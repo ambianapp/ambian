@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, Upload, Loader2, ListMusic, FileUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, Upload, Loader2, ListMusic, FileUp, FileAudio } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 
@@ -21,7 +21,10 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [isBulkAdding, setIsBulkAdding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [bulkInput, setBulkInput] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTrack, setNewTrack] = useState({
     title: "",
     artist: "",
@@ -115,6 +118,110 @@ const Admin = () => {
     setIsBulkAdding(false);
   };
 
+  // Get audio duration using Audio API
+  const getAudioDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+      audio.addEventListener("loadedmetadata", () => {
+        const minutes = Math.floor(audio.duration / 60);
+        const seconds = Math.floor(audio.duration % 60);
+        URL.revokeObjectURL(audio.src);
+        resolve(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+      });
+      audio.addEventListener("error", () => {
+        URL.revokeObjectURL(audio.src);
+        resolve("");
+      });
+    });
+  };
+
+  // Extract title from filename (remove extension and clean up)
+  const getTitleFromFilename = (filename: string): string => {
+    return filename
+      .replace(/\.[^/.]+$/, "") // Remove extension
+      .replace(/[-_]/g, " ") // Replace dashes/underscores with spaces
+      .replace(/\s+/g, " ") // Collapse multiple spaces
+      .trim();
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadProgress({ current: 0, total: files.length });
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress({ current: i + 1, total: files.length });
+
+      try {
+        // Get duration from audio file
+        const duration = await getAudioDuration(file);
+
+        // Extract title from filename
+        const title = getTitleFromFilename(file.name);
+
+        // Generate unique filename
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // Upload to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("audio")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          errors.push(`${file.name}: ${uploadError.message}`);
+          continue;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+
+        // Create track record
+        const { error: insertError } = await supabase.from("tracks").insert({
+          title,
+          artist: "Unknown",
+          duration,
+          audio_url: urlData.publicUrl,
+        });
+
+        if (insertError) {
+          errors.push(`${file.name}: ${insertError.message}`);
+        } else {
+          successCount++;
+        }
+      } catch (err) {
+        errors.push(`${file.name}: Failed to process`);
+      }
+    }
+
+    setIsUploading(false);
+    setUploadProgress({ current: 0, total: 0 });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Success", description: `${successCount} track(s) uploaded` });
+      loadTracks();
+    }
+
+    if (errors.length > 0) {
+      toast({
+        title: "Some uploads failed",
+        description: errors.slice(0, 3).join("\n"),
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteTrack = async (id: string) => {
     const { error } = await supabase.from("tracks").delete().eq("id", id);
 
@@ -159,12 +266,55 @@ const Admin = () => {
 
           {/* Tracks Tab */}
           <TabsContent value="tracks" className="space-y-6 mt-6">
+            {/* Upload MP3 Files */}
+            <Card className="bg-card border-border border-dashed border-2 border-primary/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileAudio className="w-5 h-5 text-primary" />
+                  Upload MP3 Files
+                </CardTitle>
+                <CardDescription>
+                  Select multiple MP3 files. Title and duration are extracted automatically.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".mp3,audio/mpeg"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="audio-upload"
+                />
+                <label
+                  htmlFor="audio-upload"
+                  className={`flex flex-col items-center justify-center p-8 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer transition-colors hover:border-primary/50 hover:bg-primary/5 ${isUploading ? "pointer-events-none opacity-50" : ""}`}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-10 h-10 text-primary animate-spin mb-3" />
+                      <p className="text-foreground font-medium">
+                        Uploading {uploadProgress.current} of {uploadProgress.total}...
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <FileAudio className="w-10 h-10 text-muted-foreground mb-3" />
+                      <p className="text-foreground font-medium">Click to select MP3 files</p>
+                      <p className="text-sm text-muted-foreground">or drag and drop</p>
+                    </>
+                  )}
+                </label>
+              </CardContent>
+            </Card>
+
             {/* Bulk Add Tracks */}
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileUp className="w-5 h-5" />
-                  Bulk Add Tracks
+                  Bulk Add Tracks (Text)
                 </CardTitle>
                 <CardDescription>
                   Paste multiple tracks, one per line. Format: "Title - Duration" or "Title   Duration"
