@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Playlist = Tables<"playlists">;
@@ -31,6 +32,8 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
   const [selectedTracksToTransfer, setSelectedTracksToTransfer] = useState<Set<string>>(new Set());
   const [transferTargetPlaylist, setTransferTargetPlaylist] = useState<string>("");
   const [isTransferring, setIsTransferring] = useState(false);
+  const [bulkInput, setBulkInput] = useState("");
+  const [isBulkAdding, setIsBulkAdding] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,6 +75,64 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
     }
 
     setIsLoading(false);
+  };
+
+  const handleBulkAddTracks = async () => {
+    if (!bulkInput.trim()) {
+      toast({ title: "Error", description: "Enter track data", variant: "destructive" });
+      return;
+    }
+
+    setIsBulkAdding(true);
+    const lines = bulkInput.trim().split("\n").filter(line => line.trim());
+    const tracksToCreate: { title: string; artist: string; duration: string }[] = [];
+
+    for (const line of lines) {
+      const parts = line.split(/\s{2,}|\t|-(?=\s*\d)/).map(p => p.trim()).filter(Boolean);
+      if (parts.length >= 1) {
+        const title = parts[0];
+        const duration = parts[1] || "";
+        tracksToCreate.push({ title, artist: "Unknown", duration });
+      }
+    }
+
+    if (tracksToCreate.length === 0) {
+      toast({ title: "Error", description: "No valid tracks found", variant: "destructive" });
+      setIsBulkAdding(false);
+      return;
+    }
+
+    // Create tracks
+    const { data: newTracks, error: createError } = await supabase
+      .from("tracks")
+      .insert(tracksToCreate)
+      .select("id");
+
+    if (createError || !newTracks) {
+      toast({ title: "Error", description: createError?.message || "Failed to create tracks", variant: "destructive" });
+      setIsBulkAdding(false);
+      return;
+    }
+
+    // Add to playlist
+    const maxPosition = playlistTracks.reduce((max, pt) => Math.max(max, pt.position || 0), 0);
+    const playlistInserts = newTracks.map((track, index) => ({
+      playlist_id: playlist.id,
+      track_id: track.id,
+      position: maxPosition + index + 1,
+    }));
+
+    const { error: linkError } = await supabase.from("playlist_tracks").insert(playlistInserts);
+
+    if (linkError) {
+      toast({ title: "Error", description: linkError.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: `${newTracks.length} tracks created and added` });
+      setBulkInput("");
+      loadData();
+    }
+
+    setIsBulkAdding(false);
   };
 
   const handleAddTrack = async () => {
@@ -219,12 +280,38 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
         </div>
       </div>
 
-      {/* Add Track */}
+      {/* Bulk Add New Tracks */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileUp className="w-5 h-5" />
+            Bulk Add New Tracks
+          </CardTitle>
+          <CardDescription>
+            Create tracks and add them to this playlist. Format: "Title - Duration" per line
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea
+            value={bulkInput}
+            onChange={(e) => setBulkInput(e.target.value)}
+            placeholder={`Ocean Waves - 3:42\nForest Rain - 5:15\nMorning Birds   4:30`}
+            className="bg-card min-h-[120px] font-mono text-sm"
+            rows={6}
+          />
+          <Button onClick={handleBulkAddTracks} disabled={isBulkAdding}>
+            {isBulkAdding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileUp className="w-4 h-4 mr-2" />}
+            Create & Add All
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Add Existing Track */}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
-            Add Track
+            Add Existing Track
           </CardTitle>
         </CardHeader>
         <CardContent>
