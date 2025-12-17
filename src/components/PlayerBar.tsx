@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Track } from "@/data/musicData";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface PlayerBarProps {
   currentTrack: (Track & { audioUrl?: string }) | null;
@@ -21,6 +24,64 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Check if current track is liked
+  useEffect(() => {
+    const checkIfLiked = async () => {
+      if (!user || !currentTrack) {
+        setIsLiked(false);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from("liked_songs")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("track_id", currentTrack.id)
+        .maybeSingle();
+      
+      setIsLiked(!!data);
+    };
+    
+    checkIfLiked();
+  }, [user, currentTrack]);
+
+  const handleLikeToggle = async () => {
+    if (!user || !currentTrack) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like songs",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isLiked) {
+      // Unlike
+      const { error } = await supabase
+        .from("liked_songs")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("track_id", currentTrack.id);
+      
+      if (!error) {
+        setIsLiked(false);
+        toast({ title: "Removed from Liked Songs" });
+      }
+    } else {
+      // Like
+      const { error } = await supabase
+        .from("liked_songs")
+        .insert({ user_id: user.id, track_id: currentTrack.id });
+      
+      if (!error) {
+        setIsLiked(true);
+        toast({ title: "Added to Liked Songs" });
+      }
+    }
+  };
 
   // Play/pause audio when isPlaying changes
   useEffect(() => {
@@ -71,7 +132,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-20 md:h-24 glass border-t border-border px-2 md:px-4 flex items-center z-50">
+    <div className="fixed bottom-14 md:bottom-0 left-0 right-0 h-20 md:h-24 glass border-t border-border px-2 md:px-4 flex items-center z-50">
       {/* Hidden Audio Element */}
       {currentTrack.audioUrl && (
         <audio
@@ -110,8 +171,16 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
         <Button
           variant="ghost"
           size="iconSm"
-          onClick={() => setIsLiked(!isLiked)}
+          onClick={handleLikeToggle}
           className={cn("hidden md:flex", isLiked && "text-primary")}
+        >
+          <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="iconSm"
+          onClick={handleLikeToggle}
+          className={cn("md:hidden", isLiked && "text-primary")}
         >
           <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
         </Button>
@@ -137,14 +206,14 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3 w-full">
+        <div className="flex items-center gap-2 md:gap-3 w-full px-2 md:px-0">
           <span className="text-xs text-muted-foreground w-8 md:w-10 text-right">{formatTime(currentTime)}</span>
           <Slider
             value={progress}
             onValueChange={handleProgressChange}
             max={100}
             step={0.1}
-            className="flex-1"
+            className="flex-1 min-w-[120px] md:min-w-[200px] cursor-pointer [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
           />
           <span className="text-xs text-muted-foreground w-8 md:w-10">{formatTime(duration) || currentTrack.duration}</span>
         </div>
