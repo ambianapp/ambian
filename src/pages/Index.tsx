@@ -15,7 +15,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [currentTrack, setCurrentTrack] = useState<Track | null>(mockTracks[0]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const { subscription, checkSubscription } = useAuth();
+  const { subscription, checkSubscription, isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -65,8 +65,8 @@ const Index = () => {
     setIsPlaying(true);
   }, [currentTrack]);
 
-  // Show subscription gate if not subscribed
-  if (!subscription.subscribed) {
+  // Show subscription gate if not subscribed (admins bypass)
+  if (!subscription.subscribed && !isAdmin) {
     return <SubscriptionGate />;
   }
 
