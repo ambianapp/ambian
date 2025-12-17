@@ -11,13 +11,21 @@ import type { Tables } from "@/integrations/supabase/types";
 type DbPlaylist = Tables<"playlists">;
 type DbTrack = Tables<"tracks">;
 
+interface SelectedPlaylist {
+  id: string;
+  name: string;
+  cover: string | null;
+  description: string | null;
+}
+
 interface HomeViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
   onTrackSelect: (track: Track) => void;
+  onPlaylistSelect: (playlist: SelectedPlaylist) => void;
 }
 
-const HomeView = ({ currentTrack, isPlaying, onTrackSelect }: HomeViewProps) => {
+const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: HomeViewProps) => {
   const [playlists, setPlaylists] = useState<DbPlaylist[]>([]);
   const [recentTracks, setRecentTracks] = useState<DbTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,7 +119,12 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect }: HomeViewProps) => 
                 <button
                   key={playlist.id}
                   className="flex items-center gap-4 bg-card/80 hover:bg-card rounded-lg overflow-hidden transition-colors group"
-                  onClick={() => recentTracks[0] && handleTrackSelect(recentTracks[0])}
+                  onClick={() => onPlaylistSelect({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
                 >
                   {playlist.cover_url ? (
                     <img
@@ -159,7 +172,12 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect }: HomeViewProps) => 
                     trackCount: 0,
                     tracks: [],
                   }}
-                  onClick={() => recentTracks[0] && handleTrackSelect(recentTracks[0])}
+                  onClick={() => onPlaylistSelect({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
                   onUpdate={handlePlaylistUpdate}
                 />
               ))}

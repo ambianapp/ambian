@@ -6,10 +6,18 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+interface SelectedPlaylist {
+  id: string;
+  name: string;
+  cover: string | null;
+  description: string | null;
+}
+
 interface LibraryViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
   onTrackSelect: (track: Track) => void;
+  onPlaylistSelect: (playlist: SelectedPlaylist) => void;
 }
 
 interface Playlist {
@@ -21,7 +29,7 @@ interface Playlist {
   trackCount?: number;
 }
 
-const LibraryView = ({ currentTrack, isPlaying, onTrackSelect }: LibraryViewProps) => {
+const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: LibraryViewProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [likedSongs, setLikedSongs] = useState<Track[]>([]);
@@ -173,6 +181,12 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect }: LibraryViewProp
               <button
                 key={playlist.id}
                 className="group p-4 rounded-xl bg-card/50 hover:bg-card transition-all duration-300 text-left"
+                onClick={() => onPlaylistSelect({
+                  id: playlist.id,
+                  name: playlist.name,
+                  cover: playlist.cover_url,
+                  description: playlist.description,
+                })}
               >
                 <img
                   src={playlist.cover_url || "/placeholder.svg"}
@@ -188,6 +202,12 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect }: LibraryViewProp
               <button
                 key={playlist.id}
                 className="flex items-center gap-4 p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors w-full text-left"
+                onClick={() => onPlaylistSelect({
+                  id: playlist.id,
+                  name: playlist.name,
+                  cover: playlist.cover_url,
+                  description: playlist.description,
+                })}
               >
                 <img
                   src={playlist.cover_url || "/placeholder.svg"}
