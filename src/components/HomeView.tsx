@@ -83,6 +83,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect }: HomeViewProps) => 
       duration: track.duration || "",
       cover: track.cover_url || "/placeholder.svg",
       genre: track.genre || "",
+      audioUrl: track.audio_url || undefined,
     });
   };
 

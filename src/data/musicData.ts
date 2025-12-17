@@ -6,6 +6,7 @@ export interface Track {
   duration: string;
   cover: string;
   genre: string;
+  audioUrl?: string;
 }
 
 export interface Playlist {
