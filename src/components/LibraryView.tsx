@@ -1,9 +1,10 @@
-import { Plus, List, Grid3X3 } from "lucide-react";
+import { Plus, List, Grid3X3, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { playlists } from "@/data/musicData";
 import { Track } from "@/data/musicData";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LibraryViewProps {
   currentTrack: Track | null;
@@ -11,8 +12,79 @@ interface LibraryViewProps {
   onTrackSelect: (track: Track) => void;
 }
 
+interface Playlist {
+  id: string;
+  name: string;
+  cover_url: string | null;
+  description: string | null;
+  is_system: boolean;
+  trackCount?: number;
+}
+
 const LibraryView = ({ currentTrack, isPlaying, onTrackSelect }: LibraryViewProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [likedSongs, setLikedSongs] = useState<Track[]>([]);
+  const [likedCount, setLikedCount] = useState(0);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchLibrary = async () => {
+      if (!user) return;
+
+      // Fetch user's playlists
+      const { data: userPlaylists } = await supabase
+        .from("playlists")
+        .select("*")
+        .or(`user_id.eq.${user.id},is_system.eq.true`)
+        .order("created_at", { ascending: false });
+
+      if (userPlaylists) {
+        setPlaylists(userPlaylists);
+      }
+
+      // Fetch liked songs count
+      const { count } = await supabase
+        .from("liked_songs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      setLikedCount(count || 0);
+
+      // Fetch first liked song for playing
+      const { data: likedData } = await supabase
+        .from("liked_songs")
+        .select("track_id, tracks(*)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (likedData) {
+        const tracks = likedData
+          .map((item: any) => item.tracks)
+          .filter(Boolean)
+          .map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            album: t.album || "",
+            duration: t.duration || "0:00",
+            cover: t.cover_url || "/placeholder.svg",
+            genre: t.genre || "",
+            audioUrl: t.audio_url,
+          }));
+        setLikedSongs(tracks);
+      }
+    };
+
+    fetchLibrary();
+  }, [user]);
+
+  const handleLikedSongsClick = () => {
+    if (likedSongs.length > 0) {
+      onTrackSelect(likedSongs[0]);
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto pb-32">
@@ -68,35 +140,65 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect }: LibraryViewProp
           )}
           style={{ animationDelay: "0.2s" }}
         >
+          {/* Liked Songs - Always first */}
+          {viewMode === "grid" ? (
+            <button
+              className="group p-4 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 hover:from-primary/40 hover:to-primary/20 transition-all duration-300 text-left"
+              onClick={handleLikedSongsClick}
+            >
+              <div className="w-full aspect-square rounded-lg shadow-lg mb-4 bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                <Heart className="w-16 h-16 text-primary-foreground fill-current" />
+              </div>
+              <h3 className="font-semibold text-foreground truncate">Liked Songs</h3>
+              <p className="text-sm text-muted-foreground">{likedCount} songs</p>
+            </button>
+          ) : (
+            <button
+              className="flex items-center gap-4 p-3 rounded-lg bg-gradient-to-r from-primary/20 to-transparent hover:from-primary/30 transition-colors w-full text-left"
+              onClick={handleLikedSongsClick}
+            >
+              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                <Heart className="w-6 h-6 text-primary-foreground fill-current" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground truncate">Liked Songs</h3>
+                <p className="text-sm text-muted-foreground">Playlist • {likedCount} songs</p>
+              </div>
+            </button>
+          )}
+
+          {/* User Playlists */}
           {playlists.map((playlist) =>
             viewMode === "grid" ? (
               <button
                 key={playlist.id}
                 className="group p-4 rounded-xl bg-card/50 hover:bg-card transition-all duration-300 text-left"
-                onClick={() => onTrackSelect(playlist.tracks[0])}
               >
                 <img
-                  src={playlist.cover}
+                  src={playlist.cover_url || "/placeholder.svg"}
                   alt={playlist.name}
                   className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4"
                 />
                 <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                <p className="text-sm text-muted-foreground">{playlist.trackCount} songs</p>
+                <p className="text-sm text-muted-foreground">
+                  {playlist.is_system ? "System playlist" : "Playlist"}
+                </p>
               </button>
             ) : (
               <button
                 key={playlist.id}
                 className="flex items-center gap-4 p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors w-full text-left"
-                onClick={() => onTrackSelect(playlist.tracks[0])}
               >
                 <img
-                  src={playlist.cover}
+                  src={playlist.cover_url || "/placeholder.svg"}
                   alt={playlist.name}
                   className="w-14 h-14 object-cover rounded-lg"
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                  <p className="text-sm text-muted-foreground">Playlist • {playlist.trackCount} songs</p>
+                  <p className="text-sm text-muted-foreground">
+                    {playlist.is_system ? "System playlist" : "Playlist"}
+                  </p>
                 </div>
               </button>
             )
