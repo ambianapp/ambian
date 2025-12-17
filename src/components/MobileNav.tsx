@@ -1,5 +1,7 @@
-import { Home, Search, Library } from "lucide-react";
+import { Home, Search, Library, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MobileNavProps {
   activeView: string;
@@ -7,6 +9,9 @@ interface MobileNavProps {
 }
 
 const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+
   const navItems = [
     { id: "home", label: "Home", icon: Home },
     { id: "search", label: "Search", icon: Search },
@@ -31,6 +36,15 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
             <span className="text-xs font-medium">{item.label}</span>
           </button>
         ))}
+        {isAdmin && (
+          <button
+            className="flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-colors text-muted-foreground"
+            onClick={() => navigate("/admin")}
+          >
+            <Shield className="w-6 h-6 text-primary" />
+            <span className="text-xs font-medium">Admin</span>
+          </button>
+        )}
       </div>
     </nav>
   );
