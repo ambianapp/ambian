@@ -1,6 +1,8 @@
-import { Home, Search, Library, Plus, Heart, Music2 } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, Music2, User, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   activeView: string;
@@ -8,6 +10,9 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
   const navItems = [
     { id: "home", label: "Home", icon: Home },
     { id: "search", label: "Search", icon: Search },
@@ -76,6 +81,28 @@ const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
             Spa & Wellness
           </Button>
         </div>
+      </div>
+
+      {/* User Section */}
+      <div className="border-t border-border pt-4 space-y-2">
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/admin")}
+          >
+            <Shield className="w-4 h-4 text-primary" />
+            Admin Panel
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
+          onClick={() => navigate("/profile")}
+        >
+          <User className="w-4 h-4" />
+          <span className="truncate">{user?.email || "Profile"}</span>
+        </Button>
       </div>
     </aside>
   );
