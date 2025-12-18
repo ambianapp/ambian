@@ -2,3 +2,9 @@ project_id = "hjecjqyonxvrrvprbvgr"
 
 [functions.verify-payment]
 verify_jwt = true
+
+[functions.add-device-slot]
+verify_jwt = true
+
+[functions.sync-device-slots]
+verify_jwt = true

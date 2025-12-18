@@ -78,6 +78,7 @@ serve(async (req) => {
         is_trial: isInTrial,
         trial_days_remaining: trialDaysRemaining,
         trial_end: trialEndDate.toISOString(),
+        device_slots: 1,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -120,6 +121,15 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
 
+      // Get device slots from local subscription
+      const { data: subData } = await supabaseClient
+        .from("subscriptions")
+        .select("device_slots")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      const deviceSlots = subData?.device_slots ?? 1;
+
       return new Response(JSON.stringify({
         subscribed: true,
         is_trial: false,
@@ -128,6 +138,7 @@ serve(async (req) => {
         plan_type: planType,
         subscription_end: subscriptionEnd,
         is_recurring: true,
+        device_slots: deviceSlots,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -181,6 +192,8 @@ serve(async (req) => {
 
     const hasAccess = hasPrepaidAccess || isInTrial;
 
+    const deviceSlots = localSub?.device_slots ?? 1;
+
     return new Response(JSON.stringify({
       subscribed: hasAccess,
       is_trial: !hasPrepaidAccess && isInTrial,
@@ -189,6 +202,7 @@ serve(async (req) => {
       plan_type: planType,
       subscription_end: subscriptionEnd,
       is_recurring: false,
+      device_slots: deviceSlots,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
