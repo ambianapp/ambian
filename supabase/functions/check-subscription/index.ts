@@ -39,22 +39,36 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Check trial status based on user creation date (3 days free trial)
+    const TRIAL_DAYS = 3;
+    const userCreatedAt = new Date(user.created_at);
+    const trialEndDate = new Date(userCreatedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const isInTrial = now < trialEndDate;
+    const trialDaysRemaining = isInTrial ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
+    logStep("Trial status", { isInTrial, trialDaysRemaining, trialEndDate: trialEndDate.toISOString() });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      logStep("No Stripe customer found");
+      logStep("No Stripe customer found, checking trial");
       
       // Update local subscription status
       await supabaseClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
-          status: "inactive",
+          status: isInTrial ? "trialing" : "inactive",
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
 
-      return new Response(JSON.stringify({ subscribed: false }), {
+      return new Response(JSON.stringify({ 
+        subscribed: isInTrial,
+        is_trial: isInTrial,
+        trial_days_remaining: trialDaysRemaining,
+        trial_end: trialEndDate.toISOString(),
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -104,8 +118,14 @@ serve(async (req) => {
         }, { onConflict: "user_id" });
     }
 
+    // If no active subscription, check if still in trial
+    const hasAccess = hasActiveSub || isInTrial;
+
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: hasAccess,
+      is_trial: !hasActiveSub && isInTrial,
+      trial_days_remaining: hasActiveSub ? 0 : trialDaysRemaining,
+      trial_end: hasActiveSub ? null : trialEndDate.toISOString(),
       plan_type: planType,
       subscription_end: subscriptionEnd,
     }), {

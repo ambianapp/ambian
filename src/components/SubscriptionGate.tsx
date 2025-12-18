@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Music2, Check, Loader2, User, Shield } from "lucide-react";
+import { Music2, Check, User, Shield, Clock } from "lucide-react";
 
 const features = [
   "Unlimited access to all music",
@@ -12,12 +12,28 @@ const features = [
 ];
 
 const SubscriptionGate = () => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut, subscription } = useAuth();
   const navigate = useNavigate();
+
+  // Show trial banner if user is in trial period
+  const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-8 animate-fade-in">
+        {/* Trial Banner */}
+        {showTrialBanner && (
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Clock className="w-5 h-5" />
+              <span className="font-semibold">Free Trial Active</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {subscription.trialDaysRemaining} day{subscription.trialDaysRemaining !== 1 ? 's' : ''} remaining
+            </p>
+          </div>
+        )}
+
         {/* Logo */}
         <div className="inline-flex items-center gap-3 mb-6">
           <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center glow">
@@ -29,10 +45,12 @@ const SubscriptionGate = () => {
         {/* Message */}
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Subscribe to Listen
+            {showTrialBanner ? "Continue with Full Access" : "Subscribe to Listen"}
           </h1>
           <p className="text-muted-foreground">
-            Get unlimited access to our entire music library for your business.
+            {showTrialBanner 
+              ? "Your free trial is active. Subscribe anytime to continue after your trial ends."
+              : "Get unlimited access to our entire music library for your business."}
           </p>
         </div>
 
@@ -55,10 +73,13 @@ const SubscriptionGate = () => {
               €7.40<span className="text-lg font-normal text-muted-foreground">/month</span>
             </p>
             <p className="text-sm text-muted-foreground">when billed yearly (€89/year)</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Prices exclude VAT
+            </p>
           </div>
 
           <Button size="lg" className="w-full h-14 text-lg" onClick={() => navigate("/pricing")}>
-            Start Listening
+            {showTrialBanner ? "View Plans" : "Start Listening"}
           </Button>
 
           <p className="text-xs text-muted-foreground">
