@@ -42,7 +42,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-2 py-2 z-50 h-[60px]">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-2 pb-6 pt-3 z-50">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = isOnIndexPage && activeView === item.id;
@@ -50,36 +50,36 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
             <button
               key={item.id}
               className={cn(
-                "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+                "flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl transition-colors min-w-[64px] min-h-[56px]",
                 isActive ? "text-foreground" : "text-muted-foreground"
               )}
               onClick={() => handleNavClick(item.id)}
             >
-              <item.icon className={cn("w-5 h-5", isActive && "text-primary")} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <item.icon className={cn("w-6 h-6", isActive && "text-primary")} />
+              <span className="text-xs font-medium">{item.label}</span>
             </button>
           );
         })}
         <button
           className={cn(
-            "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+            "flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl transition-colors min-w-[64px] min-h-[56px]",
             isOnProfilePage ? "text-foreground" : "text-muted-foreground"
           )}
           onClick={handleProfileClick}
         >
-          <User className={cn("w-5 h-5", isOnProfilePage && "text-primary")} />
-          <span className="text-[10px] font-medium">Profile</span>
+          <User className={cn("w-6 h-6", isOnProfilePage && "text-primary")} />
+          <span className="text-xs font-medium">Profile</span>
         </button>
         {isAdmin && (
           <button
             className={cn(
-              "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+              "flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl transition-colors min-w-[64px] min-h-[56px]",
               isOnAdminPage ? "text-foreground" : "text-muted-foreground"
             )}
             onClick={handleAdminClick}
           >
-            <Shield className={cn("w-5 h-5", isOnAdminPage ? "text-primary" : "text-primary")} />
-            <span className="text-[10px] font-medium">Admin</span>
+            <Shield className={cn("w-6 h-6", isOnAdminPage ? "text-primary" : "text-primary")} />
+            <span className="text-xs font-medium">Admin</span>
           </button>
         )}
       </div>
