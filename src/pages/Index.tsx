@@ -51,6 +51,23 @@ const Index = () => {
     }
   }, [searchParams, checkSubscription, toast]);
 
+  // Real-time trial expiry check - lock user out when trial ends
+  useEffect(() => {
+    if (!subscription.isTrial || !subscription.trialEnd || isAdmin) return;
+
+    const checkTrialExpiry = () => {
+      const now = new Date().getTime();
+      const end = new Date(subscription.trialEnd!).getTime();
+      if (now >= end) {
+        // Trial expired - recheck subscription to update state and show gate
+        checkSubscription();
+      }
+    };
+
+    const interval = setInterval(checkTrialExpiry, 1000);
+    return () => clearInterval(interval);
+  }, [subscription.isTrial, subscription.trialEnd, isAdmin, checkSubscription]);
+
   const handleTrackSelect = useCallback((track: Track) => {
     setCurrentTrack(track);
     setIsPlaying(true);
