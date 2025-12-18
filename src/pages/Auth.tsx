@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo.png";
 import { z } from "zod";
 
@@ -18,7 +18,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
@@ -65,9 +65,6 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: redirectUrl,
-            data: {
-              full_name: fullName,
-            },
           },
         });
         if (error) throw error;
@@ -130,22 +127,6 @@ const Auth = () => {
 
         {/* Form */}
         <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
-          {!isLogin && (
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Your name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10 h-12 bg-card border-border"
-                />
-              </div>
-            </div>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
