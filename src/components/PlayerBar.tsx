@@ -19,6 +19,8 @@ const PlayerBar = () => {
     handlePrevious,
     handleShuffleToggle,
     handleRepeatToggle,
+    seekPosition,
+    setSeekPosition,
   } = usePlayer();
   
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -395,19 +397,47 @@ const PlayerBar = () => {
     }
   }, [volume, isMuted]);
 
+  // Save current position for persistence
+  const savePositionRef = useRef<NodeJS.Timeout | null>(null);
+  
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      const progressPercent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      const time = audioRef.current.currentTime;
+      setCurrentTime(time);
+      const progressPercent = (time / audioRef.current.duration) * 100;
       setProgress([isNaN(progressPercent) ? 0 : progressPercent]);
       // Update last progress time for stall detection
       lastProgressTimeRef.current = Date.now();
+      
+      // Save position to localStorage (throttled)
+      if (!savePositionRef.current) {
+        savePositionRef.current = setTimeout(() => {
+          try {
+            const saved = localStorage.getItem("ambian_playback_state");
+            if (saved) {
+              const state = JSON.parse(saved);
+              state.position = time;
+              state.savedAt = Date.now();
+              localStorage.setItem("ambian_playback_state", JSON.stringify(state));
+            }
+          } catch (e) {
+            // Ignore errors
+          }
+          savePositionRef.current = null;
+        }, 5000); // Save every 5 seconds
+      }
     }
   };
 
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
+      
+      // Seek to restored position if available
+      if (seekPosition !== null && seekPosition > 0) {
+        audioRef.current.currentTime = seekPosition;
+        setSeekPosition(null);
+      }
     }
   };
 
