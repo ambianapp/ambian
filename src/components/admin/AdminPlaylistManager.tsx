@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, ListMusic, Edit, Loader2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
@@ -21,6 +23,7 @@ const AdminPlaylistManager = () => {
     name: "",
     description: "",
     cover_url: "",
+    category: "" as string,
   });
   const { toast } = useToast();
 
@@ -57,6 +60,7 @@ const AdminPlaylistManager = () => {
         name: newPlaylist.name,
         description: newPlaylist.description || null,
         cover_url: newPlaylist.cover_url || null,
+        category: newPlaylist.category || null,
         is_system: true,
         is_public: true,
         user_id: null,
@@ -67,7 +71,7 @@ const AdminPlaylistManager = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Playlist created" });
-      setNewPlaylist({ name: "", description: "", cover_url: "" });
+      setNewPlaylist({ name: "", description: "", cover_url: "", category: "" });
       loadPlaylists();
     }
     setIsCreating(false);
@@ -116,7 +120,7 @@ const AdminPlaylistManager = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreatePlaylist} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="playlist-name">Name *</Label>
                 <Input
@@ -127,6 +131,21 @@ const AdminPlaylistManager = () => {
                   className="bg-card"
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="playlist-category">Category</Label>
+                <Select
+                  value={newPlaylist.category}
+                  onValueChange={(value) => setNewPlaylist({ ...newPlaylist, category: value })}
+                >
+                  <SelectTrigger className="bg-card">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mood">Mood</SelectItem>
+                    <SelectItem value="genre">Genre</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="playlist-cover">Cover URL</Label>
@@ -197,7 +216,14 @@ const AdminPlaylistManager = () => {
                       </div>
                     )}
                   </div>
-                  <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
+                    {playlist.category && (
+                      <Badge variant="secondary" className="capitalize text-xs">
+                        {playlist.category}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                     {playlist.description || "No description"}
                   </p>
