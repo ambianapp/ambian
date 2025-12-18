@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Playlist = Tables<"playlists">;
@@ -24,6 +25,12 @@ interface PlaylistEditorProps {
   onBack: () => void;
 }
 
+interface UploadProgress {
+  total: number;
+  completed: number;
+  current: string;
+}
+
 const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps) => {
   const [playlistTracks, setPlaylistTracks] = useState<PlaylistTrackWithDetails[]>([]);
   const [allTracks, setAllTracks] = useState<Track[]>([]);
@@ -34,6 +41,9 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
   const [isTransferring, setIsTransferring] = useState(false);
   const [bulkInput, setBulkInput] = useState("");
   const [isBulkAdding, setIsBulkAdding] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -76,6 +86,139 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
 
     setIsLoading(false);
   };
+
+  // Extract duration from audio file
+  const getAudioDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      audio.onloadedmetadata = () => {
+        const mins = Math.floor(audio.duration / 60);
+        const secs = Math.floor(audio.duration % 60);
+        resolve(`${mins}:${secs.toString().padStart(2, "0")}`);
+        URL.revokeObjectURL(audio.src);
+      };
+      audio.onerror = () => {
+        resolve("0:00");
+        URL.revokeObjectURL(audio.src);
+      };
+      audio.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Extract title from filename
+  const getTitleFromFilename = (filename: string): string => {
+    return filename
+      .replace(/\.[^/.]+$/, "") // Remove extension
+      .replace(/[-_]/g, " ") // Replace dashes/underscores with spaces
+      .replace(/\s+/g, " ") // Normalize spaces
+      .trim();
+  };
+
+  // Handle MP3 file uploads
+  const handleFileUpload = async (files: FileList | File[]) => {
+    const mp3Files = Array.from(files).filter(
+      (file) => file.type === "audio/mpeg" || file.name.toLowerCase().endsWith(".mp3")
+    );
+
+    if (mp3Files.length === 0) {
+      toast({ title: "Error", description: "Please select MP3 files", variant: "destructive" });
+      return;
+    }
+
+    setUploadProgress({ total: mp3Files.length, completed: 0, current: "" });
+
+    const maxPosition = playlistTracks.reduce((max, pt) => Math.max(max, pt.position || 0), 0);
+    let successCount = 0;
+
+    for (let i = 0; i < mp3Files.length; i++) {
+      const file = mp3Files[i];
+      const title = getTitleFromFilename(file.name);
+      setUploadProgress({ total: mp3Files.length, completed: i, current: title });
+
+      try {
+        // Get duration
+        const duration = await getAudioDuration(file);
+
+        // Upload to storage
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const { error: uploadError } = await supabase.storage
+          .from("audio")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error(`Failed to upload ${file.name}:`, uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+
+        // Create track record
+        const { data: newTrack, error: trackError } = await supabase
+          .from("tracks")
+          .insert({
+            title,
+            artist: "Unknown",
+            duration,
+            audio_url: urlData.publicUrl,
+          })
+          .select("id")
+          .single();
+
+        if (trackError || !newTrack) {
+          console.error(`Failed to create track for ${file.name}:`, trackError);
+          continue;
+        }
+
+        // Add to playlist
+        const { error: linkError } = await supabase.from("playlist_tracks").insert({
+          playlist_id: playlist.id,
+          track_id: newTrack.id,
+          position: maxPosition + successCount + 1,
+        });
+
+        if (!linkError) {
+          successCount++;
+        }
+      } catch (err) {
+        console.error(`Error processing ${file.name}:`, err);
+      }
+    }
+
+    setUploadProgress(null);
+
+    if (successCount > 0) {
+      toast({ title: "Success", description: `${successCount} of ${mp3Files.length} tracks imported` });
+      loadData();
+    } else {
+      toast({ title: "Error", description: "Failed to import tracks", variant: "destructive" });
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  }, [playlistTracks, playlist.id]);
 
   const handleBulkAddTracks = async () => {
     if (!bulkInput.trim()) {
@@ -280,15 +423,84 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
         </div>
       </div>
 
-      {/* Bulk Add New Tracks */}
+      {/* Drag & Drop MP3 Import */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5" />
+            Import MP3 Files
+          </CardTitle>
+          <CardDescription>
+            Drag and drop MP3 files here to import them. Title and duration are extracted automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div
+            ref={dropZoneRef}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              isDragging
+                ? "border-primary bg-primary/10"
+                : "border-muted-foreground/30 hover:border-primary/50"
+            }`}
+          >
+            {uploadProgress ? (
+              <div className="space-y-4">
+                <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary" />
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Importing {uploadProgress.completed + 1} of {uploadProgress.total}
+                  </p>
+                  <p className="text-sm font-medium text-foreground truncate px-4">
+                    {uploadProgress.current}
+                  </p>
+                  <Progress 
+                    value={(uploadProgress.completed / uploadProgress.total) * 100} 
+                    className="h-2"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <Upload className={`w-10 h-10 mx-auto mb-4 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+                <p className="text-lg font-medium text-foreground mb-2">
+                  {isDragging ? "Drop MP3 files here" : "Drag & drop MP3 files"}
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  or click to browse
+                </p>
+                <input
+                  type="file"
+                  accept=".mp3,audio/mpeg"
+                  multiple
+                  onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                  className="hidden"
+                  id="mp3-file-input"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("mp3-file-input")?.click()}
+                >
+                  <FileUp className="w-4 h-4 mr-2" />
+                  Select Files
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Add New Tracks (Text Input) */}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileUp className="w-5 h-5" />
-            Bulk Add New Tracks
+            Bulk Add (Text Input)
           </CardTitle>
           <CardDescription>
-            Create tracks and add them to this playlist. Format: "Title - Duration" per line
+            Alternative: Paste track names manually. Format: "Title - Duration" per line
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
