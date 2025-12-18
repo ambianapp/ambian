@@ -133,35 +133,44 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
   // Network-aware playback recovery
   useEffect(() => {
     const handleOnline = () => {
-      console.log("Network connection restored");
+      console.log("Network connection restored, wasPlaying:", wasPlayingBeforeOfflineRef.current);
       setIsOffline(false);
-      toast({
-        title: "Connection restored",
-        description: "Resuming playback...",
-      });
       
       // Resume playback if we were playing before going offline
-      if (wasPlayingBeforeOfflineRef.current && audioRef.current && currentTrack?.audioUrl) {
+      if (wasPlayingBeforeOfflineRef.current && audioRef.current) {
+        toast({
+          title: "Connection restored",
+          description: "Resuming playback...",
+        });
+        
         retryCountRef.current = 0;
+        const currentPos = audioRef.current.currentTime;
+        
+        // Always reload and seek to handle buffering issues after network loss
         setTimeout(() => {
-          audioRef.current?.play().catch((err) => {
-            console.error("Failed to resume after reconnection:", err);
-            // Reload and try again
-            if (audioRef.current) {
-              const currentPos = audioRef.current.currentTime;
-              audioRef.current.load();
-              audioRef.current.currentTime = currentPos;
-              audioRef.current.play().catch(console.error);
-            }
-          });
+          if (audioRef.current) {
+            console.log("Reloading audio at position:", currentPos);
+            audioRef.current.load();
+            audioRef.current.currentTime = currentPos;
+            audioRef.current.play().catch((err) => {
+              console.error("Failed to resume after reconnection:", err);
+            });
+          }
         }, 500);
+      } else {
+        toast({
+          title: "Connection restored",
+        });
       }
+      
+      wasPlayingBeforeOfflineRef.current = false;
     };
 
     const handleOffline = () => {
-      console.log("Network connection lost");
+      console.log("Network connection lost, currently playing:", !audioRef.current?.paused);
       setIsOffline(true);
-      wasPlayingBeforeOfflineRef.current = isPlaying;
+      // Check actual audio state, not React state which may be stale
+      wasPlayingBeforeOfflineRef.current = audioRef.current ? !audioRef.current.paused : false;
       toast({
         title: "Connection lost",
         description: "Music will resume when connection returns",
@@ -176,7 +185,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [isPlaying, currentTrack, toast]);
+  }, [toast]);
 
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
