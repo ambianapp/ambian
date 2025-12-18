@@ -183,18 +183,33 @@ const PlayerBar = () => {
   useEffect(() => {
     if (!('mediaSession' in navigator) || !currentTrack) return;
 
-    // Set metadata
+    // Get absolute URL for cover image (iOS requires full URLs)
+    const getCoverUrl = () => {
+      if (!currentTrack.cover || currentTrack.cover === '/placeholder.svg') {
+        return null;
+      }
+      // If already absolute URL, use as is
+      if (currentTrack.cover.startsWith('http')) {
+        return currentTrack.cover;
+      }
+      // Convert relative URL to absolute
+      return `${window.location.origin}${currentTrack.cover}`;
+    };
+
+    const coverUrl = getCoverUrl();
+    
+    // Set metadata - use "Ambian Music" as artist fallback
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentTrack.title,
-      artist: currentTrack.artist,
+      title: currentTrack.title || 'Unknown Track',
+      artist: currentTrack.artist || 'Ambian Music',
       album: currentTrack.album || 'Ambian Music',
-      artwork: currentTrack.cover ? [
-        { src: currentTrack.cover, sizes: '96x96', type: 'image/jpeg' },
-        { src: currentTrack.cover, sizes: '128x128', type: 'image/jpeg' },
-        { src: currentTrack.cover, sizes: '192x192', type: 'image/jpeg' },
-        { src: currentTrack.cover, sizes: '256x256', type: 'image/jpeg' },
-        { src: currentTrack.cover, sizes: '384x384', type: 'image/jpeg' },
-        { src: currentTrack.cover, sizes: '512x512', type: 'image/jpeg' },
+      artwork: coverUrl ? [
+        { src: coverUrl, sizes: '96x96', type: 'image/jpeg' },
+        { src: coverUrl, sizes: '128x128', type: 'image/jpeg' },
+        { src: coverUrl, sizes: '192x192', type: 'image/jpeg' },
+        { src: coverUrl, sizes: '256x256', type: 'image/jpeg' },
+        { src: coverUrl, sizes: '384x384', type: 'image/jpeg' },
+        { src: coverUrl, sizes: '512x512', type: 'image/jpeg' },
       ] : [],
     });
 
