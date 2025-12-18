@@ -198,19 +198,22 @@ const PlayerBar = () => {
 
     const coverUrl = getCoverUrl();
     
-    // Set metadata - use "Ambian Music" as artist fallback
+    // Always use Ambian logo for lock screen artwork
+    const logoUrl = `${window.location.origin}/ambian-logo.png`;
+    
+    // Set metadata
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title || 'Unknown Track',
       artist: 'Ambian',
       album: 'Ambian Music',
-      artwork: coverUrl ? [
-        { src: coverUrl, sizes: '96x96', type: 'image/jpeg' },
-        { src: coverUrl, sizes: '128x128', type: 'image/jpeg' },
-        { src: coverUrl, sizes: '192x192', type: 'image/jpeg' },
-        { src: coverUrl, sizes: '256x256', type: 'image/jpeg' },
-        { src: coverUrl, sizes: '384x384', type: 'image/jpeg' },
-        { src: coverUrl, sizes: '512x512', type: 'image/jpeg' },
-      ] : [],
+      artwork: [
+        { src: logoUrl, sizes: '96x96', type: 'image/png' },
+        { src: logoUrl, sizes: '128x128', type: 'image/png' },
+        { src: logoUrl, sizes: '192x192', type: 'image/png' },
+        { src: logoUrl, sizes: '256x256', type: 'image/png' },
+        { src: logoUrl, sizes: '384x384', type: 'image/png' },
+        { src: logoUrl, sizes: '512x512', type: 'image/png' },
+      ],
     });
 
     // Set action handlers for next/previous (this shows track buttons instead of seek buttons)

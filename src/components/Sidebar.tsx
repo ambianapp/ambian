@@ -173,10 +173,11 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
     <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 gap-6">
       {/* Logo */}
       <div className="flex items-center gap-3 px-2 py-4">
-        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center glow">
-          <Music2 className="w-6 h-6 text-primary-foreground" />
-        </div>
-        <span className="text-xl font-bold text-gradient">ambian</span>
+        <img 
+          src="/ambian-logo.png" 
+          alt="Ambian" 
+          className="h-8 object-contain"
+        />
       </div>
 
       {/* Main Navigation */}
