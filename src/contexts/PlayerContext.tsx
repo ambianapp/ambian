@@ -15,11 +15,6 @@ interface PlaybackState {
   savedAt: number;
 }
 
-// Flag to indicate restored session needs user interaction to play
-let pendingResume = false;
-export const hasPendingResume = () => pendingResume;
-export const clearPendingResume = () => { pendingResume = false; };
-
 interface PlayerContextType {
   currentTrack: (Track & { audioUrl?: string }) | null;
   isPlaying: boolean;
@@ -197,29 +192,24 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
         playlistTracksRef.current = orderedTracks;
 
-        // Find and play current track
-        const trackToPlay = orderedTracks.find(t => t.id === state.currentTrackId);
-        if (!trackToPlay) return;
-
-        // Fetch audio URL
-        const trackData = tracks.find(t => t.id === state.currentTrackId);
-        if (trackData?.audio_url) {
-          setOriginalDbUrl(trackData.audio_url);
-          const signedUrl = await getSignedAudioUrl(trackData.audio_url);
-          setCurrentTrack({ ...trackToPlay, audioUrl: signedUrl });
+        // Find the NEXT track to play (skip current, start fresh for reliable autoplay)
+        const currentIndex = orderedTracks.findIndex(t => t.id === state.currentTrackId);
+        const nextIndex = (currentIndex + 1) % orderedTracks.length;
+        const nextTrack = orderedTracks[nextIndex];
+        
+        // Fetch audio URL for next track
+        const nextTrackData = tracks.find(t => t.id === nextTrack.id);
+        if (nextTrackData?.audio_url) {
+          setOriginalDbUrl(nextTrackData.audio_url);
+          const signedUrl = await getSignedAudioUrl(nextTrackData.audio_url);
+          setCurrentTrack({ ...nextTrack, audioUrl: signedUrl });
           
-          // Set position for PlayerBar to seek to
-          if (state.position > 0) {
-            setSeekPosition(state.position);
-          }
-          
-          // Don't auto-play - browsers block this after refresh
-          // Set flag so PlayerBar can show "tap to resume" prompt
+          // Auto-play the next track (browser may block, that's ok - silent failure)
           if (state.wasPlaying) {
-            pendingResume = true;
+            setIsPlaying(true);
           }
           
-          console.log("Playback state restored - tap to resume");
+          console.log("Restored playlist, starting next track");
         }
       } catch (e) {
         console.error("Failed to restore playback state:", e);
