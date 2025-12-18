@@ -12,8 +12,14 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
-// Price IDs for prepaid access
-const PRICE_IDS = {
+// Price IDs for subscriptions (recurring)
+const SUBSCRIPTION_PRICES = {
+  monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
+  yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
+};
+
+// Price IDs for prepaid access (one-time)
+const PREPAID_PRICES = {
   monthly: "price_1SfhOOJrU52a7SNLPPopAVyb",
   yearly: "price_1SfhOZJrU52a7SNLIejHHUh4",
 };
@@ -40,12 +46,14 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId } = await req.json();
-    logStep("Received request", { priceId });
+    const { priceId, paymentMode } = await req.json();
+    // paymentMode: "subscription" or "payment" (one-time prepaid)
+    const mode = paymentMode || "subscription";
+    logStep("Received request", { priceId, mode });
 
     // Determine plan type from price ID
     let planType = "monthly";
-    if (priceId === PRICE_IDS.yearly) {
+    if (priceId === SUBSCRIPTION_PRICES.yearly || priceId === PREPAID_PRICES.yearly) {
       planType = "yearly";
     }
     logStep("Plan type determined", { planType });
@@ -70,7 +78,11 @@ serve(async (req) => {
 
     const returnOrigin = req.headers.get("origin") || "https://ambian.lovable.app";
     
-    // Use mode: "payment" for one-time prepaid access
+    // Build success URL based on mode
+    const successUrl = mode === "payment" 
+      ? `${returnOrigin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}&mode=prepaid`
+      : `${returnOrigin}/?checkout=success`;
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -84,12 +96,13 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: "payment", // One-time payment instead of subscription
-      success_url: `${returnOrigin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      mode: mode, // "subscription" or "payment"
+      success_url: successUrl,
       cancel_url: `${returnOrigin}/?checkout=cancelled`,
       metadata: {
         user_id: user.id,
         plan_type: planType,
+        payment_mode: mode,
       },
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
@@ -103,7 +116,7 @@ serve(async (req) => {
       ],
     });
 
-    logStep("Checkout session created", { sessionId: session.id, mode: "payment" });
+    logStep("Checkout session created", { sessionId: session.id, mode });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

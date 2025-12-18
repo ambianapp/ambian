@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const getCorsHeaders = (origin: string | null) => {
@@ -40,6 +41,9 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
     const { data: userData, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
@@ -55,8 +59,85 @@ serve(async (req) => {
     const trialDaysRemaining = isInTrial ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
     logStep("Trial status", { isInTrial, trialDaysRemaining, trialEndDate: trialEndDate.toISOString() });
 
-    // Check local database for prepaid access
-    const { data: subscription, error: subError } = await supabaseClient
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+
+    if (customers.data.length === 0) {
+      logStep("No Stripe customer found, checking trial");
+      
+      await supabaseClient
+        .from("subscriptions")
+        .upsert({
+          user_id: user.id,
+          status: isInTrial ? "trialing" : "inactive",
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+
+      return new Response(JSON.stringify({ 
+        subscribed: isInTrial,
+        is_trial: isInTrial,
+        trial_days_remaining: trialDaysRemaining,
+        trial_end: trialEndDate.toISOString(),
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const customerId = customers.data[0].id;
+    logStep("Found customer", { customerId });
+
+    // Check for active Stripe subscription (recurring)
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
+
+    const hasActiveStripeSub = subscriptions.data.length > 0;
+    let subscriptionEnd = null;
+    let planType = null;
+    let isRecurring = false;
+
+    if (hasActiveStripeSub) {
+      const subscription = subscriptions.data[0];
+      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const interval = subscription.items.data[0].price.recurring?.interval;
+      planType = interval === "year" ? "yearly" : "monthly";
+      isRecurring = true;
+      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType });
+
+      await supabaseClient
+        .from("subscriptions")
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          status: "active",
+          plan_type: planType,
+          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_end: subscriptionEnd,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+
+      return new Response(JSON.stringify({
+        subscribed: true,
+        is_trial: false,
+        trial_days_remaining: 0,
+        trial_end: null,
+        plan_type: planType,
+        subscription_end: subscriptionEnd,
+        is_recurring: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // No active Stripe subscription, check local database for prepaid access
+    logStep("No active Stripe subscription, checking prepaid access");
+    
+    const { data: localSub, error: subError } = await supabaseClient
       .from("subscriptions")
       .select("*")
       .eq("user_id", user.id)
@@ -66,40 +147,31 @@ serve(async (req) => {
       logStep("Database query error", { error: subError.message });
     }
 
-    let hasActiveAccess = false;
-    let accessEndDate: string | null = null;
-    let planType: string | null = null;
-
-    if (subscription && subscription.current_period_end) {
-      const periodEnd = new Date(subscription.current_period_end);
-      hasActiveAccess = periodEnd > now && subscription.status === "active";
-      accessEndDate = subscription.current_period_end;
-      planType = subscription.plan_type;
-      logStep("Prepaid access check", { 
-        hasActiveAccess, 
-        periodEnd: periodEnd.toISOString(),
-        status: subscription.status 
-      });
+    let hasPrepaidAccess = false;
+    if (localSub && localSub.current_period_end && localSub.status === "active") {
+      const periodEnd = new Date(localSub.current_period_end);
+      hasPrepaidAccess = periodEnd > now;
+      if (hasPrepaidAccess) {
+        subscriptionEnd = localSub.current_period_end;
+        planType = localSub.plan_type;
+        logStep("Prepaid access found", { periodEnd: periodEnd.toISOString() });
+      } else {
+        // Prepaid access expired, update status
+        logStep("Prepaid access expired, updating status");
+        await supabaseClient
+          .from("subscriptions")
+          .update({ status: "inactive", updated_at: new Date().toISOString() })
+          .eq("user_id", user.id);
+      }
     }
 
-    // Update subscription status if expired
-    if (subscription && !hasActiveAccess && subscription.status === "active") {
-      logStep("Access expired, updating status to inactive");
-      await supabaseClient
-        .from("subscriptions")
-        .update({ 
-          status: "inactive",
-          updated_at: new Date().toISOString() 
-        })
-        .eq("user_id", user.id);
-    }
-
-    // If no subscription record exists, create one for trial tracking
-    if (!subscription) {
+    // If no prepaid access, update/create trial record
+    if (!hasPrepaidAccess) {
       await supabaseClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
+          stripe_customer_id: customerId,
           status: isInTrial ? "trialing" : "inactive",
           current_period_start: isInTrial ? userCreatedAt.toISOString() : null,
           current_period_end: isInTrial ? trialEndDate.toISOString() : null,
@@ -107,16 +179,16 @@ serve(async (req) => {
         }, { onConflict: "user_id" });
     }
 
-    // User has access if they have active prepaid access OR are in trial
-    const hasAccess = hasActiveAccess || isInTrial;
+    const hasAccess = hasPrepaidAccess || isInTrial;
 
     return new Response(JSON.stringify({
       subscribed: hasAccess,
-      is_trial: !hasActiveAccess && isInTrial,
-      trial_days_remaining: hasActiveAccess ? 0 : trialDaysRemaining,
-      trial_end: hasActiveAccess ? null : trialEndDate.toISOString(),
+      is_trial: !hasPrepaidAccess && isInTrial,
+      trial_days_remaining: hasPrepaidAccess ? 0 : trialDaysRemaining,
+      trial_end: hasPrepaidAccess ? null : trialEndDate.toISOString(),
       plan_type: planType,
-      subscription_end: accessEndDate,
+      subscription_end: subscriptionEnd,
+      is_recurring: false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
