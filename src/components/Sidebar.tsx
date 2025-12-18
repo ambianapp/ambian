@@ -176,7 +176,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
         <img 
           src="/ambian-logo.png" 
           alt="Ambian" 
-          className="h-16 object-contain"
+          className="h-24 object-contain"
         />
       </div>
 
