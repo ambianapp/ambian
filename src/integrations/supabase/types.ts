@@ -84,6 +84,7 @@ export type Database = {
       }
       playlists: {
         Row: {
+          category: string | null
           cover_url: string | null
           created_at: string
           description: string | null
@@ -95,6 +96,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          category?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          category?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
