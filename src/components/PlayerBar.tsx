@@ -35,12 +35,20 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
   const retryCountRef = useRef(0);
   const lastProgressTimeRef = useRef(Date.now());
   const stallCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const wasPlayingBeforeOfflineRef = useRef(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const maxRetries = 3;
 
   // Handle audio errors with auto-recovery
   const handleAudioError = () => {
     const audio = audioRef.current;
     console.error("Audio error:", audio?.error?.code, audio?.error?.message);
+    
+    // Don't retry while offline - let the online handler deal with it
+    if (isOffline) {
+      wasPlayingBeforeOfflineRef.current = true;
+      return;
+    }
     
     if (retryCountRef.current < maxRetries) {
       retryCountRef.current++;
@@ -79,6 +87,11 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
   useEffect(() => {
     if (isPlaying && currentTrack?.audioUrl) {
       stallCheckIntervalRef.current = setInterval(() => {
+        // Don't try recovery while offline - let the online handler deal with it
+        if (isOffline) {
+          return;
+        }
+        
         const now = Date.now();
         const timeSinceLastProgress = now - lastProgressTimeRef.current;
         
@@ -109,13 +122,61 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
         clearInterval(stallCheckIntervalRef.current);
       }
     };
-  }, [isPlaying, currentTrack, onNext]);
+  }, [isPlaying, currentTrack, onNext, isOffline]);
 
   // Reset retry count on successful track change
   useEffect(() => {
     retryCountRef.current = 0;
     lastProgressTimeRef.current = Date.now();
   }, [currentTrack?.id]);
+
+  // Network-aware playback recovery
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("Network connection restored");
+      setIsOffline(false);
+      toast({
+        title: "Connection restored",
+        description: "Resuming playback...",
+      });
+      
+      // Resume playback if we were playing before going offline
+      if (wasPlayingBeforeOfflineRef.current && audioRef.current && currentTrack?.audioUrl) {
+        retryCountRef.current = 0;
+        setTimeout(() => {
+          audioRef.current?.play().catch((err) => {
+            console.error("Failed to resume after reconnection:", err);
+            // Reload and try again
+            if (audioRef.current) {
+              const currentPos = audioRef.current.currentTime;
+              audioRef.current.load();
+              audioRef.current.currentTime = currentPos;
+              audioRef.current.play().catch(console.error);
+            }
+          });
+        }, 500);
+      }
+    };
+
+    const handleOffline = () => {
+      console.log("Network connection lost");
+      setIsOffline(true);
+      wasPlayingBeforeOfflineRef.current = isPlaying;
+      toast({
+        title: "Connection lost",
+        description: "Music will resume when connection returns",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [isPlaying, currentTrack, toast]);
 
   // Check if current track is liked
   useEffect(() => {
