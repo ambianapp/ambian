@@ -4,8 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const PLANS = {
   monthly: {
@@ -35,6 +44,10 @@ const Pricing = () => {
   const { user, subscription } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,6 +76,51 @@ const Pricing = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleInvoiceRequest = async () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!companyName.trim()) {
+      toast({
+        title: "Company name required",
+        description: "Please enter your company name for the invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsInvoiceLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-invoice", {
+        body: { 
+          priceId: PLANS[selectedPlan].priceId,
+          companyName: companyName.trim(),
+          companyAddress: companyAddress.trim(),
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Invoice Sent!",
+        description: data.message || "Check your email for the invoice. You have 14 days to pay.",
+      });
+      setShowInvoiceDialog(false);
+      setCompanyName("");
+      setCompanyAddress("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsInvoiceLoading(false);
     }
   };
 
@@ -182,11 +240,11 @@ const Pricing = () => {
           </CardContent>
         </Card>
 
-        {/* CTA Button - only show if not subscribed and not in trial */}
+        {/* Payment Options - only show if not subscribed and not in trial */}
         {!subscription.subscribed && !subscription.isTrial && (
-          <div className="text-center">
+          <div className="space-y-6">
             {!user ? (
-              <>
+              <div className="text-center">
                 <Button
                   size="lg"
                   className="px-12 h-14 text-lg"
@@ -197,30 +255,113 @@ const Pricing = () => {
                 <p className="text-sm text-muted-foreground mt-4">
                   3 days free • No credit card required
                 </p>
-              </>
+              </div>
             ) : (
               <>
-                <Button
-                  size="lg"
-                  className="px-12 h-14 text-lg"
-                  onClick={handleSubscribe}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  ) : null}
-                  Subscribe Now
-                </Button>
-                <p className="text-sm text-muted-foreground mt-4">
-                  No music license required. Cancel anytime.
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-2">
-                  Prices shown exclude VAT. VAT will be calculated at checkout based on your location.
+                {/* Payment Method Selection */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Pay Now Option */}
+                  <Card className="border-border hover:border-primary/50 transition-all">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <CreditCard className="w-5 h-5 text-primary" />
+                        Pay Now
+                      </CardTitle>
+                      <CardDescription>
+                        Pay immediately with card and receive invoice
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        className="w-full"
+                        onClick={handleSubscribe}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : null}
+                        Pay with Card
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Invoice Option */}
+                  <Card className="border-border hover:border-primary/50 transition-all">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <FileText className="w-5 h-5 text-primary" />
+                        Pay by Invoice
+                      </CardTitle>
+                      <CardDescription>
+                        Receive invoice with 14 days payment terms
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowInvoiceDialog(true)}
+                      >
+                        Request Invoice
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <p className="text-xs text-muted-foreground/70 text-center">
+                  Prices shown exclude VAT. VAT will be calculated based on your location.
                 </p>
               </>
             )}
           </div>
         )}
+
+        {/* Invoice Request Dialog */}
+        <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Request Invoice</DialogTitle>
+              <DialogDescription>
+                Enter your company details for the invoice. You'll have 14 days to pay.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name *</Label>
+                <Input
+                  id="companyName"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Your Company Ltd"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyAddress">Company Address</Label>
+                <Input
+                  id="companyAddress"
+                  value={companyAddress}
+                  onChange={(e) => setCompanyAddress(e.target.value)}
+                  placeholder="123 Business Street, City"
+                />
+              </div>
+              <div className="pt-2">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Selected plan: <span className="font-medium text-foreground">{selectedPlan === "yearly" ? "Yearly" : "Monthly"}</span> ({PLANS[selectedPlan].price})
+                </p>
+                <Button
+                  className="w-full"
+                  onClick={handleInvoiceRequest}
+                  disabled={isInvoiceLoading}
+                >
+                  {isInvoiceLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  Send Invoice to My Email
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
