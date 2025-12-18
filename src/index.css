@@ -132,3 +132,8 @@
 .float {
   animation: float 3s ease-in-out infinite;
 }
+
+/* Safe area for mobile devices with notches */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
