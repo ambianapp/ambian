@@ -13,7 +13,7 @@ type DbTrack = Tables<"tracks">;
 interface LikedSongsViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
-  onTrackSelect: (track: Track) => void;
+  onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onBack: () => void;
 }
 
@@ -54,22 +54,31 @@ const LikedSongsView = ({
     setIsLoading(false);
   };
 
+  const convertToTrack = (dbTrack: DbTrack, signedAudioUrl: string | undefined): Track => ({
+    id: dbTrack.id,
+    title: dbTrack.title,
+    artist: dbTrack.artist,
+    album: dbTrack.album || "",
+    duration: dbTrack.duration || "",
+    cover: dbTrack.cover_url || "/placeholder.svg",
+    genre: dbTrack.genre || "",
+    audioUrl: signedAudioUrl,
+  });
+
   const handleTrackSelect = async (track: DbTrack) => {
     const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
 
-    onTrackSelect({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      album: track.album || "",
-      duration: track.duration || "",
-      cover: track.cover_url || "/placeholder.svg",
-      genre: track.genre || "",
-      audioUrl: signedAudioUrl,
+    // Convert all tracks for playlist context
+    const allTracksPromises = tracks.map(async (t) => {
+      const url = t.id === track.id ? signedAudioUrl : undefined;
+      return convertToTrack(t, url);
     });
+    const playlistTracks = await Promise.all(allTracksPromises);
+
+    onTrackSelect(convertToTrack(track, signedAudioUrl), playlistTracks);
   };
 
-  const handlePlayAll = () => {
+  const handlePlayAll = async () => {
     if (tracks.length > 0) {
       handleTrackSelect(tracks[0]);
     }

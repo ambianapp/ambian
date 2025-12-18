@@ -30,7 +30,7 @@ interface DbPlaylist {
 interface SearchViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
-  onTrackSelect: (track: Track) => void;
+  onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onPlaylistSelect?: (playlist: any) => void;
 }
 
@@ -75,6 +75,18 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
 
   const handleTrackSelect = async (dbTrack: DbTrack) => {
     const signedAudioUrl = await getSignedAudioUrl(dbTrack.audio_url);
+    
+    // Convert all filtered tracks for playlist context
+    const playlistTracks: Track[] = filteredTracks.map(t => ({
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      album: t.album || "",
+      duration: t.duration || "0:00",
+      cover: t.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+      genre: t.genre || "",
+    }));
+    
     onTrackSelect({
       id: dbTrack.id,
       title: dbTrack.title,
@@ -84,7 +96,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
       cover: dbTrack.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
       genre: dbTrack.genre || "",
       audioUrl: signedAudioUrl,
-    });
+    }, playlistTracks);
   };
 
   const hasResults = filteredTracks.length > 0 || filteredPlaylists.length > 0;

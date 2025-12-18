@@ -22,7 +22,7 @@ interface SelectedPlaylist {
 interface HomeViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
-  onTrackSelect: (track: Track) => void;
+  onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onPlaylistSelect: (playlist: SelectedPlaylist) => void;
 }
 
@@ -89,6 +89,18 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
   const handleTrackSelect = async (track: DbTrack) => {
     const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
+    
+    // Convert all recent tracks for playlist context
+    const playlistTracks: Track[] = recentTracks.map(t => ({
+      id: t.id,
+      title: t.title,
+      artist: t.artist,
+      album: t.album || "",
+      duration: t.duration || "",
+      cover: t.cover_url || "/placeholder.svg",
+      genre: t.genre || "",
+    }));
+    
     onTrackSelect({
       id: track.id,
       title: track.title,
@@ -98,7 +110,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       cover: track.cover_url || "/placeholder.svg",
       genre: track.genre || "",
       audioUrl: signedAudioUrl,
-    });
+    }, playlistTracks);
   };
 
   const getGreeting = () => {
