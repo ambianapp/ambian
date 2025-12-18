@@ -201,8 +201,8 @@ const PlayerBar = () => {
     // Set metadata - use "Ambian Music" as artist fallback
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title || 'Unknown Track',
-      artist: currentTrack.artist || 'Ambian Music',
-      album: currentTrack.album || 'Ambian Music',
+      artist: 'Ambian',
+      album: 'Ambian Music',
       artwork: coverUrl ? [
         { src: coverUrl, sizes: '96x96', type: 'image/jpeg' },
         { src: coverUrl, sizes: '128x128', type: 'image/jpeg' },
@@ -421,7 +421,7 @@ const PlayerBar = () => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-medium text-foreground truncate text-xs">{currentTrack.title}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{currentTrack.artist}</p>
+              <p className="text-[10px] text-muted-foreground truncate">Ambian</p>
             </div>
           </div>
 
@@ -481,7 +481,7 @@ const PlayerBar = () => {
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
-            <p className="text-sm text-muted-foreground truncate">{currentTrack.artist}</p>
+            <p className="text-sm text-muted-foreground truncate">Ambian</p>
           </div>
           <Button
             variant="ghost"

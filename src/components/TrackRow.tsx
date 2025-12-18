@@ -181,7 +181,7 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
           <p className={cn("font-medium truncate text-sm md:text-base", isCurrentTrack ? "text-primary" : "text-foreground")}>
             {track.title}
           </p>
-          <p className="text-xs md:text-sm text-muted-foreground truncate">{track.artist}</p>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">Ambian</p>
         </div>
       </div>
 
