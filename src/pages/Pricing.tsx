@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock } from "lucide-react";
 
 const PLANS = {
   monthly: {
@@ -82,11 +82,28 @@ const Pricing = () => {
           </div>
         </div>
 
+        {/* Trial active message */}
+        {subscription.isTrial && (
+          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+            <div className="flex items-center justify-center gap-2 text-primary mb-2">
+              <Clock className="w-5 h-5" />
+              <span className="font-semibold">Free Trial Active</span>
+            </div>
+            <p className="text-muted-foreground mb-3">
+              {subscription.trialDaysRemaining} day{subscription.trialDaysRemaining !== 1 ? 's' : ''} remaining. 
+              Enjoy full access - no payment needed yet!
+            </p>
+            <Button onClick={() => navigate("/")} variant="default">
+              Continue to App
+            </Button>
+          </div>
+        )}
+
         {/* Already subscribed message */}
-        {subscription.subscribed && (
+        {subscription.subscribed && !subscription.isTrial && (
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
             <p className="text-primary font-medium">
-              You're already subscribed! Manage your subscription in your profile.
+              You're subscribed! Manage your subscription in your profile.
             </p>
             <Button variant="link" onClick={() => navigate("/profile")} className="mt-2">
               Go to Profile
@@ -165,26 +182,43 @@ const Pricing = () => {
           </CardContent>
         </Card>
 
-        {/* CTA Button */}
-        {!subscription.subscribed && (
+        {/* CTA Button - only show if not subscribed and not in trial */}
+        {!subscription.subscribed && !subscription.isTrial && (
           <div className="text-center">
-            <Button
-              size="lg"
-              className="px-12 h-14 text-lg"
-              onClick={handleSubscribe}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : null}
-              Start Listening
-            </Button>
-            <p className="text-sm text-muted-foreground mt-4">
-              No music license required. Cancel anytime.
-            </p>
-            <p className="text-xs text-muted-foreground/70 mt-2">
-              Prices shown exclude VAT. VAT will be calculated at checkout based on your location.
-            </p>
+            {!user ? (
+              <>
+                <Button
+                  size="lg"
+                  className="px-12 h-14 text-lg"
+                  onClick={() => navigate("/auth")}
+                >
+                  Start Free Trial
+                </Button>
+                <p className="text-sm text-muted-foreground mt-4">
+                  3 days free • No credit card required
+                </p>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  className="px-12 h-14 text-lg"
+                  onClick={handleSubscribe}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  ) : null}
+                  Subscribe Now
+                </Button>
+                <p className="text-sm text-muted-foreground mt-4">
+                  No music license required. Cancel anytime.
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-2">
+                  Prices shown exclude VAT. VAT will be calculated at checkout based on your location.
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
