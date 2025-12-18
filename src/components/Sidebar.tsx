@@ -5,6 +5,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 interface SelectedPlaylist {
   id: string;
@@ -29,51 +40,56 @@ interface SidebarProps {
 const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [ownPlaylists, setOwnPlaylists] = useState<SidebarPlaylist[]>([]);
   const [likedPlaylists, setLikedPlaylists] = useState<SidebarPlaylist[]>([]);
   const [likedSongsCount, setLikedSongsCount] = useState(0);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  const fetchPlaylists = async () => {
+    if (!user) return;
+
+    // Fetch user's own playlists
+    const { data: userPlaylists } = await supabase
+      .from("playlists")
+      .select("id, name, cover_url, description")
+      .eq("user_id", user.id)
+      .eq("is_system", false)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (userPlaylists) {
+      setOwnPlaylists(userPlaylists);
+    }
+
+    // Fetch liked playlists
+    const { data: likedData } = await supabase
+      .from("liked_playlists")
+      .select("playlist_id, playlists(id, name, cover_url, description)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (likedData) {
+      const playlists = likedData
+        .map((item: any) => item.playlists)
+        .filter(Boolean);
+      setLikedPlaylists(playlists);
+    }
+
+    // Fetch liked songs count
+    const { count } = await supabase
+      .from("liked_songs")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    setLikedSongsCount(count || 0);
+  };
 
   useEffect(() => {
-    const fetchPlaylists = async () => {
-      if (!user) return;
-
-      // Fetch user's own playlists
-      const { data: userPlaylists } = await supabase
-        .from("playlists")
-        .select("id, name, cover_url, description")
-        .eq("user_id", user.id)
-        .eq("is_system", false)
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (userPlaylists) {
-        setOwnPlaylists(userPlaylists);
-      }
-
-      // Fetch liked playlists
-      const { data: likedData } = await supabase
-        .from("liked_playlists")
-        .select("playlist_id, playlists(id, name, cover_url, description)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (likedData) {
-        const playlists = likedData
-          .map((item: any) => item.playlists)
-          .filter(Boolean);
-        setLikedPlaylists(playlists);
-      }
-
-      // Fetch liked songs count
-      const { count } = await supabase
-        .from("liked_songs")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
-      setLikedSongsCount(count || 0);
-    };
-
     fetchPlaylists();
   }, [user]);
 
@@ -95,7 +111,6 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
   };
 
   const handleLikedSongsClick = () => {
-    // Open liked songs as a special playlist view
     if (onPlaylistSelect) {
       onPlaylistSelect({
         id: "liked-songs",
@@ -106,8 +121,50 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
     }
   };
 
+  const handleCreatePlaylist = async () => {
+    if (!user || !newPlaylistName.trim()) return;
+
+    setIsCreating(true);
+    const { data, error } = await supabase
+      .from("playlists")
+      .insert({
+        name: newPlaylistName.trim(),
+        description: newPlaylistDescription.trim() || null,
+        user_id: user.id,
+        is_system: false,
+        is_public: false,
+      })
+      .select()
+      .single();
+
+    setIsCreating(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create playlist",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Playlist created" });
+      setNewPlaylistName("");
+      setNewPlaylistDescription("");
+      setIsCreateDialogOpen(false);
+      fetchPlaylists();
+      
+      // Open the new playlist
+      if (data && onPlaylistSelect) {
+        onPlaylistSelect({
+          id: data.id,
+          name: data.name,
+          cover: data.cover_url,
+          description: data.description,
+        });
+      }
+    }
+  };
+
   const allPlaylists = [...ownPlaylists, ...likedPlaylists];
-  // Remove duplicates (in case a user's own playlist is also liked)
   const uniquePlaylists = allPlaylists.filter(
     (playlist, index, self) => index === self.findIndex((p) => p.id === playlist.id)
   );
@@ -146,10 +203,56 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
       <div className="flex-1 flex flex-col gap-4 mt-4">
         <div className="flex items-center justify-between px-2">
           <span className="text-sm font-semibold text-muted-foreground">Your Playlists</span>
-          <Button variant="ghost" size="iconSm" className="text-muted-foreground hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            size="iconSm" 
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
             <Plus className="w-4 h-4" />
           </Button>
         </div>
+
+      {/* Create Playlist Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Playlist</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="playlist-name">Name</Label>
+              <Input
+                id="playlist-name"
+                placeholder="My Playlist"
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="playlist-description">Description (optional)</Label>
+              <Textarea
+                id="playlist-description"
+                placeholder="Add a description..."
+                value={newPlaylistDescription}
+                onChange={(e) => setNewPlaylistDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreatePlaylist} 
+              disabled={!newPlaylistName.trim() || isCreating}
+            >
+              {isCreating ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
         <div className="flex-1 overflow-y-auto space-y-1">
           {/* Liked Songs - always shown */}
