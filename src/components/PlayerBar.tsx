@@ -14,9 +14,13 @@ interface PlayerBarProps {
   onPlayPause: () => void;
   onNext: () => void;
   onPrevious: () => void;
+  shuffle: boolean;
+  onShuffleToggle: () => void;
+  repeat: boolean;
+  onRepeatToggle: () => void;
 }
 
-const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }: PlayerBarProps) => {
+const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, shuffle, onShuffleToggle, repeat, onRepeatToggle }: PlayerBarProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [volume, setVolume] = useState([75]);
   const [progress, setProgress] = useState([0]);
@@ -136,7 +140,14 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
           src={currentTrack.audioUrl}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onEnded={onNext}
+          onEnded={() => {
+            if (repeat && audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play();
+            } else {
+              onNext();
+            }
+          }}
         />
       )}
 
@@ -184,14 +195,14 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="iconSm"
-              onClick={handleLikeToggle}
-              className={cn("h-8 w-8", isLiked && "text-primary")}
+              onClick={onShuffleToggle}
+              className={cn("h-7 w-7", shuffle ? "text-primary" : "text-muted-foreground")}
             >
-              <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
+              <Shuffle className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="iconSm" onClick={onPrevious} className="text-foreground h-8 w-8">
               <SkipBack className="w-4 h-4" />
@@ -201,6 +212,14 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
             </Button>
             <Button variant="ghost" size="iconSm" onClick={onNext} className="text-foreground h-8 w-8">
               <SkipForward className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={onRepeatToggle}
+              className={cn("h-7 w-7", repeat ? "text-primary" : "text-muted-foreground")}
+            >
+              <Repeat className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
@@ -245,7 +264,12 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
         {/* Player Controls */}
         <div className="flex-1 flex flex-col items-center gap-2 max-w-2xl mx-auto">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="iconSm" className="text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="iconSm" 
+              onClick={onShuffleToggle}
+              className={cn(shuffle ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+            >
               <Shuffle className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={onPrevious} className="text-foreground">
@@ -257,7 +281,12 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious }:
             <Button variant="ghost" size="icon" onClick={onNext} className="text-foreground">
               <SkipForward className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="iconSm" className="text-muted-foreground hover:text-foreground">
+            <Button 
+              variant="ghost" 
+              size="iconSm" 
+              onClick={onRepeatToggle}
+              className={cn(repeat ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+            >
               <Repeat className="w-4 h-4" />
             </Button>
           </div>

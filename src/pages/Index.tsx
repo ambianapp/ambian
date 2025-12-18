@@ -24,6 +24,8 @@ const Index = () => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(mockTracks[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
+  const [shuffle, setShuffle] = useState(false);
+  const [repeat, setRepeat] = useState(false);
   const { subscription, checkSubscription, isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -86,7 +88,13 @@ const Index = () => {
     setSelectedPlaylist(null); // Clear playlist when changing views
   }, []);
 
-  // Show subscription gate if not subscribed (admins bypass)
+  const handleShuffleToggle = useCallback(() => {
+    setShuffle((prev) => !prev);
+  }, []);
+
+  const handleRepeatToggle = useCallback(() => {
+    setRepeat((prev) => !prev);
+  }, []);
   if (!subscription.subscribed && !isAdmin) {
     return <SubscriptionGate />;
   }
@@ -156,6 +164,10 @@ const Index = () => {
         onPlayPause={handlePlayPause}
         onNext={handleNext}
         onPrevious={handlePrevious}
+        shuffle={shuffle}
+        onShuffleToggle={handleShuffleToggle}
+        repeat={repeat}
+        onRepeatToggle={handleRepeatToggle}
       />
     </div>
   );
