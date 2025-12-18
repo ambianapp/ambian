@@ -30,7 +30,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Use anon key with user's token for auth, service role only for subscription upserts
+  // Use anon key with user's token for all operations (RLS policies now allow users to manage their own subscriptions)
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const authHeader = req.headers.get("Authorization");
 
@@ -41,18 +41,11 @@ serve(async (req) => {
     });
   }
 
-  // User client for authentication
-  const userClient = createClient(
+  // User client for all operations including subscription upserts
+  const supabaseClient = createClient(
     supabaseUrl,
     Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     { global: { headers: { Authorization: authHeader } } }
-  );
-
-  // Service client only for subscription upserts (requires bypassing RLS)
-  const serviceClient = createClient(
-    supabaseUrl,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
   );
 
   try {
@@ -61,7 +54,7 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const { data: userData, error: userError } = await userClient.auth.getUser();
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
@@ -83,8 +76,8 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No Stripe customer found, checking trial");
       
-      // Update local subscription status (needs service role to bypass RLS)
-      await serviceClient
+      // Update local subscription status (user can now manage their own subscription via RLS)
+      await supabaseClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
@@ -123,8 +116,8 @@ serve(async (req) => {
       planType = interval === "year" ? "yearly" : "monthly";
       logStep("Active subscription found", { subscriptionId: subscription.id, planType });
 
-      // Update local subscription status (needs service role to bypass RLS)
-      await serviceClient
+      // Update local subscription status (user can now manage their own subscription via RLS)
+      await supabaseClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
@@ -137,7 +130,7 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
     } else {
-      await serviceClient
+      await supabaseClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
