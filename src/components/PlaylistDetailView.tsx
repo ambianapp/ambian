@@ -37,6 +37,7 @@ const PlaylistDetailView = ({
   const [tracks, setTracks] = useState<DbTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
+  const [isSystemPlaylist, setIsSystemPlaylist] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -78,6 +79,16 @@ const PlaylistDetailView = ({
   const loadPlaylistTracks = async () => {
     setIsLoading(true);
     
+    // Check if this is a system playlist
+    const { data: playlistData } = await supabase
+      .from("playlists")
+      .select("is_system")
+      .eq("id", playlistId)
+      .maybeSingle();
+    
+    const isSystem = playlistData?.is_system ?? false;
+    setIsSystemPlaylist(isSystem);
+    
     const { data, error } = await supabase
       .from("playlist_tracks")
       .select("track_id, position, tracks(*)")
@@ -87,9 +98,17 @@ const PlaylistDetailView = ({
     if (error) {
       console.error("Error loading playlist tracks:", error);
     } else if (data) {
-      const trackList = data
+      let trackList = data
         .map((item: any) => item.tracks)
         .filter(Boolean);
+      
+      // Sort alphabetically by title for system playlists (genre/mood)
+      if (isSystem) {
+        trackList = trackList.sort((a: DbTrack, b: DbTrack) => 
+          a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' })
+        );
+      }
+      
       setTracks(trackList);
     }
 

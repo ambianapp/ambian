@@ -37,7 +37,7 @@ const AdminPlaylistManager = () => {
       .from("playlists")
       .select("*")
       .eq("is_system", true)
-      .order("created_at", { ascending: false });
+      .order("name", { ascending: true });
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
