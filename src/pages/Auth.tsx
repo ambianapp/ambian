@@ -115,8 +115,8 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-8 animate-fade-in">
         {/* Logo */}
         <div className="text-center">
-          <div className="mb-6">
-            <img src={ambianLogo} alt="Ambian" className="h-16 mx-auto" />
+          <div className="mb-8">
+            <img src={ambianLogo} alt="Ambian" className="h-32 mx-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
             {isLogin ? "Welcome back" : "Start your free trial"}
