@@ -179,6 +179,51 @@ const PlayerBar = () => {
     };
   }, [toast, handleNext]);
 
+  // Media Session API for lock screen controls
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentTrack) return;
+
+    // Set metadata
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.title,
+      artist: currentTrack.artist,
+      album: currentTrack.album || 'Ambian Music',
+      artwork: currentTrack.cover ? [
+        { src: currentTrack.cover, sizes: '96x96', type: 'image/jpeg' },
+        { src: currentTrack.cover, sizes: '128x128', type: 'image/jpeg' },
+        { src: currentTrack.cover, sizes: '192x192', type: 'image/jpeg' },
+        { src: currentTrack.cover, sizes: '256x256', type: 'image/jpeg' },
+        { src: currentTrack.cover, sizes: '384x384', type: 'image/jpeg' },
+        { src: currentTrack.cover, sizes: '512x512', type: 'image/jpeg' },
+      ] : [],
+    });
+
+    // Set action handlers for next/previous (this shows track buttons instead of seek buttons)
+    navigator.mediaSession.setActionHandler('play', () => {
+      handlePlayPause();
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      handlePlayPause();
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      handlePrevious();
+    });
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      handleNext();
+    });
+    
+    // Remove seek handlers to prevent 10-second skip buttons
+    navigator.mediaSession.setActionHandler('seekbackward', null);
+    navigator.mediaSession.setActionHandler('seekforward', null);
+
+  }, [currentTrack, handlePlayPause, handlePrevious, handleNext]);
+
+  // Update playback state for media session
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+  }, [isPlaying]);
+
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
