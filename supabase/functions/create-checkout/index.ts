@@ -68,6 +68,16 @@ serve(async (req) => {
       automatic_tax: { enabled: true },
       // Allow B2B customers to provide VAT ID for reverse charge
       tax_id_collection: { enabled: true },
+      // Collect billing address (required for VAT)
+      billing_address_collection: "required",
+      // Collect company name as custom field
+      custom_fields: [
+        {
+          key: "company_name",
+          label: { type: "custom", custom: "Company Name" },
+          type: "text",
+        },
+      ],
     });
 
     logStep("Checkout session created", { sessionId: session.id });

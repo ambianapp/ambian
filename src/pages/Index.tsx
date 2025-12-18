@@ -8,6 +8,7 @@ import LibraryView from "@/components/LibraryView";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
 import MobileNav from "@/components/MobileNav";
 import SubscriptionGate from "@/components/SubscriptionGate";
+import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Track, tracks as mockTracks } from "@/data/musicData";
@@ -153,12 +154,15 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar activeView={activeView} onViewChange={handleViewChange} />
-      
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {renderView()}
-      </main>
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
+      <TrialBanner />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar activeView={activeView} onViewChange={handleViewChange} />
+        
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {renderView()}
+        </main>
+      </div>
 
       <MobileNav activeView={activeView} onViewChange={handleViewChange} />
       

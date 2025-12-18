@@ -6,6 +6,9 @@ interface SubscriptionInfo {
   subscribed: boolean;
   planType: string | null;
   subscriptionEnd: string | null;
+  isTrial: boolean;
+  trialDaysRemaining: number;
+  trialEnd: string | null;
 }
 
 interface AuthContextType {
@@ -29,6 +32,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     subscribed: false,
     planType: null,
     subscriptionEnd: null,
+    isTrial: false,
+    trialDaysRemaining: 0,
+    trialEnd: null,
   });
 
   const checkSubscription = async () => {
@@ -42,6 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subscribed: data.subscribed,
         planType: data.plan_type,
         subscriptionEnd: data.subscription_end,
+        isTrial: data.is_trial || false,
+        trialDaysRemaining: data.trial_days_remaining || 0,
+        trialEnd: data.trial_end || null,
       });
     } catch (error) {
       console.error("Error checking subscription:", error);
@@ -80,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setIsAdmin(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null });
         }
       }
     );
