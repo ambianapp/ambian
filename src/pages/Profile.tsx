@@ -90,7 +90,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 pb-48 md:pb-40">
+    <div className="min-h-screen bg-background p-4 md:p-8 md:pb-48">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
