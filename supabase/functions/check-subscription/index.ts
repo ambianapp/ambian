@@ -10,9 +10,9 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  // Allow any origin (Lovable preview domains change frequently)
   return {
-    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Origin": origin ?? "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
@@ -129,14 +129,20 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
     } else {
+      // No active Stripe subscription. Keep trial access in-sync with DB so RLS works.
       await supabaseClient
         .from("subscriptions")
-        .upsert({
-          user_id: user.id,
-          stripe_customer_id: customerId,
-          status: "inactive",
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
+        .upsert(
+          {
+            user_id: user.id,
+            stripe_customer_id: customerId,
+            status: isInTrial ? "trialing" : "inactive",
+            current_period_start: isInTrial ? userCreatedAt.toISOString() : null,
+            current_period_end: isInTrial ? trialEndDate.toISOString() : null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
     }
 
     // If no active subscription, check if still in trial
