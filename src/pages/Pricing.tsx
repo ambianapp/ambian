@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw } from "lucide-react";
+import ambianLogo from "@/assets/ambian-logo.png";
 import {
   Dialog,
   DialogContent,
@@ -223,17 +224,17 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background p-4 pb-36 md:p-8 md:pb-8">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Logo */}
+        <div className="flex justify-center pt-4">
+          <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Choose Your Plan</h1>
-            <p className="text-muted-foreground">
-              Unlock unlimited music for your business
-            </p>
-          </div>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-foreground">Subscribe to Listen</h1>
+          <p className="text-muted-foreground mt-2">
+            Get unlimited access to our entire music library for your business.
+          </p>
         </div>
 
         {/* Trial active message */}
