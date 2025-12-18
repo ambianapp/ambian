@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Music2, Check, User, Shield, Clock } from "lucide-react";
 
 const features = [
+  "3 days free trial",
   "Unlimited access to all music",
   "Create custom playlists",
   "No music license required",
