@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbTrack = Tables<"tracks">;
@@ -33,10 +35,44 @@ const PlaylistDetailView = ({
 }: PlaylistDetailViewProps) => {
   const [tracks, setTracks] = useState<DbTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     loadPlaylistTracks();
-  }, [playlistId]);
+    checkIfLiked();
+  }, [playlistId, user]);
+
+  const checkIfLiked = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from("liked_playlists")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("playlist_id", playlistId)
+      .maybeSingle();
+    
+    setIsLiked(!!data);
+  };
+
+  const toggleLike = async () => {
+    if (!user) return;
+
+    if (isLiked) {
+      await supabase
+        .from("liked_playlists")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("playlist_id", playlistId);
+      setIsLiked(false);
+    } else {
+      await supabase
+        .from("liked_playlists")
+        .insert({ user_id: user.id, playlist_id: playlistId });
+      setIsLiked(true);
+    }
+  };
 
   const loadPlaylistTracks = async () => {
     setIsLoading(true);
@@ -137,6 +173,14 @@ const PlaylistDetailView = ({
           disabled={tracks.length === 0}
         >
           <Play className="w-6 h-6 ml-1" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className={cn("transition-colors", isLiked ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+          onClick={toggleLike}
+        >
+          <Heart className={cn("w-6 h-6", isLiked && "fill-current")} />
         </Button>
         <Button variant="ghost" size="icon" className="text-muted-foreground">
           <Shuffle className="w-5 h-5" />

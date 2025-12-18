@@ -26,12 +26,14 @@ interface Playlist {
   cover_url: string | null;
   description: string | null;
   is_system: boolean;
+  user_id: string | null;
   trackCount?: number;
 }
 
 const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: LibraryViewProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [ownPlaylists, setOwnPlaylists] = useState<Playlist[]>([]);
+  const [likedPlaylists, setLikedPlaylists] = useState<Playlist[]>([]);
   const [likedSongs, setLikedSongs] = useState<Track[]>([]);
   const [likedCount, setLikedCount] = useState(0);
   const { user } = useAuth();
@@ -40,15 +42,30 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     const fetchLibrary = async () => {
       if (!user) return;
 
-      // Fetch user's playlists
+      // Fetch user's own playlists (not system playlists)
       const { data: userPlaylists } = await supabase
         .from("playlists")
         .select("*")
-        .or(`user_id.eq.${user.id},is_system.eq.true`)
+        .eq("user_id", user.id)
+        .eq("is_system", false)
         .order("created_at", { ascending: false });
 
       if (userPlaylists) {
-        setPlaylists(userPlaylists);
+        setOwnPlaylists(userPlaylists);
+      }
+
+      // Fetch liked playlists
+      const { data: likedPlaylistData } = await supabase
+        .from("liked_playlists")
+        .select("playlist_id, playlists(*)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (likedPlaylistData) {
+        const playlists = likedPlaylistData
+          .map((item: any) => item.playlists)
+          .filter(Boolean);
+        setLikedPlaylists(playlists);
       }
 
       // Fetch liked songs count
@@ -175,8 +192,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
             </button>
           )}
 
-          {/* User Playlists */}
-          {playlists.map((playlist) =>
+          {/* User's Own Playlists */}
+          {ownPlaylists.map((playlist) =>
             viewMode === "grid" ? (
               <button
                 key={playlist.id}
@@ -194,9 +211,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                   className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4"
                 />
                 <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {playlist.is_system ? "System playlist" : "Playlist"}
-                </p>
+                <p className="text-sm text-muted-foreground">Your playlist</p>
               </button>
             ) : (
               <button
@@ -216,9 +231,58 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {playlist.is_system ? "System playlist" : "Playlist"}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Your playlist</p>
+                </div>
+              </button>
+            )
+          )}
+
+          {/* Liked Playlists */}
+          {likedPlaylists.map((playlist) =>
+            viewMode === "grid" ? (
+              <button
+                key={`liked-${playlist.id}`}
+                className="group p-4 rounded-xl bg-card/50 hover:bg-card transition-all duration-300 text-left"
+                onClick={() => onPlaylistSelect({
+                  id: playlist.id,
+                  name: playlist.name,
+                  cover: playlist.cover_url,
+                  description: playlist.description,
+                })}
+              >
+                <div className="relative">
+                  <img
+                    src={playlist.cover_url || "/placeholder.svg"}
+                    alt={playlist.name}
+                    className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4"
+                  />
+                  <Heart className="absolute top-2 right-2 w-5 h-5 text-primary fill-current" />
+                </div>
+                <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
+                <p className="text-sm text-muted-foreground">Liked playlist</p>
+              </button>
+            ) : (
+              <button
+                key={`liked-${playlist.id}`}
+                className="flex items-center gap-4 p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors w-full text-left"
+                onClick={() => onPlaylistSelect({
+                  id: playlist.id,
+                  name: playlist.name,
+                  cover: playlist.cover_url,
+                  description: playlist.description,
+                })}
+              >
+                <div className="relative">
+                  <img
+                    src={playlist.cover_url || "/placeholder.svg"}
+                    alt={playlist.name}
+                    className="w-14 h-14 object-cover rounded-lg"
+                  />
+                  <Heart className="absolute -top-1 -right-1 w-4 h-4 text-primary fill-current" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
+                  <p className="text-sm text-muted-foreground">Liked playlist</p>
                 </div>
               </button>
             )
