@@ -136,26 +136,18 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       console.log("Network connection restored, wasPlaying:", wasPlayingBeforeOfflineRef.current);
       setIsOffline(false);
       
-      // Resume playback if we were playing before going offline
-      if (wasPlayingBeforeOfflineRef.current && audioRef.current) {
+      // If we were playing before going offline, automatically play the next song
+      if (wasPlayingBeforeOfflineRef.current) {
         toast({
           title: "Connection restored",
-          description: "Resuming playback...",
+          description: "Playing next track...",
         });
         
         retryCountRef.current = 0;
-        const currentPos = audioRef.current.currentTime;
         
-        // Always reload and seek to handle buffering issues after network loss
+        // Play next song after a short delay to ensure network is stable
         setTimeout(() => {
-          if (audioRef.current) {
-            console.log("Reloading audio at position:", currentPos);
-            audioRef.current.load();
-            audioRef.current.currentTime = currentPos;
-            audioRef.current.play().catch((err) => {
-              console.error("Failed to resume after reconnection:", err);
-            });
-          }
+          onNext();
         }, 500);
       } else {
         toast({
@@ -185,7 +177,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [toast]);
+  }, [toast, onNext]);
 
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
