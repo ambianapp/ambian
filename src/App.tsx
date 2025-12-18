@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +96,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/install" element={<Install />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -105,7 +107,7 @@ const AppContent = () => {
   const location = useLocation();
   
   // Show MobileNav on non-index protected pages
-  const showGlobalMobileNav = user && location.pathname !== "/" && location.pathname !== "/auth";
+  const showGlobalMobileNav = user && location.pathname !== "/" && location.pathname !== "/auth" && location.pathname !== "/install";
   
   return (
     <>
