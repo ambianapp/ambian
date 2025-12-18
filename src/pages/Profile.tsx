@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Smartphone, Check } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -31,6 +32,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
 
   useEffect(() => {
     // Check if returning from device slot purchase
@@ -332,6 +334,55 @@ const Profile = () => {
               <p className="text-sm text-muted-foreground">
                 Subscribe first to add extra locations.
               </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Install App Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              Install App
+            </CardTitle>
+            <CardDescription>Get the Ambian app on your device</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isInstalled ? (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <Check className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">App Installed</p>
+                  <p className="text-sm text-muted-foreground">You're using the installed app</p>
+                </div>
+              </div>
+            ) : isIOS ? (
+              <div className="p-4 rounded-lg bg-secondary">
+                <p className="font-medium text-foreground mb-2">Install on iPhone/iPad</p>
+                <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Tap the Share button in Safari</li>
+                  <li>Scroll down and tap "Add to Home Screen"</li>
+                  <li>Tap "Add" to install</li>
+                </ol>
+              </div>
+            ) : canInstall ? (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg bg-secondary">
+                <div>
+                  <p className="font-medium text-foreground">Install Ambian</p>
+                  <p className="text-sm text-muted-foreground">Add to your home screen for quick access</p>
+                </div>
+                <Button onClick={promptInstall} className="w-full sm:w-auto">
+                  <Download className="w-4 h-4 mr-2" />
+                  Install App
+                </Button>
+              </div>
+            ) : (
+              <div className="p-4 rounded-lg bg-secondary">
+                <p className="font-medium text-foreground mb-2">Install from your browser</p>
+                <p className="text-sm text-muted-foreground">
+                  Open this page in Chrome or Safari, then use your browser's menu to "Add to Home Screen" or "Install App".
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
