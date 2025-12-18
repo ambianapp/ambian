@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
 import TrackRow from "./TrackRow";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -30,18 +31,49 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
   const [recentTracks, setRecentTracks] = useState<DbTrack[]>([]);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllMoods, setShowAllMoods] = useState(false);
   const [showAllGenres, setShowAllGenres] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     setIsLoading(true);
     
+    // Load recently played playlists for current user
+    if (user) {
+      const { data: historyData } = await supabase
+        .from("play_history")
+        .select("playlist_id, played_at")
+        .eq("user_id", user.id)
+        .order("played_at", { ascending: false })
+        .limit(20);
+
+      if (historyData && historyData.length > 0) {
+        // Get unique playlist IDs (most recent first)
+        const uniquePlaylistIds = [...new Set(historyData.map(h => h.playlist_id))].slice(0, 6);
+        
+        // Fetch playlist details
+        const { data: playlistData } = await supabase
+          .from("playlists")
+          .select("*")
+          .in("id", uniquePlaylistIds);
+
+        if (playlistData) {
+          // Sort by original order
+          const sortedPlaylists = uniquePlaylistIds
+            .map(id => playlistData.find(p => p.id === id))
+            .filter((p): p is DbPlaylist => p !== undefined);
+          setRecentlyPlayed(sortedPlaylists);
+        }
+      }
+    }
+
     // Load mood playlists
     const { data: moodData } = await supabase
       .from("playlists")
@@ -71,6 +103,17 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
     setRecentTracks(trackData || []);
     setIsLoading(false);
+  };
+
+  const handlePlaylistClick = async (playlist: SelectedPlaylist) => {
+    // Record play history
+    if (user) {
+      await supabase.from("play_history").insert({
+        user_id: user.id,
+        playlist_id: playlist.id,
+      });
+    }
+    onPlaylistSelect(playlist);
   };
 
   const handlePlaylistUpdate = async (id: string, data: { name: string; description: string; cover: string }) => {
@@ -157,7 +200,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                   trackCount: 0,
                   tracks: [],
                 }}
-                onClick={() => onPlaylistSelect({
+                onClick={() => handlePlaylistClick({
                   id: playlist.id,
                   name: playlist.name,
                   cover: playlist.cover_url,
@@ -182,6 +225,38 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           <h1 className="text-3xl md:text-4xl font-bold text-foreground">{getGreeting()}</h1>
           <p className="text-muted-foreground mt-2">Ready to set the perfect ambiance?</p>
         </div>
+
+        {/* Recently Played */}
+        {recentlyPlayed.length > 0 && (
+          <section className="animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">Continue Listening</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {recentlyPlayed.map((playlist) => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={{
+                    id: playlist.id,
+                    name: playlist.name,
+                    description: playlist.description || "",
+                    cover: playlist.cover_url || "/placeholder.svg",
+                    trackCount: 0,
+                    tracks: [],
+                  }}
+                  onClick={() => handlePlaylistClick({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
+                  onUpdate={handlePlaylistUpdate}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Playlists by Mood */}
         {renderPlaylistSection(
