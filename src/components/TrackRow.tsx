@@ -145,7 +145,7 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
   return (
     <div
       className={cn(
-        "group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
+        "group grid grid-cols-[auto_1fr_auto_auto] gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
         isCurrentTrack ? "bg-secondary" : "hover:bg-secondary/50"
       )}
       onClick={onPlay}
@@ -185,12 +185,12 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
         </div>
       </div>
 
-      {/* Desktop like button */}
-      <div className="hidden md:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Like button - always visible on all devices */}
+      <div className="flex items-center">
         <Button 
           variant="ghost" 
           size="iconSm" 
-          className={cn("text-muted-foreground hover:text-foreground", isLiked && "text-primary")}
+          className={cn("text-muted-foreground hover:text-foreground h-7 w-7 md:h-8 md:w-8", isLiked && "text-primary")}
           onClick={(e) => {
             e.stopPropagation();
             handleLikeToggle();
