@@ -37,13 +37,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     trialEnd: null,
   });
 
-  const checkSubscription = async () => {
-    if (!session) return;
-    
+  const checkSubscription = async (overrideSession?: Session | null) => {
     try {
+      const currentSession =
+        overrideSession ?? (await supabase.auth.getSession()).data.session;
+      if (!currentSession) return;
+
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
-      
+
       setSubscription({
         subscribed: data.subscribed,
         planType: data.plan_type,
@@ -85,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             checkAdminRole(session.user.id);
-            checkSubscription();
+            checkSubscription(session);
           }, 0);
         } else {
           setIsAdmin(false);
@@ -102,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (session?.user) {
         checkAdminRole(session.user.id);
-        checkSubscription();
+        checkSubscription(session);
       }
     });
 
@@ -112,8 +114,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Auto-refresh subscription every minute
   useEffect(() => {
     if (!session) return;
-    
-    const interval = setInterval(checkSubscription, 60000);
+
+    const interval = setInterval(() => {
+      checkSubscription();
+    }, 60000);
     return () => clearInterval(interval);
   }, [session]);
 
