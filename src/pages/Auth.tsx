@@ -238,16 +238,23 @@ const Auth = () => {
           Google
         </Button>
 
-        <p className="text-center text-sm text-muted-foreground">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:underline font-medium"
-          >
-            {isLogin ? "Sign up" : "Sign in"}
-          </button>
-        </p>
+        <div className="text-center space-y-1">
+          <p className="text-sm text-muted-foreground">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-primary hover:underline font-medium"
+            >
+              {isLogin ? "Sign up" : "Sign in"}
+            </button>
+          </p>
+          {isLogin && (
+            <p className="text-xs text-muted-foreground">
+              3 days free • No credit card required
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
