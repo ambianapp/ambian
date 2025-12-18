@@ -115,7 +115,7 @@ const PlaylistDetailView = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32">
+    <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       {/* Header with gradient background */}
       <div 
         className="relative h-64 md:h-80 bg-gradient-to-b from-primary/30 to-background"

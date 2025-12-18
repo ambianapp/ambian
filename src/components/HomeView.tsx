@@ -161,7 +161,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32">
+    <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-6 md:p-8 space-y-8">
         {/* Header */}
         <div className="animate-fade-in">
