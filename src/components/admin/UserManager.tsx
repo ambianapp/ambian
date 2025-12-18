@@ -98,11 +98,16 @@ export function UserManager() {
     loadUsers();
   }, []);
 
+  // Sanitize search query for safe filtering
+  const sanitizeSearchQuery = (q: string): string => {
+    return q.slice(0, 100);
+  };
+
   // Filtered users based on search and filters
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      // Search filter
-      const searchLower = searchQuery.toLowerCase();
+      // Search filter - sanitize input
+      const searchLower = sanitizeSearchQuery(searchQuery).toLowerCase();
       const matchesSearch = !searchQuery || 
         user.email?.toLowerCase().includes(searchLower) ||
         user.full_name?.toLowerCase().includes(searchLower);

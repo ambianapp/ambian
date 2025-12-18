@@ -80,16 +80,23 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
     localStorage.removeItem(RECENT_SEARCHES_KEY);
   };
 
+  // Sanitize search query to escape ILIKE special characters
+  const sanitizeSearchQuery = (q: string): string => {
+    return q.slice(0, 100).replace(/[%_\\[\]]/g, '\\$&');
+  };
+
   useEffect(() => {
     const searchData = async () => {
-      if (!query.trim()) {
+      const trimmed = query.trim();
+      if (!trimmed) {
         setFilteredTracks([]);
         setFilteredPlaylists([]);
         return;
       }
 
       setIsLoading(true);
-      const searchTerm = `%${query}%`;
+      const sanitized = sanitizeSearchQuery(trimmed);
+      const searchTerm = `%${sanitized}%`;
 
       const [tracksResult, playlistsResult] = await Promise.all([
         supabase
