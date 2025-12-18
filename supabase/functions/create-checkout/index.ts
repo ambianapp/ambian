@@ -12,6 +12,12 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Price IDs for prepaid access
+const PRICE_IDS = {
+  monthly: "price_1SfhOOJrU52a7SNLPPopAVyb",
+  yearly: "price_1SfhOZJrU52a7SNLIejHHUh4",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -37,6 +43,13 @@ serve(async (req) => {
     const { priceId } = await req.json();
     logStep("Received request", { priceId });
 
+    // Determine plan type from price ID
+    let planType = "monthly";
+    if (priceId === PRICE_IDS.yearly) {
+      planType = "yearly";
+    }
+    logStep("Plan type determined", { planType });
+
     const { data, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = data.user;
@@ -57,10 +70,10 @@ serve(async (req) => {
 
     const returnOrigin = req.headers.get("origin") || "https://ambian.lovable.app";
     
+    // Use mode: "payment" for one-time prepaid access
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      // Update customer info if they already exist (required for tax ID collection)
       customer_update: customerId ? {
         name: "auto",
         address: "auto",
@@ -71,19 +84,16 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: "subscription",
-      success_url: `${returnOrigin}/?checkout=success`,
+      mode: "payment", // One-time payment instead of subscription
+      success_url: `${returnOrigin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnOrigin}/?checkout=cancelled`,
       metadata: {
         user_id: user.id,
+        plan_type: planType,
       },
-      // Enable automatic tax calculation based on customer location
       automatic_tax: { enabled: true },
-      // Allow B2B customers to provide VAT ID for reverse charge
       tax_id_collection: { enabled: true },
-      // Collect billing address (required for VAT)
       billing_address_collection: "required",
-      // Collect company name as custom field
       custom_fields: [
         {
           key: "company_name",
@@ -93,7 +103,7 @@ serve(async (req) => {
       ],
     });
 
-    logStep("Checkout session created", { sessionId: session.id });
+    logStep("Checkout session created", { sessionId: session.id, mode: "payment" });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
