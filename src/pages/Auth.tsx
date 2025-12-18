@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Music2, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Loader2 } from "lucide-react";
+import ambianLogo from "@/assets/ambian-logo.png";
 import { z } from "zod";
 
 const authSchema = z.object({
@@ -114,11 +115,8 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-8 animate-fade-in">
         {/* Logo */}
         <div className="text-center">
-          <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center glow">
-              <Music2 className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold text-gradient">ambian</span>
+          <div className="mb-6">
+            <img src={ambianLogo} alt="Ambian" className="h-16 mx-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
             {isLogin ? "Welcome back" : "Start your free trial"}
