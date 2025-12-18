@@ -147,13 +147,10 @@ const Pricing = () => {
               <Clock className="w-5 h-5" />
               <span className="font-semibold">Free Trial Active</span>
             </div>
-            <p className="text-muted-foreground mb-3">
+            <p className="text-muted-foreground">
               {subscription.trialDaysRemaining} day{subscription.trialDaysRemaining !== 1 ? 's' : ''} remaining. 
-              Enjoy full access - no payment needed yet!
+              Subscribe now to continue uninterrupted access after your trial ends.
             </p>
-            <Button onClick={() => navigate("/")} variant="default">
-              Continue to App
-            </Button>
           </div>
         )}
 
@@ -240,8 +237,8 @@ const Pricing = () => {
           </CardContent>
         </Card>
 
-        {/* Payment Options - only show if not subscribed and not in trial */}
-        {!subscription.subscribed && !subscription.isTrial && (
+        {/* Payment Options - show for trial users and non-subscribed users */}
+        {(!subscription.subscribed || subscription.isTrial) && (
           <div className="space-y-6">
             {!user ? (
               <div className="text-center">
