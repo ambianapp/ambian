@@ -116,7 +116,7 @@ const Auth = () => {
         {/* Logo */}
         <div className="text-center">
           <div className="mb-4 md:mb-8">
-            <img src={ambianLogo} alt="Ambian" className="h-20 md:h-48 lg:h-56 mx-auto" />
+            <img src={ambianLogo} alt="Ambian" className="h-32 md:h-64 lg:h-80 mx-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
             {isLogin ? "Welcome back" : "Start your free trial"}
