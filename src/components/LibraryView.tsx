@@ -152,12 +152,6 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
           <Button variant="secondary" size="sm" className="rounded-full">
             Playlists
           </Button>
-          <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground">
-            Artists
-          </Button>
-          <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground">
-            Albums
-          </Button>
         </div>
 
         {/* Content */}
