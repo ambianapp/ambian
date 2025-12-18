@@ -95,7 +95,7 @@ serve(async (req) => {
 
     // Add the subscription item to the invoice
     if (price.recurring) {
-      // For subscriptions, create a subscription with pending_invoice_item_interval
+      // For subscriptions, create a subscription with send_invoice collection method
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: priceId }],
@@ -105,7 +105,28 @@ serve(async (req) => {
           user_id: user.id,
         },
       });
-      logStep("Created subscription with invoice", { subscriptionId: subscription.id });
+      logStep("Created subscription", { subscriptionId: subscription.id });
+
+      // Get the latest invoice for this subscription and send it
+      const invoices = await stripe.invoices.list({
+        subscription: subscription.id,
+        limit: 1,
+      });
+      
+      if (invoices.data.length > 0) {
+        const subscriptionInvoice = invoices.data[0];
+        logStep("Found subscription invoice", { invoiceId: subscriptionInvoice.id, status: subscriptionInvoice.status });
+        
+        // If invoice is in draft, finalize it first
+        if (subscriptionInvoice.status === 'draft') {
+          await stripe.invoices.finalizeInvoice(subscriptionInvoice.id);
+          logStep("Finalized invoice");
+        }
+        
+        // Send the invoice email
+        await stripe.invoices.sendInvoice(subscriptionInvoice.id);
+        logStep("Sent invoice email", { invoiceId: subscriptionInvoice.id });
+      }
 
       return new Response(JSON.stringify({ 
         success: true, 
