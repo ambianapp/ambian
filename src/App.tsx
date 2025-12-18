@@ -103,17 +103,20 @@ const AppRoutes = () => {
 };
 
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, subscription, isAdmin } = useAuth();
   const location = useLocation();
   
   // Show MobileNav on non-index protected pages
   const showGlobalMobileNav = user && location.pathname !== "/" && location.pathname !== "/auth" && location.pathname !== "/install";
   
+  // Only show PlayerBar if user has active subscription or is admin
+  const showPlayerBar = user && (subscription.subscribed || isAdmin);
+  
   return (
     <>
       <AppRoutes />
       {showGlobalMobileNav && <MobileNav />}
-      {user && <PlayerBar />}
+      {showPlayerBar && <PlayerBar />}
     </>
   );
 };
