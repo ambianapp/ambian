@@ -289,16 +289,16 @@ const Profile = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Monitor className="w-5 h-5" />
-              Device Slots
+              Multiple Locations
             </CardTitle>
-            <CardDescription>Manage simultaneous device access</CardDescription>
+            <CardDescription>Play music in multiple locations at the same time</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
               <div>
-                <p className="font-medium text-foreground">Active Device Slots</p>
+                <p className="font-medium text-foreground">Active Locations</p>
                 <p className="text-sm text-muted-foreground">
-                  You can use your account on {subscription.deviceSlots} device{subscription.deviceSlots > 1 ? "s" : ""} simultaneously
+                  You can play music in {subscription.deviceSlots} location{subscription.deviceSlots > 1 ? "s" : ""} at the same time
                 </p>
               </div>
               <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
@@ -308,9 +308,10 @@ const Profile = () => {
 
             <div className="p-4 rounded-lg border border-border">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p className="font-medium text-foreground">
-                  Add Extra Device <span className="text-muted-foreground font-normal">• €5/month</span>
-                </p>
+                <div>
+                  <p className="font-medium text-foreground">Need music in more locations?</p>
+                  <p className="text-sm text-muted-foreground">Add another location for €5/month</p>
+                </div>
                 <Button
                   onClick={handleAddDeviceSlot}
                   disabled={isLoadingDevice || !subscription.subscribed}
@@ -322,14 +323,14 @@ const Profile = () => {
                   ) : (
                     <Plus className="w-4 h-4 mr-2" />
                   )}
-                  Add Device
+                  Add Location
                 </Button>
               </div>
             </div>
 
             {!subscription.subscribed && (
               <p className="text-sm text-muted-foreground">
-                Subscribe first to add extra device slots.
+                Subscribe first to add extra locations.
               </p>
             )}
           </CardContent>
