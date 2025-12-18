@@ -72,6 +72,35 @@ export type Database = {
           },
         ]
       }
+      play_history: {
+        Row: {
+          id: string
+          played_at: string
+          playlist_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          played_at?: string
+          playlist_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          played_at?: string
+          playlist_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_history_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlist_tracks: {
         Row: {
           added_at: string
