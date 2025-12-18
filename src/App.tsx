@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import PlayerBar from "@/components/PlayerBar";
+import MobileNav from "@/components/MobileNav";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -101,10 +102,15 @@ const AppRoutes = () => {
 
 const AppContent = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  
+  // Show MobileNav on non-index protected pages
+  const showGlobalMobileNav = user && location.pathname !== "/" && location.pathname !== "/auth";
   
   return (
     <>
       <AppRoutes />
+      {showGlobalMobileNav && <MobileNav />}
       {user && <PlayerBar />}
     </>
   );
