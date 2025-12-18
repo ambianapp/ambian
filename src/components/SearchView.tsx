@@ -1,28 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { genres, tracks, playlists } from "@/data/musicData";
+import { genres } from "@/data/musicData";
+import { supabase } from "@/integrations/supabase/client";
 import GenreCard from "./GenreCard";
 import TrackRow from "./TrackRow";
+import PlaylistCard from "./PlaylistCard";
 import { Track } from "@/data/musicData";
+
+interface DbTrack {
+  id: string;
+  title: string;
+  artist: string;
+  album: string | null;
+  duration: string | null;
+  cover_url: string | null;
+  audio_url: string | null;
+  genre: string | null;
+}
+
+interface DbPlaylist {
+  id: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+}
 
 interface SearchViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
   onTrackSelect: (track: Track) => void;
+  onPlaylistSelect?: (playlist: any) => void;
 }
 
-const SearchView = ({ currentTrack, isPlaying, onTrackSelect }: SearchViewProps) => {
+const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: SearchViewProps) => {
   const [query, setQuery] = useState("");
+  const [filteredTracks, setFilteredTracks] = useState<DbTrack[]>([]);
+  const [filteredPlaylists, setFilteredPlaylists] = useState<DbPlaylist[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredTracks = query
-    ? tracks.filter(
-        (track) =>
-          track.title.toLowerCase().includes(query.toLowerCase()) ||
-          track.artist.toLowerCase().includes(query.toLowerCase()) ||
-          track.genre.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
+  useEffect(() => {
+    const searchData = async () => {
+      if (!query.trim()) {
+        setFilteredTracks([]);
+        setFilteredPlaylists([]);
+        return;
+      }
+
+      setIsLoading(true);
+      const searchTerm = `%${query}%`;
+
+      const [tracksResult, playlistsResult] = await Promise.all([
+        supabase
+          .from("tracks")
+          .select("*")
+          .or(`title.ilike.${searchTerm},artist.ilike.${searchTerm},genre.ilike.${searchTerm}`)
+          .limit(20),
+        supabase
+          .from("playlists")
+          .select("*")
+          .or(`name.ilike.${searchTerm},description.ilike.${searchTerm}`)
+          .limit(10),
+      ]);
+
+      setFilteredTracks(tracksResult.data || []);
+      setFilteredPlaylists(playlistsResult.data || []);
+      setIsLoading(false);
+    };
+
+    const debounce = setTimeout(searchData, 300);
+    return () => clearTimeout(debounce);
+  }, [query]);
+
+  const mapDbTrackToTrack = (dbTrack: DbTrack): Track => ({
+    id: dbTrack.id,
+    title: dbTrack.title,
+    artist: dbTrack.artist,
+    album: dbTrack.album || "",
+    duration: dbTrack.duration || "0:00",
+    cover: dbTrack.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+    genre: dbTrack.genre || "",
+    audioUrl: dbTrack.audio_url || undefined,
+  });
+
+  const hasResults = filteredTracks.length > 0 || filteredPlaylists.length > 0;
 
   return (
     <div className="flex-1 overflow-y-auto pb-32">
@@ -33,7 +94,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect }: SearchViewProps)
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="What do you want to listen to?"
+              placeholder="Search songs, playlists..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-12 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full text-base"
@@ -43,25 +104,60 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect }: SearchViewProps)
 
         {/* Search Results or Browse */}
         {query ? (
-          <section className="animate-fade-in">
-            <h2 className="text-xl font-bold text-foreground mb-4">
-              {filteredTracks.length > 0 ? "Results" : "No results found"}
-            </h2>
-            {filteredTracks.length > 0 && (
-              <div className="bg-card/30 rounded-xl overflow-hidden">
-                {filteredTracks.map((track, index) => (
-                  <TrackRow
-                    key={track.id}
-                    track={track}
-                    index={index + 1}
-                    isPlaying={isPlaying}
-                    isCurrentTrack={currentTrack?.id === track.id}
-                    onPlay={() => onTrackSelect(track)}
-                  />
-                ))}
-              </div>
+          <div className="space-y-8 animate-fade-in">
+            {isLoading ? (
+              <p className="text-muted-foreground">Searching...</p>
+            ) : !hasResults ? (
+              <h2 className="text-xl font-bold text-foreground">No results found</h2>
+            ) : (
+              <>
+                {filteredPlaylists.length > 0 && (
+                  <section>
+                    <h2 className="text-xl font-bold text-foreground mb-4">Playlists</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {filteredPlaylists.map((playlist) => (
+                        <PlaylistCard
+                          key={playlist.id}
+                          playlist={{
+                            id: playlist.id,
+                            name: playlist.name,
+                            description: playlist.description || "",
+                            cover: playlist.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+                            trackCount: 0,
+                            tracks: [],
+                          }}
+                          onClick={() => onPlaylistSelect?.({
+                            id: playlist.id,
+                            name: playlist.name,
+                            description: playlist.description,
+                            cover: playlist.cover_url,
+                          })}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {filteredTracks.length > 0 && (
+                  <section>
+                    <h2 className="text-xl font-bold text-foreground mb-4">Songs</h2>
+                    <div className="bg-card/30 rounded-xl overflow-hidden">
+                      {filteredTracks.map((track, index) => (
+                        <TrackRow
+                          key={track.id}
+                          track={mapDbTrackToTrack(track)}
+                          index={index + 1}
+                          isPlaying={isPlaying}
+                          isCurrentTrack={currentTrack?.id === track.id}
+                          onPlay={() => onTrackSelect(mapDbTrackToTrack(track))}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
             )}
-          </section>
+          </div>
         ) : (
           <section className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
             <h2 className="text-xl font-bold text-foreground mb-4">Browse All</h2>
