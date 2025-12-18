@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePlayer } from "@/contexts/PlayerContext";
+import { usePlayer, hasPendingResume, clearPendingResume } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
 
 const PlayerBar = () => {
@@ -30,8 +30,27 @@ const PlayerBar = () => {
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Check for pending resume on mount
+  useEffect(() => {
+    if (hasPendingResume()) {
+      setShowResumePrompt(true);
+      toast({
+        title: "Playback restored",
+        description: "Tap play to continue where you left off",
+      });
+    }
+  }, [currentTrack, toast]);
+
+  // Handle resume from pending state
+  const handleResumeFromRefresh = () => {
+    clearPendingResume();
+    setShowResumePrompt(false);
+    handlePlayPause(); // Start playing
+  };
 
   // Playback monitoring state
   const retryCountRef = useRef(0);
@@ -536,7 +555,12 @@ const PlayerBar = () => {
             <Button variant="ghost" size="iconSm" onClick={handlePrevious} className="text-foreground h-8 w-8">
               <SkipBack className="w-4 h-4" />
             </Button>
-            <Button variant="player" size="icon" onClick={handlePlayPause} className="h-10 w-10">
+            <Button 
+              variant="player" 
+              size="icon" 
+              onClick={showResumePrompt ? handleResumeFromRefresh : handlePlayPause} 
+              className={cn("h-10 w-10", showResumePrompt && "animate-pulse ring-2 ring-primary")}
+            >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </Button>
             <Button variant="ghost" size="iconSm" onClick={handleNext} className="text-foreground h-8 w-8">
@@ -605,7 +629,12 @@ const PlayerBar = () => {
             <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground">
               <SkipBack className="w-5 h-5" />
             </Button>
-            <Button variant="player" size="iconLg" onClick={handlePlayPause} className="h-12 w-12">
+            <Button 
+              variant="player" 
+              size="iconLg" 
+              onClick={showResumePrompt ? handleResumeFromRefresh : handlePlayPause} 
+              className={cn("h-12 w-12", showResumePrompt && "animate-pulse ring-2 ring-primary")}
+            >
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </Button>
             <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground">

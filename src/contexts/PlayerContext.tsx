@@ -15,6 +15,11 @@ interface PlaybackState {
   savedAt: number;
 }
 
+// Flag to indicate restored session needs user interaction to play
+let pendingResume = false;
+export const hasPendingResume = () => pendingResume;
+export const clearPendingResume = () => { pendingResume = false; };
+
 interface PlayerContextType {
   currentTrack: (Track & { audioUrl?: string }) | null;
   isPlaying: boolean;
@@ -208,12 +213,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
             setSeekPosition(state.position);
           }
           
-          // Auto-play if was playing
+          // Don't auto-play - browsers block this after refresh
+          // Set flag so PlayerBar can show "tap to resume" prompt
           if (state.wasPlaying) {
-            setIsPlaying(true);
+            pendingResume = true;
           }
           
-          console.log("Playback state restored");
+          console.log("Playback state restored - tap to resume");
         }
       } catch (e) {
         console.error("Failed to restore playback state:", e);
