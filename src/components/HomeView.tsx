@@ -6,6 +6,7 @@ import TrackRow from "./TrackRow";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbPlaylist = Tables<"playlists">;
@@ -86,7 +87,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     }
   };
 
-  const handleTrackSelect = (track: DbTrack) => {
+  const handleTrackSelect = async (track: DbTrack) => {
+    const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
     onTrackSelect({
       id: track.id,
       title: track.title,
@@ -95,7 +97,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       duration: track.duration || "",
       cover: track.cover_url || "/placeholder.svg",
       genre: track.genre || "",
-      audioUrl: track.audio_url || undefined,
+      audioUrl: signedAudioUrl,
     });
   };
 
