@@ -31,6 +31,92 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Playback monitoring state
+  const retryCountRef = useRef(0);
+  const lastProgressTimeRef = useRef(Date.now());
+  const stallCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const maxRetries = 3;
+
+  // Handle audio errors with auto-recovery
+  const handleAudioError = () => {
+    const audio = audioRef.current;
+    console.error("Audio error:", audio?.error?.code, audio?.error?.message);
+    
+    if (retryCountRef.current < maxRetries) {
+      retryCountRef.current++;
+      console.log(`Retrying playback (attempt ${retryCountRef.current}/${maxRetries})...`);
+      
+      // Wait and retry
+      setTimeout(() => {
+        if (audioRef.current && currentTrack?.audioUrl) {
+          audioRef.current.load();
+          audioRef.current.play().catch(console.error);
+        }
+      }, 1000 * retryCountRef.current); // Exponential backoff
+    } else {
+      console.log("Max retries reached, skipping to next track");
+      retryCountRef.current = 0;
+      toast({
+        title: "Playback issue",
+        description: "Skipping to next track",
+      });
+      onNext();
+    }
+  };
+
+  // Handle stall/waiting events
+  const handleStalled = () => {
+    console.log("Audio stalled, attempting recovery...");
+    if (audioRef.current && isPlaying) {
+      // Try to resume playback
+      setTimeout(() => {
+        audioRef.current?.play().catch(console.error);
+      }, 500);
+    }
+  };
+
+  // Monitor for playback stalls (no progress for extended time)
+  useEffect(() => {
+    if (isPlaying && currentTrack?.audioUrl) {
+      stallCheckIntervalRef.current = setInterval(() => {
+        const now = Date.now();
+        const timeSinceLastProgress = now - lastProgressTimeRef.current;
+        
+        // If no progress for 10 seconds while playing, try recovery
+        if (timeSinceLastProgress > 10000 && audioRef.current && !audioRef.current.paused) {
+          console.log("Detected playback stall, attempting recovery...");
+          
+          if (retryCountRef.current < maxRetries) {
+            retryCountRef.current++;
+            const currentPos = audioRef.current.currentTime;
+            audioRef.current.load();
+            audioRef.current.currentTime = currentPos;
+            audioRef.current.play().catch(() => {
+              // If recovery fails, skip to next
+              retryCountRef.current = 0;
+              onNext();
+            });
+          } else {
+            retryCountRef.current = 0;
+            onNext();
+          }
+        }
+      }, 5000);
+    }
+
+    return () => {
+      if (stallCheckIntervalRef.current) {
+        clearInterval(stallCheckIntervalRef.current);
+      }
+    };
+  }, [isPlaying, currentTrack, onNext]);
+
+  // Reset retry count on successful track change
+  useEffect(() => {
+    retryCountRef.current = 0;
+    lastProgressTimeRef.current = Date.now();
+  }, [currentTrack?.id]);
+
   // Check if current track is liked
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -106,6 +192,8 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       setCurrentTime(audioRef.current.currentTime);
       const progressPercent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
       setProgress([isNaN(progressPercent) ? 0 : progressPercent]);
+      // Update last progress time for stall detection
+      lastProgressTimeRef.current = Date.now();
     }
   };
 
@@ -140,6 +228,9 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
           src={currentTrack.audioUrl}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
+          onError={handleAudioError}
+          onStalled={handleStalled}
+          onWaiting={handleStalled}
           onEnded={() => {
             if (repeat === "one" && audioRef.current) {
               audioRef.current.currentTime = 0;
