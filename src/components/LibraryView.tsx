@@ -17,7 +17,7 @@ interface SelectedPlaylist {
 interface LibraryViewProps {
   currentTrack: Track | null;
   isPlaying: boolean;
-  onTrackSelect: (track: Track) => void;
+  onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onPlaylistSelect: (playlist: SelectedPlaylist) => void;
 }
 

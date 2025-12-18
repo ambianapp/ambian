@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import PlayerBar from "@/components/PlayerBar";
@@ -12,7 +12,9 @@ import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Track, tracks as mockTracks } from "@/data/musicData";
+import { Track } from "@/data/musicData";
+import { getSignedAudioUrl } from "@/lib/storage";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SelectedPlaylist {
   id: string;
@@ -28,6 +30,7 @@ const Index = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState<"off" | "all" | "one">("off");
+  const playlistTracksRef = useRef<Track[]>([]);
   const { subscription, checkSubscription, isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -69,32 +72,72 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [subscription.isTrial, subscription.trialEnd, isAdmin, checkSubscription]);
 
-  const handleTrackSelect = useCallback((track: Track) => {
+  const handleTrackSelect = useCallback((track: Track, playlistTracks?: Track[]) => {
     setCurrentTrack(track);
     setIsPlaying(true);
+    if (playlistTracks) {
+      playlistTracksRef.current = playlistTracks;
+    }
   }, []);
 
   const handlePlayPause = useCallback(() => {
     setIsPlaying((prev) => !prev);
   }, []);
 
-  const handleNext = useCallback(() => {
-    if (!currentTrack) return;
-    const currentIndex = mockTracks.findIndex((t) => t.id === currentTrack.id);
-    if (currentIndex === -1) return;
-    const nextIndex = (currentIndex + 1) % mockTracks.length;
-    setCurrentTrack(mockTracks[nextIndex]);
+  const fetchAndPlayTrack = useCallback(async (track: Track) => {
+    if (track.audioUrl) {
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      return;
+    }
+    
+    const { data } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", track.id)
+      .single();
+    
+    if (data?.audio_url) {
+      const signedUrl = await getSignedAudioUrl(data.audio_url);
+      setCurrentTrack({ ...track, audioUrl: signedUrl });
+    } else {
+      setCurrentTrack(track);
+    }
     setIsPlaying(true);
-  }, [currentTrack]);
+  }, []);
 
-  const handlePrevious = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (!currentTrack) return;
-    const currentIndex = mockTracks.findIndex((t) => t.id === currentTrack.id);
+    const tracks = playlistTracksRef.current;
+    if (tracks.length === 0) return;
+    
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
     if (currentIndex === -1) return;
-    const prevIndex = (currentIndex - 1 + mockTracks.length) % mockTracks.length;
-    setCurrentTrack(mockTracks[prevIndex]);
-    setIsPlaying(true);
-  }, [currentTrack]);
+    
+    let nextIndex: number;
+    if (shuffle) {
+      const availableIndices = tracks.map((_, i) => i).filter(i => i !== currentIndex);
+      nextIndex = availableIndices.length > 0 
+        ? availableIndices[Math.floor(Math.random() * availableIndices.length)]
+        : currentIndex;
+    } else {
+      nextIndex = (currentIndex + 1) % tracks.length;
+    }
+    
+    await fetchAndPlayTrack(tracks[nextIndex]);
+  }, [currentTrack, shuffle, fetchAndPlayTrack]);
+
+  const handlePrevious = useCallback(async () => {
+    if (!currentTrack) return;
+    const tracks = playlistTracksRef.current;
+    if (tracks.length === 0) return;
+    
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
+    if (currentIndex === -1) return;
+    
+    const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
+    await fetchAndPlayTrack(tracks[prevIndex]);
+  }, [currentTrack, fetchAndPlayTrack]);
 
   const handlePlaylistSelect = useCallback((playlist: SelectedPlaylist) => {
     setSelectedPlaylist(playlist);
