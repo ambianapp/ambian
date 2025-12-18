@@ -257,12 +257,13 @@ const Profile = () => {
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               {subscription.subscribed ? (
                 <Button
                   variant="outline"
                   onClick={handleManageSubscription}
                   disabled={isLoadingPortal}
+                  className="w-full sm:w-auto"
                 >
                   {isLoadingPortal ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -272,11 +273,11 @@ const Profile = () => {
                   Manage Subscription
                 </Button>
               ) : (
-                <Button onClick={() => navigate("/pricing")}>
+                <Button onClick={() => navigate("/pricing")} className="w-full sm:w-auto">
                   Subscribe Now
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => checkSubscription()}>
+              <Button variant="ghost" onClick={() => checkSubscription()} className="w-full sm:w-auto">
                 Refresh Status
               </Button>
             </div>
