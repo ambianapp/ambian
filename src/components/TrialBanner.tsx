@@ -12,10 +12,11 @@ interface TimeRemaining {
 }
 
 const TrialBanner = () => {
-  const { subscription } = useAuth();
+  const { subscription, checkSubscription } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
+  const [trialExpired, setTrialExpired] = useState(false);
 
   useEffect(() => {
     if (!subscription.trialEnd) return;
@@ -27,6 +28,11 @@ const TrialBanner = () => {
 
       if (diff <= 0) {
         setTimeRemaining(null);
+        // Trial just expired - trigger recheck to lock the user out
+        if (!trialExpired) {
+          setTrialExpired(true);
+          checkSubscription();
+        }
         return;
       }
 
@@ -42,7 +48,7 @@ const TrialBanner = () => {
     const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [subscription.trialEnd]);
+  }, [subscription.trialEnd, trialExpired, checkSubscription]);
 
   if (!subscription.isTrial || dismissed || !timeRemaining) return null;
 
