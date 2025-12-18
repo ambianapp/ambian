@@ -7,13 +7,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download } from "lucide-react";
+
+interface Invoice {
+  id: string;
+  number: string;
+  amount: number;
+  currency: string;
+  date: number;
+  status: string;
+  pdfUrl: string | null;
+  hostedUrl: string | null;
+}
 
 const Profile = () => {
   const { user, subscription, checkSubscription, signOut } = useAuth();
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,6 +46,25 @@ const Profile = () => {
     };
 
     loadProfile();
+  }, [user]);
+
+  useEffect(() => {
+    const loadInvoices = async () => {
+      if (!user) return;
+      setIsLoadingInvoices(true);
+
+      try {
+        const { data, error } = await supabase.functions.invoke("get-invoices");
+        if (error) throw error;
+        setInvoices(data?.invoices || []);
+      } catch (error: any) {
+        console.error("Failed to load invoices:", error);
+      } finally {
+        setIsLoadingInvoices(false);
+      }
+    };
+
+    loadInvoices();
   }, [user]);
 
   const handleUpdateProfile = async () => {
@@ -82,6 +114,13 @@ const Profile = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100);
   };
 
   if (!user) {
@@ -210,6 +249,58 @@ const Profile = () => {
                 Refresh Status
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Invoices Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Invoices
+            </CardTitle>
+            <CardDescription>View and download your payment history</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingInvoices ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : invoices.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No invoices found.</p>
+            ) : (
+              <div className="space-y-3">
+                {invoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-secondary"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">
+                        {invoice.number || "Invoice"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(invoice.date * 1000).toLocaleDateString()} • {formatCurrency(invoice.amount, invoice.currency)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary">
+                        Paid
+                      </span>
+                      {invoice.pdfUrl && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => window.open(invoice.pdfUrl!, "_blank")}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
