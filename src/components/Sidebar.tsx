@@ -197,6 +197,24 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
             {item.label}
           </Button>
         ))}
+        <Button
+          variant="ghost"
+          className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => navigate("/profile")}
+        >
+          <User className="w-5 h-5" />
+          Profile
+        </Button>
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/admin")}
+          >
+            <Shield className="w-5 h-5 text-primary" />
+            Admin Panel
+          </Button>
+        )}
       </nav>
 
       {/* Playlists Section */}
@@ -297,27 +315,6 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
         </div>
       </div>
 
-      {/* User Section */}
-      <div className="border-t border-border pt-4 space-y-2">
-        {isAdmin && (
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/admin")}
-          >
-            <Shield className="w-4 h-4 text-primary" />
-            Admin Panel
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
-          onClick={() => navigate("/profile")}
-        >
-          <User className="w-4 h-4" />
-          <span className="truncate">{user?.email || "Profile"}</span>
-        </Button>
-      </div>
     </aside>
   );
 };
