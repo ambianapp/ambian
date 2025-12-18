@@ -111,7 +111,9 @@ const AppContent = () => {
   
   return (
     <>
-      <AppRoutes />
+      <div className={user ? "pb-[calc(160px+var(--safe-bottom-tight))] md:pb-0" : undefined}>
+        <AppRoutes />
+      </div>
       {showGlobalMobileNav && <MobileNav />}
       {user && <PlayerBar />}
     </>
