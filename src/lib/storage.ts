@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// 4 hours in seconds - longer expiry for 24/7 playback
+const SIGNED_URL_EXPIRY = 14400;
+
 /**
  * Generate a signed URL for audio file access
  * Since the audio bucket is private, we need signed URLs for authenticated access
@@ -18,7 +21,7 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
     
     const { data, error } = await supabase.storage
       .from('audio')
-      .createSignedUrl(fileName, 3600); // 1 hour expiry
+      .createSignedUrl(fileName, SIGNED_URL_EXPIRY);
     
     if (error) {
       console.error("Error creating signed URL:", error);
@@ -31,7 +34,7 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
   
   const { data, error } = await supabase.storage
     .from('audio')
-    .createSignedUrl(filePath, 3600); // 1 hour expiry
+    .createSignedUrl(filePath, SIGNED_URL_EXPIRY);
   
   if (error) {
     console.error("Error creating signed URL:", error);
