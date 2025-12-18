@@ -22,7 +22,7 @@ interface SelectedPlaylist {
 
 const Index = () => {
   const [activeView, setActiveView] = useState("home");
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(mockTracks[0]);
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
   const [shuffle, setShuffle] = useState(false);
@@ -80,6 +80,7 @@ const Index = () => {
   const handleNext = useCallback(() => {
     if (!currentTrack) return;
     const currentIndex = mockTracks.findIndex((t) => t.id === currentTrack.id);
+    if (currentIndex === -1) return;
     const nextIndex = (currentIndex + 1) % mockTracks.length;
     setCurrentTrack(mockTracks[nextIndex]);
     setIsPlaying(true);
@@ -88,6 +89,7 @@ const Index = () => {
   const handlePrevious = useCallback(() => {
     if (!currentTrack) return;
     const currentIndex = mockTracks.findIndex((t) => t.id === currentTrack.id);
+    if (currentIndex === -1) return;
     const prevIndex = (currentIndex - 1 + mockTracks.length) % mockTracks.length;
     setCurrentTrack(mockTracks[prevIndex]);
     setIsPlaying(true);

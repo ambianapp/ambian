@@ -178,6 +178,9 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
     };
   }, [isPlaying, currentTrack, toast]);
 
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
   // Check if current track is liked
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -185,17 +188,23 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
         setIsLiked(false);
         return;
       }
-      
+
+      // Demo/mock tracks use non-UUID ids; skip DB check for those.
+      if (!isUuid(currentTrack.id)) {
+        setIsLiked(false);
+        return;
+      }
+
       const { data } = await supabase
         .from("liked_songs")
         .select("id")
         .eq("user_id", user.id)
         .eq("track_id", currentTrack.id)
         .maybeSingle();
-      
+
       setIsLiked(!!data);
     };
-    
+
     checkIfLiked();
   }, [user, currentTrack]);
 
@@ -209,13 +218,22 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       return;
     }
 
+    if (!isUuid(currentTrack.id)) {
+      toast({
+        title: "Can't like this track",
+        description: "Please play a library track first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isLiked) {
       const { error } = await supabase
         .from("liked_songs")
         .delete()
         .eq("user_id", user.id)
         .eq("track_id", currentTrack.id);
-      
+
       if (!error) {
         setIsLiked(false);
         toast({ title: "Removed from Liked Songs" });
@@ -224,7 +242,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       const { error } = await supabase
         .from("liked_songs")
         .insert({ user_id: user.id, track_id: currentTrack.id });
-      
+
       if (!error) {
         setIsLiked(true);
         toast({ title: "Added to Liked Songs" });
