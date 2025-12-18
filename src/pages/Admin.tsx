@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, Upload, Loader2, ListMusic, FileUp, FileAudio } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, Upload, Loader2, ListMusic, FileUp, FileAudio, Users } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
+import { UserManager } from "@/components/admin/UserManager";
 
 type Track = Tables<"tracks">;
 
@@ -253,7 +254,7 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="tracks" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="tracks" className="flex items-center gap-2">
               <Music className="w-4 h-4" />
               Tracks
@@ -261,6 +262,10 @@ const Admin = () => {
             <TabsTrigger value="playlists" className="flex items-center gap-2">
               <ListMusic className="w-4 h-4" />
               Playlists
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Users
             </TabsTrigger>
           </TabsList>
 
@@ -490,6 +495,11 @@ const Admin = () => {
           {/* Playlists Tab */}
           <TabsContent value="playlists" className="mt-6">
             <AdminPlaylistManager />
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="mt-6">
+            <UserManager />
           </TabsContent>
         </Tabs>
       </div>
