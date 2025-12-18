@@ -121,12 +121,12 @@ const Auth = () => {
             <span className="text-2xl font-bold text-gradient">ambian</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {isLogin ? "Welcome back" : "Start your free trial"}
           </h1>
           <p className="text-muted-foreground mt-2">
             {isLogin
               ? "Sign in to access your music"
-              : "Start your musical journey"}
+              : "3 days free • No credit card required"}
           </p>
         </div>
 
@@ -197,7 +197,7 @@ const Auth = () => {
             ) : isLogin ? (
               "Sign In"
             ) : (
-              "Create Account"
+              "Start Free Trial"
             )}
           </Button>
         </form>
