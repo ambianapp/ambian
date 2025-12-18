@@ -130,6 +130,62 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     }
   };
 
+  const handlePlayPlaylist = async (playlistId: string) => {
+    // Fetch first track of playlist
+    const { data } = await supabase
+      .from("playlist_tracks")
+      .select("track_id, tracks(*)")
+      .eq("playlist_id", playlistId)
+      .order("position", { ascending: true })
+      .limit(1);
+
+    if (data && data.length > 0) {
+      const track = (data[0] as any).tracks;
+      if (track) {
+        const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
+        
+        // Fetch all tracks for playlist context
+        const { data: allTracksData } = await supabase
+          .from("playlist_tracks")
+          .select("tracks(*)")
+          .eq("playlist_id", playlistId)
+          .order("position", { ascending: true });
+
+        const playlistTracks: Track[] = (allTracksData || [])
+          .map((item: any) => item.tracks)
+          .filter(Boolean)
+          .map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            album: t.album || "",
+            duration: t.duration || "",
+            cover: t.cover_url || "/placeholder.svg",
+            genre: t.genre || "",
+          }));
+
+        // Record play history
+        if (user) {
+          await supabase.from("play_history").insert({
+            user_id: user.id,
+            playlist_id: playlistId,
+          });
+        }
+
+        onTrackSelect({
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          album: track.album || "",
+          duration: track.duration || "",
+          cover: track.cover_url || "/placeholder.svg",
+          genre: track.genre || "",
+          audioUrl: signedAudioUrl,
+        }, playlistTracks);
+      }
+    }
+  };
+
   const handleTrackSelect = async (track: DbTrack) => {
     const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
     
@@ -206,6 +262,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                   cover: playlist.cover_url,
                   description: playlist.description,
                 })}
+                onPlay={() => handlePlayPlaylist(playlist.id)}
                 onUpdate={handlePlaylistUpdate}
               />
             ))}
@@ -251,6 +308,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                     cover: playlist.cover_url,
                     description: playlist.description,
                   })}
+                  onPlay={() => handlePlayPlaylist(playlist.id)}
                   onUpdate={handlePlaylistUpdate}
                 />
               ))}

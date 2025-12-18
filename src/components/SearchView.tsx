@@ -31,12 +31,13 @@ interface SearchViewProps {
   isPlaying: boolean;
   onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onPlaylistSelect?: (playlist: any) => void;
+  onPlayPlaylist?: (playlistId: string) => void;
 }
 
 const RECENT_SEARCHES_KEY = "ambian_recent_searches";
 const MAX_RECENT_SEARCHES = 8;
 
-const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: SearchViewProps) => {
+const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, onPlayPlaylist }: SearchViewProps) => {
   const [query, setQuery] = useState("");
   const [filteredTracks, setFilteredTracks] = useState<DbTrack[]>([]);
   const [filteredPlaylists, setFilteredPlaylists] = useState<DbPlaylist[]>([]);
@@ -191,6 +192,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
                             description: playlist.description,
                             cover: playlist.cover_url,
                           })}
+                          onPlay={() => onPlayPlaylist?.(playlist.id)}
                         />
                       ))}
                     </div>

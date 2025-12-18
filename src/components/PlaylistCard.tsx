@@ -11,10 +11,11 @@ import { useAuth } from "@/contexts/AuthContext";
 interface PlaylistCardProps {
   playlist: Playlist;
   onClick: () => void;
+  onPlay?: () => void;
   onUpdate?: (id: string, data: { name: string; description: string; cover: string }) => void;
 }
 
-const PlaylistCard = ({ playlist, onClick, onUpdate }: PlaylistCardProps) => {
+const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps) => {
   const { isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -57,7 +58,11 @@ const PlaylistCard = ({ playlist, onClick, onUpdate }: PlaylistCardProps) => {
               className="absolute bottom-2 right-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-2xl"
               onClick={(e) => {
                 e.stopPropagation();
-                onClick();
+                if (onPlay) {
+                  onPlay();
+                } else {
+                  onClick();
+                }
               }}
             >
               <Play className="w-6 h-6 ml-0.5" />
