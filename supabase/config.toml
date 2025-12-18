@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.delete-user]
 verify_jwt = false
+
+[functions.cancel-user-subscription]
+verify_jwt = false

@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Loader2, RefreshCw, Crown, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -20,6 +22,7 @@ interface Subscription {
   status: string;
   plan_type: string | null;
   current_period_end: string | null;
+  stripe_subscription_id: string | null;
 }
 
 interface UserRole {
@@ -32,10 +35,19 @@ interface UserWithDetails extends UserProfile {
   role?: "admin" | "user";
 }
 
+type FilterStatus = "all" | "active" | "trialing" | "canceled" | "inactive" | "none";
+type FilterRole = "all" | "admin" | "user";
+
 export function UserManager() {
   const [users, setUsers] = useState<UserWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [cancelingUserId, setCancelingUserId] = useState<string | null>(null);
+  
+  // Search and filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
+  const [roleFilter, setRoleFilter] = useState<FilterRole>("all");
 
   const loadUsers = async () => {
     setLoading(true);
@@ -86,6 +98,32 @@ export function UserManager() {
     loadUsers();
   }, []);
 
+  // Filtered users based on search and filters
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || 
+        user.email?.toLowerCase().includes(searchLower) ||
+        user.full_name?.toLowerCase().includes(searchLower);
+
+      // Status filter
+      let matchesStatus = true;
+      if (statusFilter !== "all") {
+        if (statusFilter === "none") {
+          matchesStatus = !user.subscription;
+        } else {
+          matchesStatus = user.subscription?.status === statusFilter;
+        }
+      }
+
+      // Role filter
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  }, [users, searchQuery, statusFilter, roleFilter]);
+
   const handleDeleteUser = async (userId: string) => {
     setDeletingUserId(userId);
     try {
@@ -103,6 +141,26 @@ export function UserManager() {
       toast.error(error.message || "Failed to delete user");
     } finally {
       setDeletingUserId(null);
+    }
+  };
+
+  const handleCancelSubscription = async (userId: string, stripeSubscriptionId: string) => {
+    setCancelingUserId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-user-subscription", {
+        body: { userId, stripeSubscriptionId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success("Subscription canceled successfully");
+      loadUsers();
+    } catch (error: any) {
+      console.error("Error canceling subscription:", error);
+      toast.error(error.message || "Failed to cancel subscription");
+    } finally {
+      setCancelingUserId(null);
     }
   };
 
@@ -133,6 +191,14 @@ export function UserManager() {
     });
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setRoleFilter("all");
+  };
+
+  const hasActiveFilters = searchQuery || statusFilter !== "all" || roleFilter !== "all";
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -144,11 +210,52 @@ export function UserManager() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Users ({users.length})</h3>
+        <h3 className="text-lg font-semibold">Users ({filteredUsers.length} of {users.length})</h3>
         <Button variant="outline" size="sm" onClick={loadUsers}>
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by email or name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FilterStatus)}>
+          <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="trialing">Trialing</SelectItem>
+            <SelectItem value="canceled">Canceled</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="none">No Subscription</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as FilterRole)}>
+          <SelectTrigger className="w-full sm:w-[140px]">
+            <SelectValue placeholder="Role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="user">User</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="icon" onClick={clearFilters} title="Clear filters">
+            <XCircle className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">
@@ -159,11 +266,11 @@ export function UserManager() {
               <TableHead>Role</TableHead>
               <TableHead>Subscription</TableHead>
               <TableHead>Joined</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex flex-col">
@@ -191,48 +298,92 @@ export function UserManager() {
                   {formatDate(user.created_at)}
                 </TableCell>
                 <TableCell>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        disabled={user.role === "admin" || deletingUserId === user.user_id}
-                      >
-                        {deletingUserId === user.user_id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete User</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete{" "}
-                          <span className="font-semibold">{user.email || user.full_name}</span>?
-                          This action cannot be undone and will remove all their data.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteUser(user.user_id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  <div className="flex items-center gap-1">
+                    {/* Cancel Subscription Button */}
+                    {user.subscription?.status === "active" && user.subscription?.stripe_subscription_id && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-orange-500 hover:text-orange-500 hover:bg-orange-500/10"
+                            disabled={cancelingUserId === user.user_id}
+                            title="Cancel subscription"
+                          >
+                            {cancelingUserId === user.user_id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <CreditCard className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to cancel the subscription for{" "}
+                              <span className="font-semibold">{user.email || user.full_name}</span>?
+                              This will immediately revoke their access to premium features.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleCancelSubscription(user.user_id, user.subscription!.stripe_subscription_id!)}
+                              className="bg-orange-500 text-white hover:bg-orange-600"
+                            >
+                              Cancel Subscription
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+
+                    {/* Delete User Button */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={user.role === "admin" || deletingUserId === user.user_id}
+                          title="Delete user"
                         >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          {deletingUserId === user.user_id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete User</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete{" "}
+                            <span className="font-semibold">{user.email || user.full_name}</span>?
+                            This action cannot be undone and will remove all their data.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteUser(user.user_id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
-            {users.length === 0 && (
+            {filteredUsers.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  No users found
+                  {hasActiveFilters ? "No users match your filters" : "No users found"}
                 </TableCell>
               </TableRow>
             )}
