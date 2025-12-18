@@ -20,7 +20,7 @@ const SubscriptionGate = () => {
   const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-32">
       <div className="max-w-md w-full text-center space-y-8 animate-fade-in">
         {/* Trial Banner */}
         {showTrialBanner && (
