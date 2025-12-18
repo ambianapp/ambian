@@ -145,9 +145,10 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
   return (
     <div
       className={cn(
-        "group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors",
+        "group grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
         isCurrentTrack ? "bg-secondary" : "hover:bg-secondary/50"
       )}
+      onClick={onPlay}
     >
       <div className="w-6 md:w-8 flex items-center justify-center">
         <span className={cn("text-sm text-muted-foreground group-hover:hidden", isCurrentTrack && "text-primary")}>
@@ -157,7 +158,10 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
           variant="ghost"
           size="iconSm"
           className="hidden group-hover:flex h-6 w-6 md:h-8 md:w-8"
-          onClick={onPlay}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlay();
+          }}
         >
           {isPlaying && isCurrentTrack ? (
             <Pause className="w-3 h-3 md:w-4 md:h-4" />
@@ -186,7 +190,10 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
           variant="ghost" 
           size="iconSm" 
           className={cn("text-muted-foreground hover:text-foreground", isLiked && "text-primary")}
-          onClick={handleLikeToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleLikeToggle();
+          }}
         >
           <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
         </Button>
@@ -201,6 +208,7 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
               variant="ghost" 
               size="iconSm" 
               className="hidden md:flex opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+              onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontal className="w-4 h-4" />
             </Button>
