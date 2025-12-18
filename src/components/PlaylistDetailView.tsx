@@ -6,6 +6,7 @@ import TrackRow from "./TrackRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbTrack = Tables<"tracks">;
@@ -95,7 +96,10 @@ const PlaylistDetailView = ({
     setIsLoading(false);
   };
 
-  const handleTrackSelect = (track: DbTrack) => {
+  const handleTrackSelect = async (track: DbTrack) => {
+    // Get signed URL for audio since bucket is private
+    const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
+    
     onTrackSelect({
       id: track.id,
       title: track.title,
@@ -104,7 +108,7 @@ const PlaylistDetailView = ({
       duration: track.duration || "",
       cover: track.cover_url || "/placeholder.svg",
       genre: track.genre || "",
-      audioUrl: track.audio_url || undefined,
+      audioUrl: signedAudioUrl,
     });
   };
 

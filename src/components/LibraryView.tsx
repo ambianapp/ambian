@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getSignedAudioUrl } from "@/lib/storage";
 
 interface SelectedPlaylist {
   id: string;
@@ -96,7 +97,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
             duration: t.duration || "0:00",
             cover: t.cover_url || "/placeholder.svg",
             genre: t.genre || "",
-            audioUrl: t.audio_url,
+            audioUrl: t.audio_url, // Store raw URL, will get signed when playing
           }));
         setLikedSongs(tracks);
       }
@@ -105,9 +106,11 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     fetchLibrary();
   }, [user]);
 
-  const handleLikedSongsClick = () => {
+  const handleLikedSongsClick = async () => {
     if (likedSongs.length > 0) {
-      onTrackSelect(likedSongs[0]);
+      const track = likedSongs[0];
+      const signedAudioUrl = await getSignedAudioUrl(track.audioUrl || null);
+      onTrackSelect({ ...track, audioUrl: signedAudioUrl });
     }
   };
 

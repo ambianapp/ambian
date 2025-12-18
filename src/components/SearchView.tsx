@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { genres } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
+import { getSignedAudioUrl } from "@/lib/storage";
 import GenreCard from "./GenreCard";
 import TrackRow from "./TrackRow";
 import PlaylistCard from "./PlaylistCard";
@@ -72,16 +73,19 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
     return () => clearTimeout(debounce);
   }, [query]);
 
-  const mapDbTrackToTrack = (dbTrack: DbTrack): Track => ({
-    id: dbTrack.id,
-    title: dbTrack.title,
-    artist: dbTrack.artist,
-    album: dbTrack.album || "",
-    duration: dbTrack.duration || "0:00",
-    cover: dbTrack.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
-    genre: dbTrack.genre || "",
-    audioUrl: dbTrack.audio_url || undefined,
-  });
+  const handleTrackSelect = async (dbTrack: DbTrack) => {
+    const signedAudioUrl = await getSignedAudioUrl(dbTrack.audio_url);
+    onTrackSelect({
+      id: dbTrack.id,
+      title: dbTrack.title,
+      artist: dbTrack.artist,
+      album: dbTrack.album || "",
+      duration: dbTrack.duration || "0:00",
+      cover: dbTrack.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+      genre: dbTrack.genre || "",
+      audioUrl: signedAudioUrl,
+    });
+  };
 
   const hasResults = filteredTracks.length > 0 || filteredPlaylists.length > 0;
 
@@ -145,11 +149,19 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
                       {filteredTracks.map((track, index) => (
                         <TrackRow
                           key={track.id}
-                          track={mapDbTrackToTrack(track)}
+                          track={{
+                            id: track.id,
+                            title: track.title,
+                            artist: track.artist,
+                            album: track.album || "",
+                            duration: track.duration || "0:00",
+                            cover: track.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+                            genre: track.genre || "",
+                          }}
                           index={index + 1}
                           isPlaying={isPlaying}
                           isCurrentTrack={currentTrack?.id === track.id}
-                          onPlay={() => onTrackSelect(mapDbTrackToTrack(track))}
+                          onPlay={() => handleTrackSelect(track)}
                         />
                       ))}
                     </div>
