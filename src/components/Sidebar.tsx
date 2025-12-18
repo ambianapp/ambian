@@ -1,23 +1,109 @@
+import { useState, useEffect } from "react";
 import { Home, Search, Library, Plus, Heart, Music2, User, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SelectedPlaylist {
+  id: string;
+  name: string;
+  cover: string | null;
+  description: string | null;
+}
+
+interface SidebarPlaylist {
+  id: string;
+  name: string;
+  cover_url: string | null;
+  description: string | null;
+}
 
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
+  onPlaylistSelect?: (playlist: SelectedPlaylist) => void;
 }
 
-const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
+const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [ownPlaylists, setOwnPlaylists] = useState<SidebarPlaylist[]>([]);
+  const [likedPlaylists, setLikedPlaylists] = useState<SidebarPlaylist[]>([]);
+  const [likedSongsCount, setLikedSongsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      if (!user) return;
+
+      // Fetch user's own playlists
+      const { data: userPlaylists } = await supabase
+        .from("playlists")
+        .select("id, name, cover_url, description")
+        .eq("user_id", user.id)
+        .eq("is_system", false)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (userPlaylists) {
+        setOwnPlaylists(userPlaylists);
+      }
+
+      // Fetch liked playlists
+      const { data: likedData } = await supabase
+        .from("liked_playlists")
+        .select("playlist_id, playlists(id, name, cover_url, description)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (likedData) {
+        const playlists = likedData
+          .map((item: any) => item.playlists)
+          .filter(Boolean);
+        setLikedPlaylists(playlists);
+      }
+
+      // Fetch liked songs count
+      const { count } = await supabase
+        .from("liked_songs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      setLikedSongsCount(count || 0);
+    };
+
+    fetchPlaylists();
+  }, [user]);
 
   const navItems = [
     { id: "home", label: "Home", icon: Home },
     { id: "search", label: "Search", icon: Search },
     { id: "library", label: "Your Library", icon: Library },
   ];
+
+  const handlePlaylistClick = (playlist: SidebarPlaylist) => {
+    if (onPlaylistSelect) {
+      onPlaylistSelect({
+        id: playlist.id,
+        name: playlist.name,
+        cover: playlist.cover_url,
+        description: playlist.description,
+      });
+    }
+  };
+
+  const handleLikedSongsClick = () => {
+    // Navigate to library view which shows liked songs
+    onViewChange("library");
+  };
+
+  const allPlaylists = [...ownPlaylists, ...likedPlaylists];
+  // Remove duplicates (in case a user's own playlist is also liked)
+  const uniquePlaylists = allPlaylists.filter(
+    (playlist, index, self) => index === self.findIndex((p) => p.id === playlist.id)
+  );
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 gap-6">
@@ -59,27 +145,45 @@ const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-1">
+          {/* Liked Songs - always shown */}
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
+            onClick={handleLikedSongsClick}
           >
-            <Heart className="w-4 h-4 text-primary" />
-            Liked Songs
+            <Heart className="w-4 h-4 text-primary fill-current" />
+            <span className="truncate">Liked Songs</span>
+            {likedSongsCount > 0 && (
+              <span className="text-xs text-muted-foreground ml-auto">{likedSongsCount}</span>
+            )}
           </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <div className="w-4 h-4 rounded bg-gradient-to-br from-primary to-accent" />
-            Café Vibes
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <div className="w-4 h-4 rounded bg-gradient-to-br from-blue-500 to-cyan-500" />
-            Spa & Wellness
-          </Button>
+
+          {/* User's playlists */}
+          {uniquePlaylists.map((playlist) => (
+            <Button
+              key={playlist.id}
+              variant="ghost"
+              className="w-full justify-start gap-3 h-10 text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => handlePlaylistClick(playlist)}
+            >
+              {playlist.cover_url ? (
+                <img
+                  src={playlist.cover_url}
+                  alt={playlist.name}
+                  className="w-4 h-4 rounded object-cover"
+                />
+              ) : (
+                <div className="w-4 h-4 rounded bg-gradient-to-br from-primary to-accent" />
+              )}
+              <span className="truncate">{playlist.name}</span>
+            </Button>
+          ))}
+
+          {uniquePlaylists.length === 0 && (
+            <p className="text-xs text-muted-foreground px-2 py-2">
+              No playlists yet. Create one in Your Library.
+            </p>
+          )}
         </div>
       </div>
 
