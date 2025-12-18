@@ -181,6 +181,9 @@ const Pricing = () => {
             <p className="text-sm text-muted-foreground mt-4">
               No music license required. Cancel anytime.
             </p>
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Prices shown exclude VAT. VAT will be calculated at checkout based on your location.
+            </p>
           </div>
         )}
       </div>
