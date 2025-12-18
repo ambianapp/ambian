@@ -1,4 +1,4 @@
-import { Home, Search, Library, Shield } from "lucide-react";
+import { Home, Search, Library, Shield, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,30 +19,37 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-4 py-2 z-40 h-[60px]">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-2 py-2 z-40 h-[60px]">
       <div className="flex items-center justify-around">
         {navItems.map((item) => (
           <button
             key={item.id}
             className={cn(
-              "flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-colors",
+              "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
               activeView === item.id
                 ? "text-foreground"
                 : "text-muted-foreground"
             )}
             onClick={() => onViewChange(item.id)}
           >
-            <item.icon className={cn("w-6 h-6", activeView === item.id && "text-primary")} />
-            <span className="text-xs font-medium">{item.label}</span>
+            <item.icon className={cn("w-5 h-5", activeView === item.id && "text-primary")} />
+            <span className="text-[10px] font-medium">{item.label}</span>
           </button>
         ))}
+        <button
+          className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors text-muted-foreground"
+          onClick={() => navigate("/profile")}
+        >
+          <User className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Profile</span>
+        </button>
         {isAdmin && (
           <button
-            className="flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-colors text-muted-foreground"
+            className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors text-muted-foreground"
             onClick={() => navigate("/admin")}
           >
-            <Shield className="w-6 h-6 text-primary" />
-            <span className="text-xs font-medium">Admin</span>
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="text-[10px] font-medium">Admin</span>
           </button>
         )}
       </div>
