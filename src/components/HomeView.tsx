@@ -112,8 +112,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     showAll: boolean,
     onToggle: () => void
   ) => {
-    if (playlists.length === 0) return null;
-    
     const displayedPlaylists = showAll ? playlists : playlists.slice(0, 4);
 
     return (
@@ -132,28 +130,32 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {displayedPlaylists.map((playlist) => (
-            <PlaylistCard
-              key={playlist.id}
-              playlist={{
-                id: playlist.id,
-                name: playlist.name,
-                description: playlist.description || "",
-                cover: playlist.cover_url || "/placeholder.svg",
-                trackCount: 0,
-                tracks: [],
-              }}
-              onClick={() => onPlaylistSelect({
-                id: playlist.id,
-                name: playlist.name,
-                cover: playlist.cover_url,
-                description: playlist.description,
-              })}
-              onUpdate={handlePlaylistUpdate}
-            />
-          ))}
-        </div>
+        {playlists.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {displayedPlaylists.map((playlist) => (
+              <PlaylistCard
+                key={playlist.id}
+                playlist={{
+                  id: playlist.id,
+                  name: playlist.name,
+                  description: playlist.description || "",
+                  cover: playlist.cover_url || "/placeholder.svg",
+                  trackCount: 0,
+                  tracks: [],
+                }}
+                onClick={() => onPlaylistSelect({
+                  id: playlist.id,
+                  name: playlist.name,
+                  cover: playlist.cover_url,
+                  description: playlist.description,
+                })}
+                onUpdate={handlePlaylistUpdate}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">No playlists yet. Create one in the admin panel.</p>
+        )}
       </section>
     );
   };
