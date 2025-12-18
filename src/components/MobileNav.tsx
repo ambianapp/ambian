@@ -42,8 +42,8 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border z-50 h-[calc(72px+env(safe-area-inset-bottom))]">
-      <div className="flex items-center justify-around h-[72px] px-4">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border z-50 h-[calc(64px+env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-around h-[64px] px-4">
         {navItems.map((item) => {
           const isActive = isOnIndexPage && activeView === item.id;
           return (
