@@ -64,21 +64,10 @@ const Pricing = () => {
 
       if (error) throw error;
 
-      const url: string | undefined = data?.url;
-      if (!url) {
-        throw new Error("Checkout could not be started. Please try again.");
-      }
-
-      // Stripe Checkout often fails inside embedded previews; always open in a new tab.
-      const opened = window.open(url, "_blank", "noopener,noreferrer");
-      if (!opened) {
-        // Popup blocked fallback
-        window.location.assign(url);
+      if (data?.url) {
+        window.location.href = data.url;
       } else {
-        toast({
-          title: "Opening checkout",
-          description: "Stripe Checkout opened in a new tab.",
-        });
+        throw new Error("Checkout could not be started. Please try again.");
       }
     } catch (error: any) {
       toast({
@@ -86,7 +75,6 @@ const Pricing = () => {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
