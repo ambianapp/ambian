@@ -61,10 +61,9 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Check trial status based on user creation date
-    // TESTING: 3 minutes trial (change back to 3 days for production)
-    const TRIAL_MINUTES = 3;
+    const TRIAL_DAYS = 3;
     const userCreatedAt = new Date(user.created_at);
-    const trialEndDate = new Date(userCreatedAt.getTime() + TRIAL_MINUTES * 60 * 1000);
+    const trialEndDate = new Date(userCreatedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
     const now = new Date();
     const isInTrial = now < trialEndDate;
     const trialDaysRemaining = isInTrial ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 0;
