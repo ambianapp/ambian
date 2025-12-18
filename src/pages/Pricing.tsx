@@ -31,7 +31,6 @@ const PLANS = {
 };
 
 const features = [
-  "3 days free trial",
   "Unlimited access to all music",
   "Create custom playlists",
   "No music license required",
