@@ -64,6 +64,10 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
       },
+      // Enable automatic tax calculation based on customer location
+      automatic_tax: { enabled: true },
+      // Allow B2B customers to provide VAT ID for reverse charge
+      tax_id_collection: { enabled: true },
     });
 
     logStep("Checkout session created", { sessionId: session.id });
