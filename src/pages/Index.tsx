@@ -25,7 +25,7 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
   const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState(false);
+  const [repeat, setRepeat] = useState<"off" | "all" | "one">("off");
   const { subscription, checkSubscription, isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -93,7 +93,11 @@ const Index = () => {
   }, []);
 
   const handleRepeatToggle = useCallback(() => {
-    setRepeat((prev) => !prev);
+    setRepeat((prev) => {
+      if (prev === "off") return "all";
+      if (prev === "all") return "one";
+      return "off";
+    });
   }, []);
   if (!subscription.subscribed && !isAdmin) {
     return <SubscriptionGate />;

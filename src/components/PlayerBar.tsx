@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle, Heart } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Track } from "@/data/musicData";
@@ -16,7 +16,7 @@ interface PlayerBarProps {
   onPrevious: () => void;
   shuffle: boolean;
   onShuffleToggle: () => void;
-  repeat: boolean;
+  repeat: "off" | "all" | "one";
   onRepeatToggle: () => void;
 }
 
@@ -141,7 +141,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onEnded={() => {
-            if (repeat && audioRef.current) {
+            if (repeat === "one" && audioRef.current) {
               audioRef.current.currentTime = 0;
               audioRef.current.play();
             } else {
@@ -217,9 +217,10 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
               variant="ghost"
               size="iconSm"
               onClick={onRepeatToggle}
-              className={cn("h-7 w-7", repeat ? "text-primary" : "text-muted-foreground")}
+              className={cn("h-7 w-7 relative", repeat !== "off" ? "text-primary" : "text-muted-foreground")}
             >
-              <Repeat className="w-3.5 h-3.5" />
+              {repeat === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
+              {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
             </Button>
           </div>
         </div>
@@ -285,9 +286,10 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
               variant="ghost" 
               size="iconSm" 
               onClick={onRepeatToggle}
-              className={cn(repeat ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+              className={cn("relative", repeat !== "off" ? "text-primary" : "text-muted-foreground hover:text-foreground")}
             >
-              <Repeat className="w-4 h-4" />
+              {repeat === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+              {repeat !== "off" && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
             </Button>
           </div>
 
