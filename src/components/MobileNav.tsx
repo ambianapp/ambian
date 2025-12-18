@@ -1,16 +1,21 @@
 import { Home, Search, Library, Shield, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface MobileNavProps {
-  activeView: string;
-  onViewChange: (view: string) => void;
+  activeView?: string;
+  onViewChange?: (view: string) => void;
 }
 
 const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isOnIndexPage = location.pathname === "/";
+  const isOnProfilePage = location.pathname === "/profile";
+  const isOnAdminPage = location.pathname === "/admin";
 
   const navItems = [
     { id: "home", label: "Home", icon: Home },
@@ -18,37 +23,62 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
     { id: "library", label: "Library", icon: Library },
   ];
 
+  const handleNavClick = (id: string) => {
+    if (isOnIndexPage && onViewChange) {
+      // On Index page, use view switching
+      onViewChange(id);
+    } else {
+      // On other pages, navigate to Index with the view
+      navigate("/", { state: { view: id } });
+    }
+  };
+
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
+
+  const handleAdminClick = () => {
+    navigate("/admin");
+  };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-2 py-2 z-40 h-[60px]">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-2 py-2 z-50 h-[60px]">
       <div className="flex items-center justify-around">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            className={cn(
-              "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
-              activeView === item.id
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-            onClick={() => onViewChange(item.id)}
-          >
-            <item.icon className={cn("w-5 h-5", activeView === item.id && "text-primary")} />
-            <span className="text-[10px] font-medium">{item.label}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = isOnIndexPage && activeView === item.id;
+          return (
+            <button
+              key={item.id}
+              className={cn(
+                "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+                isActive ? "text-foreground" : "text-muted-foreground"
+              )}
+              onClick={() => handleNavClick(item.id)}
+            >
+              <item.icon className={cn("w-5 h-5", isActive && "text-primary")} />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </button>
+          );
+        })}
         <button
-          className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors text-muted-foreground"
-          onClick={() => navigate("/profile")}
+          className={cn(
+            "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+            isOnProfilePage ? "text-foreground" : "text-muted-foreground"
+          )}
+          onClick={handleProfileClick}
         >
-          <User className="w-5 h-5" />
+          <User className={cn("w-5 h-5", isOnProfilePage && "text-primary")} />
           <span className="text-[10px] font-medium">Profile</span>
         </button>
         {isAdmin && (
           <button
-            className="flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors text-muted-foreground"
-            onClick={() => navigate("/admin")}
+            className={cn(
+              "flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors",
+              isOnAdminPage ? "text-foreground" : "text-muted-foreground"
+            )}
+            onClick={handleAdminClick}
           >
-            <Shield className="w-5 h-5 text-primary" />
+            <Shield className={cn("w-5 h-5", isOnAdminPage ? "text-primary" : "text-primary")} />
             <span className="text-[10px] font-medium">Admin</span>
           </button>
         )}
