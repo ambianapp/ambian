@@ -481,7 +481,7 @@ const PlayerBar = () => {
       )}
 
       {/* Mobile Player Bar */}
-      <div className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
+      <div className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
         {/* Full-width Progress Slider */}
         <div className="flex items-center gap-2 px-3 pt-2">
           <span className="text-[10px] text-muted-foreground w-8 text-right">{formatTime(currentTime)}</span>
