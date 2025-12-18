@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Music2, Check, User, Shield, Clock } from "lucide-react";
+import { Check, User, Shield, Clock } from "lucide-react";
+import ambianLogo from "@/assets/ambian-logo-text-only.png";
 
 const features = [
   "3 days free trial",
@@ -20,7 +21,7 @@ const SubscriptionGate = () => {
   const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-48">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-56">
       <div className="max-w-md w-full text-center space-y-8 animate-fade-in">
         {/* Trial Banner */}
         {showTrialBanner && (
@@ -36,11 +37,8 @@ const SubscriptionGate = () => {
         )}
 
         {/* Logo */}
-        <div className="inline-flex items-center gap-3 mb-6">
-          <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center glow">
-            <Music2 className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <span className="text-3xl font-bold text-gradient">ambian</span>
+        <div className="mb-6">
+          <img src={ambianLogo} alt="Ambian" className="h-16" />
         </div>
 
         {/* Message */}
