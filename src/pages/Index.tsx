@@ -6,6 +6,7 @@ import HomeView from "@/components/HomeView";
 import SearchView from "@/components/SearchView";
 import LibraryView from "@/components/LibraryView";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
+import LikedSongsView from "@/components/LikedSongsView";
 import MobileNav from "@/components/MobileNav";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
@@ -124,6 +125,18 @@ const Index = () => {
   }
 
   const renderView = () => {
+    // Show liked songs view for special "liked-songs" playlist
+    if (selectedPlaylist?.id === "liked-songs") {
+      return (
+        <LikedSongsView
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          onTrackSelect={handleTrackSelect}
+          onBack={handleBackFromPlaylist}
+        />
+      );
+    }
+
     // Show playlist detail if a playlist is selected
     if (selectedPlaylist) {
       return (

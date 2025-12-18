@@ -106,12 +106,14 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     fetchLibrary();
   }, [user]);
 
-  const handleLikedSongsClick = async () => {
-    if (likedSongs.length > 0) {
-      const track = likedSongs[0];
-      const signedAudioUrl = await getSignedAudioUrl(track.audioUrl || null);
-      onTrackSelect({ ...track, audioUrl: signedAudioUrl });
-    }
+  const handleLikedSongsClick = () => {
+    // Open liked songs as a playlist view
+    onPlaylistSelect({
+      id: "liked-songs",
+      name: "Liked Songs",
+      cover: null,
+      description: "Your favorite tracks",
+    });
   };
 
   return (
