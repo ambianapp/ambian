@@ -9,6 +9,7 @@ interface SubscriptionInfo {
   isTrial: boolean;
   trialDaysRemaining: number;
   trialEnd: string | null;
+  isRecurring: boolean;
 }
 
 interface AuthContextType {
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isTrial: false,
     trialDaysRemaining: 0,
     trialEnd: null,
+    isRecurring: false,
   });
 
   const checkSubscription = async (overrideSession?: Session | null) => {
@@ -53,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isTrial: data.is_trial || false,
         trialDaysRemaining: data.trial_days_remaining || 0,
         trialEnd: data.trial_end || null,
+        isRecurring: data.is_recurring || false,
       });
     } catch (error) {
       console.error("Error checking subscription:", error);
@@ -91,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setIsAdmin(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false });
         }
       }
     );
@@ -131,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUser(null);
       setIsAdmin(false);
-      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null });
+      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false });
     }
   };
 

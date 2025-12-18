@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,18 +15,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const PLANS = {
+// Subscription prices (recurring)
+const SUBSCRIPTION_PLANS = {
+  monthly: {
+    priceId: "price_1S2BhCJrU52a7SNLtRRpyoCl",
+    price: "€8.90",
+    interval: "month",
+  },
+  yearly: {
+    priceId: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
+    price: "€89",
+    interval: "year",
+    savings: "Save €17.80/year",
+  },
+};
+
+// Prepaid prices (one-time)
+const PREPAID_PLANS = {
   monthly: {
     priceId: "price_1SfhOOJrU52a7SNLPPopAVyb",
     price: "€8.90",
-    interval: "month",
     duration: "1 month",
   },
   yearly: {
     priceId: "price_1SfhOZJrU52a7SNLIejHHUh4",
     price: "€89",
-    interval: "year",
     duration: "1 year",
     savings: "Save €17.80",
   },
@@ -38,12 +53,12 @@ const features = [
   "No music license required",
   "100+ new songs every week",
   "Perfect for business premises",
-  "Buy more time anytime",
 ];
 
 const Pricing = () => {
   const { user, subscription, checkSubscription } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
+  const [paymentType, setPaymentType] = useState<"subscription" | "prepaid">("subscription");
   const [isLoading, setIsLoading] = useState(false);
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
@@ -59,43 +74,52 @@ const Pricing = () => {
     const verifyPayment = async () => {
       const sessionId = searchParams.get("session_id");
       const checkoutStatus = searchParams.get("checkout");
+      const mode = searchParams.get("mode");
       
-      if (checkoutStatus === "success" && sessionId && user) {
-        setIsVerifying(true);
-        try {
-          const { data, error } = await supabase.functions.invoke("verify-payment", {
-            body: { sessionId },
-          });
+      if (checkoutStatus === "success" && user) {
+        // For prepaid payments, verify and activate access
+        if (mode === "prepaid" && sessionId) {
+          setIsVerifying(true);
+          try {
+            const { data, error } = await supabase.functions.invoke("verify-payment", {
+              body: { sessionId },
+            });
 
-          if (error) throw error;
+            if (error) throw error;
 
+            toast({
+              title: "Payment Successful!",
+              description: `Your access has been activated until ${new Date(data.access_until).toLocaleDateString()}.`,
+            });
+          } catch (error: any) {
+            console.error("Payment verification error:", error);
+            toast({
+              title: "Verification Issue",
+              description: "Payment received. Your access will be activated shortly.",
+            });
+          } finally {
+            setIsVerifying(false);
+          }
+        } else {
+          // For subscriptions, just show success message
           toast({
-            title: "Payment Successful!",
-            description: `Your access has been activated until ${new Date(data.access_until).toLocaleDateString()}.`,
+            title: "Subscription Activated!",
+            description: "Your subscription is now active. Enjoy unlimited music!",
           });
-          
-          // Refresh subscription status
-          await checkSubscription();
-          
-          // Clear URL params
-          navigate("/", { replace: true });
-        } catch (error: any) {
-          console.error("Payment verification error:", error);
-          toast({
-            title: "Verification Issue",
-            description: "Payment received. Your access will be activated shortly.",
-          });
-          navigate("/", { replace: true });
-        } finally {
-          setIsVerifying(false);
         }
+        
+        // Refresh subscription status
+        await checkSubscription();
+        
+        // Clear URL params
+        navigate("/", { replace: true });
       }
     };
 
     verifyPayment();
   }, [searchParams, user, checkSubscription, navigate, toast]);
 
-  const handleSubscribe = async () => {
+  const handleCheckout = async () => {
     if (!user) {
       navigate("/auth");
       return;
@@ -103,8 +127,12 @@ const Pricing = () => {
 
     setIsLoading(true);
     try {
+      const plans = paymentType === "subscription" ? SUBSCRIPTION_PLANS : PREPAID_PLANS;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: PLANS[selectedPlan].priceId },
+        body: { 
+          priceId: plans[selectedPlan].priceId,
+          paymentMode: paymentType === "subscription" ? "subscription" : "payment",
+        },
       });
 
       if (error) throw error;
@@ -141,9 +169,10 @@ const Pricing = () => {
 
     setIsInvoiceLoading(true);
     try {
+      const plans = paymentType === "subscription" ? SUBSCRIPTION_PLANS : PREPAID_PLANS;
       const { data, error } = await supabase.functions.invoke("create-invoice", {
         body: { 
-          priceId: PLANS[selectedPlan].priceId,
+          priceId: plans[selectedPlan].priceId,
           companyName: companyName.trim(),
           companyAddress: companyAddress.trim(),
         },
@@ -169,7 +198,6 @@ const Pricing = () => {
     }
   };
 
-  // Format access end date
   const formatAccessEnd = (dateStr: string | null) => {
     if (!dateStr) return null;
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -178,6 +206,8 @@ const Pricing = () => {
       day: "numeric",
     });
   };
+
+  const currentPlans = paymentType === "subscription" ? SUBSCRIPTION_PLANS : PREPAID_PLANS;
 
   if (isVerifying) {
     return (
@@ -199,9 +229,9 @@ const Pricing = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Buy Access Time</h1>
+            <h1 className="text-3xl font-bold text-foreground">Choose Your Plan</h1>
             <p className="text-muted-foreground">
-              Prepay for unlimited music access
+              Unlock unlimited music for your business
             </p>
           </div>
         </div>
@@ -215,12 +245,12 @@ const Pricing = () => {
             </div>
             <p className="text-muted-foreground">
               {subscription.trialDaysRemaining} day{subscription.trialDaysRemaining !== 1 ? 's' : ''} remaining. 
-              Buy access now to continue after your trial ends.
+              Subscribe now to continue after your trial ends.
             </p>
           </div>
         )}
 
-        {/* Active access message */}
+        {/* Active subscription/access message */}
         {subscription.subscribed && !subscription.isTrial && subscription.subscriptionEnd && (
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
             <div className="flex items-center justify-center gap-2 text-primary mb-2">
@@ -229,11 +259,41 @@ const Pricing = () => {
             </div>
             <p className="text-muted-foreground">
               Your access is valid until <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>.
-              <br />
-              Buy more time to extend your access.
+              {subscription.isRecurring ? " Your subscription will auto-renew." : " Buy more time to extend."}
             </p>
+            {subscription.isRecurring && (
+              <Button variant="link" onClick={() => navigate("/profile")} className="mt-2">
+                Manage Subscription
+              </Button>
+            )}
           </div>
         )}
+
+        {/* Payment Type Tabs */}
+        <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as "subscription" | "prepaid")} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="subscription" className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Subscription
+            </TabsTrigger>
+            <TabsTrigger value="prepaid" className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              One-Time Payment
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="subscription" className="mt-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Auto-renews each billing period. Cancel anytime.
+            </p>
+          </TabsContent>
+          
+          <TabsContent value="prepaid" className="mt-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Pay once for a set period. No auto-renewal. Buy more time when needed.
+            </p>
+          </TabsContent>
+        </Tabs>
 
         {/* Plan Selection */}
         <div className="grid md:grid-cols-2 gap-6">
@@ -247,14 +307,18 @@ const Pricing = () => {
             onClick={() => setSelectedPlan("monthly")}
           >
             <CardHeader>
-              <CardTitle>1 Month Access</CardTitle>
-              <CardDescription>Pay for one month</CardDescription>
+              <CardTitle>{paymentType === "subscription" ? "Monthly" : "1 Month Access"}</CardTitle>
+              <CardDescription>
+                {paymentType === "subscription" ? "Billed monthly" : "One-time payment"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-foreground mb-2">
-                {PLANS.monthly.price}
+                {currentPlans.monthly.price}
+                {paymentType === "subscription" && (
+                  <span className="text-lg font-normal text-muted-foreground">/month</span>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">One-time payment</p>
             </CardContent>
           </Card>
 
@@ -271,14 +335,17 @@ const Pricing = () => {
               Best Value
             </div>
             <CardHeader>
-              <CardTitle>1 Year Access</CardTitle>
-              <CardDescription>{PLANS.yearly.savings}</CardDescription>
+              <CardTitle>{paymentType === "subscription" ? "Yearly" : "1 Year Access"}</CardTitle>
+              <CardDescription>{currentPlans.yearly.savings}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-foreground mb-2">
-                {PLANS.yearly.price}
+                {currentPlans.yearly.price}
+                {paymentType === "subscription" && (
+                  <span className="text-lg font-normal text-muted-foreground">/year</span>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">≈ €7.40/month • One-time payment</p>
+              <p className="text-sm text-muted-foreground">≈ €7.40/month</p>
             </CardContent>
           </Card>
         </div>
@@ -301,6 +368,14 @@ const Pricing = () => {
                   <span className="text-foreground">{feature}</span>
                 </li>
               ))}
+              <li className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-foreground">
+                  {paymentType === "subscription" ? "Cancel anytime" : "No auto-renewal"}
+                </span>
+              </li>
             </ul>
           </CardContent>
         </Card>
@@ -338,13 +413,13 @@ const Pricing = () => {
                   <CardContent>
                     <Button
                       className="w-full"
-                      onClick={handleSubscribe}
+                      onClick={handleCheckout}
                       disabled={isLoading}
                     >
                       {isLoading ? (
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       ) : null}
-                      Buy {PLANS[selectedPlan].duration} Access
+                      {paymentType === "subscription" ? "Subscribe" : "Buy"} {selectedPlan === "yearly" ? "Yearly" : "Monthly"}
                     </Button>
                   </CardContent>
                 </Card>
@@ -409,7 +484,9 @@ const Pricing = () => {
               </div>
               <div className="pt-2">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Selected plan: <span className="font-medium text-foreground">{selectedPlan === "yearly" ? "1 Year" : "1 Month"}</span> ({PLANS[selectedPlan].price})
+                  Selected: <span className="font-medium text-foreground">
+                    {selectedPlan === "yearly" ? "Yearly" : "Monthly"} ({paymentType === "subscription" ? "Subscription" : "One-time"})
+                  </span> ({currentPlans[selectedPlan].price})
                 </p>
                 <Button
                   className="w-full"
