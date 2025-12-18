@@ -307,15 +307,15 @@ const Profile = () => {
             </div>
 
             <div className="p-4 rounded-lg border border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Add Extra Device</p>
-                  <p className="text-sm text-muted-foreground">€5/month per additional device</p>
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="font-medium text-foreground">
+                  Add Extra Device <span className="text-muted-foreground font-normal">• €5/month</span>
+                </p>
                 <Button
                   onClick={handleAddDeviceSlot}
                   disabled={isLoadingDevice || !subscription.subscribed}
                   size="sm"
+                  className="w-full sm:w-auto"
                 >
                   {isLoadingDevice ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
