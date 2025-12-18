@@ -42,15 +42,15 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border px-2 pb-6 pt-3 z-50">
-      <div className="flex items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border z-50 safe-area-bottom">
+      <div className="flex items-center justify-around h-20 px-4">
         {navItems.map((item) => {
           const isActive = isOnIndexPage && activeView === item.id;
           return (
             <button
               key={item.id}
               className={cn(
-                "flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl transition-colors min-w-[64px] min-h-[56px]",
+                "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
                 isActive ? "text-foreground" : "text-muted-foreground"
               )}
               onClick={() => handleNavClick(item.id)}
@@ -62,7 +62,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
         })}
         <button
           className={cn(
-            "flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl transition-colors min-w-[64px] min-h-[56px]",
+            "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
             isOnProfilePage ? "text-foreground" : "text-muted-foreground"
           )}
           onClick={handleProfileClick}
@@ -73,7 +73,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
         {isAdmin && (
           <button
             className={cn(
-              "flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl transition-colors min-w-[64px] min-h-[56px]",
+              "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
               isOnAdminPage ? "text-foreground" : "text-muted-foreground"
             )}
             onClick={handleAdminClick}
