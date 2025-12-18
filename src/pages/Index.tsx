@@ -116,6 +116,7 @@ const Index = () => {
             currentTrack={currentTrack}
             isPlaying={isPlaying}
             onTrackSelect={handleTrackSelect}
+            onPlaylistSelect={handlePlaylistSelect}
           />
         );
       case "library":
