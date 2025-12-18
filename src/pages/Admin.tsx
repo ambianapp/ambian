@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, Upload, Loader2, ListMusic, FileUp, FileAudio, Users } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, Upload, Loader2, ListMusic, FileAudio, Users } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 import { UserManager } from "@/components/admin/UserManager";
@@ -21,10 +21,10 @@ const Admin = () => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
-  const [isBulkAdding, setIsBulkAdding] = useState(false);
+  
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
-  const [bulkInput, setBulkInput] = useState("");
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTrack, setNewTrack] = useState({
     title: "",
@@ -81,43 +81,6 @@ const Admin = () => {
     setIsAdding(false);
   };
 
-  const handleBulkAdd = async () => {
-    if (!bulkInput.trim()) {
-      toast({ title: "Error", description: "Enter track data", variant: "destructive" });
-      return;
-    }
-
-    setIsBulkAdding(true);
-    const lines = bulkInput.trim().split("\n").filter(line => line.trim());
-    const tracksToAdd: { title: string; artist: string; duration: string }[] = [];
-
-    for (const line of lines) {
-      // Format: "Title - Duration" or "Title    Duration" or just "Title"
-      const parts = line.split(/\s{2,}|\t|-(?=\s*\d)/).map(p => p.trim()).filter(Boolean);
-      if (parts.length >= 1) {
-        const title = parts[0];
-        const duration = parts[1] || "";
-        tracksToAdd.push({ title, artist: "Unknown", duration });
-      }
-    }
-
-    if (tracksToAdd.length === 0) {
-      toast({ title: "Error", description: "No valid tracks found", variant: "destructive" });
-      setIsBulkAdding(false);
-      return;
-    }
-
-    const { error } = await supabase.from("tracks").insert(tracksToAdd);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: `${tracksToAdd.length} tracks added` });
-      setBulkInput("");
-      loadTracks();
-    }
-    setIsBulkAdding(false);
-  };
 
   // Get audio duration using Audio API
   const getAudioDuration = (file: File): Promise<string> => {
@@ -314,31 +277,6 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            {/* Bulk Add Tracks */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileUp className="w-5 h-5" />
-                  Bulk Add Tracks (Text)
-                </CardTitle>
-                <CardDescription>
-                  Paste multiple tracks, one per line. Format: "Title - Duration" or "Title   Duration"
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
-                  value={bulkInput}
-                  onChange={(e) => setBulkInput(e.target.value)}
-                  placeholder={`Ocean Waves - 3:42\nForest Rain - 5:15\nMorning Birds   4:30\nPeaceful Stream`}
-                  className="bg-card min-h-[150px] font-mono text-sm"
-                  rows={8}
-                />
-                <Button onClick={handleBulkAdd} disabled={isBulkAdding}>
-                  {isBulkAdding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                  Add All Tracks
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Add Single Track Form */}
             <Card className="bg-card border-border">
