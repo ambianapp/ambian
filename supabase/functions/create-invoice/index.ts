@@ -2,9 +2,19 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const ALLOWED_ORIGINS = [
+  "https://ambian.lovable.app",
+  "https://preview--ambian.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,13 +23,25 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "No authorization header" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+    });
+  }
+
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
   );
 
   try {
@@ -28,9 +50,8 @@ serve(async (req) => {
     const { priceId, companyName, companyAddress } = await req.json();
     logStep("Received request", { priceId, companyName });
 
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    const { data, error: userError } = await supabaseClient.auth.getUser();
+    if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });

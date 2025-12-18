@@ -2,9 +2,19 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const ALLOWED_ORIGINS = [
+  "https://ambian.lovable.app",
+  "https://preview--ambian.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,12 +23,34 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
+  // Use anon key with user's token for auth, service role only for subscription upserts
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const authHeader = req.headers.get("Authorization");
+
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "No authorization header" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+    });
+  }
+
+  // User client for authentication
+  const userClient = createClient(
+    supabaseUrl,
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  // Service client only for subscription upserts (requires bypassing RLS)
+  const serviceClient = createClient(
+    supabaseUrl,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     { auth: { persistSession: false } }
   );
@@ -29,11 +61,7 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await userClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
@@ -55,8 +83,8 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No Stripe customer found, checking trial");
       
-      // Update local subscription status
-      await supabaseClient
+      // Update local subscription status (needs service role to bypass RLS)
+      await serviceClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
@@ -95,8 +123,8 @@ serve(async (req) => {
       planType = interval === "year" ? "yearly" : "monthly";
       logStep("Active subscription found", { subscriptionId: subscription.id, planType });
 
-      // Update local subscription status
-      await supabaseClient
+      // Update local subscription status (needs service role to bypass RLS)
+      await serviceClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
@@ -109,7 +137,7 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
     } else {
-      await supabaseClient
+      await serviceClient
         .from("subscriptions")
         .upsert({
           user_id: user.id,
