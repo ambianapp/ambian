@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Clock, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { genres } from "@/data/musicData";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getSignedAudioUrl } from "@/lib/storage";
-import GenreCard from "./GenreCard";
 import TrackRow from "./TrackRow";
 import PlaylistCard from "./PlaylistCard";
 import { Track } from "@/data/musicData";
@@ -34,11 +33,51 @@ interface SearchViewProps {
   onPlaylistSelect?: (playlist: any) => void;
 }
 
+const RECENT_SEARCHES_KEY = "ambian_recent_searches";
+const MAX_RECENT_SEARCHES = 8;
+
 const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: SearchViewProps) => {
   const [query, setQuery] = useState("");
   const [filteredTracks, setFilteredTracks] = useState<DbTrack[]>([]);
   const [filteredPlaylists, setFilteredPlaylists] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch {
+        setRecentSearches([]);
+      }
+    }
+  }, []);
+
+  // Save search to recent searches
+  const saveRecentSearch = (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    
+    const updated = [
+      searchQuery.trim(),
+      ...recentSearches.filter(s => s.toLowerCase() !== searchQuery.trim().toLowerCase())
+    ].slice(0, MAX_RECENT_SEARCHES);
+    
+    setRecentSearches(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  };
+
+  const removeRecentSearch = (searchToRemove: string) => {
+    const updated = recentSearches.filter(s => s !== searchToRemove);
+    setRecentSearches(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+  };
 
   useEffect(() => {
     const searchData = async () => {
@@ -67,6 +106,11 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
       setFilteredTracks(tracksResult.data || []);
       setFilteredPlaylists(playlistsResult.data || []);
       setIsLoading(false);
+
+      // Save search if we got results
+      if ((tracksResult.data?.length || 0) > 0 || (playlistsResult.data?.length || 0) > 0) {
+        saveRecentSearch(query);
+      }
     };
 
     const debounce = setTimeout(searchData, 300);
@@ -76,14 +120,13 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
   const handleTrackSelect = async (dbTrack: DbTrack) => {
     const signedAudioUrl = await getSignedAudioUrl(dbTrack.audio_url);
     
-    // Convert all filtered tracks for playlist context
     const playlistTracks: Track[] = filteredTracks.map(t => ({
       id: t.id,
       title: t.title,
       artist: t.artist,
       album: t.album || "",
       duration: t.duration || "0:00",
-      cover: t.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+      cover: t.cover_url || "/placeholder.svg",
       genre: t.genre || "",
     }));
     
@@ -93,7 +136,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
       artist: dbTrack.artist,
       album: dbTrack.album || "",
       duration: dbTrack.duration || "0:00",
-      cover: dbTrack.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+      cover: dbTrack.cover_url || "/placeholder.svg",
       genre: dbTrack.genre || "",
       audioUrl: signedAudioUrl,
     }, playlistTracks);
@@ -118,7 +161,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
           </div>
         </div>
 
-        {/* Search Results or Browse */}
+        {/* Search Results or Recent Searches */}
         {query ? (
           <div className="space-y-8 animate-fade-in">
             {isLoading ? (
@@ -138,7 +181,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
                             id: playlist.id,
                             name: playlist.name,
                             description: playlist.description || "",
-                            cover: playlist.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+                            cover: playlist.cover_url || "/placeholder.svg",
                             trackCount: 0,
                             tracks: [],
                           }}
@@ -167,7 +210,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
                             artist: track.artist,
                             album: track.album || "",
                             duration: track.duration || "0:00",
-                            cover: track.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+                            cover: track.cover_url || "/placeholder.svg",
                             genre: track.genre || "",
                           }}
                           index={index + 1}
@@ -184,12 +227,48 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }
           </div>
         ) : (
           <section className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            <h2 className="text-xl font-bold text-foreground mb-4">Browse All</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {genres.map((genre) => (
-                <GenreCard key={genre.id} genre={genre} onClick={() => setQuery(genre.name)} />
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-foreground">Recent Searches</h2>
+              {recentSearches.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={clearRecentSearches}
+                >
+                  Clear all
+                </Button>
+              )}
             </div>
+            
+            {recentSearches.length > 0 ? (
+              <div className="space-y-2">
+                {recentSearches.map((search, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors group"
+                  >
+                    <Clock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    <button
+                      className="flex-1 text-left text-foreground hover:text-primary transition-colors"
+                      onClick={() => setQuery(search)}
+                    >
+                      {search}
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="iconSm"
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity"
+                      onClick={() => removeRecentSearch(search)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No recent searches. Start typing to search for songs and playlists.</p>
+            )}
           </section>
         )}
       </div>
