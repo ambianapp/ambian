@@ -95,8 +95,15 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
   };
 
   const handleLikedSongsClick = () => {
-    // Navigate to library view which shows liked songs
-    onViewChange("library");
+    // Open liked songs as a special playlist view
+    if (onPlaylistSelect) {
+      onPlaylistSelect({
+        id: "liked-songs",
+        name: "Liked Songs",
+        cover: null,
+        description: "Your favorite tracks",
+      });
+    }
   };
 
   const allPlaylists = [...ownPlaylists, ...likedPlaylists];
