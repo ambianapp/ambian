@@ -11,6 +11,7 @@ interface SubscriptionInfo {
   trialDaysRemaining: number;
   trialEnd: string | null;
   isRecurring: boolean;
+  deviceSlots: number;
 }
 
 interface AuthContextType {
@@ -21,6 +22,7 @@ interface AuthContextType {
   subscription: SubscriptionInfo;
   signOut: () => Promise<void>;
   checkSubscription: () => Promise<void>;
+  syncDeviceSlots: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     trialDaysRemaining: 0,
     trialEnd: null,
     isRecurring: false,
+    deviceSlots: 1,
   });
   
   const isSigningOut = useRef(false);
@@ -59,9 +62,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         trialDaysRemaining: data.trial_days_remaining || 0,
         trialEnd: data.trial_end || null,
         isRecurring: data.is_recurring || false,
+        deviceSlots: data.device_slots || 1,
       });
     } catch (error) {
       console.error("Error checking subscription:", error);
+    }
+  };
+
+  const syncDeviceSlots = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-device-slots");
+      if (error) throw error;
+      
+      if (data?.device_slots) {
+        setSubscription(prev => ({ ...prev, deviceSlots: data.device_slots }));
+      }
+    } catch (error) {
+      console.error("Error syncing device slots:", error);
     }
   };
 
@@ -82,32 +99,71 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Register session in active_sessions table (kick out other devices)
+  // Register session in active_sessions table (kick out oldest devices if over limit)
   const registerSession = useCallback(async (userId: string, sessionAccessToken: string) => {
     try {
-      // Generate a unique session identifier from the access token
       const sessionId = sessionAccessToken.slice(-32);
       const deviceInfo = navigator.userAgent;
 
-      // First, try to update existing record
+      // Get device slots limit from subscription
+      const { data: subData } = await supabase
+        .from("subscriptions")
+        .select("device_slots")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      const deviceSlots = subData?.device_slots || 1;
+
+      // Check if this session already exists
       const { data: existingSession } = await supabase
         .from("active_sessions")
         .select("id")
         .eq("user_id", userId)
+        .eq("session_id", sessionId)
         .maybeSingle();
 
       if (existingSession) {
-        // Update existing session
+        // Session already registered, just update timestamp
         await supabase
           .from("active_sessions")
-          .update({ session_id: sessionId, device_info: deviceInfo })
-          .eq("user_id", userId);
-      } else {
-        // Insert new session
-        await supabase
-          .from("active_sessions")
-          .insert({ user_id: userId, session_id: sessionId, device_info: deviceInfo });
+          .update({ device_info: deviceInfo, updated_at: new Date().toISOString() })
+          .eq("id", existingSession.id);
+        console.log("Session updated");
+        return;
       }
+
+      // Get current session count
+      const { data: allSessions, error: countError } = await supabase
+        .from("active_sessions")
+        .select("id, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+
+      if (countError) {
+        console.error("Error counting sessions:", countError);
+        return;
+      }
+
+      const currentCount = allSessions?.length || 0;
+
+      // If at or over the limit, remove oldest sessions
+      if (currentCount >= deviceSlots) {
+        const sessionsToRemove = currentCount - deviceSlots + 1;
+        const oldestSessions = allSessions?.slice(0, sessionsToRemove) || [];
+        
+        for (const oldSession of oldestSessions) {
+          await supabase
+            .from("active_sessions")
+            .delete()
+            .eq("id", oldSession.id);
+        }
+        console.log(`Removed ${sessionsToRemove} old session(s)`);
+      }
+
+      // Insert new session
+      await supabase
+        .from("active_sessions")
+        .insert({ user_id: userId, session_id: sessionId, device_info: deviceInfo });
 
       console.log("Session registered successfully");
     } catch (error) {
@@ -122,10 +178,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const sessionId = currentSession.access_token.slice(-32);
       
+      // Check if this session is in the active sessions list
       const { data, error } = await supabase
         .from("active_sessions")
         .select("session_id")
         .eq("user_id", currentSession.user.id)
+        .eq("session_id", sessionId)
         .maybeSingle();
 
       if (error) {
@@ -133,8 +191,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return true; // Don't kick out on error
       }
 
-      // If no active session record or session doesn't match, user was kicked out
-      if (data && data.session_id !== sessionId) {
+      // If session not found, user was kicked out
+      if (!data) {
         console.log("Session invalidated - logged in from another device");
         return false;
       }
@@ -149,12 +207,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     isSigningOut.current = true;
     try {
-      // Clear the active session first
-      if (user) {
+      // Clear only this device's session, not all sessions
+      if (user && session) {
+        const sessionId = session.access_token.slice(-32);
         await supabase
           .from("active_sessions")
           .delete()
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .eq("session_id", sessionId);
       }
       await supabase.auth.signOut();
     } catch (error) {
@@ -164,7 +224,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUser(null);
       setIsAdmin(false);
-      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false });
+      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, deviceSlots: 1 });
       isSigningOut.current = false;
     }
   };
@@ -189,7 +249,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setIsAdmin(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, deviceSlots: 1 });
         }
       }
     );
@@ -255,6 +315,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         subscription,
         signOut,
         checkSubscription,
+        syncDeviceSlots,
       }}
     >
       {children}

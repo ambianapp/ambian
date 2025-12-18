@@ -241,6 +241,7 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          device_slots: number
           id: string
           plan_type: string | null
           status: string
@@ -253,6 +254,7 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          device_slots?: number
           id?: string
           plan_type?: string | null
           status?: string
@@ -265,6 +267,7 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          device_slots?: number
           id?: string
           plan_type?: string | null
           status?: string
