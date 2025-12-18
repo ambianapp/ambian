@@ -2,25 +2,25 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Track } from "@/data/musicData";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
 
-interface PlayerBarProps {
-  currentTrack: (Track & { audioUrl?: string }) | null;
-  isPlaying: boolean;
-  onPlayPause: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  shuffle: boolean;
-  onShuffleToggle: () => void;
-  repeat: "off" | "all" | "one";
-  onRepeatToggle: () => void;
-}
-
-const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, shuffle, onShuffleToggle, repeat, onRepeatToggle }: PlayerBarProps) => {
+const PlayerBar = () => {
+  const {
+    currentTrack,
+    isPlaying,
+    shuffle,
+    repeat,
+    handlePlayPause,
+    handleNext,
+    handlePrevious,
+    handleShuffleToggle,
+    handleRepeatToggle,
+  } = usePlayer();
+  
   const audioRef = useRef<HTMLAudioElement>(null);
   const [volume, setVolume] = useState([75]);
   const [progress, setProgress] = useState([0]);
@@ -68,7 +68,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
         title: "Playback issue",
         description: "Skipping to next track",
       });
-      onNext();
+      handleNext();
     }
   };
 
@@ -107,11 +107,11 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
             audioRef.current.play().catch(() => {
               // If recovery fails, skip to next
               retryCountRef.current = 0;
-              onNext();
+              handleNext();
             });
           } else {
             retryCountRef.current = 0;
-            onNext();
+            handleNext();
           }
         }
       }, 5000);
@@ -122,7 +122,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
         clearInterval(stallCheckIntervalRef.current);
       }
     };
-  }, [isPlaying, currentTrack, onNext, isOffline]);
+  }, [isPlaying, currentTrack, handleNext, isOffline]);
 
   // Reset retry count on successful track change
   useEffect(() => {
@@ -147,7 +147,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
         
         // Play next song after a short delay to ensure network is stable
         setTimeout(() => {
-          onNext();
+          handleNext();
         }, 500);
       } else {
         toast({
@@ -177,7 +177,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [toast, onNext]);
+  }, [toast, handleNext]);
 
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -316,7 +316,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
               audioRef.current.currentTime = 0;
               audioRef.current.play();
             } else {
-              onNext();
+              handleNext();
             }
           }}
         />
@@ -370,24 +370,24 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
             <Button
               variant="ghost"
               size="iconSm"
-              onClick={onShuffleToggle}
+              onClick={handleShuffleToggle}
               className={cn("h-7 w-7", shuffle ? "text-primary" : "text-muted-foreground")}
             >
               <Shuffle className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="iconSm" onClick={onPrevious} className="text-foreground h-8 w-8">
+            <Button variant="ghost" size="iconSm" onClick={handlePrevious} className="text-foreground h-8 w-8">
               <SkipBack className="w-4 h-4" />
             </Button>
-            <Button variant="player" size="icon" onClick={onPlayPause} className="h-10 w-10">
+            <Button variant="player" size="icon" onClick={handlePlayPause} className="h-10 w-10">
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="iconSm" onClick={onNext} className="text-foreground h-8 w-8">
+            <Button variant="ghost" size="iconSm" onClick={handleNext} className="text-foreground h-8 w-8">
               <SkipForward className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="iconSm"
-              onClick={onRepeatToggle}
+              onClick={handleRepeatToggle}
               className={cn("h-7 w-7 relative", repeat !== "off" ? "text-primary" : "text-muted-foreground")}
             >
               {repeat === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
@@ -439,24 +439,24 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
             <Button 
               variant="ghost" 
               size="iconSm" 
-              onClick={onShuffleToggle}
+              onClick={handleShuffleToggle}
               className={cn(shuffle ? "text-primary" : "text-muted-foreground hover:text-foreground")}
             >
               <Shuffle className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={onPrevious} className="text-foreground">
+            <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground">
               <SkipBack className="w-5 h-5" />
             </Button>
-            <Button variant="player" size="iconLg" onClick={onPlayPause} className="h-12 w-12">
+            <Button variant="player" size="iconLg" onClick={handlePlayPause} className="h-12 w-12">
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={onNext} className="text-foreground">
+            <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground">
               <SkipForward className="w-5 h-5" />
             </Button>
             <Button 
               variant="ghost" 
               size="iconSm" 
-              onClick={onRepeatToggle}
+              onClick={handleRepeatToggle}
               className={cn("relative", repeat !== "off" ? "text-primary" : "text-muted-foreground hover:text-foreground")}
             >
               {repeat === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
@@ -492,7 +492,7 @@ const PlayerBar = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrevious, s
             onValueChange={setVolume}
             max={100}
             step={1}
-            className="w-24"
+            className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
           />
         </div>
       </div>

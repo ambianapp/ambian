@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { PlayerProvider } from "@/contexts/PlayerContext";
+import PlayerBar from "@/components/PlayerBar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -97,6 +99,17 @@ const AppRoutes = () => {
   );
 };
 
+const AppContent = () => {
+  const { user } = useAuth();
+  
+  return (
+    <>
+      <AppRoutes />
+      {user && <PlayerBar />}
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -104,7 +117,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <PlayerProvider>
+            <AppContent />
+          </PlayerProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
