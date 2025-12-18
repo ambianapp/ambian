@@ -111,12 +111,12 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 animate-fade-in">
+    <div className="h-screen bg-background flex items-start md:items-center justify-center p-4 pt-8 md:pt-4 overflow-hidden">
+      <div className="w-full max-w-md space-y-4 md:space-y-8 animate-fade-in">
         {/* Logo */}
         <div className="text-center">
-          <div className="mb-8">
-            <img src={ambianLogo} alt="Ambian" className="h-32 mx-auto" />
+          <div className="mb-4 md:mb-8">
+            <img src={ambianLogo} alt="Ambian" className="h-20 md:h-32 mx-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
             {isLogin ? "Welcome back" : "Start your free trial"}
@@ -129,7 +129,7 @@ const Auth = () => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
           {!isLogin && (
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
