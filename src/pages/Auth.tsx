@@ -122,14 +122,19 @@ const Auth = () => {
           <img src={ambianLogo} alt="Ambian" className="h-24 w-auto mb-8 self-start" />
           
           {/* Main Headline */}
-          <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
-            Professional Background Music for Your Business
-          </h1>
-          
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-            Create the perfect atmosphere for your customers with fully licensed, 
-            curated playlists designed for commercial spaces.
-          </p>
+          <div className="mb-6">
+            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full mb-4">
+              <Shield className="w-5 h-5" />
+              <span className="font-semibold">100% Copyright-Free Music</span>
+            </div>
+            <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
+              No Licenses Needed. Ever.
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-lg">
+              Play music in your business without worrying about copyright claims, 
+              licensing fees, or legal issues. All tracks are pre-cleared for commercial use.
+            </p>
+          </div>
           
           {/* Who it's for */}
           <div className="mb-8">
@@ -164,11 +169,11 @@ const Auth = () => {
             
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-primary" />
+                <Music className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h4 className="font-semibold text-foreground">Fully Licensed Music</h4>
-                <p className="text-sm text-muted-foreground">All tracks are cleared for commercial use. No copyright worries.</p>
+                <h4 className="font-semibold text-foreground">50+ Curated Playlists</h4>
+                <p className="text-sm text-muted-foreground">Genre-based playlists crafted by music professionals for every mood.</p>
               </div>
             </div>
             
@@ -179,16 +184,6 @@ const Auth = () => {
               <div>
                 <h4 className="font-semibold text-foreground">Smart Scheduling</h4>
                 <p className="text-sm text-muted-foreground">Set different playlists for different times. Automated and hands-free.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Music className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground">Curated Playlists</h4>
-                <p className="text-sm text-muted-foreground">50+ genre-based playlists crafted by music professionals.</p>
               </div>
             </div>
           </div>
