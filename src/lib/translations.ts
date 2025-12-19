@@ -1,0 +1,651 @@
+export type Language = "en" | "sv" | "fi" | "de" | "fr";
+
+export const languageNames: Record<Language, string> = {
+  en: "English",
+  sv: "Svenska",
+  fi: "Suomi",
+  de: "Deutsch",
+  fr: "Français",
+};
+
+export const translations: Record<Language, Record<string, string>> = {
+  en: {
+    // Navigation
+    "nav.home": "Home",
+    "nav.search": "Search",
+    "nav.library": "Your Library",
+    "nav.schedule": "Schedule",
+    "nav.profile": "Profile",
+    
+    // Common
+    "common.save": "Save Changes",
+    "common.cancel": "Cancel",
+    "common.loading": "Loading...",
+    "common.error": "Error",
+    "common.success": "Success",
+    "common.back": "Back",
+    "common.signOut": "Sign Out",
+    "common.subscribe": "Subscribe",
+    "common.play": "Play",
+    "common.pause": "Pause",
+    "common.next": "Next",
+    "common.previous": "Previous",
+    "common.shuffle": "Shuffle",
+    "common.repeat": "Repeat",
+    
+    // Auth
+    "auth.signIn": "Sign In",
+    "auth.signUp": "Sign Up",
+    "auth.email": "Email",
+    "auth.password": "Password",
+    "auth.forgotPassword": "Forgot password?",
+    "auth.noAccount": "Don't have an account?",
+    "auth.haveAccount": "Already have an account?",
+    "auth.welcomeBack": "Welcome back",
+    "auth.startTrial": "Start your free trial",
+    "auth.trialInfo": "3 days free • No credit card required",
+    
+    // Profile
+    "profile.title": "Profile Settings",
+    "profile.subtitle": "Manage your account and subscription",
+    "profile.personalInfo": "Personal Information",
+    "profile.updateDetails": "Update your profile details",
+    "profile.fullName": "Full Name",
+    "profile.language": "Language",
+    "profile.selectLanguage": "Select your preferred language",
+    
+    // Subscription
+    "subscription.title": "Subscription",
+    "subscription.manage": "Manage your subscription plan",
+    "subscription.active": "Active Subscription",
+    "subscription.inactive": "No Active Subscription",
+    "subscription.yearly": "Yearly Plan",
+    "subscription.monthly": "Monthly Plan",
+    "subscription.renewsOn": "Renews on",
+    "subscription.manageBtn": "Manage Subscription",
+    "subscription.subscribeNow": "Subscribe Now",
+    "subscription.refreshStatus": "Refresh Status",
+    
+    // Device slots
+    "devices.title": "Multiple Locations",
+    "devices.subtitle": "Play music in multiple locations at the same time",
+    "devices.active": "Active Locations",
+    "devices.canPlay": "You can play music in {count} location(s) at the same time",
+    "devices.needMore": "Need music in more locations?",
+    "devices.addFor": "Add another location for €5/month",
+    "devices.addBtn": "Add Location",
+    "devices.subscribeFirst": "Subscribe first to add extra locations.",
+    
+    // Invoices
+    "invoices.title": "Invoices",
+    "invoices.subtitle": "View and download your payment history",
+    "invoices.none": "No invoices found.",
+    "invoices.paid": "Paid",
+    
+    // Pricing
+    "pricing.title": "Subscribe to Listen",
+    "pricing.subtitle": "Get unlimited access to our entire music library for your business.",
+    "pricing.trialActive": "Free Trial Active",
+    "pricing.daysRemaining": "{days} day(s) remaining. Subscribe now to continue after your trial ends.",
+    "pricing.accessActive": "Access Active",
+    "pricing.validUntil": "Your access is valid until",
+    "pricing.autoRenew": "Your subscription will auto-renew.",
+    "pricing.buyMore": "Buy more time to extend.",
+    "pricing.subscription": "Subscription",
+    "pricing.oneTime": "One-Time Payment",
+    "pricing.autoRenews": "Auto-renews each billing period. Cancel anytime.",
+    "pricing.payOnce": "Pay once for a set period. No auto-renewal. Buy more time when needed.",
+    "pricing.monthly": "Monthly",
+    "pricing.yearly": "Yearly",
+    "pricing.monthAccess": "1 Month Access",
+    "pricing.yearAccess": "1 Year Access",
+    "pricing.billedMonthly": "Billed monthly",
+    "pricing.billedYearly": "One-time payment",
+    "pricing.bestValue": "Best Value",
+    "pricing.whatsIncluded": "What's Included",
+    "pricing.cancelAnytime": "Cancel anytime",
+    "pricing.noAutoRenewal": "No auto-renewal",
+    "pricing.payNow": "Pay Now",
+    "pricing.payNowDesc": "Pay immediately with card and receive invoice",
+    "pricing.payByInvoice": "Pay by Invoice",
+    "pricing.payByInvoiceDesc": "Receive invoice with 14 days payment terms",
+    "pricing.requestInvoice": "Request Invoice",
+    "pricing.vatExcluded": "Prices shown exclude VAT. VAT will be calculated based on your location.",
+    "pricing.exclVat": "excl. VAT",
+    "pricing.startTrial": "Start Free Trial",
+    
+    // Features
+    "features.unlimited": "Unlimited access to all music",
+    "features.playlists": "Create custom playlists",
+    "features.noLicense": "No music license required",
+    "features.newSongs": "100+ new songs every week",
+    "features.business": "Perfect for business premises",
+    
+    // Search
+    "search.title": "Search",
+    "search.placeholder": "Search playlists...",
+    "search.browse": "Browse All",
+    
+    // Home
+    "home.recentlyPlayed": "Recently Played",
+    "home.allPlaylists": "All Playlists",
+    "home.continue": "Continue Listening",
+    
+    // Player
+    "player.nowPlaying": "Now Playing",
+    "player.crossfade": "Crossfade",
+    "player.volume": "Volume",
+  },
+  
+  sv: {
+    // Navigation
+    "nav.home": "Hem",
+    "nav.search": "Sök",
+    "nav.library": "Ditt Bibliotek",
+    "nav.schedule": "Schema",
+    "nav.profile": "Profil",
+    
+    // Common
+    "common.save": "Spara ändringar",
+    "common.cancel": "Avbryt",
+    "common.loading": "Laddar...",
+    "common.error": "Fel",
+    "common.success": "Klart",
+    "common.back": "Tillbaka",
+    "common.signOut": "Logga ut",
+    "common.subscribe": "Prenumerera",
+    "common.play": "Spela",
+    "common.pause": "Pausa",
+    "common.next": "Nästa",
+    "common.previous": "Föregående",
+    "common.shuffle": "Blanda",
+    "common.repeat": "Upprepa",
+    
+    // Auth
+    "auth.signIn": "Logga in",
+    "auth.signUp": "Registrera",
+    "auth.email": "E-post",
+    "auth.password": "Lösenord",
+    "auth.forgotPassword": "Glömt lösenord?",
+    "auth.noAccount": "Har du inget konto?",
+    "auth.haveAccount": "Har du redan ett konto?",
+    "auth.welcomeBack": "Välkommen tillbaka",
+    "auth.startTrial": "Starta din kostnadsfria provperiod",
+    "auth.trialInfo": "3 dagar gratis • Inget kreditkort krävs",
+    
+    // Profile
+    "profile.title": "Profilinställningar",
+    "profile.subtitle": "Hantera ditt konto och prenumeration",
+    "profile.personalInfo": "Personlig information",
+    "profile.updateDetails": "Uppdatera dina profiluppgifter",
+    "profile.fullName": "Fullständigt namn",
+    "profile.language": "Språk",
+    "profile.selectLanguage": "Välj ditt föredragna språk",
+    
+    // Subscription
+    "subscription.title": "Prenumeration",
+    "subscription.manage": "Hantera din prenumeration",
+    "subscription.active": "Aktiv prenumeration",
+    "subscription.inactive": "Ingen aktiv prenumeration",
+    "subscription.yearly": "Årsplan",
+    "subscription.monthly": "Månadsplan",
+    "subscription.renewsOn": "Förnyas den",
+    "subscription.manageBtn": "Hantera prenumeration",
+    "subscription.subscribeNow": "Prenumerera nu",
+    "subscription.refreshStatus": "Uppdatera status",
+    
+    // Device slots
+    "devices.title": "Flera platser",
+    "devices.subtitle": "Spela musik på flera platser samtidigt",
+    "devices.active": "Aktiva platser",
+    "devices.canPlay": "Du kan spela musik på {count} plats(er) samtidigt",
+    "devices.needMore": "Behöver du musik på fler platser?",
+    "devices.addFor": "Lägg till en plats för €5/månad",
+    "devices.addBtn": "Lägg till plats",
+    "devices.subscribeFirst": "Prenumerera först för att lägga till extra platser.",
+    
+    // Invoices
+    "invoices.title": "Fakturor",
+    "invoices.subtitle": "Visa och ladda ner din betalningshistorik",
+    "invoices.none": "Inga fakturor hittades.",
+    "invoices.paid": "Betald",
+    
+    // Pricing
+    "pricing.title": "Prenumerera för att lyssna",
+    "pricing.subtitle": "Få obegränsad tillgång till hela vårt musikbibliotek för ditt företag.",
+    "pricing.trialActive": "Gratis provperiod aktiv",
+    "pricing.daysRemaining": "{days} dag(ar) kvar. Prenumerera nu för att fortsätta efter provperioden.",
+    "pricing.accessActive": "Åtkomst aktiv",
+    "pricing.validUntil": "Din åtkomst är giltig till",
+    "pricing.autoRenew": "Din prenumeration förnyas automatiskt.",
+    "pricing.buyMore": "Köp mer tid för att förlänga.",
+    "pricing.subscription": "Prenumeration",
+    "pricing.oneTime": "Engångsbetalning",
+    "pricing.autoRenews": "Förnyas automatiskt. Avsluta när som helst.",
+    "pricing.payOnce": "Betala en gång. Ingen automatisk förnyelse.",
+    "pricing.monthly": "Månadsvis",
+    "pricing.yearly": "Årsvis",
+    "pricing.monthAccess": "1 månads åtkomst",
+    "pricing.yearAccess": "1 års åtkomst",
+    "pricing.billedMonthly": "Faktureras månadsvis",
+    "pricing.billedYearly": "Engångsbetalning",
+    "pricing.bestValue": "Bäst värde",
+    "pricing.whatsIncluded": "Vad som ingår",
+    "pricing.cancelAnytime": "Avsluta när som helst",
+    "pricing.noAutoRenewal": "Ingen automatisk förnyelse",
+    "pricing.payNow": "Betala nu",
+    "pricing.payNowDesc": "Betala direkt med kort och få faktura",
+    "pricing.payByInvoice": "Betala med faktura",
+    "pricing.payByInvoiceDesc": "Få faktura med 14 dagars betalningsvillkor",
+    "pricing.requestInvoice": "Begär faktura",
+    "pricing.vatExcluded": "Priser exklusive moms. Moms beräknas baserat på din plats.",
+    "pricing.exclVat": "exkl. moms",
+    "pricing.startTrial": "Starta gratis provperiod",
+    
+    // Features
+    "features.unlimited": "Obegränsad tillgång till all musik",
+    "features.playlists": "Skapa egna spellistor",
+    "features.noLicense": "Ingen musiklicens krävs",
+    "features.newSongs": "100+ nya låtar varje vecka",
+    "features.business": "Perfekt för företagslokaler",
+    
+    // Search
+    "search.title": "Sök",
+    "search.placeholder": "Sök spellistor...",
+    "search.browse": "Bläddra alla",
+    
+    // Home
+    "home.recentlyPlayed": "Nyligen spelat",
+    "home.allPlaylists": "Alla spellistor",
+    "home.continue": "Fortsätt lyssna",
+    
+    // Player
+    "player.nowPlaying": "Spelar nu",
+    "player.crossfade": "Övergång",
+    "player.volume": "Volym",
+  },
+  
+  fi: {
+    // Navigation
+    "nav.home": "Koti",
+    "nav.search": "Haku",
+    "nav.library": "Kirjastosi",
+    "nav.schedule": "Aikataulu",
+    "nav.profile": "Profiili",
+    
+    // Common
+    "common.save": "Tallenna muutokset",
+    "common.cancel": "Peruuta",
+    "common.loading": "Ladataan...",
+    "common.error": "Virhe",
+    "common.success": "Onnistui",
+    "common.back": "Takaisin",
+    "common.signOut": "Kirjaudu ulos",
+    "common.subscribe": "Tilaa",
+    "common.play": "Toista",
+    "common.pause": "Tauko",
+    "common.next": "Seuraava",
+    "common.previous": "Edellinen",
+    "common.shuffle": "Sekoita",
+    "common.repeat": "Toista",
+    
+    // Auth
+    "auth.signIn": "Kirjaudu sisään",
+    "auth.signUp": "Rekisteröidy",
+    "auth.email": "Sähköposti",
+    "auth.password": "Salasana",
+    "auth.forgotPassword": "Unohditko salasanan?",
+    "auth.noAccount": "Eikö sinulla ole tiliä?",
+    "auth.haveAccount": "Onko sinulla jo tili?",
+    "auth.welcomeBack": "Tervetuloa takaisin",
+    "auth.startTrial": "Aloita ilmainen kokeilu",
+    "auth.trialInfo": "3 päivää ilmaiseksi • Ei luottokorttia",
+    
+    // Profile
+    "profile.title": "Profiiliasetukset",
+    "profile.subtitle": "Hallitse tiliäsi ja tilaustasi",
+    "profile.personalInfo": "Henkilötiedot",
+    "profile.updateDetails": "Päivitä profiilitietosi",
+    "profile.fullName": "Koko nimi",
+    "profile.language": "Kieli",
+    "profile.selectLanguage": "Valitse haluamasi kieli",
+    
+    // Subscription
+    "subscription.title": "Tilaus",
+    "subscription.manage": "Hallitse tilaustasi",
+    "subscription.active": "Aktiivinen tilaus",
+    "subscription.inactive": "Ei aktiivista tilausta",
+    "subscription.yearly": "Vuositilaus",
+    "subscription.monthly": "Kuukausitilaus",
+    "subscription.renewsOn": "Uusitaan",
+    "subscription.manageBtn": "Hallitse tilausta",
+    "subscription.subscribeNow": "Tilaa nyt",
+    "subscription.refreshStatus": "Päivitä tila",
+    
+    // Device slots
+    "devices.title": "Useita sijainteja",
+    "devices.subtitle": "Toista musiikkia useissa paikoissa samanaikaisesti",
+    "devices.active": "Aktiiviset sijainnit",
+    "devices.canPlay": "Voit toistaa musiikkia {count} paikassa samanaikaisesti",
+    "devices.needMore": "Tarvitsetko musiikkia useammassa paikassa?",
+    "devices.addFor": "Lisää sijainti hintaan €5/kk",
+    "devices.addBtn": "Lisää sijainti",
+    "devices.subscribeFirst": "Tilaa ensin lisätäksesi sijainteja.",
+    
+    // Invoices
+    "invoices.title": "Laskut",
+    "invoices.subtitle": "Näytä ja lataa maksuhistoriasi",
+    "invoices.none": "Laskuja ei löytynyt.",
+    "invoices.paid": "Maksettu",
+    
+    // Pricing
+    "pricing.title": "Tilaa kuunnellaksesi",
+    "pricing.subtitle": "Saat rajattoman pääsyn koko musiikkikirjastoomme yrityksellesi.",
+    "pricing.trialActive": "Ilmainen kokeilu käynnissä",
+    "pricing.daysRemaining": "{days} päivää jäljellä. Tilaa nyt jatkaaksesi kokeilun jälkeen.",
+    "pricing.accessActive": "Pääsy aktiivinen",
+    "pricing.validUntil": "Pääsysi on voimassa",
+    "pricing.autoRenew": "Tilauksesi uusitaan automaattisesti.",
+    "pricing.buyMore": "Osta lisää aikaa jatkaaksesi.",
+    "pricing.subscription": "Tilaus",
+    "pricing.oneTime": "Kertamaksu",
+    "pricing.autoRenews": "Uusitaan automaattisesti. Peruuta milloin tahansa.",
+    "pricing.payOnce": "Maksa kerran. Ei automaattista uusintaa.",
+    "pricing.monthly": "Kuukausittain",
+    "pricing.yearly": "Vuosittain",
+    "pricing.monthAccess": "1 kuukauden pääsy",
+    "pricing.yearAccess": "1 vuoden pääsy",
+    "pricing.billedMonthly": "Laskutetaan kuukausittain",
+    "pricing.billedYearly": "Kertamaksu",
+    "pricing.bestValue": "Paras arvo",
+    "pricing.whatsIncluded": "Mitä sisältyy",
+    "pricing.cancelAnytime": "Peruuta milloin tahansa",
+    "pricing.noAutoRenewal": "Ei automaattista uusintaa",
+    "pricing.payNow": "Maksa nyt",
+    "pricing.payNowDesc": "Maksa heti kortilla ja saat laskun",
+    "pricing.payByInvoice": "Maksa laskulla",
+    "pricing.payByInvoiceDesc": "Saat laskun 14 päivän maksuajalla",
+    "pricing.requestInvoice": "Pyydä lasku",
+    "pricing.vatExcluded": "Hinnat eivät sisällä ALV:tä. ALV lasketaan sijaintisi perusteella.",
+    "pricing.exclVat": "alv 0%",
+    "pricing.startTrial": "Aloita ilmainen kokeilu",
+    
+    // Features
+    "features.unlimited": "Rajaton pääsy kaikkeen musiikkiin",
+    "features.playlists": "Luo omia soittolistoja",
+    "features.noLicense": "Ei musiikin käyttölupaa tarvita",
+    "features.newSongs": "100+ uutta kappaletta viikossa",
+    "features.business": "Täydellinen yritystiloihin",
+    
+    // Search
+    "search.title": "Haku",
+    "search.placeholder": "Hae soittolistoja...",
+    "search.browse": "Selaa kaikkia",
+    
+    // Home
+    "home.recentlyPlayed": "Äskettäin toistetut",
+    "home.allPlaylists": "Kaikki soittolistat",
+    "home.continue": "Jatka kuuntelua",
+    
+    // Player
+    "player.nowPlaying": "Nyt soi",
+    "player.crossfade": "Ristiinhäivytys",
+    "player.volume": "Äänenvoimakkuus",
+  },
+  
+  de: {
+    // Navigation
+    "nav.home": "Startseite",
+    "nav.search": "Suche",
+    "nav.library": "Deine Bibliothek",
+    "nav.schedule": "Zeitplan",
+    "nav.profile": "Profil",
+    
+    // Common
+    "common.save": "Änderungen speichern",
+    "common.cancel": "Abbrechen",
+    "common.loading": "Laden...",
+    "common.error": "Fehler",
+    "common.success": "Erfolg",
+    "common.back": "Zurück",
+    "common.signOut": "Abmelden",
+    "common.subscribe": "Abonnieren",
+    "common.play": "Abspielen",
+    "common.pause": "Pause",
+    "common.next": "Nächster",
+    "common.previous": "Vorheriger",
+    "common.shuffle": "Zufällig",
+    "common.repeat": "Wiederholen",
+    
+    // Auth
+    "auth.signIn": "Anmelden",
+    "auth.signUp": "Registrieren",
+    "auth.email": "E-Mail",
+    "auth.password": "Passwort",
+    "auth.forgotPassword": "Passwort vergessen?",
+    "auth.noAccount": "Noch kein Konto?",
+    "auth.haveAccount": "Bereits ein Konto?",
+    "auth.welcomeBack": "Willkommen zurück",
+    "auth.startTrial": "Starte deine kostenlose Testversion",
+    "auth.trialInfo": "3 Tage kostenlos • Keine Kreditkarte erforderlich",
+    
+    // Profile
+    "profile.title": "Profileinstellungen",
+    "profile.subtitle": "Verwalte dein Konto und Abonnement",
+    "profile.personalInfo": "Persönliche Informationen",
+    "profile.updateDetails": "Aktualisiere deine Profildaten",
+    "profile.fullName": "Vollständiger Name",
+    "profile.language": "Sprache",
+    "profile.selectLanguage": "Wähle deine bevorzugte Sprache",
+    
+    // Subscription
+    "subscription.title": "Abonnement",
+    "subscription.manage": "Verwalte dein Abonnement",
+    "subscription.active": "Aktives Abonnement",
+    "subscription.inactive": "Kein aktives Abonnement",
+    "subscription.yearly": "Jahresplan",
+    "subscription.monthly": "Monatsplan",
+    "subscription.renewsOn": "Verlängert am",
+    "subscription.manageBtn": "Abonnement verwalten",
+    "subscription.subscribeNow": "Jetzt abonnieren",
+    "subscription.refreshStatus": "Status aktualisieren",
+    
+    // Device slots
+    "devices.title": "Mehrere Standorte",
+    "devices.subtitle": "Spiele Musik an mehreren Standorten gleichzeitig",
+    "devices.active": "Aktive Standorte",
+    "devices.canPlay": "Du kannst Musik an {count} Standort(en) gleichzeitig abspielen",
+    "devices.needMore": "Brauchst du Musik an mehr Standorten?",
+    "devices.addFor": "Füge einen Standort für €5/Monat hinzu",
+    "devices.addBtn": "Standort hinzufügen",
+    "devices.subscribeFirst": "Abonniere zuerst, um Standorte hinzuzufügen.",
+    
+    // Invoices
+    "invoices.title": "Rechnungen",
+    "invoices.subtitle": "Zeige und lade deine Zahlungshistorie herunter",
+    "invoices.none": "Keine Rechnungen gefunden.",
+    "invoices.paid": "Bezahlt",
+    
+    // Pricing
+    "pricing.title": "Abonnieren zum Hören",
+    "pricing.subtitle": "Erhalte unbegrenzten Zugang zu unserer gesamten Musikbibliothek für dein Unternehmen.",
+    "pricing.trialActive": "Kostenlose Testversion aktiv",
+    "pricing.daysRemaining": "{days} Tag(e) verbleibend. Abonniere jetzt, um nach der Testversion fortzufahren.",
+    "pricing.accessActive": "Zugang aktiv",
+    "pricing.validUntil": "Dein Zugang ist gültig bis",
+    "pricing.autoRenew": "Dein Abonnement verlängert sich automatisch.",
+    "pricing.buyMore": "Kaufe mehr Zeit zum Verlängern.",
+    "pricing.subscription": "Abonnement",
+    "pricing.oneTime": "Einmalzahlung",
+    "pricing.autoRenews": "Verlängert sich automatisch. Jederzeit kündbar.",
+    "pricing.payOnce": "Einmal zahlen. Keine automatische Verlängerung.",
+    "pricing.monthly": "Monatlich",
+    "pricing.yearly": "Jährlich",
+    "pricing.monthAccess": "1 Monat Zugang",
+    "pricing.yearAccess": "1 Jahr Zugang",
+    "pricing.billedMonthly": "Monatlich abgerechnet",
+    "pricing.billedYearly": "Einmalzahlung",
+    "pricing.bestValue": "Bester Wert",
+    "pricing.whatsIncluded": "Was enthalten ist",
+    "pricing.cancelAnytime": "Jederzeit kündbar",
+    "pricing.noAutoRenewal": "Keine automatische Verlängerung",
+    "pricing.payNow": "Jetzt bezahlen",
+    "pricing.payNowDesc": "Sofort mit Karte bezahlen und Rechnung erhalten",
+    "pricing.payByInvoice": "Per Rechnung bezahlen",
+    "pricing.payByInvoiceDesc": "Rechnung mit 14 Tagen Zahlungsfrist erhalten",
+    "pricing.requestInvoice": "Rechnung anfordern",
+    "pricing.vatExcluded": "Preise ohne MwSt. MwSt. wird basierend auf deinem Standort berechnet.",
+    "pricing.exclVat": "zzgl. MwSt.",
+    "pricing.startTrial": "Kostenlos testen",
+    
+    // Features
+    "features.unlimited": "Unbegrenzter Zugang zu aller Musik",
+    "features.playlists": "Erstelle eigene Playlists",
+    "features.noLicense": "Keine Musiklizenz erforderlich",
+    "features.newSongs": "100+ neue Songs jede Woche",
+    "features.business": "Perfekt für Geschäftsräume",
+    
+    // Search
+    "search.title": "Suche",
+    "search.placeholder": "Playlists suchen...",
+    "search.browse": "Alle durchsuchen",
+    
+    // Home
+    "home.recentlyPlayed": "Kürzlich gespielt",
+    "home.allPlaylists": "Alle Playlists",
+    "home.continue": "Weiterhören",
+    
+    // Player
+    "player.nowPlaying": "Läuft gerade",
+    "player.crossfade": "Überblenden",
+    "player.volume": "Lautstärke",
+  },
+  
+  fr: {
+    // Navigation
+    "nav.home": "Accueil",
+    "nav.search": "Recherche",
+    "nav.library": "Votre Bibliothèque",
+    "nav.schedule": "Programmation",
+    "nav.profile": "Profil",
+    
+    // Common
+    "common.save": "Enregistrer",
+    "common.cancel": "Annuler",
+    "common.loading": "Chargement...",
+    "common.error": "Erreur",
+    "common.success": "Succès",
+    "common.back": "Retour",
+    "common.signOut": "Déconnexion",
+    "common.subscribe": "S'abonner",
+    "common.play": "Lecture",
+    "common.pause": "Pause",
+    "common.next": "Suivant",
+    "common.previous": "Précédent",
+    "common.shuffle": "Aléatoire",
+    "common.repeat": "Répéter",
+    
+    // Auth
+    "auth.signIn": "Connexion",
+    "auth.signUp": "Inscription",
+    "auth.email": "E-mail",
+    "auth.password": "Mot de passe",
+    "auth.forgotPassword": "Mot de passe oublié ?",
+    "auth.noAccount": "Pas encore de compte ?",
+    "auth.haveAccount": "Vous avez déjà un compte ?",
+    "auth.welcomeBack": "Bon retour",
+    "auth.startTrial": "Commencez votre essai gratuit",
+    "auth.trialInfo": "3 jours gratuits • Sans carte bancaire",
+    
+    // Profile
+    "profile.title": "Paramètres du profil",
+    "profile.subtitle": "Gérez votre compte et abonnement",
+    "profile.personalInfo": "Informations personnelles",
+    "profile.updateDetails": "Mettez à jour vos informations",
+    "profile.fullName": "Nom complet",
+    "profile.language": "Langue",
+    "profile.selectLanguage": "Sélectionnez votre langue préférée",
+    
+    // Subscription
+    "subscription.title": "Abonnement",
+    "subscription.manage": "Gérez votre abonnement",
+    "subscription.active": "Abonnement actif",
+    "subscription.inactive": "Aucun abonnement actif",
+    "subscription.yearly": "Plan annuel",
+    "subscription.monthly": "Plan mensuel",
+    "subscription.renewsOn": "Renouvellement le",
+    "subscription.manageBtn": "Gérer l'abonnement",
+    "subscription.subscribeNow": "S'abonner maintenant",
+    "subscription.refreshStatus": "Actualiser le statut",
+    
+    // Device slots
+    "devices.title": "Emplacements multiples",
+    "devices.subtitle": "Diffusez de la musique dans plusieurs endroits simultanément",
+    "devices.active": "Emplacements actifs",
+    "devices.canPlay": "Vous pouvez diffuser de la musique dans {count} emplacement(s) simultanément",
+    "devices.needMore": "Besoin de musique dans plus d'endroits ?",
+    "devices.addFor": "Ajoutez un emplacement pour €5/mois",
+    "devices.addBtn": "Ajouter un emplacement",
+    "devices.subscribeFirst": "Abonnez-vous d'abord pour ajouter des emplacements.",
+    
+    // Invoices
+    "invoices.title": "Factures",
+    "invoices.subtitle": "Consultez et téléchargez votre historique de paiement",
+    "invoices.none": "Aucune facture trouvée.",
+    "invoices.paid": "Payée",
+    
+    // Pricing
+    "pricing.title": "Abonnez-vous pour écouter",
+    "pricing.subtitle": "Accédez à toute notre bibliothèque musicale pour votre entreprise.",
+    "pricing.trialActive": "Essai gratuit actif",
+    "pricing.daysRemaining": "{days} jour(s) restant(s). Abonnez-vous maintenant pour continuer après l'essai.",
+    "pricing.accessActive": "Accès actif",
+    "pricing.validUntil": "Votre accès est valide jusqu'au",
+    "pricing.autoRenew": "Votre abonnement se renouvellera automatiquement.",
+    "pricing.buyMore": "Achetez plus de temps pour prolonger.",
+    "pricing.subscription": "Abonnement",
+    "pricing.oneTime": "Paiement unique",
+    "pricing.autoRenews": "Renouvellement automatique. Annulez à tout moment.",
+    "pricing.payOnce": "Payez une fois. Pas de renouvellement automatique.",
+    "pricing.monthly": "Mensuel",
+    "pricing.yearly": "Annuel",
+    "pricing.monthAccess": "Accès 1 mois",
+    "pricing.yearAccess": "Accès 1 an",
+    "pricing.billedMonthly": "Facturé mensuellement",
+    "pricing.billedYearly": "Paiement unique",
+    "pricing.bestValue": "Meilleur rapport qualité-prix",
+    "pricing.whatsIncluded": "Ce qui est inclus",
+    "pricing.cancelAnytime": "Annulez à tout moment",
+    "pricing.noAutoRenewal": "Pas de renouvellement automatique",
+    "pricing.payNow": "Payer maintenant",
+    "pricing.payNowDesc": "Payez immédiatement par carte et recevez une facture",
+    "pricing.payByInvoice": "Payer par facture",
+    "pricing.payByInvoiceDesc": "Recevez une facture avec 14 jours de délai de paiement",
+    "pricing.requestInvoice": "Demander une facture",
+    "pricing.vatExcluded": "Prix hors TVA. La TVA sera calculée selon votre localisation.",
+    "pricing.exclVat": "HT",
+    "pricing.startTrial": "Essai gratuit",
+    
+    // Features
+    "features.unlimited": "Accès illimité à toute la musique",
+    "features.playlists": "Créez vos propres playlists",
+    "features.noLicense": "Aucune licence musicale requise",
+    "features.newSongs": "100+ nouvelles chansons chaque semaine",
+    "features.business": "Parfait pour les locaux commerciaux",
+    
+    // Search
+    "search.title": "Recherche",
+    "search.placeholder": "Rechercher des playlists...",
+    "search.browse": "Parcourir tout",
+    
+    // Home
+    "home.recentlyPlayed": "Récemment écoutés",
+    "home.allPlaylists": "Toutes les playlists",
+    "home.continue": "Continuer l'écoute",
+    
+    // Player
+    "player.nowPlaying": "En cours de lecture",
+    "player.crossfade": "Fondu enchaîné",
+    "player.volume": "Volume",
+  },
+};
