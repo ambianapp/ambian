@@ -278,7 +278,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">No recent searches. Start typing to search for songs and playlists.</p>
+              <p className="text-muted-foreground">{t("search.noRecent")}</p>
             )}
           </section>
         )}

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SelectedPlaylist {
   id: string;
@@ -32,6 +33,7 @@ interface Playlist {
 }
 
 const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: LibraryViewProps) => {
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ownPlaylists, setOwnPlaylists] = useState<Playlist[]>([]);
   const [likedPlaylists, setLikedPlaylists] = useState<Playlist[]>([]);
@@ -110,9 +112,9 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     // Open liked songs as a playlist view
     onPlaylistSelect({
       id: "liked-songs",
-      name: "Liked Songs",
+      name: t("library.likedSongs"),
       cover: null,
-      description: "Your favorite tracks",
+      description: t("library.likedSongsDesc"),
     });
   };
 
@@ -121,7 +123,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
       <div className="p-6 md:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between animate-fade-in">
-          <h1 className="text-2xl font-bold text-foreground">Your Library</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <Plus className="w-5 h-5" />
@@ -150,7 +152,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
         {/* Filters */}
         <div className="flex gap-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <Button variant="secondary" size="sm" className="rounded-full">
-            Playlists
+            {t("library.playlists")}
           </Button>
         </div>
 
@@ -173,8 +175,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
               <div className="w-full aspect-square rounded-lg shadow-lg mb-4 bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
                 <Heart className="w-16 h-16 text-primary-foreground fill-current" />
               </div>
-              <h3 className="font-semibold text-foreground truncate">Liked Songs</h3>
-              <p className="text-sm text-muted-foreground">{likedCount} songs</p>
+              <h3 className="font-semibold text-foreground truncate">{t("library.likedSongs")}</h3>
+              <p className="text-sm text-muted-foreground">{likedCount} {t("library.songs")}</p>
             </button>
           ) : (
             <button
@@ -185,8 +187,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                 <Heart className="w-6 h-6 text-primary-foreground fill-current" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground truncate">Liked Songs</h3>
-                <p className="text-sm text-muted-foreground">Playlist • {likedCount} songs</p>
+                <h3 className="font-semibold text-foreground truncate">{t("library.likedSongs")}</h3>
+                <p className="text-sm text-muted-foreground">{t("library.playlists")} • {likedCount} {t("library.songs")}</p>
               </div>
             </button>
           )}
@@ -210,7 +212,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                   className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4"
                 />
                 <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                <p className="text-sm text-muted-foreground">Your playlist</p>
+                <p className="text-sm text-muted-foreground">{t("library.yourPlaylist")}</p>
               </button>
             ) : (
               <button
@@ -230,7 +232,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                  <p className="text-sm text-muted-foreground">Your playlist</p>
+                  <p className="text-sm text-muted-foreground">{t("library.yourPlaylist")}</p>
                 </div>
               </button>
             )
@@ -258,7 +260,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                   <Heart className="absolute top-2 right-2 w-5 h-5 text-primary fill-current" />
                 </div>
                 <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                <p className="text-sm text-muted-foreground">Liked playlist</p>
+                <p className="text-sm text-muted-foreground">{t("library.likedPlaylist")}</p>
               </button>
             ) : (
               <button
@@ -281,7 +283,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-                  <p className="text-sm text-muted-foreground">Liked playlist</p>
+                  <p className="text-sm text-muted-foreground">{t("library.likedPlaylist")}</p>
                 </div>
               </button>
             )
