@@ -1,4 +1,4 @@
-import { Home, Search, Library, Shield, User, Clock } from "lucide-react";
+import { Home, Search, Library, Shield, User, Clock, HelpCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   const isOnIndexPage = location.pathname === "/";
   const isOnProfilePage = location.pathname === "/profile";
   const isOnAdminPage = location.pathname === "/admin";
+  const isOnHelpPage = location.pathname === "/help";
 
   const navItems = [
     { id: "home", label: t("nav.home"), icon: Home },
@@ -38,6 +39,10 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
 
   const handleProfileClick = () => {
     navigate("/profile");
+  };
+
+  const handleHelpClick = () => {
+    navigate("/help");
   };
 
   const handleAdminClick = () => {
@@ -72,6 +77,16 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
         >
           <User className={cn("w-6 h-6", isOnProfilePage && "text-primary")} />
           <span className="text-xs font-medium">{t("nav.profile")}</span>
+        </button>
+        <button
+          className={cn(
+            "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
+            isOnHelpPage ? "text-foreground" : "text-muted-foreground"
+          )}
+          onClick={handleHelpClick}
+        >
+          <HelpCircle className={cn("w-6 h-6", isOnHelpPage && "text-primary")} />
+          <span className="text-xs font-medium">{t("nav.help")}</span>
         </button>
         {isAdmin && (
           <button

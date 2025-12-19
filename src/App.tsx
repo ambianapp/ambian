@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
 import Install from "./pages/Install";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -98,6 +99,14 @@ const AppRoutes = () => {
         }
       />
       <Route path="/install" element={<Install />} />
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute>
+            <Help />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
