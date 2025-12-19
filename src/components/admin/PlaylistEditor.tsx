@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import * as musicMetadata from "music-metadata-browser";
 
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload, ImageIcon, Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -42,7 +42,10 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
   const [isTransferring, setIsTransferring] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+  const [currentCoverUrl, setCurrentCoverUrl] = useState<string | null>(playlist.cover_url);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -102,6 +105,49 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
       };
       audio.src = URL.createObjectURL(file);
     });
+  };
+
+  // Handle cover image upload
+  const handleCoverUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Error", description: "Please select an image file (JPG, PNG)", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingCover(true);
+
+    try {
+      const fileName = `playlist-covers/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("audio")
+        .upload(fileName, file, { contentType: file.type });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+      const newCoverUrl = urlData.publicUrl;
+
+      // Update playlist in database
+      const { error: updateError } = await supabase
+        .from("playlists")
+        .update({ cover_url: newCoverUrl })
+        .eq("id", playlist.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setCurrentCoverUrl(newCoverUrl);
+      toast({ title: "Success", description: "Cover image updated" });
+    } catch (err: any) {
+      console.error("Cover upload error:", err);
+      toast({ title: "Error", description: err.message || "Failed to upload cover", variant: "destructive" });
+    } finally {
+      setIsUploadingCover(false);
+    }
   };
 
   // Extract title from filename
@@ -400,18 +446,41 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-            {playlist.cover_url ? (
-              <img src={playlist.cover_url} alt={playlist.name} className="w-full h-full object-cover" />
+          {/* Editable Cover */}
+          <div 
+            className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative group cursor-pointer"
+            onClick={() => coverInputRef.current?.click()}
+          >
+            {currentCoverUrl ? (
+              <img src={currentCoverUrl} alt={playlist.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <ListMusic className="w-8 h-8 text-muted-foreground" />
+                <ListMusic className="w-10 h-10 text-muted-foreground" />
               </div>
             )}
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              {isUploadingCover ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : (
+                <div className="text-center">
+                  <Pencil className="w-5 h-5 text-white mx-auto mb-1" />
+                  <span className="text-xs text-white">Change</span>
+                </div>
+              )}
+            </div>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])}
+            />
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">{playlist.name}</h2>
             <p className="text-muted-foreground">{playlistTracks.length} tracks</p>
+            <p className="text-xs text-muted-foreground mt-1">Click cover to change (JPG, PNG)</p>
           </div>
         </div>
       </div>
