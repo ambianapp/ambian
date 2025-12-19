@@ -26,6 +26,9 @@ const PlayerBar = () => {
     seekPosition,
     setSeekPosition,
     getNextTrack,
+    pendingScheduledTransition,
+    clearScheduledTransition,
+    playlistTracksRef,
   } = usePlayer();
   
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -492,6 +495,60 @@ const PlayerBar = () => {
     // When crossfade audio ends, it means we need to go to the next track after that
     handleNext();
   }, [handleNext]);
+
+  // Handle scheduled playlist crossfade transition
+  useEffect(() => {
+    if (!pendingScheduledTransition || !audioRef.current) return;
+
+    const { track, playlist } = pendingScheduledTransition;
+    
+    // If crossfade is enabled and we have audio playing, do a smooth transition
+    if (crossfade && isPlaying && currentTrack?.audioUrl && track.audioUrl && crossfadeAudioRef.current) {
+      // Perform crossfade to new scheduled track
+      isCrossfadingRef.current = true;
+      
+      crossfadeAudioRef.current.src = track.audioUrl;
+      crossfadeAudioRef.current.volume = 0;
+      crossfadeAudioRef.current.play().catch(console.error);
+      
+      const mainAudio = audioRef.current;
+      const crossfadeAudio = crossfadeAudioRef.current;
+      const startVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+      const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+      const steps = 50;
+      const stepTime = (CROSSFADE_DURATION * 1000) / steps;
+      let step = 0;
+      
+      const intervalId = setInterval(() => {
+        step++;
+        const progress = Math.min(1, step / steps);
+        
+        mainAudio.volume = Math.max(0, Math.min(1, startVolume * (1 - progress)));
+        crossfadeAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
+        
+        if (step >= steps) {
+          clearInterval(intervalId);
+          
+          // Swap: update playlist and set crossfade audio as main
+          playlistTracksRef.current = playlist;
+          mainAudio.src = track.audioUrl!;
+          mainAudio.volume = targetVolume;
+          mainAudio.play().catch(console.error);
+          
+          crossfadeAudio.pause();
+          crossfadeAudio.src = "";
+          
+          isCrossfadingRef.current = false;
+          clearScheduledTransition();
+        }
+      }, stepTime);
+      
+      return () => clearInterval(intervalId);
+    } else {
+      // No crossfade - just switch directly (handled by PlayerContext)
+      clearScheduledTransition();
+    }
+  }, [pendingScheduledTransition, crossfade, isPlaying, currentTrack?.audioUrl, volume, isMuted, clearScheduledTransition]);
 
   // Save current position for persistence
   const savePositionRef = useRef<NodeJS.Timeout | null>(null);

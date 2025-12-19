@@ -15,6 +15,11 @@ interface PlaybackState {
   savedAt: number;
 }
 
+interface ScheduledTransition {
+  track: Track & { audioUrl?: string };
+  playlist: Track[];
+}
+
 interface PlayerContextType {
   currentTrack: (Track & { audioUrl?: string }) | null;
   isPlaying: boolean;
@@ -34,6 +39,9 @@ interface PlayerContextType {
   setSeekPosition: (position: number) => void;
   seekPosition: number | null;
   getNextTrack: () => Promise<(Track & { audioUrl?: string }) | null>;
+  pendingScheduledTransition: ScheduledTransition | null;
+  triggerScheduledCrossfade: (track: Track, playlist: Track[]) => Promise<void>;
+  clearScheduledTransition: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -57,6 +65,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   });
   const [originalDbUrl, setOriginalDbUrl] = useState<string | null>(null);
   const [seekPosition, setSeekPosition] = useState<number | null>(null);
+  const [pendingScheduledTransition, setPendingScheduledTransition] = useState<ScheduledTransition | null>(null);
   const playlistTracksRef = useRef<Track[]>([]);
   const urlCreatedAtRef = useRef<number>(Date.now());
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -375,6 +384,52 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return nextTrack;
   }, [currentTrack, shuffle]);
 
+  // Trigger a scheduled crossfade transition (for playlist scheduler)
+  const triggerScheduledCrossfade = useCallback(async (track: Track, playlist: Track[]) => {
+    // If nothing is playing, just start normally
+    if (!currentTrack || !isPlaying) {
+      playlistTracksRef.current = playlist;
+      const { data } = await supabase
+        .from("tracks")
+        .select("audio_url")
+        .eq("id", track.id)
+        .single();
+      
+      if (data?.audio_url) {
+        setOriginalDbUrl(data.audio_url);
+        const signedUrl = await getSignedAudioUrl(data.audio_url);
+        setCurrentTrack({ ...track, audioUrl: signedUrl });
+      } else {
+        setCurrentTrack(track);
+      }
+      setIsPlaying(true);
+      return;
+    }
+
+    // Fetch signed URL for the new track
+    const { data } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", track.id)
+      .single();
+    
+    let trackWithUrl: Track & { audioUrl?: string } = track;
+    if (data?.audio_url) {
+      const signedUrl = await getSignedAudioUrl(data.audio_url);
+      trackWithUrl = { ...track, audioUrl: signedUrl };
+    }
+
+    // Set the pending transition - PlayerBar will handle the crossfade
+    setPendingScheduledTransition({
+      track: trackWithUrl,
+      playlist,
+    });
+  }, [currentTrack, isPlaying]);
+
+  const clearScheduledTransition = useCallback(() => {
+    setPendingScheduledTransition(null);
+  }, []);
+
   return (
     <PlayerContext.Provider
       value={{
@@ -396,6 +451,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         setSeekPosition,
         seekPosition,
         getNextTrack,
+        pendingScheduledTransition,
+        triggerScheduledCrossfade,
+        clearScheduledTransition,
       }}
     >
       {children}
