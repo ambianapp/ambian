@@ -222,7 +222,7 @@ const Pricing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-40 md:p-8 md:pb-24">
+    <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Logo */}
         <div className="flex justify-center pt-4">
