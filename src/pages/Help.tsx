@@ -254,7 +254,7 @@ const Help = () => {
             <CardDescription>{t("help.contactDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <a 
                 href="mailto:support@ambian.fi" 
                 className="p-4 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-center"
@@ -262,14 +262,6 @@ const Help = () => {
                 <Mail className="w-6 h-6 mx-auto mb-2 text-primary" />
                 <p className="font-medium">{t("help.emailSupport")}</p>
                 <p className="text-sm text-muted-foreground">support@ambian.fi</p>
-              </a>
-              <a 
-                href="mailto:info@ambian.fi" 
-                className="p-4 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-center"
-              >
-                <Mail className="w-6 h-6 mx-auto mb-2 text-primary" />
-                <p className="font-medium">{t("help.generalInquiries") || "General Inquiries"}</p>
-                <p className="text-sm text-muted-foreground">info@ambian.fi</p>
               </a>
               <a 
                 href="https://wa.me/358404666176" 
