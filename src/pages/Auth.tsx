@@ -148,16 +148,9 @@ const Auth = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="p-4 bg-background/50 rounded-xl text-center">
-                <div className="text-2xl font-bold text-foreground">€8.90</div>
-                <div className="text-sm text-muted-foreground">/month</div>
-              </div>
-              <div className="p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
-                <div className="text-2xl font-bold text-foreground">€89</div>
-                <div className="text-sm text-muted-foreground">/year</div>
-                <div className="text-xs text-primary font-medium mt-1">Save €17.80</div>
-              </div>
+            <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
+              <div className="text-3xl font-bold text-foreground">€89<span className="text-lg font-normal text-muted-foreground">/year</span></div>
+              <div className="text-sm text-primary font-medium mt-1">Only €7.40/month</div>
             </div>
           </div>
           
