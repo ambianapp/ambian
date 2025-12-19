@@ -8,38 +8,33 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo.png";
 import { z } from "zod";
-const authSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters")
-});
+import { useLanguage } from "@/contexts/LanguageContext";
+
 const Auth = () => {
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-  }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
+  const authSchema = z.object({
+    email: z.string().email(t("auth.validEmail")),
+    password: z.string().min(6, t("auth.passwordMin")),
+  });
+
   const validateForm = () => {
     try {
-      authSchema.parse({
-        email,
-        password
-      });
+      authSchema.parse({ email, password });
       setErrors({});
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: {
-          email?: string;
-          password?: string;
-        } = {};
-        error.errors.forEach(err => {
+        const fieldErrors: { email?: string; password?: string } = {};
+        error.errors.forEach((err) => {
           if (err.path[0] === "email") fieldErrors.email = err.message;
           if (err.path[0] === "password") fieldErrors.password = err.message;
         });
@@ -48,78 +43,74 @@ const Auth = () => {
       return false;
     }
   };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+    
     setIsLoading(true);
+
     try {
       if (isLogin) {
-        const {
-          error
-        } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
-          password
+          password,
         });
         if (error) throw error;
-        toast({
-          title: "Welcome back!",
-          description: "You have signed in successfully."
-        });
+        
+        toast({ title: t("auth.welcomeToast"), description: t("auth.signInSuccess") });
         navigate("/");
       } else {
         const redirectUrl = `${window.location.origin}/`;
-        const {
-          error
-        } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: redirectUrl
-          }
+            emailRedirectTo: redirectUrl,
+          },
         });
         if (error) throw error;
-        toast({
-          title: "Account created!",
-          description: "Welcome to Ambian."
-        });
+        
+        toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
         navigate("/");
       }
     } catch (error: any) {
       let message = error.message;
       if (message.includes("User already registered")) {
-        message = "This email is already registered. Please sign in instead.";
+        message = t("auth.emailRegistered");
       }
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const {
-        error
-      } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`
-        }
+          redirectTo: `${window.location.origin}/`,
+        },
       });
       if (error) throw error;
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
       setIsLoading(false);
     }
   };
-  return <div className="min-h-screen bg-background flex">
+
+  return (
+    <div className="min-h-screen bg-background flex">
       {/* Left Side - Brand Info */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
         {/* Background Pattern */}
@@ -136,12 +127,13 @@ const Auth = () => {
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full mb-4">
               <Shield className="w-5 h-5" />
-              <span className="font-semibold">100% Copyright-Free Music</span>
+              <span className="font-semibold">{t("auth.copyrightFree")}</span>
             </div>
-            <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">100% lupavapaata taustamusiikkia</h1>
+            <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
+              {t("auth.noLicenses")}
+            </h1>
             <p className="text-lg text-muted-foreground max-w-lg">
-              Play music in your business without worrying about copyright claims, 
-              licensing fees, or legal issues. All tracks are pre-cleared for commercial use.
+              {t("auth.noLicensesDesc")}
             </p>
           </div>
 
@@ -152,38 +144,38 @@ const Auth = () => {
                 <span className="text-2xl">🎉</span>
               </div>
               <div>
-                <h3 className="font-bold text-foreground text-lg">3 Days Free Trial</h3>
-                <p className="text-sm text-muted-foreground">No credit card required</p>
+                <h3 className="font-bold text-foreground text-lg">{t("auth.freeTrialDays")}</h3>
+                <p className="text-sm text-muted-foreground">{t("auth.noCardRequired")}</p>
               </div>
             </div>
             
             <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
-              <div className="text-3xl font-bold text-foreground">€89<span className="text-lg font-normal text-muted-foreground">/year</span></div>
-              <div className="text-sm text-primary font-medium mt-1">Only €7.40/month</div>
+              <div className="text-3xl font-bold text-foreground">€89<span className="text-lg font-normal text-muted-foreground">{t("auth.perYear")}</span></div>
+              <div className="text-sm text-primary font-medium mt-1">{t("auth.onlyPerMonth")}</div>
             </div>
           </div>
           
           {/* Who it's for */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
-              Perfect for
+              {t("auth.perfectFor")}
             </h3>
             <div className="flex flex-wrap gap-2">
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Coffee className="w-3.5 h-3.5 text-primary" />
-                <span>Restaurants</span>
+                <span>{t("auth.restaurants")}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Hotel className="w-3.5 h-3.5 text-primary" />
-                <span>Hotels</span>
+                <span>{t("auth.hotels")}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Store className="w-3.5 h-3.5 text-primary" />
-                <span>Retail</span>
+                <span>{t("auth.retail")}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Building2 className="w-3.5 h-3.5 text-primary" />
-                <span>Offices</span>
+                <span>{t("auth.offices")}</span>
               </div>
             </div>
           </div>
@@ -194,13 +186,13 @@ const Auth = () => {
               <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Music className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-sm text-foreground">50+ curated playlists for every mood</span>
+              <span className="text-sm text-foreground">{t("auth.curatedPlaylists")}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Calendar className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-sm text-foreground">Smart scheduling - set it and forget it</span>
+              <span className="text-sm text-foreground">{t("auth.smartScheduling")}</span>
             </div>
           </div>
         </div>
@@ -217,22 +209,22 @@ const Auth = () => {
             <div className="bg-card/50 border border-border/50 rounded-xl p-4 mb-4 space-y-3">
               <div className="flex items-center justify-center gap-2 text-primary">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm font-semibold">100% Copyright-Free Music</span>
+                <span className="text-sm font-semibold">{t("auth.copyrightFree")}</span>
               </div>
               
               <p className="text-xs text-muted-foreground text-center">
-                No licenses needed. Play music in your business legally.
+                {t("auth.noLicensesShort")}
               </p>
               
               <div className="flex items-center justify-center gap-4 pt-2 border-t border-border/50">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-foreground">€89/year</div>
-                  <div className="text-xs text-muted-foreground">€7.40/month</div>
+                  <div className="text-lg font-bold text-foreground">€89{t("auth.perYear")}</div>
+                  <div className="text-xs text-muted-foreground">€7.40/kk</div>
                 </div>
                 <div className="h-8 w-px bg-border/50" />
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-primary">3 Days Free</div>
-                  <div className="text-xs text-muted-foreground">No card needed</div>
+                  <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
+                  <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
                 </div>
               </div>
             </div>
@@ -241,10 +233,12 @@ const Auth = () => {
           {/* Header */}
           <div className="text-center lg:text-left">
             <h1 className="text-2xl font-bold text-foreground">
-              {isLogin ? "Welcome back" : "Start your free trial"}
+              {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
             <p className="text-muted-foreground mt-2 hidden lg:block">
-              {isLogin ? "Sign in to access your music" : "3 days free • No credit card required"}
+              {isLogin
+                ? t("auth.signInToAccess")
+                : t("auth.trialInfo")}
             </p>
           </div>
 
@@ -252,25 +246,55 @@ const Auth = () => {
           <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10 h-12 bg-card border-border" required />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 h-12 bg-card border-border"
+                  required
+                />
               </div>
-              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10 h-12 bg-card border-border" required />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 h-12 bg-card border-border"
+                  required
+                />
               </div>
-              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full h-12" disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : isLogin ? "Sign In" : "Start Free Trial"}
+            <Button
+              type="submit"
+              className="w-full h-12"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : isLogin ? (
+                t("auth.signIn")
+              ) : (
+                t("auth.startFreeTrial")
+              )}
             </Button>
           </form>
 
@@ -280,34 +304,59 @@ const Auth = () => {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
+                {t("auth.orContinueWith")}
               </span>
             </div>
           </div>
 
-          <Button variant="outline" className="w-full h-12" onClick={handleGoogleLogin} disabled={isLoading}>
+          <Button
+            variant="outline"
+            className="w-full h-12"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+          >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              <path
+                fill="currentColor"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="currentColor"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
             </svg>
             Google
           </Button>
 
           <div className="text-center space-y-1">
             <p className="text-sm text-muted-foreground">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-              <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline font-medium">
-                {isLogin ? "Sign up" : "Sign in"}
+              {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}{" "}
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-primary hover:underline font-medium"
+              >
+                {isLogin ? t("auth.signUp") : t("auth.signIn")}
               </button>
             </p>
-            {isLogin && <p className="text-xs text-muted-foreground">
-                3 days free • No credit card required
-              </p>}
+            {isLogin && (
+              <p className="text-xs text-muted-foreground">
+                {t("auth.trialInfo")}
+              </p>
+            )}
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Auth;
