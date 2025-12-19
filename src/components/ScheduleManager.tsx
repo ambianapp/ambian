@@ -321,25 +321,6 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
             </Card>
           )}
 
-          {/* Current Status */}
-          {activeSchedule && (
-            <Card className="bg-primary/10 border-primary/30">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Play className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">Now playing (scheduled)</p>
-                  <p className="font-medium text-foreground">
-                    {activeSchedule.name || getPlaylistName(activeSchedule.playlist_id)}
-                  </p>
-                </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  Until {formatTime(activeSchedule.end_time)}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Schedule List */}
           {isLoading ? (
