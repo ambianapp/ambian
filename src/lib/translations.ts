@@ -678,7 +678,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noLicenses": "Teostovapaata taustamusiikkia yrityksille",
     "auth.noLicensesDesc": "Soita musiikkia yrityksessäsi huolehtimatta taustamusiikkiluvista.",
     "auth.freeTrialDays": "3 päivän ilmainen kokeilu",
-    "auth.noCardRequired": "Ei luottokorttia tarvita",
+    "auth.noCardRequired": "Luottokorttia ei tarvita",
     "auth.perYear": "/vuosi",
     "auth.onlyPerMonth": "Vain €7.40/kuukausi",
     "auth.perfectFor": "Täydellinen",
