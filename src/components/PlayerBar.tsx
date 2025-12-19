@@ -462,20 +462,18 @@ const PlayerBar = () => {
         }
         crossfadeCompleteRef.current = true;
         console.log("Crossfade complete, switching to crossfade audio");
-        
+
         // Mark that crossfade audio is now the active player
         setIsCrossfadeActive(true);
-        
+
         // Update duration from crossfade audio
         if (crossfadeAudio.duration) {
           setDuration(crossfadeAudio.duration);
         }
-        
-        // Tell React to skip the next src change (from handleNext updating currentTrack)
-        skipNextSrcChangeRef.current = true;
-        
-        // Update PlayerContext - this will change currentTrack but we'll ignore the src update
-        handleNext();
+
+        // IMPORTANT: do NOT call handleNext() here.
+        // We only advance the track state when the main audio actually ends,
+        // so we can carry over the crossfade playback position and avoid a restart.
       }
     }, stepTime);
   }, [crossfade, repeat, getNextTrack, volume, isMuted, handleNext]);
@@ -680,16 +678,23 @@ const PlayerBar = () => {
               return;
             }
             
-            // If crossfade completed, the crossfade audio is already playing
-            // Don't call handleNext again - it was already called when crossfade completed
+            // If crossfade completed, the next track is already playing on the crossfade audio.
+            // Now that the main audio ended, advance the track state and carry over position.
             if (crossfadeCompleteRef.current && crossfadeAudioRef.current && !crossfadeAudioRef.current.paused) {
-              console.log("Main audio ended, crossfade audio is playing");
+              const pos = crossfadeAudioRef.current.currentTime || 0;
+              console.log("Main audio ended; syncing to next track at position:", pos);
+
+              // Ensure the next track starts at the current crossfade position (no restart)
+              setSeekPosition(pos);
+
               if (crossfadeIntervalRef.current) {
                 clearInterval(crossfadeIntervalRef.current);
                 crossfadeIntervalRef.current = null;
               }
               isCrossfadingRef.current = false;
-              // Don't reset crossfadeCompleteRef - still needed for swap logic
+
+              // This will update currentTrack; the swap effect will sync main audio to crossfade
+              handleNext();
               return;
             }
             
