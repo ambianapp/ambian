@@ -692,7 +692,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.accountCreated": "Tili luotu!",
     "auth.welcomeToAmbian": "Tervetuloa Ambianiin.",
     "auth.emailRegistered": "Tämä sähköposti on jo rekisteröity. Kirjaudu sisään.",
-    "auth.noLicensesShort": "Ei lisenssejä tarvita. Soita musiikkia laillisesti yrityksessäsi.",
+    "auth.noLicensesShort": "Taustamusiikkia liiketiloihin - ei musiikkilupia!",
     "auth.threeDaysFree": "3 päivää ilmaiseksi",
     "auth.noCardNeeded": "Ei korttia",
     "auth.validEmail": "Anna kelvollinen sähköpostiosoite",
