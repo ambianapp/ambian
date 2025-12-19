@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Plus, Trash2, ListMusic, Edit, Loader2, Search } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import PlaylistEditor from "./PlaylistEditor";
@@ -15,6 +16,7 @@ import PlaylistEditor from "./PlaylistEditor";
 type Playlist = Tables<"playlists">;
 
 const AdminPlaylistManager = () => {
+  const { t } = useLanguage();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -115,15 +117,15 @@ const AdminPlaylistManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
-            Create New Playlist
+            {t("admin.createPlaylist")}
           </CardTitle>
-          <CardDescription>Create a system playlist available to all users</CardDescription>
+          <CardDescription>{t("admin.createPlaylistDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreatePlaylist} className="space-y-4">
             <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="playlist-name">Name *</Label>
+                <Label htmlFor="playlist-name">{t("admin.playlistName")} *</Label>
                 <Input
                   id="playlist-name"
                   value={newPlaylist.name}
@@ -134,22 +136,22 @@ const AdminPlaylistManager = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="playlist-category">Category</Label>
+                <Label htmlFor="playlist-category">{t("admin.category")}</Label>
                 <Select
                   value={newPlaylist.category}
                   onValueChange={(value) => setNewPlaylist({ ...newPlaylist, category: value })}
                 >
                   <SelectTrigger className="bg-card">
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t("admin.selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mood">Mood</SelectItem>
-                    <SelectItem value="genre">Genre</SelectItem>
+                    <SelectItem value="mood">{t("admin.mood")}</SelectItem>
+                    <SelectItem value="genre">{t("admin.genre")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="playlist-cover">Cover URL</Label>
+                <Label htmlFor="playlist-cover">{t("admin.coverUrl")}</Label>
                 <Input
                   id="playlist-cover"
                   value={newPlaylist.cover_url}
@@ -160,7 +162,7 @@ const AdminPlaylistManager = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="playlist-description">Description</Label>
+              <Label htmlFor="playlist-description">{t("admin.description")}</Label>
               <Textarea
                 id="playlist-description"
                 value={newPlaylist.description}
@@ -172,7 +174,7 @@ const AdminPlaylistManager = () => {
             </div>
             <Button type="submit" disabled={isCreating}>
               {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-              Create Playlist
+              {t("admin.createBtn")}
             </Button>
           </form>
         </CardContent>
@@ -185,14 +187,14 @@ const AdminPlaylistManager = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <ListMusic className="w-5 h-5" />
-                System Playlists ({playlists.length})
+                {t("admin.systemPlaylists")} ({playlists.length})
               </CardTitle>
-              <CardDescription>Click on a playlist to manage its tracks</CardDescription>
+              <CardDescription>{t("admin.clickToManage")}</CardDescription>
             </div>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search playlists..."
+                placeholder={t("admin.searchPlaylists")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-card"
@@ -207,7 +209,7 @@ const AdminPlaylistManager = () => {
             </div>
           ) : playlists.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              No playlists yet. Create your first playlist above.
+              {t("admin.noPlaylists")}
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -245,7 +247,7 @@ const AdminPlaylistManager = () => {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                    {playlist.description || "No description"}
+                    {playlist.description || t("admin.noDescription")}
                   </p>
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button

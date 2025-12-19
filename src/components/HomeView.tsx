@@ -6,6 +6,7 @@ import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -26,6 +27,7 @@ interface HomeViewProps {
 }
 
 const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: HomeViewProps) => {
+  const { t } = useLanguage();
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyUpdated, setRecentlyUpdated] = useState<DbPlaylist[]>([]);
@@ -198,9 +200,9 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning ☀️";
-    if (hour < 18) return "Good afternoon 🌤️";
-    return "Good evening 🌙";
+    if (hour < 12) return t("home.greeting.morning") + " ☀️";
+    if (hour < 18) return t("home.greeting.afternoon") + " 🌤️";
+    return t("home.greeting.evening") + " 🌙";
   };
 
   const renderPlaylistSection = (
@@ -222,7 +224,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               onClick={onToggle}
               className="text-muted-foreground hover:text-foreground"
             >
-              {showAll ? "Show less" : `More ${title.toLowerCase()}`}
+              {showAll ? t("home.showLess") : `${t("home.showMore")} ${title.toLowerCase()}`}
               <ChevronRight className={`w-4 h-4 ml-1 transition-transform ${showAll ? "rotate-90" : ""}`} />
             </Button>
           )}
@@ -264,7 +266,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         {/* Header */}
         <div className="animate-fade-in">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground">{getGreeting()}</h1>
-          <p className="text-muted-foreground mt-2">Ready to set the perfect ambiance?</p>
+          <p className="text-muted-foreground mt-2">{t("home.subtitle")}</p>
         </div>
 
         {/* Recently Played */}
@@ -272,7 +274,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           <section className="animate-fade-in">
             <div className="flex items-center gap-2 mb-4">
               <History className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Continue Listening</h2>
+              <h2 className="text-xl font-bold text-foreground">{t("home.continue")}</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {recentlyPlayed.map((playlist) => (
@@ -302,7 +304,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
         {/* Playlists by Mood */}
         {renderPlaylistSection(
-          "Playlists by Mood",
+          t("home.byMood"),
           moodPlaylists,
           showAllMoods,
           () => setShowAllMoods(!showAllMoods)
@@ -310,7 +312,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
         {/* Playlists by Genre */}
         {renderPlaylistSection(
-          "Playlists by Genre",
+          t("home.byGenre"),
           genrePlaylists,
           showAllGenres,
           () => setShowAllGenres(!showAllGenres)
@@ -319,7 +321,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         {/* Recently Updated Playlists */}
         {recentlyUpdated.length > 0 && (
           <section className="animate-fade-in">
-            <h2 className="text-xl font-bold text-foreground mb-4">Recently Updated Playlists</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">{t("home.recentlyUpdated")}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {recentlyUpdated.map((playlist) => (
                 <PlaylistCard
@@ -349,7 +351,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         {/* New Playlists */}
         {newPlaylists.length > 0 && (
           <section className="animate-fade-in">
-            <h2 className="text-xl font-bold text-foreground mb-4">New Playlists</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">{t("home.newPlaylists")}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {newPlaylists.map((playlist) => (
                 <PlaylistCard
