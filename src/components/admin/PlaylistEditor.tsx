@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as musicMetadata from "music-metadata-browser";
 
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload } from "lucide-react";
@@ -130,14 +131,63 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
 
     for (let i = 0; i < mp3Files.length; i++) {
       const file = mp3Files[i];
-      const title = getTitleFromFilename(file.name);
+      let title = getTitleFromFilename(file.name);
+      let artist = "Unknown";
+      let album: string | undefined;
+      let coverUrl: string | undefined;
+      
       setUploadProgress({ total: mp3Files.length, completed: i, current: title });
 
       try {
-        // Get duration
-        const duration = await getAudioDuration(file);
+        // Extract metadata from MP3 using music-metadata-browser
+        const metadata = await musicMetadata.parseBlob(file);
+        
+        // Use metadata title/artist if available
+        if (metadata.common.title) {
+          title = metadata.common.title;
+        }
+        if (metadata.common.artist) {
+          artist = metadata.common.artist;
+        }
+        if (metadata.common.album) {
+          album = metadata.common.album;
+        }
 
-        // Upload to storage
+        // Get duration from metadata or fallback to audio element
+        let duration: string;
+        if (metadata.format.duration) {
+          const mins = Math.floor(metadata.format.duration / 60);
+          const secs = Math.floor(metadata.format.duration % 60);
+          duration = `${mins}:${secs.toString().padStart(2, "0")}`;
+        } else {
+          duration = await getAudioDuration(file);
+        }
+
+        // Extract and upload cover art if present
+        const pictures = metadata.common.picture;
+        if (pictures && pictures.length > 0) {
+          const picture = pictures[0];
+          const coverFileName = `covers/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}.${picture.format.split("/")[1] || "jpg"}`;
+          
+          // Create Uint8Array from picture data to ensure compatibility
+          const coverData = new Uint8Array(picture.data);
+          const coverBlob = new Blob([coverData], { type: picture.format });
+          
+          const { error: coverUploadError } = await supabase.storage
+            .from("audio")
+            .upload(coverFileName, coverBlob, {
+              contentType: picture.format,
+            });
+
+          if (!coverUploadError) {
+            const { data: coverUrlData } = supabase.storage.from("audio").getPublicUrl(coverFileName);
+            coverUrl = coverUrlData.publicUrl;
+          } else {
+            console.warn(`Failed to upload cover for ${file.name}:`, coverUploadError);
+          }
+        }
+
+        // Upload audio to storage
         const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
         const { error: uploadError } = await supabase.storage
           .from("audio")
@@ -151,14 +201,16 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
         // Get public URL
         const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
 
-        // Create track record
+        // Create track record with extracted metadata
         const { data: newTrack, error: trackError } = await supabase
           .from("tracks")
           .insert({
             title,
-            artist: "Unknown",
+            artist,
+            album,
             duration,
             audio_url: urlData.publicUrl,
+            cover_url: coverUrl,
           })
           .select("id")
           .single();
