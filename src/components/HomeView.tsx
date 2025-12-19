@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { ChevronRight, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
-import TrackRow from "./TrackRow";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +10,6 @@ import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbPlaylist = Tables<"playlists">;
-type DbTrack = Tables<"tracks">;
 
 interface SelectedPlaylist {
   id: string;
@@ -30,7 +28,8 @@ interface HomeViewProps {
 const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: HomeViewProps) => {
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
-  const [recentTracks, setRecentTracks] = useState<DbTrack[]>([]);
+  const [recentlyUpdated, setRecentlyUpdated] = useState<DbPlaylist[]>([]);
+  const [newPlaylists, setNewPlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllMoods, setShowAllMoods] = useState(false);
@@ -94,14 +93,25 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
     setGenrePlaylists(genreData || []);
 
-    // Load recent tracks
-    const { data: trackData } = await supabase
-      .from("tracks")
+    // Load recently updated playlists
+    const { data: updatedData } = await supabase
+      .from("playlists")
       .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10);
+      .eq("is_system", true)
+      .order("updated_at", { ascending: false })
+      .limit(5);
 
-    setRecentTracks(trackData || []);
+    setRecentlyUpdated(updatedData || []);
+
+    // Load newest playlists
+    const { data: newData } = await supabase
+      .from("playlists")
+      .select("*")
+      .eq("is_system", true)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    setNewPlaylists(newData || []);
     setIsLoading(false);
   };
 
@@ -184,32 +194,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         }, playlistTracks);
       }
     }
-  };
-
-  const handleTrackSelect = async (track: DbTrack) => {
-    const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
-    
-    // Convert all recent tracks for playlist context
-    const playlistTracks: Track[] = recentTracks.map(t => ({
-      id: t.id,
-      title: t.title,
-      artist: t.artist,
-      album: t.album || "",
-      duration: t.duration || "",
-      cover: t.cover_url || "/placeholder.svg",
-      genre: t.genre || "",
-    }));
-    
-    onTrackSelect({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      album: track.album || "",
-      duration: track.duration || "",
-      cover: track.cover_url || "/placeholder.svg",
-      genre: track.genre || "",
-      audioUrl: signedAudioUrl,
-    }, playlistTracks);
   };
 
   const getGreeting = () => {
@@ -332,34 +316,65 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           () => setShowAllGenres(!showAllGenres)
         )}
 
-        {/* Recently Added Tracks */}
-        <section className="animate-fade-in">
-          <h2 className="text-xl font-bold text-foreground mb-4">Recently Added</h2>
-          {recentTracks.length > 0 ? (
-            <div className="bg-card/30 rounded-xl overflow-hidden">
-              {recentTracks.slice(0, 5).map((track, index) => (
-                <TrackRow
-                  key={track.id}
-                  track={{
-                    id: track.id,
-                    title: track.title,
-                    artist: track.artist,
-                    album: track.album || "",
-                    duration: track.duration || "",
-                    cover: track.cover_url || "/placeholder.svg",
-                    genre: track.genre || "",
+        {/* Recently Updated Playlists */}
+        {recentlyUpdated.length > 0 && (
+          <section className="animate-fade-in">
+            <h2 className="text-xl font-bold text-foreground mb-4">Recently Updated Playlists</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {recentlyUpdated.map((playlist) => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={{
+                    id: playlist.id,
+                    name: playlist.name,
+                    description: playlist.description || "",
+                    cover: playlist.cover_url || "/placeholder.svg",
+                    trackCount: 0,
+                    tracks: [],
                   }}
-                  index={index + 1}
-                  isPlaying={isPlaying}
-                  isCurrentTrack={currentTrack?.id === track.id}
-                  onPlay={() => handleTrackSelect(track)}
+                  onClick={() => handlePlaylistClick({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
+                  onPlay={() => handlePlayPlaylist(playlist.id)}
+                  onUpdate={handlePlaylistUpdate}
                 />
               ))}
             </div>
-          ) : (
-            <p className="text-muted-foreground">No tracks yet. Add some in the admin panel.</p>
-          )}
-        </section>
+          </section>
+        )}
+
+        {/* New Playlists */}
+        {newPlaylists.length > 0 && (
+          <section className="animate-fade-in">
+            <h2 className="text-xl font-bold text-foreground mb-4">New Playlists</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {newPlaylists.map((playlist) => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={{
+                    id: playlist.id,
+                    name: playlist.name,
+                    description: playlist.description || "",
+                    cover: playlist.cover_url || "/placeholder.svg",
+                    trackCount: 0,
+                    tracks: [],
+                  }}
+                  onClick={() => handlePlaylistClick({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
+                  onPlay={() => handlePlayPlaylist(playlist.id)}
+                  onUpdate={handlePlaylistUpdate}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
