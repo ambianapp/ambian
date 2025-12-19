@@ -437,6 +437,7 @@ const PlayerBar = () => {
 
   // Crossfade logic
   const crossfadeCompleteRef = useRef(false);
+  const crossfadeHandoffDoneRef = useRef(false);
   const nextTrackDataRef = useRef<{ id: string; audioUrl: string } | null>(null);
   
   const startCrossfade = useCallback(async () => {
@@ -448,6 +449,7 @@ const PlayerBar = () => {
     console.log("Starting crossfade to:", nextTrack.title);
     isCrossfadingRef.current = true;
     crossfadeCompleteRef.current = false;
+    crossfadeHandoffDoneRef.current = false;
     nextTrackPreloadedRef.current = nextTrack.id;
     nextTrackDataRef.current = { id: nextTrack.id, audioUrl: nextTrack.audioUrl };
     
@@ -473,6 +475,9 @@ const PlayerBar = () => {
       crossfadeAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
       
         if (step >= steps) {
+          if (crossfadeHandoffDoneRef.current) return;
+          crossfadeHandoffDoneRef.current = true;
+
           if (crossfadeIntervalRef.current) {
             clearInterval(crossfadeIntervalRef.current);
             crossfadeIntervalRef.current = null;
@@ -485,7 +490,6 @@ const PlayerBar = () => {
           setIsCrossfadeActive(true);
 
           // Ensure main audio cannot start the next track when PlayerContext updates
-          // (this is what caused the "starts twice" behavior)
           audioRef.current?.pause();
 
           // Update duration from crossfade audio
@@ -497,7 +501,7 @@ const PlayerBar = () => {
           void handleNextCrossfade(nextTrack.id, 0);
         }
     }, stepTime);
-  }, [crossfade, repeat, getNextTrack, volume, isMuted, handleNext]);
+  }, [crossfade, repeat, getNextTrack, volume, isMuted, handleNextCrossfade]);
 
   // Monitor for crossfade trigger point
   useEffect(() => {
