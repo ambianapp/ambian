@@ -276,24 +276,26 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-background to-card">
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-4">
-            {onBack && (
-              <Button variant="ghost" size="icon" onClick={onBack}>
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            )}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Clock className="w-6 h-6 text-primary" />
-                {t("schedule.title")}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {t("schedule.subtitle")}
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3">
+              {onBack && (
+                <Button variant="ghost" size="icon" onClick={onBack}>
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              )}
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                  {t("schedule.title")}
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  {t("schedule.subtitle")}
+                </p>
+              </div>
             </div>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               {t("schedule.addSchedule")}
             </Button>
@@ -355,15 +357,15 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                       : "bg-card/80 border-border"
                   } ${!schedule.is_active ? "opacity-50" : ""}`}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                       {/* Playlist Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           {isCurrentlyPlaying ? (
-                            <Play className="w-4 h-4 text-primary animate-pulse" />
+                            <Play className="w-4 h-4 text-primary animate-pulse flex-shrink-0" />
                           ) : (
-                            <Music className="w-4 h-4 text-primary" />
+                            <Music className="w-4 h-4 text-primary flex-shrink-0" />
                           )}
                           <span className="font-medium text-foreground truncate">
                             {schedule.name || getPlaylistName(schedule.playlist_id)}
@@ -374,7 +376,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
@@ -387,26 +389,33 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                       </div>
 
                       {/* Controls */}
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={schedule.is_active}
-                          onCheckedChange={() => handleToggleActive(schedule)}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(schedule)}
-                        >
-                          {t("schedule.edit")}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDelete(schedule.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                      <div className="flex items-center gap-2 justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 mt-1 sm:mt-0">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={schedule.is_active}
+                            onCheckedChange={() => handleToggleActive(schedule)}
+                          />
+                          <span className="text-xs text-muted-foreground sm:hidden">
+                            {schedule.is_active ? "On" : "Off"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(schedule)}
+                          >
+                            {t("schedule.edit")}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(schedule.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
