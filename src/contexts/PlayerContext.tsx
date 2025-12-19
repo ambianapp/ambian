@@ -20,6 +20,7 @@ interface PlayerContextType {
   isPlaying: boolean;
   shuffle: boolean;
   repeat: "off" | "all" | "one";
+  crossfade: boolean;
   playlistTracksRef: React.MutableRefObject<Track[]>;
   handleTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   handlePlayPause: () => void;
@@ -27,10 +28,12 @@ interface PlayerContextType {
   handlePrevious: () => Promise<void>;
   handleShuffleToggle: () => void;
   handleRepeatToggle: () => void;
+  handleCrossfadeToggle: () => void;
   updateAudioUrl: (newUrl: string) => void;
   originalDbUrl: string | null;
   setSeekPosition: (position: number) => void;
   seekPosition: number | null;
+  getNextTrack: () => Promise<(Track & { audioUrl?: string }) | null>;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -48,6 +51,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState<"off" | "all" | "one">("off");
+  const [crossfade, setCrossfade] = useState(() => {
+    const saved = localStorage.getItem("ambian_crossfade");
+    return saved === "true";
+  });
   const [originalDbUrl, setOriginalDbUrl] = useState<string | null>(null);
   const [seekPosition, setSeekPosition] = useState<number | null>(null);
   const playlistTracksRef = useRef<Track[]>([]);
@@ -324,6 +331,50 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const handleCrossfadeToggle = useCallback(() => {
+    setCrossfade((prev) => {
+      const newValue = !prev;
+      localStorage.setItem("ambian_crossfade", String(newValue));
+      return newValue;
+    });
+  }, []);
+
+  // Get next track with audio URL for crossfade preloading
+  const getNextTrack = useCallback(async (): Promise<(Track & { audioUrl?: string }) | null> => {
+    if (!currentTrack) return null;
+    const tracks = playlistTracksRef.current;
+    if (tracks.length === 0) return null;
+    
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
+    if (currentIndex === -1) return null;
+    
+    let nextIndex: number;
+    if (shuffle) {
+      const availableIndices = tracks.map((_, i) => i).filter(i => i !== currentIndex);
+      nextIndex = availableIndices.length > 0 
+        ? availableIndices[Math.floor(Math.random() * availableIndices.length)]
+        : currentIndex;
+    } else {
+      nextIndex = (currentIndex + 1) % tracks.length;
+    }
+    
+    const nextTrack = tracks[nextIndex];
+    
+    // Fetch audio URL
+    const { data } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", nextTrack.id)
+      .single();
+    
+    if (data?.audio_url) {
+      const signedUrl = await getSignedAudioUrl(data.audio_url);
+      return { ...nextTrack, audioUrl: signedUrl };
+    }
+    
+    return nextTrack;
+  }, [currentTrack, shuffle]);
+
   return (
     <PlayerContext.Provider
       value={{
@@ -331,6 +382,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         isPlaying,
         shuffle,
         repeat,
+        crossfade,
         playlistTracksRef,
         handleTrackSelect,
         handlePlayPause,
@@ -338,10 +390,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         handlePrevious,
         handleShuffleToggle,
         handleRepeatToggle,
+        handleCrossfadeToggle,
         updateAudioUrl,
         originalDbUrl,
         setSeekPosition,
         seekPosition,
+        getNextTrack,
       }}
     >
       {children}
