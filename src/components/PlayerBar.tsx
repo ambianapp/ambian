@@ -61,6 +61,7 @@ const PlayerBar = () => {
   const crossfadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const nextTrackPreloadedRef = useRef<string | null>(null);
   const [isCrossfadeActive, setIsCrossfadeActive] = useState(false);
+  const isCrossfadeActiveRef = useRef(false);
   const freezeMainSrcRef = useRef(false);
 
   // Wake Lock API - prevents device from sleeping during playback
@@ -413,14 +414,16 @@ const PlayerBar = () => {
   }, [currentTrack?.audioUrl, isCrossfadeActive]);
 
   useEffect(() => {
-    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
-    const inactiveAudio = isCrossfadeActive ? audioRef.current : crossfadeAudioRef.current;
+    const crossfadeActive = isCrossfadeActiveRef.current || isCrossfadeActive;
+    const activeAudio = crossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    const inactiveAudio = crossfadeActive ? audioRef.current : crossfadeAudioRef.current;
 
     // Make sure inactive audio never "auto-starts" during crossfade.
     if (inactiveAudio) inactiveAudio.pause();
 
     if (activeAudio) {
-      if (isPlaying && (currentTrack?.audioUrl || isCrossfadeActive)) {
+      if (isPlaying && (currentTrack?.audioUrl || crossfadeActive)) {
+        // Calling play() on an already-playing element is fine; it guarantees resume.
         activeAudio.play().catch(console.error);
       } else {
         activeAudio.pause();
@@ -485,8 +488,9 @@ const PlayerBar = () => {
           crossfadeCompleteRef.current = true;
           console.log("Crossfade complete (next track continues on crossfade audio)");
 
-          // Switch UI/control to the crossfade audio immediately
+          // Switch UI/control to the crossfade audio immediately (set ref first to avoid races)
           freezeMainSrcRef.current = true;
+          isCrossfadeActiveRef.current = true;
           setIsCrossfadeActive(true);
 
           // Ensure main audio cannot start the next track when PlayerContext updates
@@ -691,6 +695,7 @@ const PlayerBar = () => {
           isCrossfadingRef.current = false;
           crossfadeCompleteRef.current = false;
           freezeMainSrcRef.current = false;
+          isCrossfadeActiveRef.current = false;
           nextTrackPreloadedRef.current = null;
           nextTrackDataRef.current = null;
           setIsCrossfadeActive(false);
