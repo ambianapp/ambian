@@ -672,7 +672,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.startTrial": "Aloita ilmainen kokeilu",
     "auth.trialInfo": "3 päivää ilmaiseksi • Ei luottokorttia",
     "auth.orContinueWith": "Tai jatka",
-    "auth.noLicenses": "Teostovapaata taustamusiikkia yrityksille",
+    "auth.noLicenses": "Taustamusiikkia yrityksille - ei musiikkilupia!",
     "auth.noLicensesDesc": "Soita musiikkia yrityksessäsi huolehtimatta taustamusiikkiluvista.",
     "auth.freeTrialDays": "3 päivän ilmainen kokeilu",
     "auth.noCardRequired": "Luottokorttia ei tarvita",
