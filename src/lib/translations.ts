@@ -17,6 +17,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.schedule": "Schedule",
     "nav.profile": "Profile",
     "nav.help": "Help",
+    "nav.more": "More",
     
     // Common
     "common.save": "Save Changes",
@@ -330,6 +331,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.schedule": "Schema",
     "nav.profile": "Profil",
     "nav.help": "Hjälp",
+    "nav.more": "Mer",
     
     // Common
     "common.save": "Spara ändringar",
@@ -643,6 +645,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.schedule": "Aikataulu",
     "nav.profile": "Profiili",
     "nav.help": "Ohje",
+    "nav.more": "Lisää",
     
     // Common
     "common.save": "Tallenna muutokset",
@@ -956,6 +959,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.schedule": "Zeitplan",
     "nav.profile": "Profil",
     "nav.help": "Hilfe",
+    "nav.more": "Mehr",
     
     // Common
     "common.save": "Änderungen speichern",
@@ -1268,6 +1272,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.library": "Votre Bibliothèque",
     "nav.schedule": "Programmation",
     "nav.profile": "Profil",
+    "nav.help": "Aide",
+    "nav.more": "Plus",
     
     // Common
     "common.save": "Enregistrer",
