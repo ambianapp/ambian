@@ -31,7 +31,7 @@ const Index = () => {
   const { toast } = useToast();
   
   // Auto-play scheduled playlists
-  usePlaylistScheduler();
+  const { isEnabled: schedulerEnabled, toggleScheduler } = usePlaylistScheduler();
 
   // Handle checkout callback
   useEffect(() => {
@@ -138,7 +138,11 @@ const Index = () => {
         );
       case "schedule":
         return (
-          <ScheduleManager onBack={() => handleViewChange("home")} />
+          <ScheduleManager 
+            onBack={() => handleViewChange("home")} 
+            schedulerEnabled={schedulerEnabled}
+            onToggleScheduler={toggleScheduler}
+          />
         );
       default:
         return (
