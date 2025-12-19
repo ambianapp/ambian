@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -220,6 +220,14 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         >
           <User className="w-5 h-5" />
           {t("nav.profile")}
+        </Button>
+        <Button
+          variant="ghost"
+          className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => navigate("/help")}
+        >
+          <HelpCircle className="w-5 h-5" />
+          {t("nav.help")}
         </Button>
         {isAdmin && (
           <Button
