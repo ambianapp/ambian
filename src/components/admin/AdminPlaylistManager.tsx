@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ListMusic, Edit, Loader2 } from "lucide-react";
+import { Plus, Trash2, ListMusic, Edit, Loader2, Search } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import PlaylistEditor from "./PlaylistEditor";
 
@@ -19,6 +19,7 @@ const AdminPlaylistManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [newPlaylist, setNewPlaylist] = useState({
     name: "",
     description: "",
@@ -180,11 +181,24 @@ const AdminPlaylistManager = () => {
       {/* Playlist List */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ListMusic className="w-5 h-5" />
-            System Playlists ({playlists.length})
-          </CardTitle>
-          <CardDescription>Click on a playlist to manage its tracks</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ListMusic className="w-5 h-5" />
+                System Playlists ({playlists.length})
+              </CardTitle>
+              <CardDescription>Click on a playlist to manage its tracks</CardDescription>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search playlists..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-card"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -197,7 +211,13 @@ const AdminPlaylistManager = () => {
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {playlists.map((playlist) => (
+              {playlists
+                .filter((playlist) =>
+                  playlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  playlist.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  playlist.category?.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((playlist) => (
                 <div
                   key={playlist.id}
                   className="relative group p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-all cursor-pointer"
