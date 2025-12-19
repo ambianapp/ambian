@@ -99,73 +99,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Register session in active_sessions table (kick out oldest devices if over limit)
+  // Register session via edge function (uses service role to kick out older devices)
   const registerSession = useCallback(async (userId: string, sessionAccessToken: string) => {
     try {
       const sessionId = sessionAccessToken.slice(-32);
       const deviceInfo = navigator.userAgent;
 
-      // Get device slots limit from subscription
-      const { data: subData } = await supabase
-        .from("subscriptions")
-        .select("device_slots")
-        .eq("user_id", userId)
-        .maybeSingle();
-      
-      const deviceSlots = subData?.device_slots || 1;
+      const { data, error } = await supabase.functions.invoke("register-session", {
+        body: { sessionId, deviceInfo },
+      });
 
-      // Check if this session already exists
-      const { data: existingSession } = await supabase
-        .from("active_sessions")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("session_id", sessionId)
-        .maybeSingle();
-
-      if (existingSession) {
-        // Session already registered, just update timestamp
-        await supabase
-          .from("active_sessions")
-          .update({ device_info: deviceInfo, updated_at: new Date().toISOString() })
-          .eq("id", existingSession.id);
-        console.log("Session updated");
+      if (error) {
+        console.error("Error registering session:", error);
         return;
       }
 
-      // Get current session count
-      const { data: allSessions, error: countError } = await supabase
-        .from("active_sessions")
-        .select("id, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
-
-      if (countError) {
-        console.error("Error counting sessions:", countError);
-        return;
+      console.log("Session registered:", data?.message);
+      if (data?.removedSessions > 0) {
+        console.log(`Kicked out ${data.removedSessions} older device(s)`);
       }
-
-      const currentCount = allSessions?.length || 0;
-
-      // If at or over the limit, remove oldest sessions
-      if (currentCount >= deviceSlots) {
-        const sessionsToRemove = currentCount - deviceSlots + 1;
-        const oldestSessions = allSessions?.slice(0, sessionsToRemove) || [];
-        
-        for (const oldSession of oldestSessions) {
-          await supabase
-            .from("active_sessions")
-            .delete()
-            .eq("id", oldSession.id);
-        }
-        console.log(`Removed ${sessionsToRemove} old session(s)`);
-      }
-
-      // Insert new session
-      await supabase
-        .from("active_sessions")
-        .insert({ user_id: userId, session_id: sessionId, device_info: deviceInfo });
-
-      console.log("Session registered successfully");
     } catch (error) {
       console.error("Error registering session:", error);
     }
