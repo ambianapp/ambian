@@ -225,10 +225,15 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(":");
-    const h = parseInt(hours);
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${minutes} ${ampm}`;
+    // Create a date object to use Intl formatting
+    const date = new Date();
+    date.setHours(parseInt(hours), parseInt(minutes), 0);
+    
+    // Use user's locale to determine 12h vs 24h format
+    return date.toLocaleTimeString(navigator.language, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   // Get currently active schedule based on time
