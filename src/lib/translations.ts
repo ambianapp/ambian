@@ -204,6 +204,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.clearAll": "Clear all",
     "search.noRecent": "No recent searches. Start typing to search for songs and playlists.",
     
+    // Library
+    "library.title": "Your Library",
+    "library.playlists": "Playlists",
+    "library.likedSongs": "Liked Songs",
+    "library.songs": "songs",
+    "library.yourPlaylist": "Your playlist",
+    "library.likedPlaylist": "Liked playlist",
+    "library.likedSongsDesc": "Your favorite tracks",
+    
     // Home extras
     "home.greeting.morning": "Good morning",
     "home.greeting.afternoon": "Good afternoon",
@@ -517,6 +526,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.recentSearches": "Senaste sökningar",
     "search.clearAll": "Rensa alla",
     "search.noRecent": "Inga senaste sökningar. Börja skriva för att söka efter låtar och spellistor.",
+    
+    // Library
+    "library.title": "Ditt bibliotek",
+    "library.playlists": "Spellistor",
+    "library.likedSongs": "Gillade låtar",
+    "library.songs": "låtar",
+    "library.yourPlaylist": "Din spellista",
+    "library.likedPlaylist": "Gillad spellista",
+    "library.likedSongsDesc": "Dina favoritlåtar",
     
     // Home extras
     "home.greeting.morning": "God morgon",
@@ -832,6 +850,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.clearAll": "Tyhjennä kaikki",
     "search.noRecent": "Ei viimeaikaisia hakuja. Aloita kirjoittaminen etsiäksesi kappaleita ja soittolistoja.",
     
+    // Library
+    "library.title": "Kirjastosi",
+    "library.playlists": "Soittolistat",
+    "library.likedSongs": "Tykätyt kappaleet",
+    "library.songs": "kappaletta",
+    "library.yourPlaylist": "Oma soittolista",
+    "library.likedPlaylist": "Tykätty soittolista",
+    "library.likedSongsDesc": "Suosikkikappaleesi",
+    
     // Home extras
     "home.greeting.morning": "Hyvää huomenta",
     "home.greeting.afternoon": "Hyvää iltapäivää",
@@ -1146,6 +1173,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.clearAll": "Alle löschen",
     "search.noRecent": "Keine letzten Suchen. Beginne zu tippen, um Songs und Playlists zu suchen.",
     
+    // Library
+    "library.title": "Deine Bibliothek",
+    "library.playlists": "Playlists",
+    "library.likedSongs": "Lieblingssongs",
+    "library.songs": "Songs",
+    "library.yourPlaylist": "Deine Playlist",
+    "library.likedPlaylist": "Gelikte Playlist",
+    "library.likedSongsDesc": "Deine Lieblingssongs",
+    
     // Home extras
     "home.greeting.morning": "Guten Morgen",
     "home.greeting.afternoon": "Guten Tag",
@@ -1459,6 +1495,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.recentSearches": "Recherches récentes",
     "search.clearAll": "Tout effacer",
     "search.noRecent": "Aucune recherche récente. Commencez à taper pour rechercher des chansons et des playlists.",
+    
+    // Library
+    "library.title": "Votre bibliothèque",
+    "library.playlists": "Playlists",
+    "library.likedSongs": "Titres likés",
+    "library.songs": "titres",
+    "library.yourPlaylist": "Votre playlist",
+    "library.likedPlaylist": "Playlist likée",
+    "library.likedSongsDesc": "Vos titres préférés",
     
     // Home extras
     "home.greeting.morning": "Bonjour",
