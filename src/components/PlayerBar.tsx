@@ -20,6 +20,7 @@ const PlayerBar = () => {
     handlePlayPause,
     handleNext,
     handlePrevious,
+    handleNextCrossfade,
     handleShuffleToggle,
     handleRepeatToggle,
     handleCrossfadeToggle,
@@ -483,8 +484,8 @@ const PlayerBar = () => {
           setDuration(crossfadeAudio.duration);
         }
 
-        // Advance track state NOW (so UI shows the upcoming track), but keep main audio src frozen.
-        handleNext();
+        // Advance track state NOW using a crossfade-aware next that does NOT reset seekPosition.
+        handleNextCrossfade(nextTrack.id, 0);
       }
     }, stepTime);
   }, [crossfade, repeat, getNextTrack, volume, isMuted, handleNext]);
@@ -509,7 +510,7 @@ const PlayerBar = () => {
     if (crossfadeEl.paused) return;
 
     const pos = crossfadeEl.currentTime || 0;
-    const nextSrc = currentTrack?.audioUrl;
+    const nextSrc = crossfadeEl.src;
     if (!nextSrc) return;
 
     console.log("Swapping crossfade -> main at position:", pos);
