@@ -8,13 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo.png";
 import { z } from "zod";
-
-const authSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Auth = () => {
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +20,11 @@ const Auth = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const authSchema = z.object({
+    email: z.string().email(t("auth.validEmail")),
+    password: z.string().min(6, t("auth.passwordMin")),
+  });
 
   const validateForm = () => {
     try {
@@ -56,7 +58,7 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        toast({ title: "Welcome back!", description: "You have signed in successfully." });
+        toast({ title: t("auth.welcomeToast"), description: t("auth.signInSuccess") });
         navigate("/");
       } else {
         const redirectUrl = `${window.location.origin}/`;
@@ -69,16 +71,16 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        toast({ title: "Account created!", description: "Welcome to Ambian." });
+        toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
         navigate("/");
       }
     } catch (error: any) {
       let message = error.message;
       if (message.includes("User already registered")) {
-        message = "This email is already registered. Please sign in instead.";
+        message = t("auth.emailRegistered");
       }
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: message,
         variant: "destructive",
       });
@@ -99,7 +101,7 @@ const Auth = () => {
       if (error) throw error;
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });
@@ -125,14 +127,13 @@ const Auth = () => {
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full mb-4">
               <Shield className="w-5 h-5" />
-              <span className="font-semibold">100% Copyright-Free Music</span>
+              <span className="font-semibold">{t("auth.copyrightFree")}</span>
             </div>
             <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
-              No Licenses Needed. Ever.
+              {t("auth.noLicenses")}
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg">
-              Play music in your business without worrying about copyright claims, 
-              licensing fees, or legal issues. All tracks are pre-cleared for commercial use.
+              {t("auth.noLicensesDesc")}
             </p>
           </div>
 
@@ -143,38 +144,38 @@ const Auth = () => {
                 <span className="text-2xl">🎉</span>
               </div>
               <div>
-                <h3 className="font-bold text-foreground text-lg">3 Days Free Trial</h3>
-                <p className="text-sm text-muted-foreground">No credit card required</p>
+                <h3 className="font-bold text-foreground text-lg">{t("auth.freeTrialDays")}</h3>
+                <p className="text-sm text-muted-foreground">{t("auth.noCardRequired")}</p>
               </div>
             </div>
             
             <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
-              <div className="text-3xl font-bold text-foreground">€89<span className="text-lg font-normal text-muted-foreground">/year</span></div>
-              <div className="text-sm text-primary font-medium mt-1">Only €7.40/month</div>
+              <div className="text-3xl font-bold text-foreground">€89<span className="text-lg font-normal text-muted-foreground">{t("auth.perYear")}</span></div>
+              <div className="text-sm text-primary font-medium mt-1">{t("auth.onlyPerMonth")}</div>
             </div>
           </div>
           
           {/* Who it's for */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
-              Perfect for
+              {t("auth.perfectFor")}
             </h3>
             <div className="flex flex-wrap gap-2">
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Coffee className="w-3.5 h-3.5 text-primary" />
-                <span>Restaurants</span>
+                <span>{t("auth.restaurants")}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Hotel className="w-3.5 h-3.5 text-primary" />
-                <span>Hotels</span>
+                <span>{t("auth.hotels")}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Store className="w-3.5 h-3.5 text-primary" />
-                <span>Retail</span>
+                <span>{t("auth.retail")}</span>
               </div>
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Building2 className="w-3.5 h-3.5 text-primary" />
-                <span>Offices</span>
+                <span>{t("auth.offices")}</span>
               </div>
             </div>
           </div>
@@ -185,13 +186,13 @@ const Auth = () => {
               <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Music className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-sm text-foreground">50+ curated playlists for every mood</span>
+              <span className="text-sm text-foreground">{t("auth.curatedPlaylists")}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Calendar className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-sm text-foreground">Smart scheduling - set it and forget it</span>
+              <span className="text-sm text-foreground">{t("auth.smartScheduling")}</span>
             </div>
           </div>
         </div>
@@ -208,22 +209,22 @@ const Auth = () => {
             <div className="bg-card/50 border border-border/50 rounded-xl p-4 mb-4 space-y-3">
               <div className="flex items-center justify-center gap-2 text-primary">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm font-semibold">100% Copyright-Free Music</span>
+                <span className="text-sm font-semibold">{t("auth.copyrightFree")}</span>
               </div>
               
               <p className="text-xs text-muted-foreground text-center">
-                No licenses needed. Play music in your business legally.
+                {t("auth.noLicensesShort")}
               </p>
               
               <div className="flex items-center justify-center gap-4 pt-2 border-t border-border/50">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-foreground">€89/year</div>
-                  <div className="text-xs text-muted-foreground">€7.40/month</div>
+                  <div className="text-lg font-bold text-foreground">€89{t("auth.perYear")}</div>
+                  <div className="text-xs text-muted-foreground">€7.40/kk</div>
                 </div>
                 <div className="h-8 w-px bg-border/50" />
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-primary">3 Days Free</div>
-                  <div className="text-xs text-muted-foreground">No card needed</div>
+                  <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
+                  <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
                 </div>
               </div>
             </div>
@@ -232,12 +233,12 @@ const Auth = () => {
           {/* Header */}
           <div className="text-center lg:text-left">
             <h1 className="text-2xl font-bold text-foreground">
-              {isLogin ? "Welcome back" : "Start your free trial"}
+              {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
             <p className="text-muted-foreground mt-2 hidden lg:block">
               {isLogin
-                ? "Sign in to access your music"
-                : "3 days free • No credit card required"}
+                ? t("auth.signInToAccess")
+                : t("auth.trialInfo")}
             </p>
           </div>
 
@@ -245,7 +246,7 @@ const Auth = () => {
           <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -264,7 +265,7 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -290,9 +291,9 @@ const Auth = () => {
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : isLogin ? (
-                "Sign In"
+                t("auth.signIn")
               ) : (
-                "Start Free Trial"
+                t("auth.startFreeTrial")
               )}
             </Button>
           </form>
@@ -303,7 +304,7 @@ const Auth = () => {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
+                {t("auth.orContinueWith")}
               </span>
             </div>
           </div>
@@ -337,18 +338,18 @@ const Auth = () => {
 
           <div className="text-center space-y-1">
             <p className="text-sm text-muted-foreground">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+              {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}{" "}
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-primary hover:underline font-medium"
               >
-                {isLogin ? "Sign up" : "Sign in"}
+                {isLogin ? t("auth.signUp") : t("auth.signIn")}
               </button>
             </p>
             {isLogin && (
               <p className="text-xs text-muted-foreground">
-                3 days free • No credit card required
+                {t("auth.trialInfo")}
               </p>
             )}
           </div>
