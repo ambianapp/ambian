@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel } from "lucide-react";
+import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo.png";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -172,6 +172,14 @@ const Auth = () => {
               <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
                 <Building2 className="w-3.5 h-3.5 text-primary" />
                 <span>{t("auth.offices")}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
+                <Dumbbell className="w-3.5 h-3.5 text-primary" />
+                <span>{t("auth.gyms")}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 text-sm">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span>{t("auth.beautySalons")}</span>
               </div>
             </div>
           </div>
