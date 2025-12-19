@@ -264,7 +264,23 @@ const Help = () => {
                 <p className="text-sm text-muted-foreground">support@ambian.fi</p>
               </button>
               <button 
-                onClick={() => window.open('https://wa.me/358404666176', '_blank', 'noopener,noreferrer')}
+                onClick={() => {
+                  const phone = "358404666176";
+                  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                  const target = window.top ?? window;
+
+                  if (isMobile) {
+                    // Try to open the WhatsApp app first on mobile
+                    target.location.href = `whatsapp://send?phone=${phone}`;
+                    // Fallback to web after a short delay
+                    setTimeout(() => {
+                      target.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
+                    }, 600);
+                    return;
+                  }
+
+                  target.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
+                }}
                 className="p-4 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors text-center cursor-pointer"
               >
                 <MessageCircle className="w-6 h-6 mx-auto mb-2 text-green-500" />
