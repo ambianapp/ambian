@@ -24,7 +24,7 @@ const Help = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <main className="container max-w-4xl mx-auto px-4 py-8 pb-32 space-y-8">
         {/* Getting Started */}
         <Card>
           <CardHeader>
