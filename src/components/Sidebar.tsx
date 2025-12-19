@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -35,9 +36,11 @@ interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
   onPlaylistSelect?: (playlist: SelectedPlaylist) => void;
+  schedulerEnabled?: boolean;
+  onToggleScheduler?: (enabled: boolean) => void;
 }
 
-const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) => {
+const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled = true, onToggleScheduler }: SidebarProps) => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -184,20 +187,29 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
       {/* Main Navigation */}
       <nav className="flex flex-col gap-1">
         {navItems.map((item) => (
-          <Button
-            key={item.id}
-            variant="ghost"
-            className={cn(
-              "justify-start gap-4 h-12 text-base font-medium",
-              activeView === item.id
-                ? "bg-secondary text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+          <div key={item.id} className="flex items-center">
+            <Button
+              variant="ghost"
+              className={cn(
+                "justify-start gap-4 h-12 text-base font-medium flex-1",
+                activeView === item.id
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => onViewChange(item.id)}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </Button>
+            {/* Scheduler toggle next to Schedule item */}
+            {item.id === "schedule" && onToggleScheduler && (
+              <Switch
+                checked={schedulerEnabled}
+                onCheckedChange={onToggleScheduler}
+                className="mr-2"
+              />
             )}
-            onClick={() => onViewChange(item.id)}
-          >
-            <item.icon className="w-5 h-5" />
-            {item.label}
-          </Button>
+          </div>
         ))}
         <Button
           variant="ghost"

@@ -160,7 +160,7 @@ const Index = () => {
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <TrialBanner />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar activeView={activeView} onViewChange={handleViewChange} onPlaylistSelect={handlePlaylistSelect} />
+        <Sidebar activeView={activeView} onViewChange={handleViewChange} onPlaylistSelect={handlePlaylistSelect} schedulerEnabled={schedulerEnabled} onToggleScheduler={toggleScheduler} />
         
         <main className="flex-1 flex flex-col overflow-hidden">
           {renderView()}
