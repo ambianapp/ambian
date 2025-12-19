@@ -499,24 +499,11 @@ const PlayerBar = () => {
         <div className="flex items-center justify-between px-3 py-2">
           {/* Track Info */}
           <div className="flex items-center gap-2 min-w-0 flex-1 max-w-[45%]">
-            <div className="relative flex-shrink-0">
-              <img
-                src={currentTrack.cover}
-                alt={currentTrack.title}
-                className="w-10 h-10 rounded-md object-cover shadow-lg"
-              />
-              {isPlaying && (
-                <div className="absolute inset-0 flex items-end justify-center gap-0.5 pb-1">
-                  {[...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-0.5 bg-primary rounded-full waveform-bar"
-                      style={{ animationDelay: `${i * 0.15}s`, height: "25%" }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <img
+              src={currentTrack.cover}
+              alt={currentTrack.title}
+              className="w-10 h-10 rounded-md object-cover shadow-lg flex-shrink-0"
+            />
             <div className="min-w-0 flex-1">
               <p className="font-medium text-foreground truncate text-xs">{currentTrack.title}</p>
               <p className="text-[10px] text-muted-foreground truncate">Ambian</p>
@@ -559,24 +546,11 @@ const PlayerBar = () => {
       <div className="fixed bottom-0 left-0 right-0 h-24 glass border-t border-border px-4 hidden md:flex items-center z-50">
         {/* Track Info */}
         <div className="flex items-center gap-4 w-72 min-w-0 flex-shrink-0">
-          <div className="relative group flex-shrink-0">
-            <img
-              src={currentTrack.cover}
-              alt={currentTrack.title}
-              className="w-14 h-14 rounded-lg object-cover shadow-lg"
-            />
-            {isPlaying && (
-              <div className="absolute inset-0 flex items-end justify-center gap-0.5 pb-2">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-primary rounded-full waveform-bar"
-                    style={{ animationDelay: `${i * 0.15}s`, height: "30%" }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          <img
+            src={currentTrack.cover}
+            alt={currentTrack.title}
+            className="w-14 h-14 rounded-lg object-cover shadow-lg flex-shrink-0"
+          />
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
             <p className="text-sm text-muted-foreground truncate">Ambian</p>
