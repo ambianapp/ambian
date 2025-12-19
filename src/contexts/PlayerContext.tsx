@@ -220,13 +220,34 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(restorePlayback, 500);
   }, []);
 
-  const handleTrackSelect = useCallback((track: Track, playlistTracks?: Track[]) => {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    setSeekPosition(null);
+  const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[]) => {
     if (playlistTracks) {
       playlistTracksRef.current = playlistTracks;
     }
+    setSeekPosition(null);
+    
+    // If track already has a valid signed URL (not a raw DB URL), use it
+    if (track.audioUrl && track.audioUrl.includes('token=')) {
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      return;
+    }
+    
+    // Fetch signed URL for the track
+    const { data } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", track.id)
+      .single();
+    
+    if (data?.audio_url) {
+      setOriginalDbUrl(data.audio_url);
+      const signedUrl = await getSignedAudioUrl(data.audio_url);
+      setCurrentTrack({ ...track, audioUrl: signedUrl });
+    } else {
+      setCurrentTrack(track);
+    }
+    setIsPlaying(true);
   }, []);
 
   const handlePlayPause = useCallback(() => {
