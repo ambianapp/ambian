@@ -236,19 +236,36 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
     });
   };
 
-  // Get currently active schedule based on time
+  // Get currently active schedule based on time (handles overnight schedules)
   const getCurrentSchedule = () => {
+    if (!schedulerEnabled) return null;
+    
     const now = new Date();
     const currentDay = now.getDay();
     const currentTime = now.toTimeString().slice(0, 5);
 
-    return schedules.find(
-      s =>
-        s.is_active &&
-        s.days_of_week.includes(currentDay) &&
-        s.start_time.slice(0, 5) <= currentTime &&
-        s.end_time.slice(0, 5) > currentTime
-    );
+    const matching = schedules.filter(s => {
+      if (!s.is_active) return false;
+      
+      const startTime = s.start_time.slice(0, 5);
+      const endTime = s.end_time.slice(0, 5);
+      
+      // Check if schedule spans midnight (e.g., 17:00 to 09:00)
+      const spansOvernight = startTime > endTime;
+      
+      if (spansOvernight) {
+        const isAfterStart = currentTime >= startTime && s.days_of_week.includes(currentDay);
+        const isBeforeEnd = currentTime < endTime && s.days_of_week.includes((currentDay + 6) % 7);
+        return isAfterStart || isBeforeEnd;
+      } else {
+        return s.days_of_week.includes(currentDay) && 
+               currentTime >= startTime && 
+               currentTime < endTime;
+      }
+    });
+
+    if (matching.length === 0) return null;
+    return matching.reduce((prev, curr) => curr.priority > prev.priority ? curr : prev);
   };
 
   const activeSchedule = getCurrentSchedule();
@@ -343,22 +360,35 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
             </Card>
           ) : (
             <div className="space-y-3">
-              {schedules.map(schedule => (
+              {schedules.map(schedule => {
+                const isCurrentlyPlaying = activeSchedule?.id === schedule.id;
+                return (
                 <Card
                   key={schedule.id}
-                  className={`bg-card/80 border-border transition-opacity ${
-                    !schedule.is_active ? "opacity-50" : ""
-                  }`}
+                  className={`border transition-all ${
+                    isCurrentlyPlaying 
+                      ? "bg-primary/10 border-primary/50 ring-1 ring-primary/30" 
+                      : "bg-card/80 border-border"
+                  } ${!schedule.is_active ? "opacity-50" : ""}`}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
                       {/* Playlist Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Music className="w-4 h-4 text-primary" />
+                          {isCurrentlyPlaying ? (
+                            <Play className="w-4 h-4 text-primary animate-pulse" />
+                          ) : (
+                            <Music className="w-4 h-4 text-primary" />
+                          )}
                           <span className="font-medium text-foreground truncate">
                             {schedule.name || getPlaylistName(schedule.playlist_id)}
                           </span>
+                          {isCurrentlyPlaying && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-medium">
+                              NOW PLAYING
+                            </span>
+                          )}
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
@@ -397,7 +427,8 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              );
+              })}
             </div>
           )}
 
