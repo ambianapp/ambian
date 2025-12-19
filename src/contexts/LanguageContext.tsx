@@ -38,13 +38,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("language")
+          .select("*")
           .eq("user_id", user.id)
           .maybeSingle();
         
-        if (data?.language && ["en", "sv", "fi", "de", "fr"].includes(data.language)) {
-          setLanguageState(data.language as Language);
-          localStorage.setItem(STORAGE_KEY, data.language);
+        const profileData = data as { language?: string } | null;
+        if (profileData?.language && ["en", "sv", "fi", "de", "fr"].includes(profileData.language)) {
+          setLanguageState(profileData.language as Language);
+          localStorage.setItem(STORAGE_KEY, profileData.language);
         }
       } catch (error) {
         console.error("Failed to load language preference:", error);
@@ -63,7 +64,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         await supabase
           .from("profiles")
-          .update({ language: lang })
+          .update({ language: lang } as any)
           .eq("user_id", user.id);
       } catch (error) {
         console.error("Failed to save language preference:", error);

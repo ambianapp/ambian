@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import PlayerBar from "@/components/PlayerBar";
 import MobileNav from "@/components/MobileNav";
 import Index from "./pages/Index";
@@ -127,9 +128,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <PlayerProvider>
-            <AppContent />
-          </PlayerProvider>
+          <LanguageProvider>
+            <PlayerProvider>
+              <AppContent />
+            </PlayerProvider>
+          </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
