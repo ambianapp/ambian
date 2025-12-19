@@ -146,8 +146,8 @@ const Auth = () => {
             </div>
             
             <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
-              <div className="text-3xl font-bold text-foreground">€89<span className="text-lg font-normal text-muted-foreground">{t("auth.perYear")}</span></div>
-              <div className="text-sm text-primary font-medium mt-1">{t("auth.onlyPerMonth")}</div>
+              <div className="text-3xl font-bold text-foreground">€7.40<span className="text-lg font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
+              <div className="text-xs text-muted-foreground mt-1">{t("auth.billedYearly")}</div>
             </div>
           </div>
           
@@ -217,8 +217,8 @@ const Auth = () => {
               
               <div className="flex items-center justify-center gap-4 pt-2 border-t border-border/50">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-foreground">€89{t("auth.perYear")}</div>
-                  <div className="text-xs text-muted-foreground">€7.40/kk</div>
+                  <div className="text-lg font-bold text-foreground">€7.40{t("auth.perMonth")}</div>
+                  <div className="text-xs text-muted-foreground">{t("auth.billedYearly")}</div>
                 </div>
                 <div className="h-8 w-px bg-border/50" />
                 <div className="text-center">
