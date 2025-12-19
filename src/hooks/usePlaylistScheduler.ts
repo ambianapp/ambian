@@ -54,13 +54,28 @@ export const usePlaylistScheduler = () => {
     const currentTime = now.toTimeString().slice(0, 5);
 
     // Find all matching schedules and pick highest priority
-    const matching = schedules.filter(
-      s =>
-        s.is_active &&
-        s.days_of_week.includes(currentDay) &&
-        s.start_time.slice(0, 5) <= currentTime &&
-        s.end_time.slice(0, 5) > currentTime
-    );
+    const matching = schedules.filter(s => {
+      if (!s.is_active) return false;
+      
+      const startTime = s.start_time.slice(0, 5);
+      const endTime = s.end_time.slice(0, 5);
+      
+      // Check if schedule spans midnight (e.g., 17:00 to 09:00)
+      const spansOvernight = startTime > endTime;
+      
+      if (spansOvernight) {
+        // For overnight schedules, check if current time is after start OR before end
+        // Also need to check correct day
+        const isAfterStart = currentTime >= startTime && s.days_of_week.includes(currentDay);
+        const isBeforeEnd = currentTime < endTime && s.days_of_week.includes((currentDay + 6) % 7); // yesterday's schedule
+        return isAfterStart || isBeforeEnd;
+      } else {
+        // Normal same-day schedule
+        return s.days_of_week.includes(currentDay) && 
+               currentTime >= startTime && 
+               currentTime < endTime;
+      }
+    });
 
     if (matching.length === 0) return null;
 
