@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Plus, Trash2, Calendar, Music, Play, ArrowLeft } from "lucide-react";
+import { Clock, Plus, Trash2, Calendar, Music, Play, ArrowLeft, Power } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -42,9 +42,11 @@ const DAYS = [
 
 interface ScheduleManagerProps {
   onBack?: () => void;
+  schedulerEnabled?: boolean;
+  onToggleScheduler?: (enabled: boolean) => void;
 }
 
-const ScheduleManager = ({ onBack }: ScheduleManagerProps) => {
+const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }: ScheduleManagerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -271,6 +273,31 @@ const ScheduleManager = ({ onBack }: ScheduleManagerProps) => {
               Add Schedule
             </Button>
           </div>
+
+          {/* Global On/Off Toggle */}
+          {onToggleScheduler && (
+            <Card className={`${schedulerEnabled ? 'bg-primary/10 border-primary/30' : 'bg-muted/50 border-border'}`}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${schedulerEnabled ? 'bg-primary/20' : 'bg-muted'}`}>
+                  <Power className={`w-5 h-5 ${schedulerEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">
+                    {schedulerEnabled ? "Automatic Scheduling ON" : "Automatic Scheduling OFF"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {schedulerEnabled 
+                      ? "Playlists will automatically switch based on your schedules" 
+                      : "You're in manual mode - choose playlists yourself"}
+                  </p>
+                </div>
+                <Switch
+                  checked={schedulerEnabled}
+                  onCheckedChange={onToggleScheduler}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Current Status */}
           {activeSchedule && (

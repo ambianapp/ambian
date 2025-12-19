@@ -1,9 +1,11 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { Track } from "@/data/musicData";
 import { useToast } from "@/hooks/use-toast";
+
+const SCHEDULER_ENABLED_KEY = "ambian_scheduler_enabled";
 
 interface Schedule {
   id: string;
@@ -33,6 +35,18 @@ export const usePlaylistScheduler = () => {
   const { toast } = useToast();
   const lastScheduleIdRef = useRef<string | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isEnabled, setIsEnabled] = useState(() => {
+    const saved = localStorage.getItem(SCHEDULER_ENABLED_KEY);
+    return saved === null ? true : saved === "true";
+  });
+
+  const toggleScheduler = useCallback((enabled: boolean) => {
+    setIsEnabled(enabled);
+    localStorage.setItem(SCHEDULER_ENABLED_KEY, String(enabled));
+    if (!enabled) {
+      lastScheduleIdRef.current = null;
+    }
+  }, []);
 
   const getCurrentSchedule = useCallback((schedules: Schedule[]) => {
     const now = new Date();
@@ -95,7 +109,7 @@ export const usePlaylistScheduler = () => {
   }, [handleTrackSelect, toast]);
 
   const checkSchedule = useCallback(async () => {
-    if (!user) return;
+    if (!user || !isEnabled) return;
 
     // Fetch user's schedules
     const { data: schedules, error } = await supabase
@@ -118,10 +132,10 @@ export const usePlaylistScheduler = () => {
       // No active schedule
       lastScheduleIdRef.current = null;
     }
-  }, [user, getCurrentSchedule, loadAndPlayPlaylist]);
+  }, [user, isEnabled, getCurrentSchedule, loadAndPlayPlaylist]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isEnabled) return;
 
     // Check immediately on mount
     checkSchedule();
@@ -134,7 +148,7 @@ export const usePlaylistScheduler = () => {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, [user, checkSchedule]);
+  }, [user, isEnabled, checkSchedule]);
 
-  return { checkSchedule };
+  return { checkSchedule, isEnabled, toggleScheduler };
 };
