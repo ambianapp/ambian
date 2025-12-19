@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -254,14 +254,32 @@ const Help = () => {
             <CardDescription>{t("help.contactDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="grid gap-4 sm:grid-cols-3">
               <a 
                 href="mailto:support@ambian.fi" 
-                className="flex-1 p-4 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-center"
+                className="p-4 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-center"
               >
                 <Mail className="w-6 h-6 mx-auto mb-2 text-primary" />
                 <p className="font-medium">{t("help.emailSupport")}</p>
                 <p className="text-sm text-muted-foreground">support@ambian.fi</p>
+              </a>
+              <a 
+                href="mailto:info@ambian.fi" 
+                className="p-4 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-center"
+              >
+                <Mail className="w-6 h-6 mx-auto mb-2 text-primary" />
+                <p className="font-medium">{t("help.generalInquiries") || "General Inquiries"}</p>
+                <p className="text-sm text-muted-foreground">info@ambian.fi</p>
+              </a>
+              <a 
+                href="https://wa.me/358404666176" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-4 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors text-center"
+              >
+                <MessageCircle className="w-6 h-6 mx-auto mb-2 text-green-500" />
+                <p className="font-medium">WhatsApp</p>
+                <p className="text-sm text-muted-foreground">+358 40 466 6176</p>
               </a>
             </div>
           </CardContent>
