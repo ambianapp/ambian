@@ -125,10 +125,6 @@ const Auth = () => {
           
           {/* Main Headline */}
           <div className="mb-6">
-            <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full mb-4">
-              <Shield className="w-5 h-5" />
-              <span className="font-semibold">{t("auth.copyrightFree")}</span>
-            </div>
             <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
               {t("auth.noLicenses")}
             </h1>
@@ -207,11 +203,6 @@ const Auth = () => {
             
             {/* Compact Brand Info for Mobile */}
             <div className="bg-card/50 border border-border/50 rounded-xl p-4 mb-4 space-y-3">
-              <div className="flex items-center justify-center gap-2 text-primary">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm font-semibold">{t("auth.copyrightFree")}</span>
-              </div>
-              
               <p className="text-xs text-muted-foreground text-center">
                 {t("auth.noLicensesShort")}
               </p>
