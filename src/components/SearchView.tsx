@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getSignedAudioUrl } from "@/lib/storage";
+import { useLanguage } from "@/contexts/LanguageContext";
 import TrackRow from "./TrackRow";
 import PlaylistCard from "./PlaylistCard";
 import { Track } from "@/data/musicData";
@@ -38,6 +39,7 @@ const RECENT_SEARCHES_KEY = "ambian_recent_searches";
 const MAX_RECENT_SEARCHES = 8;
 
 const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, onPlayPlaylist }: SearchViewProps) => {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [filteredTracks, setFilteredTracks] = useState<DbTrack[]>([]);
   const [filteredPlaylists, setFilteredPlaylists] = useState<DbPlaylist[]>([]);
@@ -161,7 +163,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search songs, playlists..."
+              placeholder={t("search.placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-12 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full text-base"
@@ -173,14 +175,14 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
         {query ? (
           <div className="space-y-8 animate-fade-in">
             {isLoading ? (
-              <p className="text-muted-foreground">Searching...</p>
+              <p className="text-muted-foreground">{t("search.searching")}</p>
             ) : !hasResults ? (
-              <h2 className="text-xl font-bold text-foreground">No results found</h2>
+              <h2 className="text-xl font-bold text-foreground">{t("search.noResults")}</h2>
             ) : (
               <>
                 {filteredPlaylists.length > 0 && (
                   <section>
-                    <h2 className="text-xl font-bold text-foreground mb-4">Playlists</h2>
+                    <h2 className="text-xl font-bold text-foreground mb-4">{t("search.playlists")}</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {filteredPlaylists.map((playlist) => (
                         <PlaylistCard
@@ -208,7 +210,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
 
                 {filteredTracks.length > 0 && (
                   <section>
-                    <h2 className="text-xl font-bold text-foreground mb-4">Songs</h2>
+                    <h2 className="text-xl font-bold text-foreground mb-4">{t("search.songs")}</h2>
                     <div className="bg-card/30 rounded-xl overflow-hidden">
                       {filteredTracks.map((track, index) => (
                         <TrackRow
@@ -237,7 +239,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
         ) : (
           <section className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-foreground">Recent Searches</h2>
+              <h2 className="text-xl font-bold text-foreground">{t("search.recentSearches")}</h2>
               {recentSearches.length > 0 && (
                 <Button 
                   variant="ghost" 
@@ -245,7 +247,7 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
                   className="text-muted-foreground hover:text-foreground"
                   onClick={clearRecentSearches}
                 >
-                  Clear all
+                  {t("search.clearAll")}
                 </Button>
               )}
             </div>

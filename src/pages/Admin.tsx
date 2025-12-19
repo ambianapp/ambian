@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, ListMusic, Users } from "lucide-react";
@@ -9,6 +10,7 @@ import { UserManager } from "@/components/admin/UserManager";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,8 +32,8 @@ const Admin = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground">Manage playlists and users</p>
+            <h1 className="text-2xl font-bold text-foreground">{t("admin.title")}</h1>
+            <p className="text-muted-foreground">{t("admin.subtitle")}</p>
           </div>
         </div>
 
@@ -40,11 +42,11 @@ const Admin = () => {
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="playlists" className="flex items-center gap-2">
               <ListMusic className="w-4 h-4" />
-              Playlists
+              {t("admin.playlists")}
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Users
+              {t("admin.users")}
             </TabsTrigger>
           </TabsList>
 

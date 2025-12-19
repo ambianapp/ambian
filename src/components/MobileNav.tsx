@@ -2,6 +2,7 @@ import { Home, Search, Library, Shield, User, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MobileNavProps {
   activeView?: string;
@@ -10,6 +11,7 @@ interface MobileNavProps {
 
 const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   const { isAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,10 +20,10 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
   const isOnAdminPage = location.pathname === "/admin";
 
   const navItems = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "search", label: "Search", icon: Search },
-    { id: "library", label: "Library", icon: Library },
-    { id: "schedule", label: "Schedule", icon: Clock },
+    { id: "home", label: t("nav.home"), icon: Home },
+    { id: "search", label: t("nav.search"), icon: Search },
+    { id: "library", label: t("nav.library"), icon: Library },
+    { id: "schedule", label: t("nav.schedule"), icon: Clock },
   ];
 
   const handleNavClick = (id: string) => {
@@ -69,7 +71,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
           onClick={handleProfileClick}
         >
           <User className={cn("w-6 h-6", isOnProfilePage && "text-primary")} />
-          <span className="text-xs font-medium">Profile</span>
+          <span className="text-xs font-medium">{t("nav.profile")}</span>
         </button>
         {isAdmin && (
           <button
@@ -80,7 +82,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
             onClick={handleAdminClick}
           >
             <Shield className={cn("w-6 h-6", isOnAdminPage ? "text-primary" : "text-primary")} />
-            <span className="text-xs font-medium">Admin</span>
+            <span className="text-xs font-medium">{t("admin.title")}</span>
           </button>
         )}
       </div>

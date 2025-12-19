@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -42,6 +43,7 @@ interface SidebarProps {
 
 const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled = true, onToggleScheduler }: SidebarProps) => {
   const { user, isAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [ownPlaylists, setOwnPlaylists] = useState<SidebarPlaylist[]>([]);
@@ -97,10 +99,10 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   }, [user]);
 
   const navItems = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "search", label: "Search", icon: Search },
-    { id: "library", label: "Your Library", icon: Library },
-    { id: "schedule", label: "Schedule", icon: Clock },
+    { id: "home", label: t("nav.home"), icon: Home },
+    { id: "search", label: t("nav.search"), icon: Search },
+    { id: "library", label: t("nav.library"), icon: Library },
+    { id: "schedule", label: t("nav.schedule"), icon: Clock },
   ];
 
   const handlePlaylistClick = (playlist: SidebarPlaylist) => {
@@ -118,9 +120,9 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     if (onPlaylistSelect) {
       onPlaylistSelect({
         id: "liked-songs",
-        name: "Liked Songs",
+        name: t("sidebar.likedSongs"),
         cover: null,
-        description: "Your favorite tracks",
+        description: null,
       });
     }
   };
@@ -217,7 +219,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           onClick={() => navigate("/profile")}
         >
           <User className="w-5 h-5" />
-          Profile
+          {t("nav.profile")}
         </Button>
         {isAdmin && (
           <Button
@@ -226,15 +228,14 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
             onClick={() => navigate("/admin")}
           >
             <Shield className="w-5 h-5 text-primary" />
-            Admin Panel
+            {t("sidebar.adminPanel")}
           </Button>
         )}
       </nav>
 
-      {/* Playlists Section */}
       <div className="flex-1 flex flex-col gap-4 mt-4">
         <div className="flex items-center justify-between px-2">
-          <span className="text-sm font-semibold text-muted-foreground">Your Playlists</span>
+          <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
           <Button 
             variant="ghost" 
             size="iconSm" 
@@ -249,11 +250,11 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Playlist</DialogTitle>
+            <DialogTitle>{t("sidebar.createPlaylist")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="playlist-name">Name</Label>
+              <Label htmlFor="playlist-name">{t("sidebar.playlistName")}</Label>
               <Input
                 id="playlist-name"
                 placeholder="My Playlist"
@@ -262,7 +263,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="playlist-description">Description (optional)</Label>
+              <Label htmlFor="playlist-description">{t("sidebar.playlistDescription")}</Label>
               <Textarea
                 id="playlist-description"
                 placeholder="Add a description..."
@@ -274,13 +275,13 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button 
               onClick={handleCreatePlaylist} 
               disabled={!newPlaylistName.trim() || isCreating}
             >
-              {isCreating ? "Creating..." : "Create"}
+              {isCreating ? t("common.loading") : t("sidebar.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -294,7 +295,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
             onClick={handleLikedSongsClick}
           >
             <Heart className="w-4 h-4 text-primary fill-current" />
-            <span className="truncate">Liked Songs</span>
+            <span className="truncate">{t("sidebar.likedSongs")}</span>
             {likedSongsCount > 0 && (
               <span className="text-xs text-muted-foreground ml-auto">{likedSongsCount}</span>
             )}
@@ -323,7 +324,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
 
           {uniquePlaylists.length === 0 && (
             <p className="text-xs text-muted-foreground px-2 py-2">
-              No playlists yet. Create one in Your Library.
+              {t("sidebar.noPlaylists")}
             </p>
           )}
         </div>
