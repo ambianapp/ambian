@@ -271,11 +271,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => authSubscription.unsubscribe();
   }, [registerSession]);
 
-  // Session validation interval - check every 30 seconds
+  // Session validation interval - check every 30 seconds, but only when page is visible
   useEffect(() => {
     if (!session) return;
 
     const validateAndKickIfNeeded = async () => {
+      // Skip validation if page is hidden (device sleeping/screen off)
+      // This prevents false logouts when the app is backgrounded overnight
+      if (document.visibilityState === 'hidden') {
+        console.log("Skipping session validation while page is hidden");
+        return;
+      }
+      
       const isValid = await validateSession(session);
       if (!isValid && !isSigningOut.current) {
         toast.error("You've been logged out because your account was accessed from another device.");
@@ -286,12 +293,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Initial validation after a short delay
     const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
     
-    // Periodic validation
+    // Periodic validation - only runs when visible
     const interval = setInterval(validateAndKickIfNeeded, 30000);
+
+    // Re-validate when page becomes visible again (user wakes device)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Short delay to let network reconnect after device wake
+        setTimeout(validateAndKickIfNeeded, 2000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [session, validateSession]);
 
