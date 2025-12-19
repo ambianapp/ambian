@@ -640,8 +640,29 @@ const PlayerBar = () => {
 
       {/* Mobile Player Bar */}
       <div className="fixed bottom-[calc(56px+var(--safe-bottom-tight))] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
-        {/* Full-width Progress Slider */}
-        <div className="flex items-center gap-2 px-3 pt-2">
+        {/* Track Info Row */}
+        <div className="flex items-center gap-3 px-3 pt-2">
+          <img
+            src={currentTrack.cover}
+            alt={currentTrack.title}
+            className="w-10 h-10 rounded-md object-cover shadow-lg flex-shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-foreground truncate text-sm">{currentTrack.title}</p>
+            <p className="text-xs text-muted-foreground truncate">Ambian</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            onClick={handleLikeToggle}
+            className={cn("h-8 w-8", isLiked && "text-primary")}
+          >
+            <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
+          </Button>
+        </div>
+
+        {/* Progress Slider */}
+        <div className="flex items-center gap-2 px-3 pt-1">
           <span className="text-[10px] text-muted-foreground w-8 text-right">{formatTime(currentTime)}</span>
           <Slider
             value={progress}
@@ -653,63 +674,47 @@ const PlayerBar = () => {
           <span className="text-[10px] text-muted-foreground w-8">{formatTime(duration) || currentTrack.duration}</span>
         </div>
         
-        {/* Track Info + Controls Row */}
-        <div className="flex items-center justify-between px-3 py-2">
-          {/* Track Info */}
-          <div className="flex items-center gap-2 min-w-0 flex-1 max-w-[45%]">
-            <img
-              src={currentTrack.cover}
-              alt={currentTrack.title}
-              className="w-10 h-10 rounded-md object-cover shadow-lg flex-shrink-0"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="font-medium text-foreground truncate text-xs">{currentTrack.title}</p>
-              <p className="text-[10px] text-muted-foreground truncate">Ambian</p>
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={handleShuffleToggle}
-              className={cn("h-7 w-7", shuffle ? "text-primary" : "text-muted-foreground")}
-            >
-              <Shuffle className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="iconSm" onClick={handlePrevious} className="text-foreground h-8 w-8">
-              <SkipBack className="w-4 h-4" />
-            </Button>
-            <Button variant="player" size="icon" onClick={handlePlayPause} className="h-10 w-10">
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-            </Button>
-            <Button variant="ghost" size="iconSm" onClick={handleNext} className="text-foreground h-8 w-8">
-              <SkipForward className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={handleRepeatToggle}
-              className={cn("h-7 w-7 relative", repeat !== "off" ? "text-primary" : "text-muted-foreground")}
-            >
-              {repeat === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
-              {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={() => {
-                handleCrossfadeToggle();
-                toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
-              }}
-              className={cn("h-7 w-7 relative", crossfade ? "text-primary" : "text-muted-foreground")}
-              title="Crossfade"
-            >
-              <Disc3 className="w-3.5 h-3.5" />
-              {crossfade && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
-            </Button>
-          </div>
+        {/* Controls Row */}
+        <div className="flex items-center justify-center gap-2 px-3 py-2">
+          <Button
+            variant="ghost"
+            size="iconSm"
+            onClick={handleShuffleToggle}
+            className={cn("h-8 w-8", shuffle ? "text-primary" : "text-muted-foreground")}
+          >
+            <Shuffle className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground h-10 w-10">
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          <Button variant="player" size="icon" onClick={handlePlayPause} className="h-12 w-12">
+            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground h-10 w-10">
+            <SkipForward className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            onClick={handleRepeatToggle}
+            className={cn("h-8 w-8 relative", repeat !== "off" ? "text-primary" : "text-muted-foreground")}
+          >
+            {repeat === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+            {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            onClick={() => {
+              handleCrossfadeToggle();
+              toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
+            }}
+            className={cn("h-8 w-8 relative", crossfade ? "text-primary" : "text-muted-foreground")}
+            title="Crossfade"
+          >
+            <Disc3 className="w-4 h-4" />
+            {crossfade && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
+          </Button>
         </div>
       </div>
 
