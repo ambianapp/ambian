@@ -681,7 +681,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noCardRequired": "Luottokorttia ei tarvita",
     "auth.perYear": "/vuosi",
     "auth.onlyPerMonth": "Vain €7.40/kuukausi",
-    "auth.perfectFor": "Täydellinen",
+    "auth.perfectFor": "Sopii kaikille aloille",
     "auth.restaurants": "Ravintolat",
     "auth.hotels": "Hotellit",
     "auth.retail": "Vähittäiskauppa",
