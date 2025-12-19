@@ -314,12 +314,13 @@ const Pricing = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-foreground mb-2">
+              <div className="text-4xl font-bold text-foreground mb-1">
                 {currentPlans.monthly.price}
                 {paymentType === "subscription" && (
                   <span className="text-lg font-normal text-muted-foreground">/month</span>
                 )}
               </div>
+              <p className="text-xs text-muted-foreground">excl. VAT</p>
             </CardContent>
           </Card>
 
@@ -340,13 +341,14 @@ const Pricing = () => {
               <CardDescription>{currentPlans.yearly.savings}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-foreground mb-2">
+              <div className="text-4xl font-bold text-foreground mb-1">
                 {currentPlans.yearly.price}
                 {paymentType === "subscription" && (
                   <span className="text-lg font-normal text-muted-foreground">/year</span>
                 )}
               </div>
               <p className="text-sm text-muted-foreground">≈ €7.40/month</p>
+              <p className="text-xs text-muted-foreground">excl. VAT</p>
             </CardContent>
           </Card>
         </div>
