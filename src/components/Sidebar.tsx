@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Search, Library, Plus, Heart, Music2, User, Shield } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -97,6 +97,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect }: SidebarProps) =
     { id: "home", label: "Home", icon: Home },
     { id: "search", label: "Search", icon: Search },
     { id: "library", label: "Your Library", icon: Library },
+    { id: "schedule", label: "Schedule", icon: Clock },
   ];
 
   const handlePlaylistClick = (playlist: SidebarPlaylist) => {
