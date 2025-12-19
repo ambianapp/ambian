@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -8,22 +8,28 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
 
+const CROSSFADE_DURATION = 5; // seconds
+
 const PlayerBar = () => {
   const {
     currentTrack,
     isPlaying,
     shuffle,
     repeat,
+    crossfade,
     handlePlayPause,
     handleNext,
     handlePrevious,
     handleShuffleToggle,
     handleRepeatToggle,
+    handleCrossfadeToggle,
     seekPosition,
     setSeekPosition,
+    getNextTrack,
   } = usePlayer();
   
   const audioRef = useRef<HTMLAudioElement>(null);
+  const crossfadeAudioRef = useRef<HTMLAudioElement>(null);
   const [volume, setVolume] = useState([75]);
   const [progress, setProgress] = useState([0]);
   const [currentTime, setCurrentTime] = useState(0);
@@ -41,6 +47,11 @@ const PlayerBar = () => {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const maxRetries = 3;
+
+  // Crossfade state
+  const isCrossfadingRef = useRef(false);
+  const crossfadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const nextTrackPreloadedRef = useRef<string | null>(null);
 
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
@@ -397,6 +408,73 @@ const PlayerBar = () => {
     }
   }, [volume, isMuted]);
 
+  // Crossfade logic
+  const startCrossfade = useCallback(async () => {
+    if (isCrossfadingRef.current || !crossfade || repeat === "one") return;
+    
+    const nextTrack = await getNextTrack();
+    if (!nextTrack?.audioUrl || !crossfadeAudioRef.current || !audioRef.current) return;
+    
+    isCrossfadingRef.current = true;
+    nextTrackPreloadedRef.current = nextTrack.id;
+    
+    // Set up crossfade audio
+    crossfadeAudioRef.current.src = nextTrack.audioUrl;
+    crossfadeAudioRef.current.volume = 0;
+    crossfadeAudioRef.current.play().catch(console.error);
+    
+    const mainAudio = audioRef.current;
+    const crossfadeAudio = crossfadeAudioRef.current;
+    const startVolume = isMuted ? 0 : volume[0] / 100;
+    const steps = 50;
+    const stepTime = (CROSSFADE_DURATION * 1000) / steps;
+    let step = 0;
+    
+    crossfadeIntervalRef.current = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      
+      // Fade out main, fade in crossfade
+      mainAudio.volume = Math.max(0, startVolume * (1 - progress));
+      crossfadeAudio.volume = isMuted ? 0 : (volume[0] / 100) * progress;
+      
+      if (step >= steps) {
+        if (crossfadeIntervalRef.current) {
+          clearInterval(crossfadeIntervalRef.current);
+          crossfadeIntervalRef.current = null;
+        }
+        isCrossfadingRef.current = false;
+        // The actual track switch happens via handleNext when main audio ends
+      }
+    }, stepTime);
+  }, [crossfade, repeat, getNextTrack, volume, isMuted]);
+
+  // Monitor for crossfade trigger point
+  useEffect(() => {
+    if (!crossfade || !isPlaying || !duration || repeat === "one") return;
+    
+    const timeRemaining = duration - currentTime;
+    if (timeRemaining <= CROSSFADE_DURATION && timeRemaining > CROSSFADE_DURATION - 0.5 && !isCrossfadingRef.current) {
+      startCrossfade();
+    }
+  }, [currentTime, duration, crossfade, isPlaying, repeat, startCrossfade]);
+
+  // Cleanup crossfade on track change
+  useEffect(() => {
+    return () => {
+      if (crossfadeIntervalRef.current) {
+        clearInterval(crossfadeIntervalRef.current);
+        crossfadeIntervalRef.current = null;
+      }
+      isCrossfadingRef.current = false;
+      nextTrackPreloadedRef.current = null;
+      if (crossfadeAudioRef.current) {
+        crossfadeAudioRef.current.pause();
+        crossfadeAudioRef.current.src = "";
+      }
+    };
+  }, [currentTrack?.id]);
+
   // Save current position for persistence
   const savePositionRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -459,7 +537,7 @@ const PlayerBar = () => {
 
   return (
     <>
-      {/* Hidden Audio Element */}
+      {/* Hidden Audio Elements */}
       {currentTrack.audioUrl && (
         <audio
           ref={audioRef}
@@ -470,6 +548,17 @@ const PlayerBar = () => {
           onStalled={handleStalled}
           onWaiting={handleStalled}
           onEnded={() => {
+            // Cleanup crossfade
+            if (crossfadeIntervalRef.current) {
+              clearInterval(crossfadeIntervalRef.current);
+              crossfadeIntervalRef.current = null;
+            }
+            isCrossfadingRef.current = false;
+            if (crossfadeAudioRef.current) {
+              crossfadeAudioRef.current.pause();
+              crossfadeAudioRef.current.src = "";
+            }
+            
             if (repeat === "one" && audioRef.current) {
               audioRef.current.currentTime = 0;
               audioRef.current.play();
@@ -479,6 +568,8 @@ const PlayerBar = () => {
           }}
         />
       )}
+      {/* Hidden crossfade audio element */}
+      <audio ref={crossfadeAudioRef} />
 
       {/* Mobile Player Bar */}
       <div className="fixed bottom-[calc(56px+var(--safe-bottom-tight))] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
@@ -538,6 +629,19 @@ const PlayerBar = () => {
               {repeat === "one" ? <Repeat1 className="w-3.5 h-3.5" /> : <Repeat className="w-3.5 h-3.5" />}
               {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
             </Button>
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={() => {
+                handleCrossfadeToggle();
+                toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
+              }}
+              className={cn("h-7 w-7 relative", crossfade ? "text-primary" : "text-muted-foreground")}
+              title="Crossfade"
+            >
+              <Disc3 className="w-3.5 h-3.5" />
+              {crossfade && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
+            </Button>
           </div>
         </div>
       </div>
@@ -593,6 +697,19 @@ const PlayerBar = () => {
             >
               {repeat === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
               {repeat !== "off" && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="iconSm" 
+              onClick={() => {
+                handleCrossfadeToggle();
+                toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
+              }}
+              className={cn("relative", crossfade ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+              title="Crossfade"
+            >
+              <Disc3 className="w-4 h-4" />
+              {crossfade && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
             </Button>
           </div>
 
