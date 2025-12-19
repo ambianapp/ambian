@@ -31,14 +31,12 @@ interface PlayerContextType {
   handlePlayPause: () => void;
   handleNext: () => Promise<void>;
   handlePrevious: () => Promise<void>;
-  // Used by PlayerBar crossfade to avoid resetting seekPosition while handoff happens
-  handleNextCrossfade: (nextTrackId: string, seekToSeconds: number) => Promise<void>;
   handleShuffleToggle: () => void;
   handleRepeatToggle: () => void;
   handleCrossfadeToggle: () => void;
   updateAudioUrl: (newUrl: string) => void;
   originalDbUrl: string | null;
-  setSeekPosition: (position: number | null) => void;
+  setSeekPosition: (position: number) => void;
   seekPosition: number | null;
   getNextTrack: () => Promise<(Track & { audioUrl?: string }) | null>;
   pendingScheduledTransition: ScheduledTransition | null;
@@ -272,22 +270,20 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsPlaying((prev) => !prev);
   }, []);
 
-  const fetchAndPlayTrack = useCallback(async (track: Track, seekToSeconds?: number) => {
-    // For crossfade handoff: set seek position BEFORE changing track so PlayerBar can seek on metadata.
-    setSeekPosition(typeof seekToSeconds === "number" ? seekToSeconds : null);
-
+  const fetchAndPlayTrack = useCallback(async (track: Track) => {
     if (track.audioUrl) {
       setCurrentTrack(track);
       setIsPlaying(true);
+      setSeekPosition(null);
       return;
     }
-
+    
     const { data } = await supabase
       .from("tracks")
       .select("audio_url")
       .eq("id", track.id)
       .single();
-
+    
     if (data?.audio_url) {
       setOriginalDbUrl(data.audio_url);
       const signedUrl = await getSignedAudioUrl(data.audio_url);
@@ -296,36 +292,29 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentTrack(track);
     }
     setIsPlaying(true);
+    setSeekPosition(null);
   }, []);
 
   const handleNext = useCallback(async () => {
     if (!currentTrack) return;
     const tracks = playlistTracksRef.current;
     if (tracks.length === 0) return;
-
+    
     const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
     if (currentIndex === -1) return;
-
+    
     let nextIndex: number;
     if (shuffle) {
       const availableIndices = tracks.map((_, i) => i).filter(i => i !== currentIndex);
-      nextIndex = availableIndices.length > 0
+      nextIndex = availableIndices.length > 0 
         ? availableIndices[Math.floor(Math.random() * availableIndices.length)]
         : currentIndex;
     } else {
       nextIndex = (currentIndex + 1) % tracks.length;
     }
-
+    
     await fetchAndPlayTrack(tracks[nextIndex]);
   }, [currentTrack, shuffle, fetchAndPlayTrack]);
-
-  const handleNextCrossfade = useCallback(async (nextTrackId: string, seekToSeconds: number) => {
-    const tracks = playlistTracksRef.current;
-    if (tracks.length === 0) return;
-    const nextTrack = tracks.find(t => t.id === nextTrackId);
-    if (!nextTrack) return;
-    await fetchAndPlayTrack(nextTrack, seekToSeconds);
-  }, [fetchAndPlayTrack]);
 
   const handlePrevious = useCallback(async () => {
     if (!currentTrack) return;
@@ -454,7 +443,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         handlePlayPause,
         handleNext,
         handlePrevious,
-        handleNextCrossfade,
         handleShuffleToggle,
         handleRepeatToggle,
         handleCrossfadeToggle,
