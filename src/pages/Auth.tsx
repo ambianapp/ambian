@@ -200,9 +200,33 @@ const Auth = () => {
       {/* Right Side - Auth Form */}
       <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-8 md:pt-4 overflow-auto">
         <div className="w-full max-w-md space-y-4 md:space-y-6 animate-fade-in">
-          {/* Mobile Logo */}
-          <div className="text-center lg:hidden">
-            <img src={ambianLogo} alt="Ambian" className="h-20 mx-auto mb-4" />
+          {/* Mobile/Tablet Logo & Info */}
+          <div className="lg:hidden">
+            <img src={ambianLogo} alt="Ambian" className="h-16 mx-auto mb-4" />
+            
+            {/* Compact Brand Info for Mobile */}
+            <div className="bg-card/50 border border-border/50 rounded-xl p-4 mb-4 space-y-3">
+              <div className="flex items-center justify-center gap-2 text-primary">
+                <Shield className="w-4 h-4" />
+                <span className="text-sm font-semibold">100% Copyright-Free Music</span>
+              </div>
+              
+              <p className="text-xs text-muted-foreground text-center">
+                No licenses needed. Play music in your business legally.
+              </p>
+              
+              <div className="flex items-center justify-center gap-4 pt-2 border-t border-border/50">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-foreground">€89/year</div>
+                  <div className="text-xs text-muted-foreground">€7.40/month</div>
+                </div>
+                <div className="h-8 w-px bg-border/50" />
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-primary">3 Days Free</div>
+                  <div className="text-xs text-muted-foreground">No card needed</div>
+                </div>
+              </div>
+            </div>
           </div>
           
           {/* Header */}
@@ -210,7 +234,7 @@ const Auth = () => {
             <h1 className="text-2xl font-bold text-foreground">
               {isLogin ? "Welcome back" : "Start your free trial"}
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 hidden lg:block">
               {isLogin
                 ? "Sign in to access your music"
                 : "3 days free • No credit card required"}
