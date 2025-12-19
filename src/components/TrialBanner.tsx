@@ -12,7 +12,7 @@ interface TimeRemaining {
 }
 
 const TrialBanner = () => {
-  const { subscription, checkSubscription } = useAuth();
+  const { subscription, checkSubscription, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
@@ -50,7 +50,8 @@ const TrialBanner = () => {
     return () => clearInterval(interval);
   }, [subscription.trialEnd, trialExpired, checkSubscription]);
 
-  if (!subscription.isTrial || dismissed || !timeRemaining) return null;
+  // Don't show trial banner for admins - they have free access
+  if (isAdmin || !subscription.isTrial || dismissed || !timeRemaining) return null;
 
   const formatNumber = (n: number) => n.toString().padStart(2, '0');
 
