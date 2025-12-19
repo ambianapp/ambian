@@ -66,14 +66,27 @@ serve(async (req) => {
     // Use service role client to manage sessions (bypass RLS)
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get device slots limit from subscription
-    const { data: subData } = await adminClient
-      .from("subscriptions")
-      .select("device_slots")
+    // Check if user is admin (admins have unlimited devices)
+    const { data: roleData } = await adminClient
+      .from("user_roles")
+      .select("role")
       .eq("user_id", user.id)
+      .eq("role", "admin")
       .maybeSingle();
 
-    const deviceSlots = subData?.device_slots || 1;
+    const isAdmin = !!roleData;
+
+    // Get device slots limit from subscription (only matters for non-admins)
+    let deviceSlots = 999; // Unlimited for admins
+    if (!isAdmin) {
+      const { data: subData } = await adminClient
+        .from("subscriptions")
+        .select("device_slots")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      deviceSlots = subData?.device_slots || 1;
+    }
 
     // Check if this session already exists
     const { data: existingSession } = await adminClient
@@ -112,8 +125,8 @@ serve(async (req) => {
 
     const currentCount = allSessions?.length || 0;
 
-    // If at or over the limit, remove oldest sessions to make room
-    if (currentCount >= deviceSlots) {
+    // If at or over the limit, remove oldest sessions to make room (skip for admins)
+    if (!isAdmin && currentCount >= deviceSlots) {
       const sessionsToRemove = currentCount - deviceSlots + 1;
       const oldestSessions = allSessions?.slice(0, sessionsToRemove) || [];
 
