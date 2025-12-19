@@ -1,4 +1,4 @@
-import { Home, Search, Library, Shield, User } from "lucide-react";
+import { Home, Search, Library, Shield, User, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +21,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
     { id: "home", label: "Home", icon: Home },
     { id: "search", label: "Search", icon: Search },
     { id: "library", label: "Library", icon: Library },
+    { id: "schedule", label: "Schedule", icon: Clock },
   ];
 
   const handleNavClick = (id: string) => {

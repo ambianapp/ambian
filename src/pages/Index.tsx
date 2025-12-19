@@ -6,12 +6,14 @@ import SearchView from "@/components/SearchView";
 import LibraryView from "@/components/LibraryView";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
 import LikedSongsView from "@/components/LikedSongsView";
+import ScheduleManager from "@/components/ScheduleManager";
 import MobileNav from "@/components/MobileNav";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
+import { usePlaylistScheduler } from "@/hooks/usePlaylistScheduler";
 
 interface SelectedPlaylist {
   id: string;
@@ -27,6 +29,9 @@ const Index = () => {
   const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  
+  // Auto-play scheduled playlists
+  usePlaylistScheduler();
 
   // Handle checkout callback
   useEffect(() => {
@@ -130,6 +135,10 @@ const Index = () => {
             onTrackSelect={handleTrackSelect}
             onPlaylistSelect={handlePlaylistSelect}
           />
+        );
+      case "schedule":
+        return (
+          <ScheduleManager onBack={() => handleViewChange("home")} />
         );
       default:
         return (
