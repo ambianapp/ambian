@@ -448,7 +448,7 @@ const Pricing = () => {
                 </Card>
               </div>
 
-              <p className="text-xs text-muted-foreground/70 text-center">
+              <p className="text-sm text-muted-foreground text-center">
                 Prices shown exclude VAT. VAT will be calculated based on your location.
               </p>
             </>
