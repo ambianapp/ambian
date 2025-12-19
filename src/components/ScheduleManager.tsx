@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,14 +31,14 @@ interface Playlist {
   cover_url: string | null;
 }
 
-const DAYS = [
-  { value: 0, label: "Sun", full: "Sunday" },
-  { value: 1, label: "Mon", full: "Monday" },
-  { value: 2, label: "Tue", full: "Tuesday" },
-  { value: 3, label: "Wed", full: "Wednesday" },
-  { value: 4, label: "Thu", full: "Thursday" },
-  { value: 5, label: "Fri", full: "Friday" },
-  { value: 6, label: "Sat", full: "Saturday" },
+const getDays = (t: (key: string) => string) => [
+  { value: 0, label: t("schedule.daySun"), full: "Sunday" },
+  { value: 1, label: t("schedule.dayMon"), full: "Monday" },
+  { value: 2, label: t("schedule.dayTue"), full: "Tuesday" },
+  { value: 3, label: t("schedule.dayWed"), full: "Wednesday" },
+  { value: 4, label: t("schedule.dayThu"), full: "Thursday" },
+  { value: 5, label: t("schedule.dayFri"), full: "Friday" },
+  { value: 6, label: t("schedule.daySat"), full: "Saturday" },
 ];
 
 interface ScheduleManagerProps {
@@ -48,6 +49,7 @@ interface ScheduleManagerProps {
 
 const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }: ScheduleManagerProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -217,9 +219,10 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
   };
 
   const formatDays = (days: number[]) => {
-    if (days.length === 7) return "Every day";
-    if (days.length === 5 && [1, 2, 3, 4, 5].every(d => days.includes(d))) return "Weekdays";
-    if (days.length === 2 && [0, 6].every(d => days.includes(d))) return "Weekends";
+    const DAYS = getDays(t);
+    if (days.length === 7) return t("schedule.everyDay");
+    if (days.length === 5 && [1, 2, 3, 4, 5].every(d => days.includes(d))) return t("schedule.weekdays");
+    if (days.length === 2 && [0, 6].every(d => days.includes(d))) return t("schedule.weekends");
     return days.map(d => DAYS.find(day => day.value === d)?.label).join(", ");
   };
 
@@ -284,15 +287,15 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                 <Clock className="w-6 h-6 text-primary" />
-                Schedule Music
+                {t("schedule.title")}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Set different playlists to play automatically at different times
+                {t("schedule.subtitle")}
               </p>
             </div>
             <Button onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
-              Add Schedule
+              {t("schedule.addSchedule")}
             </Button>
           </div>
 
@@ -305,12 +308,12 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground">
-                    {schedulerEnabled ? "Automatic Scheduling ON" : "Automatic Scheduling OFF"}
+                    {schedulerEnabled ? t("schedule.schedulerOn") : t("schedule.schedulerOff")}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {schedulerEnabled 
-                      ? "Playlists will automatically switch based on your schedules" 
-                      : "You're in manual mode - choose playlists yourself"}
+                      ? t("schedule.schedulerOnDesc") 
+                      : t("schedule.schedulerOffDesc")}
                   </p>
                 </div>
                 <Switch
@@ -324,18 +327,18 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
           {/* Schedule List */}
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading schedules...</div>
+            <div className="text-center py-8 text-muted-foreground">{t("schedule.loading")}</div>
           ) : schedules.length === 0 ? (
             <Card className="bg-card/50">
               <CardContent className="p-8 text-center">
                 <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No schedules yet</h3>
+                <h3 className="text-lg font-medium text-foreground mb-2">{t("schedule.noSchedules")}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Create a schedule to automatically play different playlists at different times
+                  {t("schedule.noSchedulesDesc")}
                 </p>
                 <Button onClick={openCreateDialog}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Schedule
+                  {t("schedule.createFirst")}
                 </Button>
               </CardContent>
             </Card>
@@ -367,7 +370,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                           </span>
                           {isCurrentlyPlaying && (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-medium">
-                              NOW PLAYING
+                              {t("schedule.nowPlaying")}
                             </span>
                           )}
                         </div>
@@ -394,7 +397,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                           size="sm"
                           onClick={() => openEditDialog(schedule)}
                         >
-                          Edit
+                          {t("schedule.edit")}
                         </Button>
                         <Button
                           variant="ghost"
@@ -416,12 +419,12 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
           {/* Tips */}
           <Card className="bg-card/30">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Tips</CardTitle>
+              <CardTitle className="text-sm">{t("schedule.tips")}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
-              <p>• Schedules run automatically when the app is open</p>
-              <p>• If schedules overlap, the one with higher priority wins</p>
-              <p>• Toggle schedules on/off without deleting them</p>
+              <p>• {t("schedule.tip1")}</p>
+              <p>• {t("schedule.tip2")}</p>
+              <p>• {t("schedule.tip3")}</p>
             </CardContent>
           </Card>
         </div>
@@ -431,15 +434,15 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingSchedule ? "Edit Schedule" : "Create Schedule"}</DialogTitle>
+            <DialogTitle>{editingSchedule ? t("schedule.editSchedule") : t("schedule.createSchedule")}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Name */}
             <div className="space-y-2">
-              <Label>Schedule Name (optional)</Label>
+              <Label>{t("schedule.scheduleName")}</Label>
               <Input
-                placeholder="e.g., Morning Jazz"
+                placeholder={t("schedule.scheduleNamePlaceholder")}
                 value={formName}
                 onChange={e => setFormName(e.target.value)}
               />
@@ -447,10 +450,10 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
             {/* Playlist */}
             <div className="space-y-2">
-              <Label>Playlist *</Label>
+              <Label>{t("schedule.playlist")} *</Label>
               <Select value={formPlaylistId} onValueChange={setFormPlaylistId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a playlist" />
+                  <SelectValue placeholder={t("schedule.selectPlaylist")} />
                 </SelectTrigger>
                 <SelectContent>
                   {playlists.map(playlist => (
@@ -464,9 +467,9 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
             {/* Days */}
             <div className="space-y-2">
-              <Label>Days *</Label>
+              <Label>{t("schedule.days")} *</Label>
               <div className="flex flex-wrap gap-2">
-                {DAYS.map(day => (
+                {getDays(t).map(day => (
                   <Button
                     key={day.value}
                     type="button"
@@ -486,7 +489,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                   size="sm"
                   onClick={() => setFormDays([1, 2, 3, 4, 5])}
                 >
-                  Weekdays
+                  {t("schedule.weekdays")}
                 </Button>
                 <Button
                   type="button"
@@ -494,7 +497,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                   size="sm"
                   onClick={() => setFormDays([0, 6])}
                 >
-                  Weekends
+                  {t("schedule.weekends")}
                 </Button>
                 <Button
                   type="button"
@@ -502,7 +505,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                   size="sm"
                   onClick={() => setFormDays([0, 1, 2, 3, 4, 5, 6])}
                 >
-                  Every day
+                  {t("schedule.everyDay")}
                 </Button>
               </div>
             </div>
@@ -510,7 +513,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
             {/* Time Range */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Time *</Label>
+                <Label>{t("schedule.startTime")} *</Label>
                 <Input
                   type="time"
                   value={formStartTime}
@@ -518,7 +521,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                 />
               </div>
               <div className="space-y-2">
-                <Label>End Time *</Label>
+                <Label>{t("schedule.endTime")} *</Label>
                 <Input
                   type="time"
                   value={formEndTime}
@@ -529,7 +532,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
             {/* Priority */}
             <div className="space-y-2">
-              <Label>Priority (higher wins on overlap)</Label>
+              <Label>{t("schedule.priority")}</Label>
               <Select value={formPriority.toString()} onValueChange={v => setFormPriority(parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -545,10 +548,10 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button onClick={handleSave}>
-              {editingSchedule ? "Save Changes" : "Create Schedule"}
+              {t("schedule.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
