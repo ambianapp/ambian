@@ -31,7 +31,7 @@ interface PlaylistTrack {
 
 export const usePlaylistScheduler = () => {
   const { user } = useAuth();
-  const { handleTrackSelect, currentTrack } = usePlayer();
+  const { triggerScheduledCrossfade, currentTrack } = usePlayer();
   const { toast } = useToast();
   const lastScheduleIdRef = useRef<string | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -113,15 +113,15 @@ export const usePlaylistScheduler = () => {
       }));
 
     if (tracks.length > 0) {
-      // Start playing first track with full playlist
-      handleTrackSelect(tracks[0], tracks);
+      // Use crossfade transition for smooth playlist changes
+      await triggerScheduledCrossfade(tracks[0], tracks);
       
       toast({
         title: "Scheduled playlist started",
         description: schedule.name || "Playing scheduled music",
       });
     }
-  }, [handleTrackSelect, toast]);
+  }, [triggerScheduledCrossfade, toast]);
 
   const checkSchedule = useCallback(async () => {
     if (!user || !isEnabled) return;
