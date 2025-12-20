@@ -3,6 +3,7 @@ import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart } from "l
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
+import SignedImage from "@/components/SignedImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -38,12 +39,39 @@ const PlaylistDetailView = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isSystemPlaylist, setIsSystemPlaylist] = useState(false);
+  const [resolvedPlaylistCover, setResolvedPlaylistCover] = useState<string | null>(playlistCover);
   const { user } = useAuth();
 
   useEffect(() => {
     loadPlaylistTracks();
     checkIfLiked();
   }, [playlistId, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveCover() {
+      if (!playlistCover) {
+        setResolvedPlaylistCover(null);
+        return;
+      }
+
+      if (!playlistCover.includes("/storage/v1/object/public/audio/")) {
+        setResolvedPlaylistCover(playlistCover);
+        return;
+      }
+
+      const signed = await getSignedAudioUrl(playlistCover);
+      if (cancelled) return;
+      setResolvedPlaylistCover(signed || playlistCover);
+    }
+
+    resolveCover();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [playlistCover]);
 
   const checkIfLiked = async () => {
     if (!user) return;
@@ -152,7 +180,9 @@ const PlaylistDetailView = ({
       <div 
         className="relative h-64 md:h-80 bg-gradient-to-b from-primary/30 to-background"
         style={{
-          backgroundImage: playlistCover ? `linear-gradient(to bottom, rgba(0,0,0,0.3), var(--background)), url(${playlistCover})` : undefined,
+          backgroundImage: resolvedPlaylistCover
+            ? `linear-gradient(to bottom, rgba(0,0,0,0.3), var(--background)), url(${resolvedPlaylistCover})`
+            : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -172,11 +202,13 @@ const PlaylistDetailView = ({
         {/* Playlist Info */}
         <div className="absolute bottom-6 left-6 right-6 flex items-end gap-6">
           <div className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0 rounded-lg shadow-2xl overflow-hidden bg-card">
-            {playlistCover ? (
-              <img
-                src={playlistCover}
-                alt={playlistName}
+            {resolvedPlaylistCover ? (
+              <SignedImage
+                src={resolvedPlaylistCover}
+                alt={`${playlistName} playlist cover`}
                 className="w-full h-full object-cover"
+                fallbackSrc="/placeholder.svg"
+                loading="eager"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Playlist } from "@/data/musicData";
 import { useAuth } from "@/contexts/AuthContext";
+import SignedImage from "@/components/SignedImage";
 
 interface PlaylistCardProps {
   playlist: Playlist;
@@ -47,10 +48,11 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps
         )}
         <button onClick={onClick} className="w-full text-left">
           <div className="relative mb-4">
-            <img
+            <SignedImage
               src={playlist.cover}
-              alt={playlist.name}
+              alt={`${playlist.name} playlist cover`}
               className="w-full aspect-square object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
+              fallbackSrc="/placeholder.svg"
             />
             <Button
               variant="player"
