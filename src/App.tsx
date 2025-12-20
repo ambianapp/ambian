@@ -15,6 +15,7 @@ import Pricing from "./pages/Pricing";
 import Admin from "./pages/Admin";
 import Install from "./pages/Install";
 import Help from "./pages/Help";
+import AllPlaylists from "./pages/AllPlaylists";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +105,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Help />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/playlists"
+        element={
+          <ProtectedRoute>
+            <AllPlaylists />
           </ProtectedRoute>
         }
       />

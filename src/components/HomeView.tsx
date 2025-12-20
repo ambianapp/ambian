@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { ChevronRight, History } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight, History, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
 import { Track } from "@/data/musicData";
@@ -28,6 +29,7 @@ interface HomeViewProps {
 
 const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: HomeViewProps) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyUpdated, setRecentlyUpdated] = useState<DbPlaylist[]>([]);
@@ -264,9 +266,21 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-6 md:p-8 space-y-8">
         {/* Header */}
-        <div className="animate-fade-in">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">{getGreeting()}</h1>
-          <p className="text-muted-foreground mt-2">{t("home.subtitle")}</p>
+        <div className="animate-fade-in flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{getGreeting()}</h1>
+            <p className="text-muted-foreground mt-2">{t("home.subtitle")}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/playlists")}
+            className="shrink-0 gap-2"
+          >
+            <Music className="w-4 h-4" />
+            <span className="hidden sm:inline">{t("home.allPlaylists") || "All Playlists"}</span>
+            <span className="sm:hidden">All</span>
+          </Button>
         </div>
 
         {/* Recently Played */}
