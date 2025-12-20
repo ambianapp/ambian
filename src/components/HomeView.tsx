@@ -278,7 +278,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             className="shrink-0 gap-2"
           >
             <Music className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("home.showAllPlaylists") || "Show all playlists"}</span>
+            <span className="hidden sm:inline">Show all playlists</span>
             <span className="sm:hidden">All</span>
           </Button>
         </div>
