@@ -37,6 +37,14 @@ const PlayerBar = () => {
   const [progress, setProgress] = useState([0]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  const normalizeUrl = useCallback((url: string) => {
+    try {
+      return new URL(url, window.location.href).href;
+    } catch {
+      return url;
+    }
+  }, []);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const { user } = useAuth();
@@ -408,16 +416,17 @@ const PlayerBar = () => {
     // During crossfade, the main <audio> must NOT be forced to load the new track via React.
     if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) return;
 
-    if (mainAudioSrcRef.current !== currentTrack.audioUrl) {
-      mainAudioSrcRef.current = currentTrack.audioUrl;
-      audio.src = currentTrack.audioUrl;
+    const desiredSrc = normalizeUrl(currentTrack.audioUrl);
+    if (mainAudioSrcRef.current !== desiredSrc) {
+      mainAudioSrcRef.current = desiredSrc;
+      audio.src = desiredSrc;
       audio.load();
     }
 
     if (isPlaying) {
       audio.play().catch(console.error);
     }
-  }, [currentTrack?.audioUrl, crossfade, isCrossfadeActive, isPlaying]);
+  }, [currentTrack?.audioUrl, crossfade, isCrossfadeActive, isPlaying, normalizeUrl]);
 
   useEffect(() => {
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
@@ -564,10 +573,11 @@ const PlayerBar = () => {
       
       if (mainAudio && crossfadeAudio.src) {
         // Copy crossfade audio state to main
-        const currentSrc = crossfadeAudio.src;
+        const currentSrc = normalizeUrl(crossfadeAudio.src);
         const currentTimePos = crossfadeAudio.currentTime;
         const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
 
+        // IMPORTANT: store normalized src so the "keep src stable" effect doesn't reload it
         mainAudioSrcRef.current = currentSrc;
         mainAudio.src = currentSrc;
         mainAudio.currentTime = currentTimePos;
