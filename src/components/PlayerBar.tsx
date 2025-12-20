@@ -564,39 +564,8 @@ const PlayerBar = () => {
     }
   }, [currentTime, crossfade, isPlaying, repeat, startCrossfade]);
 
-  // Cleanup crossfade on track change
+  // Cleanup crossfade (unmount / disable)
   useEffect(() => {
-    // If crossfade completed and we're using crossfade audio as main, swap back
-    if (isCrossfadeActive && crossfadeAudioRef.current && !crossfadeAudioRef.current.paused) {
-      const crossfadeAudio = crossfadeAudioRef.current;
-      const mainAudio = audioRef.current;
-      
-      if (mainAudio && crossfadeAudio.src) {
-        // Copy crossfade audio state to main
-        const currentSrc = normalizeUrl(crossfadeAudio.src);
-        const currentTimePos = crossfadeAudio.currentTime;
-        const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
-
-        // IMPORTANT: store normalized src so the "keep src stable" effect doesn't reload it
-        mainAudioSrcRef.current = currentSrc;
-        mainAudio.src = currentSrc;
-        mainAudio.currentTime = currentTimePos;
-        mainAudio.volume = targetVolume;
-        mainAudio.play().catch(console.error);
-        
-        // Clean up crossfade
-        crossfadeAudio.pause();
-        crossfadeAudio.src = "";
-        setIsCrossfadeActive(false);
-        isCrossfadingRef.current = false;
-        crossfadeCompleteRef.current = false;
-        crossfadeTrackSwitchedRef.current = false;
-        nextTrackPreloadedRef.current = null;
-        preloadedNextTrackRef.current = null;
-      }
-      return;
-    }
-    
     return () => {
       if (crossfadeIntervalRef.current) {
         clearInterval(crossfadeIntervalRef.current);
@@ -608,13 +577,13 @@ const PlayerBar = () => {
       nextTrackPreloadedRef.current = null;
       preloadedNextTrackRef.current = null;
       isPreloadingRef.current = false;
-      if (!isCrossfadeActive && crossfadeAudioRef.current) {
+      if (crossfadeAudioRef.current) {
         crossfadeAudioRef.current.pause();
         crossfadeAudioRef.current.src = "";
       }
       setIsCrossfadeActive(false);
     };
-  }, [currentTrack?.id, isCrossfadeActive, isMuted]);
+  }, []);
 
   // Handle crossfade audio ending
   const handleCrossfadeEnded = useCallback(() => {
@@ -763,9 +732,9 @@ const PlayerBar = () => {
               return;
             }
 
-            // If crossfade is in progress or active, DO NOT start the next track from the main player.
-            // The crossfade audio is responsible for continuing playback.
-            if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) {
+            // Crossfade path: the next track is already playing on the crossfade audio.
+            // Never advance again from the main audio ended event.
+            if (crossfade && (isCrossfadingRef.current || isCrossfadeActive || crossfadeTrackSwitchedRef.current)) {
               return;
             }
 
