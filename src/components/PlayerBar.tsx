@@ -815,46 +815,55 @@ const PlayerBar = () => {
         </div>
         
         {/* Controls Row */}
-        <div className="flex items-center justify-center gap-3 px-3 py-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleShuffleToggle}
-            className={cn("h-10 w-10", shuffle ? "text-primary" : "text-muted-foreground")}
-          >
-            <Shuffle className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground h-11 w-11">
-            <SkipBack className="w-6 h-6" />
-          </Button>
+        <div className="flex items-center justify-between px-4 py-2">
+          {/* Left controls */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShuffleToggle}
+              className={cn("h-10 w-10", shuffle ? "text-primary" : "text-muted-foreground")}
+            >
+              <Shuffle className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground h-11 w-11">
+              <SkipBack className="w-6 h-6" />
+            </Button>
+          </div>
+          
+          {/* Center play button */}
           <Button variant="player" size="icon" onClick={handlePlayPause} className="h-12 w-12">
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground h-11 w-11">
-            <SkipForward className="w-6 h-6" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRepeatToggle}
-            className={cn("h-10 w-10 relative", repeat !== "off" ? "text-primary" : "text-muted-foreground")}
-          >
-            {repeat === "one" ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
-            {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              handleCrossfadeToggle();
-              toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
-            }}
-            className={cn("h-10 w-10 relative", crossfade ? "text-primary" : "text-muted-foreground")}
-            title="Crossfade"
-          >
-            <Disc3 className="w-5 h-5" />
-            {crossfade && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
-          </Button>
+          
+          {/* Right controls */}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground h-11 w-11">
+              <SkipForward className="w-6 h-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRepeatToggle}
+              className={cn("h-10 w-10 relative", repeat !== "off" ? "text-primary" : "text-muted-foreground")}
+            >
+              {repeat === "one" ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
+              {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                handleCrossfadeToggle();
+                toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
+              }}
+              className={cn("h-10 w-10 relative", crossfade ? "text-primary" : "text-muted-foreground")}
+              title="Crossfade"
+            >
+              <Disc3 className="w-5 h-5" />
+              {crossfade && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
+            </Button>
+          </div>
         </div>
       </div>
 
