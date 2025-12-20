@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import SignedImage from "@/components/SignedImage";
 import {
   Dialog,
   DialogContent,
@@ -343,10 +344,11 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
               onClick={() => handlePlaylistClick(playlist)}
             >
               {playlist.cover_url ? (
-                <img
+                <SignedImage
                   src={playlist.cover_url}
-                  alt={playlist.name}
+                  alt={`${playlist.name} playlist cover`}
                   className="w-4 h-4 rounded object-cover"
+                  fallbackSrc="/placeholder.svg"
                 />
               ) : (
                 <div className="w-4 h-4 rounded bg-gradient-to-br from-primary to-accent" />
