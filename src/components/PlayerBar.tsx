@@ -872,7 +872,7 @@ const PlayerBar = () => {
       <div className="fixed bottom-0 left-0 right-0 h-24 glass border-t border-border px-4 hidden md:flex items-center z-50">
         {/* Track Info */}
         <div className="flex items-center gap-4 w-72 min-w-0 flex-shrink-0">
-          <img
+          <SignedImage
             src={currentTrack.cover}
             alt={currentTrack.title}
             className="w-14 h-14 rounded-lg object-cover shadow-lg flex-shrink-0"

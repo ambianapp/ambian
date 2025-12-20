@@ -2,12 +2,10 @@ import { useEffect, useState, forwardRef } from "react";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
-type SignedImageProps = {
+type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   src?: string | null;
   alt: string;
-  className?: string;
   fallbackSrc?: string;
-  loading?: "eager" | "lazy";
 };
 
 function isAudioBucketPublicUrl(url: string) {
@@ -19,7 +17,7 @@ function isAudioBucketPublicUrl(url: string) {
  * (e.g. /storage/v1/object/public/audio/...) into a signed URL.
  */
 const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
-  ({ src, alt, className, fallbackSrc = "/placeholder.svg", loading = "lazy" }, ref) => {
+  ({ src, alt, className, fallbackSrc = "/placeholder.svg", loading = "lazy", ...props }, ref) => {
     const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
 
     useEffect(() => {
@@ -58,6 +56,7 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
         loading={loading}
         className={cn(className)}
         onError={() => setResolvedSrc(fallbackSrc)}
+        {...props}
       />
     );
   }
