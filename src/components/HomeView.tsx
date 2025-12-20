@@ -57,7 +57,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
       if (historyData && historyData.length > 0) {
         // Get unique playlist IDs (most recent first)
-        const uniquePlaylistIds = [...new Set(historyData.map(h => h.playlist_id))].slice(0, 6);
+        const uniquePlaylistIds = [...new Set(historyData.map(h => h.playlist_id))].slice(0, 4);
         
         // Fetch playlist details
         const { data: playlistData } = await supabase
@@ -276,7 +276,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               <History className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-bold text-foreground">{t("home.continue")}</h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {recentlyPlayed.map((playlist) => (
                 <PlaylistCard
                   key={playlist.id}
