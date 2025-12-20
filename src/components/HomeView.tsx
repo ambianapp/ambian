@@ -211,13 +211,13 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     showAll: boolean,
     onToggle: () => void
   ) => {
-    const displayedPlaylists = showAll ? playlists : playlists.slice(0, 4);
+    const displayedPlaylists = showAll ? playlists : playlists.slice(0, 6);
 
     return (
       <section className="animate-fade-in bg-secondary/30 rounded-2xl p-5 border border-border/50">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-foreground">{title}</h2>
-          {playlists.length > 4 && (
+          {playlists.length > 6 && (
             <Button
               variant="ghost"
               size="sm"
