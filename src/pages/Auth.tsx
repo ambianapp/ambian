@@ -116,9 +116,9 @@ const Auth = () => {
         {/* Slow Moving Gradient Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Large soft color blobs that drift slowly */}
-          <div className="absolute top-[-10%] left-[-5%] w-[70%] h-[70%] bg-primary/20 rounded-full blur-[120px] animate-[drift_20s_ease-in-out_infinite]" />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-primary/15 rounded-full blur-[100px] animate-[drift_25s_ease-in-out_infinite_reverse]" />
-          <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-primary/12 rounded-full blur-[80px] animate-[drift_18s_ease-in-out_infinite_3s]" />
+          <div className="absolute top-[-10%] left-[-5%] w-[70%] h-[70%] bg-primary/20 rounded-full blur-[120px] animate-[drift_12s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-primary/15 rounded-full blur-[100px] animate-[drift_15s_ease-in-out_infinite_reverse]" />
+          <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-primary/12 rounded-full blur-[80px] animate-[drift_10s_ease-in-out_infinite_3s]" />
         </div>
         
         <div className="relative z-10 flex flex-col justify-center p-12 xl:p-16">
