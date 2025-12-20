@@ -110,7 +110,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-primary/10 to-background lg:bg-background flex relative overflow-hidden">
       {/* Left Side - Brand Info */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
         {/* Slow Moving Gradient Background */}
@@ -204,8 +204,15 @@ const Auth = () => {
         </div>
       </div>
 
+      {/* Mobile Background Effects */}
+      <div className="lg:hidden absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-5%] w-[70%] h-[70%] bg-primary/20 rounded-full blur-[120px] animate-drift" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-primary/15 rounded-full blur-[100px] animate-drift-slow" />
+        <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-primary/12 rounded-full blur-[80px] animate-drift-delayed" />
+      </div>
+
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-8 md:pt-4 overflow-auto">
+      <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-8 md:pt-4 overflow-auto relative z-10">
         <div className="w-full max-w-md space-y-4 md:space-y-6 animate-fade-in">
           {/* Mobile/Tablet Logo & Info */}
           <div className="lg:hidden">
