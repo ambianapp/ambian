@@ -220,8 +220,8 @@ const Auth = () => {
             <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-3" />
             
             {/* Compact Brand Info for Mobile */}
-            <div className="bg-card/50 border border-border/50 rounded-xl p-3 mb-3">
-              <p className="text-xs text-muted-foreground text-center mb-2">
+            <div className="mb-3 space-y-2">
+              <p className="text-xs text-muted-foreground text-center">
                 {t("auth.noLicensesShort")}
               </p>
               
