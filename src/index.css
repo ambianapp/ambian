@@ -129,12 +129,21 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-20px) scale(1.1); opacity: 1; }
 }
 
 .float {
   animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0; transform: translateX(-20%); }
+  50% { opacity: 1; transform: translateX(20%); }
+}
+
+.shimmer {
+  animation: shimmer 4s ease-in-out infinite;
 }
 
 /* Safe area for mobile devices with notches */
