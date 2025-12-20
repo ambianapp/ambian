@@ -56,6 +56,9 @@ const PlayerBar = () => {
   const crossfadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const nextTrackPreloadedRef = useRef<string | null>(null);
   const [isCrossfadeActive, setIsCrossfadeActive] = useState(false);
+  const preloadedNextTrackRef = useRef<{ id: string; audioUrl: string } | null>(null);
+  const isPreloadingRef = useRef(false);
+  const userVolumeRef = useRef(75); // Store user's intended volume
 
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
@@ -416,40 +419,77 @@ const PlayerBar = () => {
 
   // Crossfade logic
   const crossfadeCompleteRef = useRef(false);
-  const nextTrackDataRef = useRef<{ id: string; audioUrl: string } | null>(null);
   const crossfadeTrackSwitchedRef = useRef(false);
   
-  const startCrossfade = useCallback(async () => {
+  // Keep user volume in sync
+  useEffect(() => {
+    userVolumeRef.current = volume[0];
+  }, [volume]);
+  
+  // Preload next track when current track is playing (well ahead of crossfade point)
+  useEffect(() => {
+    if (!crossfade || !isPlaying || !duration || repeat === "one") return;
+    
+    const preloadAheadTime = CROSSFADE_DURATION + 10; // Preload 15 seconds before end
+    const timeRemaining = duration - currentTime;
+    
+    // Start preloading when we're approaching the crossfade point
+    if (timeRemaining <= preloadAheadTime && timeRemaining > CROSSFADE_DURATION + 5 && !isPreloadingRef.current && !preloadedNextTrackRef.current) {
+      isPreloadingRef.current = true;
+      
+      getNextTrack().then(nextTrack => {
+        if (nextTrack?.audioUrl && crossfadeAudioRef.current) {
+          console.log('Preloading next track for crossfade:', nextTrack.id);
+          preloadedNextTrackRef.current = { id: nextTrack.id, audioUrl: nextTrack.audioUrl };
+          
+          // Preload by setting src and loading (but not playing)
+          crossfadeAudioRef.current.src = nextTrack.audioUrl;
+          crossfadeAudioRef.current.volume = 0;
+          crossfadeAudioRef.current.load();
+        }
+        isPreloadingRef.current = false;
+      }).catch(() => {
+        isPreloadingRef.current = false;
+      });
+    }
+  }, [currentTime, duration, crossfade, isPlaying, repeat, getNextTrack]);
+  
+  // Start crossfade when approaching end of track
+  const startCrossfade = useCallback(() => {
     if (isCrossfadingRef.current || !crossfade || repeat === "one") return;
+    if (!crossfadeAudioRef.current || !audioRef.current) return;
     
-    const nextTrack = await getNextTrack();
-    if (!nextTrack?.audioUrl || !crossfadeAudioRef.current || !audioRef.current) return;
+    // Check if preloaded track is ready
+    if (!preloadedNextTrackRef.current || !crossfadeAudioRef.current.src) {
+      console.log('Crossfade: next track not preloaded, skipping crossfade');
+      return;
+    }
     
+    console.log('Starting crossfade');
     isCrossfadingRef.current = true;
     crossfadeCompleteRef.current = false;
     crossfadeTrackSwitchedRef.current = false;
-    nextTrackPreloadedRef.current = nextTrack.id;
-    nextTrackDataRef.current = { id: nextTrack.id, audioUrl: nextTrack.audioUrl };
-    
-    // Set up crossfade audio
-    crossfadeAudioRef.current.src = nextTrack.audioUrl;
-    crossfadeAudioRef.current.volume = 0;
-    crossfadeAudioRef.current.play().catch(console.error);
+    nextTrackPreloadedRef.current = preloadedNextTrackRef.current.id;
     
     const mainAudio = audioRef.current;
     const crossfadeAudio = crossfadeAudioRef.current;
-    const startVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
-    const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+    const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
+    
+    // Start playing crossfade audio (already preloaded)
+    crossfadeAudio.volume = 0;
+    crossfadeAudio.play().catch(console.error);
+    
     const steps = 50;
     const stepTime = (CROSSFADE_DURATION * 1000) / steps;
     let step = 0;
+    const startVolume = mainAudio.volume;
     
     crossfadeIntervalRef.current = setInterval(() => {
       step++;
       const progress = Math.min(1, step / steps);
       
-      // Fade out main, fade in crossfade (ensure volume stays in 0-1 range)
-      mainAudio.volume = Math.max(0, Math.min(1, startVolume * (1 - progress)));
+      // Fade out main, fade in crossfade
+      mainAudio.volume = Math.max(0, startVolume * (1 - progress));
       crossfadeAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
       
       if (step >= steps) {
@@ -459,22 +499,26 @@ const PlayerBar = () => {
         }
         crossfadeCompleteRef.current = true;
         
-        // Crossfade complete - immediately switch to next track
-        // This ensures PlayerContext is updated while crossfade audio keeps playing
+        // Crossfade complete - switch to crossfade audio as main player
         if (!crossfadeTrackSwitchedRef.current) {
           crossfadeTrackSwitchedRef.current = true;
+          
+          // Ensure crossfade audio is at correct volume
+          crossfadeAudio.volume = targetVolume;
+          
+          // Pause and reset main audio
+          mainAudio.pause();
+          
+          // Update state and call handleNext to sync PlayerContext
           setIsCrossfadeActive(true);
-          // Update duration from crossfade audio
           if (crossfadeAudio.duration) {
             setDuration(crossfadeAudio.duration);
           }
-          // Call handleNext to update the track in PlayerContext
-          // But the crossfade audio is already playing, so we just need state sync
           handleNext();
         }
       }
     }, stepTime);
-  }, [crossfade, repeat, getNextTrack, volume, isMuted, handleNext]);
+  }, [crossfade, repeat, isMuted, handleNext]);
 
   // Monitor for crossfade trigger point
   useEffect(() => {
@@ -486,26 +530,25 @@ const PlayerBar = () => {
     }
   }, [currentTime, duration, crossfade, isPlaying, repeat, startCrossfade]);
 
-  // Cleanup crossfade on track change - but NOT if crossfade is active (audio is playing)
+  // Cleanup crossfade on track change
   useEffect(() => {
-    // If crossfade just completed and we switched tracks, don't clean up the crossfade audio
+    // If crossfade completed and we're using crossfade audio as main, swap back
     if (isCrossfadeActive && crossfadeAudioRef.current && !crossfadeAudioRef.current.paused) {
-      // Crossfade audio is now the main player - swap sources
       const crossfadeAudio = crossfadeAudioRef.current;
       const mainAudio = audioRef.current;
       
       if (mainAudio && crossfadeAudio.src) {
-        // Copy crossfade audio to main, then clear crossfade
+        // Copy crossfade audio state to main
         const currentSrc = crossfadeAudio.src;
-        const currentTime = crossfadeAudio.currentTime;
-        const currentVolume = crossfadeAudio.volume;
+        const currentTimePos = crossfadeAudio.currentTime;
+        const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
         
         mainAudio.src = currentSrc;
-        mainAudio.currentTime = currentTime;
-        mainAudio.volume = currentVolume;
+        mainAudio.currentTime = currentTimePos;
+        mainAudio.volume = targetVolume;
         mainAudio.play().catch(console.error);
         
-        // Now clean up crossfade
+        // Clean up crossfade
         crossfadeAudio.pause();
         crossfadeAudio.src = "";
         setIsCrossfadeActive(false);
@@ -513,7 +556,7 @@ const PlayerBar = () => {
         crossfadeCompleteRef.current = false;
         crossfadeTrackSwitchedRef.current = false;
         nextTrackPreloadedRef.current = null;
-        nextTrackDataRef.current = null;
+        preloadedNextTrackRef.current = null;
       }
       return;
     }
@@ -527,19 +570,26 @@ const PlayerBar = () => {
       crossfadeCompleteRef.current = false;
       crossfadeTrackSwitchedRef.current = false;
       nextTrackPreloadedRef.current = null;
-      nextTrackDataRef.current = null;
-      // Don't pause crossfade audio if it's currently the active player
+      preloadedNextTrackRef.current = null;
+      isPreloadingRef.current = false;
       if (!isCrossfadeActive && crossfadeAudioRef.current) {
         crossfadeAudioRef.current.pause();
         crossfadeAudioRef.current.src = "";
       }
       setIsCrossfadeActive(false);
     };
-  }, [currentTrack?.id, isCrossfadeActive]);
+  }, [currentTrack?.id, isCrossfadeActive, isMuted]);
 
-  // Handle crossfade audio ending (swap it to main when crossfade track ends)
+  // Handle crossfade audio ending
   const handleCrossfadeEnded = useCallback(() => {
-    // When crossfade audio ends, it means we need to go to the next track after that
+    // Reset state and go to next
+    isCrossfadingRef.current = false;
+    crossfadeCompleteRef.current = false;
+    crossfadeTrackSwitchedRef.current = false;
+    nextTrackPreloadedRef.current = null;
+    preloadedNextTrackRef.current = null;
+    isPreloadingRef.current = false;
+    setIsCrossfadeActive(false);
     handleNext();
   }, [handleNext]);
 
@@ -717,7 +767,8 @@ const PlayerBar = () => {
           crossfadeCompleteRef.current = false;
           crossfadeTrackSwitchedRef.current = false;
           nextTrackPreloadedRef.current = null;
-          nextTrackDataRef.current = null;
+          preloadedNextTrackRef.current = null;
+          isPreloadingRef.current = false;
           setIsCrossfadeActive(false); // Switch back to main audio
           handleNext();
         }}
