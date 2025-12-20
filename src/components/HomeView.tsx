@@ -101,7 +101,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       .select("*")
       .eq("is_system", true)
       .order("updated_at", { ascending: false })
-      .limit(5);
+      .limit(4);
 
     setRecentlyUpdated(updatedData || []);
 
@@ -111,7 +111,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       .select("*")
       .eq("is_system", true)
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(4);
 
     setNewPlaylists(newData || []);
     setIsLoading(false);
@@ -318,64 +318,69 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           () => setShowAllGenres(!showAllGenres)
         )}
 
-        {/* Recently Updated Playlists */}
-        {recentlyUpdated.length > 0 && (
-          <section className="animate-fade-in">
-            <h2 className="text-xl font-bold text-foreground mb-4">{t("home.recentlyUpdated")}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {recentlyUpdated.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={{
-                    id: playlist.id,
-                    name: playlist.name,
-                    description: playlist.description || "",
-                    cover: playlist.cover_url || "/placeholder.svg",
-                    trackCount: 0,
-                    tracks: [],
-                  }}
-                  onClick={() => handlePlaylistClick({
-                    id: playlist.id,
-                    name: playlist.name,
-                    cover: playlist.cover_url,
-                    description: playlist.description,
-                  })}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  onUpdate={handlePlaylistUpdate}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Recently Updated & New Playlists - Side by Side */}
+        {(recentlyUpdated.length > 0 || newPlaylists.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
+            {/* Recently Updated Playlists */}
+            {recentlyUpdated.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold text-foreground mb-4">{t("home.recentlyUpdated")}</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {recentlyUpdated.map((playlist) => (
+                    <PlaylistCard
+                      key={playlist.id}
+                      playlist={{
+                        id: playlist.id,
+                        name: playlist.name,
+                        description: playlist.description || "",
+                        cover: playlist.cover_url || "/placeholder.svg",
+                        trackCount: 0,
+                        tracks: [],
+                      }}
+                      onClick={() => handlePlaylistClick({
+                        id: playlist.id,
+                        name: playlist.name,
+                        cover: playlist.cover_url,
+                        description: playlist.description,
+                      })}
+                      onPlay={() => handlePlayPlaylist(playlist.id)}
+                      onUpdate={handlePlaylistUpdate}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
-        {/* New Playlists */}
-        {newPlaylists.length > 0 && (
-          <section className="animate-fade-in">
-            <h2 className="text-xl font-bold text-foreground mb-4">{t("home.newPlaylists")}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {newPlaylists.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={{
-                    id: playlist.id,
-                    name: playlist.name,
-                    description: playlist.description || "",
-                    cover: playlist.cover_url || "/placeholder.svg",
-                    trackCount: 0,
-                    tracks: [],
-                  }}
-                  onClick={() => handlePlaylistClick({
-                    id: playlist.id,
-                    name: playlist.name,
-                    cover: playlist.cover_url,
-                    description: playlist.description,
-                  })}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  onUpdate={handlePlaylistUpdate}
-                />
-              ))}
-            </div>
-          </section>
+            {/* New Playlists */}
+            {newPlaylists.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold text-foreground mb-4">{t("home.newPlaylists")}</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  {newPlaylists.map((playlist) => (
+                    <PlaylistCard
+                      key={playlist.id}
+                      playlist={{
+                        id: playlist.id,
+                        name: playlist.name,
+                        description: playlist.description || "",
+                        cover: playlist.cover_url || "/placeholder.svg",
+                        trackCount: 0,
+                        tracks: [],
+                      }}
+                      onClick={() => handlePlaylistClick({
+                        id: playlist.id,
+                        name: playlist.name,
+                        cover: playlist.cover_url,
+                        description: playlist.description,
+                      })}
+                      onPlay={() => handlePlayPlaylist(playlist.id)}
+                      onUpdate={handlePlaylistUpdate}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         )}
       </div>
     </div>
