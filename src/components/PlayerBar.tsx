@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
+import SignedImage from "@/components/SignedImage";
 
 const CROSSFADE_DURATION = 5; // seconds
 
@@ -782,7 +783,7 @@ const PlayerBar = () => {
       <div className="fixed bottom-[calc(56px+var(--safe-bottom-tight))] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
         {/* Track Info Row */}
         <div className="flex items-center gap-3 px-3 pt-2">
-          <img
+          <SignedImage
             src={currentTrack.cover}
             alt={currentTrack.title}
             className="w-10 h-10 rounded-md object-cover shadow-lg flex-shrink-0"
