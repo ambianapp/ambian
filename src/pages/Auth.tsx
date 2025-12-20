@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles } from "lucide-react";
-import ambianLogo from "@/assets/ambian-logo.png";
+import ambianLogo from "@/assets/ambian-logo-new.png";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 

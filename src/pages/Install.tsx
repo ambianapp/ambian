@@ -1,7 +1,7 @@
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Button } from "@/components/ui/button";
 import { Download, Check, Share, Plus, Smartphone } from "lucide-react";
-import ambianLogo from "@/assets/ambian-logo.png";
+import ambianLogo from "@/assets/ambian-logo-new.png";
 
 const Install = () => {
   const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
