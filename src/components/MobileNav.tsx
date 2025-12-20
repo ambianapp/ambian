@@ -1,4 +1,4 @@
-import { Home, Search, Library, Shield, User, Clock, HelpCircle, MoreHorizontal } from "lucide-react";
+import { Home, Search, Library, Shield, User, Clock, HelpCircle, MoreHorizontal, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +16,7 @@ interface MobileNavProps {
 }
 
 const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, signOut } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -146,6 +146,13 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
                 <span>{t("admin.title")}</span>
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem 
+              onClick={signOut}
+              className="flex items-center gap-3 cursor-pointer text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>{t("profile.signOut")}</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
