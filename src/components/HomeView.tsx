@@ -323,7 +323,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
             {/* Recently Updated Playlists */}
             {recentlyUpdated.length > 0 && (
-              <section>
+              <section className="bg-secondary/30 rounded-2xl p-5 border border-border/50">
                 <h2 className="text-xl font-bold text-foreground mb-4">{t("home.recentlyUpdated")}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {recentlyUpdated.map((playlist) => (
@@ -353,7 +353,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
             {/* New Playlists */}
             {newPlaylists.length > 0 && (
-              <section>
+              <section className="bg-secondary/30 rounded-2xl p-5 border border-border/50">
                 <h2 className="text-xl font-bold text-foreground mb-4">{t("home.newPlaylists")}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {newPlaylists.map((playlist) => (
