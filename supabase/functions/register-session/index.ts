@@ -6,6 +6,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:8080",
   "https://lovable.dev",
   "https://ambian.fi",
+  "https://ambian.app",
   "https://hjecjqyonxvrrvprbvgr.supabase.co",
 ];
 
