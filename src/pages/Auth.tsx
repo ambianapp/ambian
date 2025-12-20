@@ -213,14 +213,14 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-8 md:pt-4 overflow-auto relative z-10">
-        <div className="w-full max-w-md space-y-4 md:space-y-6 animate-fade-in">
+      <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-4 md:pt-4 overflow-auto relative z-10">
+        <div className="w-full max-w-md space-y-3 md:space-y-6 animate-fade-in">
           {/* Mobile/Tablet Logo & Info */}
           <div className="lg:hidden">
-            <img src={ambianLogo} alt="Ambian" className="h-16 mx-auto mb-4" />
+            <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-3" />
             
             {/* Compact Brand Info for Mobile */}
-            <div className="bg-card/50 border border-border/50 rounded-xl p-4 mb-4 space-y-3">
+            <div className="bg-card/50 border border-border/50 rounded-xl p-3 mb-3 space-y-2">
               <p className="text-xs text-muted-foreground text-center">
                 {t("auth.noLicensesShort")}
               </p>
