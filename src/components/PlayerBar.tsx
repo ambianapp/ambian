@@ -59,6 +59,7 @@ const PlayerBar = () => {
   const preloadedNextTrackRef = useRef<{ id: string; audioUrl: string } | null>(null);
   const isPreloadingRef = useRef(false);
   const userVolumeRef = useRef(75); // Store user's intended volume
+  const mainAudioSrcRef = useRef<string | null>(null); // Prevent React re-setting src during crossfade
 
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
@@ -399,6 +400,25 @@ const PlayerBar = () => {
     }
   };
 
+  // Keep main audio element src stable (avoid restarting the next track when PlayerContext changes during crossfade)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack?.audioUrl) return;
+
+    // During crossfade, the main <audio> must NOT be forced to load the new track via React.
+    if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) return;
+
+    if (mainAudioSrcRef.current !== currentTrack.audioUrl) {
+      mainAudioSrcRef.current = currentTrack.audioUrl;
+      audio.src = currentTrack.audioUrl;
+      audio.load();
+    }
+
+    if (isPlaying) {
+      audio.play().catch(console.error);
+    }
+  }, [currentTrack?.audioUrl, crossfade, isCrossfadeActive, isPlaying]);
+
   useEffect(() => {
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (activeAudio) {
@@ -547,7 +567,8 @@ const PlayerBar = () => {
         const currentSrc = crossfadeAudio.src;
         const currentTimePos = crossfadeAudio.currentTime;
         const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
-        
+
+        mainAudioSrcRef.current = currentSrc;
         mainAudio.src = currentSrc;
         mainAudio.currentTime = currentTimePos;
         mainAudio.volume = targetVolume;
@@ -719,7 +740,6 @@ const PlayerBar = () => {
       {currentTrack.audioUrl && (
         <audio
           ref={audioRef}
-          src={currentTrack.audioUrl}
           preload="auto"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
