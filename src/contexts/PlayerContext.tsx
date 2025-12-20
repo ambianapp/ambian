@@ -42,6 +42,7 @@ interface PlayerContextType {
   pendingScheduledTransition: ScheduledTransition | null;
   triggerScheduledCrossfade: (track: Track, playlist: Track[]) => Promise<void>;
   clearScheduledTransition: () => void;
+  setCurrentTrackDirect: (track: Track & { audioUrl?: string }) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -430,6 +431,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setPendingScheduledTransition(null);
   }, []);
 
+  // Direct setter for crossfade completion (avoids double-advancing)
+  const setCurrentTrackDirect = useCallback((track: Track & { audioUrl?: string }) => {
+    setCurrentTrack(track);
+    setSeekPosition(null);
+  }, []);
+
   return (
     <PlayerContext.Provider
       value={{
@@ -454,6 +461,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         pendingScheduledTransition,
         triggerScheduledCrossfade,
         clearScheduledTransition,
+        setCurrentTrackDirect,
       }}
     >
       {children}
