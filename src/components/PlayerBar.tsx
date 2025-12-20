@@ -120,21 +120,24 @@ const PlayerBar = () => {
   // Page visibility recovery - resume playback when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && audioRef.current && isPlaying) {
-        // Check if audio is actually playing, if not try to resume
-        if (audioRef.current.paused) {
-          console.log('Tab visible again, resuming playback...');
-          audioRef.current.play().catch(() => {
-            // If can't resume, skip to next
-            handleNext();
-          });
-        }
+      if (document.visibilityState !== 'visible' || !isPlaying) return;
+
+      const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+      if (!activeAudio) return;
+
+      // Check if audio is actually playing, if not try to resume
+      if (activeAudio.paused) {
+        console.log('Tab visible again, resuming playback...');
+        activeAudio.play().catch(() => {
+          // If can't resume, skip to next
+          handleNext();
+        });
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isPlaying, handleNext]);
+  }, [isPlaying, handleNext, isCrossfadeActive]);
 
   // Handle audio errors with auto-recovery
   const handleAudioError = (audioEl?: HTMLAudioElement) => {
@@ -701,16 +704,25 @@ const PlayerBar = () => {
 
   // Save current position for persistence
   const savePositionRef = useRef<NodeJS.Timeout | null>(null);
-  
+
+  const getActiveAudio = useCallback(() => {
+    return isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+  }, [isCrossfadeActive]);
+
   const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      const time = audioRef.current.currentTime;
+    const activeAudio = getActiveAudio();
+    if (activeAudio) {
+      const time = activeAudio.currentTime;
       setCurrentTime(time);
-      const progressPercent = (time / audioRef.current.duration) * 100;
+      const dur = activeAudio.duration;
+      if (isFinite(dur) && dur > 0) setDuration(dur);
+
+      const progressPercent = dur ? (time / dur) * 100 : 0;
       setProgress([isNaN(progressPercent) ? 0 : progressPercent]);
+
       // Update last progress time for stall detection
       lastProgressTimeRef.current = Date.now();
-      
+
       // Save position to localStorage (throttled)
       if (!savePositionRef.current) {
         savePositionRef.current = setTimeout(() => {
@@ -731,20 +743,22 @@ const PlayerBar = () => {
     }
   };
 
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-      
-      // Seek to restored position if available
-      if (seekPosition !== null && seekPosition > 0) {
-        audioRef.current.currentTime = seekPosition;
-        setSeekPosition(null);
-      }
+  const handleLoadedMetadata = (audioEl?: HTMLAudioElement) => {
+    const activeAudio = audioEl ?? getActiveAudio();
+    if (!activeAudio) return;
+
+    const dur = activeAudio.duration;
+    if (isFinite(dur) && dur > 0) setDuration(dur);
+
+    // Seek to restored position if available (apply to the active element only)
+    if (seekPosition !== null && seekPosition > 0) {
+      activeAudio.currentTime = seekPosition;
+      setSeekPosition(null);
     }
   };
 
   const handleProgressChange = (value: number[]) => {
-    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    const activeAudio = getActiveAudio();
     if (activeAudio && duration) {
       const newTime = (value[0] / 100) * duration;
       activeAudio.currentTime = newTime;
@@ -768,7 +782,7 @@ const PlayerBar = () => {
           ref={audioRef}
           preload="auto"
           onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
+          onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
           onError={(e) => handleAudioError(e.currentTarget)}
           onStalled={(e) => handleStalled(e.currentTarget)}
           onWaiting={(e) => handleStalled(e.currentTarget)}
@@ -807,25 +821,12 @@ const PlayerBar = () => {
       <audio 
         ref={crossfadeAudioRef}
         preload="auto"
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
         onError={(e) => handleAudioError(e.currentTarget)}
         onStalled={(e) => handleStalled(e.currentTarget)}
         onWaiting={(e) => handleStalled(e.currentTarget)}
         onEnded={handleCrossfadeEnded}
-        onTimeUpdate={() => {
-          // Update UI time when crossfade audio is the active player
-          if (isCrossfadeActive && crossfadeAudioRef.current) {
-            const time = crossfadeAudioRef.current.currentTime;
-            setCurrentTime(time);
-            const progressPercent = (time / crossfadeAudioRef.current.duration) * 100;
-            setProgress([isNaN(progressPercent) ? 0 : progressPercent]);
-            lastProgressTimeRef.current = Date.now();
-          }
-        }}
-        onLoadedMetadata={() => {
-          if (isCrossfadeActive && crossfadeAudioRef.current) {
-            setDuration(crossfadeAudioRef.current.duration);
-          }
-        }}
       />
 
       {/* Mobile Player Bar */}
