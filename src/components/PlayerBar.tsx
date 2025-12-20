@@ -816,8 +816,8 @@ const PlayerBar = () => {
         
         {/* Controls Row */}
         <div className="flex items-center justify-between px-4 py-2">
-          {/* Left controls */}
-          <div className="flex items-center gap-2">
+          {/* Left controls - flex-1 for equal width */}
+          <div className="flex-1 flex items-center justify-start gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -832,12 +832,12 @@ const PlayerBar = () => {
           </div>
           
           {/* Center play button */}
-          <Button variant="player" size="icon" onClick={handlePlayPause} className="h-12 w-12">
+          <Button variant="player" size="icon" onClick={handlePlayPause} className="h-12 w-12 flex-shrink-0">
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
           </Button>
           
-          {/* Right controls */}
-          <div className="flex items-center gap-2">
+          {/* Right controls - flex-1 for equal width */}
+          <div className="flex-1 flex items-center justify-end gap-2">
             <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground h-11 w-11">
               <SkipForward className="w-6 h-6" />
             </Button>
