@@ -137,25 +137,31 @@ const PlayerBar = () => {
   }, [isPlaying, handleNext]);
 
   // Handle audio errors with auto-recovery
-  const handleAudioError = () => {
-    const audio = audioRef.current;
+  const handleAudioError = (audioEl?: HTMLAudioElement) => {
+    const audio = audioEl ?? (isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current);
     console.error("Audio error:", audio?.error?.code, audio?.error?.message);
-    
+
+    // Don't fight the crossfade swap (can look like an error/stall on the inactive element)
+    if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) {
+      return;
+    }
+
     // Don't retry while offline - let the online handler deal with it
     if (isOffline) {
       wasPlayingBeforeOfflineRef.current = true;
       return;
     }
-    
+
     if (retryCountRef.current < maxRetries) {
       retryCountRef.current++;
       console.log(`Retrying playback (attempt ${retryCountRef.current}/${maxRetries})...`);
-      
+
       // Wait and retry
       setTimeout(() => {
-        if (audioRef.current && currentTrack?.audioUrl) {
-          audioRef.current.load();
-          audioRef.current.play().catch(console.error);
+        const active = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+        if (active && currentTrack?.audioUrl) {
+          active.load();
+          active.play().catch(console.error);
         }
       }, 1000 * retryCountRef.current); // Exponential backoff
     } else {
@@ -170,56 +176,64 @@ const PlayerBar = () => {
   };
 
   // Handle stall/waiting events
-  const handleStalled = () => {
+  const handleStalled = (audioEl?: HTMLAudioElement) => {
+    // Ignore stalls during crossfade (inactive element often stalls/ends)
+    if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) return;
+
     console.log("Audio stalled, attempting recovery...");
-    if (audioRef.current && isPlaying) {
+    const active = audioEl ?? (isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current);
+    if (active && isPlaying) {
       // Try to resume playback
       setTimeout(() => {
-        audioRef.current?.play().catch(console.error);
+        active.play().catch(console.error);
       }, 500);
     }
   };
 
   // Monitor for playback stalls (no progress for extended time)
   useEffect(() => {
-    if (isPlaying && currentTrack?.audioUrl) {
-      stallCheckIntervalRef.current = setInterval(() => {
-        // Don't try recovery while offline - let the online handler deal with it
-        if (isOffline) {
-          return;
-        }
-        
-        const now = Date.now();
-        const timeSinceLastProgress = now - lastProgressTimeRef.current;
-        
-        // If no progress for 10 seconds while playing, try recovery
-        if (timeSinceLastProgress > 10000 && audioRef.current && !audioRef.current.paused) {
-          console.log("Detected playback stall, attempting recovery...");
-          
-          if (retryCountRef.current < maxRetries) {
-            retryCountRef.current++;
-            const currentPos = audioRef.current.currentTime;
-            audioRef.current.load();
-            audioRef.current.currentTime = currentPos;
-            audioRef.current.play().catch(() => {
-              // If recovery fails, skip to next
-              retryCountRef.current = 0;
-              handleNext();
-            });
-          } else {
+    if (!isPlaying || !currentTrack?.audioUrl) return;
+
+    stallCheckIntervalRef.current = setInterval(() => {
+      // Don't try recovery while offline - let the online handler deal with it
+      if (isOffline) return;
+
+      // Ignore stall detection during crossfade (inactive element will appear stalled)
+      if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) return;
+
+      const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+      if (!activeAudio) return;
+
+      const now = Date.now();
+      const timeSinceLastProgress = now - lastProgressTimeRef.current;
+
+      // If no progress for 10 seconds while playing, try recovery
+      if (timeSinceLastProgress > 10000 && !activeAudio.paused) {
+        console.log("Detected playback stall, attempting recovery...");
+
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current++;
+          const currentPos = activeAudio.currentTime;
+          activeAudio.load();
+          activeAudio.currentTime = currentPos;
+          activeAudio.play().catch(() => {
+            // If recovery fails, skip to next
             retryCountRef.current = 0;
             handleNext();
-          }
+          });
+        } else {
+          retryCountRef.current = 0;
+          handleNext();
         }
-      }, 5000);
-    }
+      }
+    }, 5000);
 
     return () => {
       if (stallCheckIntervalRef.current) {
         clearInterval(stallCheckIntervalRef.current);
       }
     };
-  }, [isPlaying, currentTrack, handleNext, isOffline]);
+  }, [isPlaying, currentTrack?.audioUrl, handleNext, isOffline, crossfade, isCrossfadeActive]);
 
   // Reset retry count on successful track change
   useEffect(() => {
@@ -755,9 +769,9 @@ const PlayerBar = () => {
           preload="auto"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onError={handleAudioError}
-          onStalled={handleStalled}
-          onWaiting={handleStalled}
+          onError={(e) => handleAudioError(e.currentTarget)}
+          onStalled={(e) => handleStalled(e.currentTarget)}
+          onWaiting={(e) => handleStalled(e.currentTarget)}
           onEnded={() => {
             if (repeat === "one" && audioRef.current) {
               audioRef.current.currentTime = 0;
@@ -793,6 +807,9 @@ const PlayerBar = () => {
       <audio 
         ref={crossfadeAudioRef}
         preload="auto"
+        onError={(e) => handleAudioError(e.currentTarget)}
+        onStalled={(e) => handleStalled(e.currentTarget)}
+        onWaiting={(e) => handleStalled(e.currentTarget)}
         onEnded={handleCrossfadeEnded}
         onTimeUpdate={() => {
           // Update UI time when crossfade audio is the active player
