@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Check, User, Shield, Clock } from "lucide-react";
-import ambianLogo from "@/assets/ambian-logo-gate.png";
+import ambianLogo from "@/assets/ambian-logo-new.png";
 
 const features = [
   "3 days free trial",

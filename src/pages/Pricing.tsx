@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw } from "lucide-react";
-import ambianLogo from "@/assets/ambian-logo.png";
+import ambianLogo from "@/assets/ambian-logo-new.png";
 import {
   Dialog,
   DialogContent,
