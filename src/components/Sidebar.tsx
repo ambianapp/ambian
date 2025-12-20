@@ -98,6 +98,31 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     fetchPlaylists();
   }, [user]);
 
+  // Subscribe to liked_playlists changes for real-time updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('sidebar-liked-playlists')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'liked_playlists',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchPlaylists();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const navItems = [
     { id: "home", label: t("nav.home"), icon: Home },
     { id: "search", label: t("nav.search"), icon: Search },
