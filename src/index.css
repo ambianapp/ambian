@@ -146,6 +146,13 @@
   animation: shimmer 4s ease-in-out infinite;
 }
 
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(5%, 10%) scale(1.05); }
+  50% { transform: translate(-5%, 5%) scale(0.95); }
+  75% { transform: translate(8%, -5%) scale(1.02); }
+}
+
 /* Safe area for mobile devices with notches */
 .safe-area-bottom {
   padding-bottom: var(--safe-bottom);

@@ -113,22 +113,12 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex">
       {/* Left Side - Brand Info */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
-        {/* Subtle Shimmering Light Effects */}
+        {/* Slow Moving Gradient Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Diagonal light rays */}
-          <div className="absolute -top-20 -left-20 w-[400px] h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent rotate-45 animate-[shimmer_8s_ease-in-out_infinite]" />
-          <div className="absolute top-[20%] -left-10 w-[300px] h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent rotate-[35deg] animate-[shimmer_10s_ease-in-out_infinite_2s]" />
-          <div className="absolute top-[50%] -left-10 w-[350px] h-[1px] bg-gradient-to-r from-transparent via-primary/25 to-transparent rotate-[40deg] animate-[shimmer_9s_ease-in-out_infinite_4s]" />
-          <div className="absolute top-[75%] -left-10 w-[280px] h-[1px] bg-gradient-to-r from-transparent via-primary/15 to-transparent rotate-[30deg] animate-[shimmer_11s_ease-in-out_infinite_1s]" />
-          
-          {/* Horizontal shimmer lines */}
-          <div className="absolute top-[25%] left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-[shimmer_7s_ease-in-out_infinite]" />
-          <div className="absolute top-[55%] left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/8 to-transparent animate-[shimmer_9s_ease-in-out_infinite_3s]" />
-          <div className="absolute top-[85%] left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/12 to-transparent animate-[shimmer_6s_ease-in-out_infinite_5s]" />
-          
-          {/* Soft ambient glow patches */}
-          <div className="absolute top-[10%] left-[20%] w-32 h-32 bg-primary/5 rounded-full blur-3xl animate-[pulse_6s_ease-in-out_infinite]" />
-          <div className="absolute bottom-[20%] right-[15%] w-40 h-40 bg-primary/4 rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite_2s]" />
+          {/* Large soft color blobs that drift slowly */}
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/8 rounded-full blur-[100px] animate-[drift_20s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-primary/6 rounded-full blur-[80px] animate-[drift_25s_ease-in-out_infinite_reverse]" />
+          <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[90px] animate-[drift_18s_ease-in-out_infinite_3s]" />
         </div>
         
         <div className="relative z-10 flex flex-col justify-center p-12 xl:p-16">
