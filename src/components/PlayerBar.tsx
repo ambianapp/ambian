@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
 import SignedImage from "@/components/SignedImage";
+import { Track } from "@/data/musicData";
 
 const CROSSFADE_DURATION = 5; // seconds
 
@@ -30,6 +31,7 @@ const PlayerBar = () => {
     pendingScheduledTransition,
     clearScheduledTransition,
     playlistTracksRef,
+    setCurrentTrackDirect,
   } = usePlayer();
   
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -65,7 +67,7 @@ const PlayerBar = () => {
   const crossfadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const nextTrackPreloadedRef = useRef<string | null>(null);
   const [isCrossfadeActive, setIsCrossfadeActive] = useState(false);
-  const preloadedNextTrackRef = useRef<{ id: string; audioUrl: string } | null>(null);
+  const preloadedNextTrackRef = useRef<{ id: string; audioUrl: string; track: Track } | null>(null);
   const isPreloadingRef = useRef(false);
   const userVolumeRef = useRef(75); // Store user's intended volume
   const mainAudioSrcRef = useRef<string | null>(null); // Prevent React re-setting src during crossfade
@@ -470,7 +472,7 @@ const PlayerBar = () => {
       getNextTrack().then(nextTrack => {
         if (nextTrack?.audioUrl && crossfadeAudioRef.current) {
           console.log('Preloading next track for crossfade:', nextTrack.id);
-          preloadedNextTrackRef.current = { id: nextTrack.id, audioUrl: nextTrack.audioUrl };
+          preloadedNextTrackRef.current = { id: nextTrack.id, audioUrl: nextTrack.audioUrl, track: nextTrack };
           
           // Preload by setting src and loading (but not playing)
           crossfadeAudioRef.current.src = nextTrack.audioUrl;
@@ -530,7 +532,7 @@ const PlayerBar = () => {
         crossfadeCompleteRef.current = true;
         
         // Crossfade complete - switch to crossfade audio as main player
-        if (!crossfadeTrackSwitchedRef.current) {
+        if (!crossfadeTrackSwitchedRef.current && preloadedNextTrackRef.current) {
           crossfadeTrackSwitchedRef.current = true;
           
           // Ensure crossfade audio is at correct volume
@@ -539,16 +541,17 @@ const PlayerBar = () => {
           // Pause and reset main audio
           mainAudio.pause();
           
-          // Update state and call handleNext to sync PlayerContext
+          // Update state - use the preloaded track directly instead of calling handleNext
+          // This prevents double-advancing (the track is already playing in crossfadeAudio)
           setIsCrossfadeActive(true);
           if (crossfadeAudio.duration) {
             setDuration(crossfadeAudio.duration);
           }
-          handleNext();
+          setCurrentTrackDirect(preloadedNextTrackRef.current.track);
         }
       }
     }, stepTime);
-  }, [crossfade, repeat, isMuted, handleNext]);
+  }, [crossfade, repeat, isMuted, setCurrentTrackDirect]);
 
   // Monitor for crossfade trigger point
   useEffect(() => {
