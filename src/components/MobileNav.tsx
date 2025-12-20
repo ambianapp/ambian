@@ -151,7 +151,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
               className="flex items-center gap-3 cursor-pointer text-destructive"
             >
               <LogOut className="w-4 h-4" />
-              <span>{t("profile.signOut")}</span>
+              <span>{t("common.signOut")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
