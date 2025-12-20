@@ -541,28 +541,39 @@ const PlayerBar = () => {
 
           const next = preloadedNextTrackRef.current;
 
-          // Update React state to the new track
-          setCurrentTrackDirect(next.track);
-          
-          // Update mainAudioSrcRef if we're switching to main audio
+          // Update mainAudioSrcRef BEFORE updating React state to prevent the effect from reloading
           if (isCrossfadeActive) {
+            // Switching TO main audio - update its src ref
             mainAudioSrcRef.current = normalizeUrl(next.audioUrl);
+          } else {
+            // Switching TO crossfade audio - main audio will be inactive, but update ref anyway
+            // to prevent future reload when we eventually switch back
           }
 
           // Stop the faded-out audio and clear its src
           fadingOutAudio.pause();
           fadingOutAudio.src = "";
 
-          // Toggle which audio element is active
+          // Toggle which audio element is active BEFORE updating track state
+          // This ensures the effect at line 415 sees the correct isCrossfadeActive value
           setIsCrossfadeActive(prev => !prev);
+
+          // Update React state to the new track
+          // Do this AFTER toggling active audio so the effect doesn't try to reload
+          setCurrentTrackDirect(next.track);
           
-          // Reset crossfade state for the next transition
-          isCrossfadingRef.current = false;
-          crossfadeCompleteRef.current = false;
-          crossfadeTrackSwitchedRef.current = false;
+          // Reset preload state for the next transition
+          // Keep isCrossfadingRef true briefly to block the src-setting effect
           nextTrackPreloadedRef.current = null;
           preloadedNextTrackRef.current = null;
           isPreloadingRef.current = false;
+          
+          // Delay resetting crossfade flags to allow React state to settle
+          setTimeout(() => {
+            isCrossfadingRef.current = false;
+            crossfadeCompleteRef.current = false;
+            crossfadeTrackSwitchedRef.current = false;
+          }, 100);
         }
       }
     }, stepTime);
