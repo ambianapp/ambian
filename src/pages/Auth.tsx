@@ -220,21 +220,13 @@ const Auth = () => {
             <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-3" />
             
             {/* Compact Brand Info for Mobile */}
-            <div className="bg-card/50 border border-border/50 rounded-xl p-3 mb-3 space-y-2">
-              <p className="text-xs text-muted-foreground text-center">
-                {t("auth.noLicensesShort")}
-              </p>
-              
-              <div className="flex items-center justify-center gap-4 pt-2 border-t border-border/50">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-foreground">€7.40{t("auth.perMonth")}</div>
-                  <div className="text-xs text-muted-foreground">{t("auth.billedYearly")}</div>
-                </div>
-                <div className="h-8 w-px bg-border/50" />
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
-                  <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
-                </div>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div className="flex items-center gap-2 bg-primary/15 px-3 py-1.5 rounded-full">
+                <span className="text-xs font-medium text-primary">{t("auth.threeDaysFree")}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="text-sm font-semibold text-foreground">€7.40</span>
+                <span className="text-xs">{t("auth.perMonth")}</span>
               </div>
             </div>
           </div>
