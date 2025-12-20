@@ -428,25 +428,45 @@ const PlayerBar = () => {
     }
   };
 
-  // Keep main audio element src stable (avoid restarting the next track when PlayerContext changes during crossfade)
+  // Keep audio element src stable - only update src on the INACTIVE element or when not crossfading
+  // This prevents the "restart after 5 seconds" bug caused by React re-setting src mid-playback
+  const lastSetTrackIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !currentTrack?.audioUrl) return;
-
-    // During crossfade, the main <audio> must NOT be forced to load the new track via React.
-    if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) return;
-
+    if (!currentTrack?.audioUrl) return;
+    
+    // Skip if we already set this track (prevents duplicate loads)
+    if (lastSetTrackIdRef.current === currentTrack.id) return;
+    
+    // During active crossfade, don't touch audio elements - the crossfade logic handles everything
+    if (isCrossfadingRef.current) return;
+    
+    // After crossfade completes, the active audio is already playing the correct track
+    // Only need to set src on the ACTIVE element if it doesn't match
+    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    if (!activeAudio) return;
+    
     const desiredSrc = normalizeUrl(currentTrack.audioUrl);
-    if (mainAudioSrcRef.current !== desiredSrc) {
+    const currentSrc = normalizeUrl(activeAudio.src || '');
+    
+    // Only load if the active audio doesn't already have this track
+    if (currentSrc !== desiredSrc) {
+      console.log('Setting active audio src:', currentTrack.id, 'isCrossfadeActive:', isCrossfadeActive);
+      activeAudio.src = desiredSrc;
+      activeAudio.load();
+      
+      if (isPlaying) {
+        activeAudio.play().catch(console.error);
+      }
+    }
+    
+    lastSetTrackIdRef.current = currentTrack.id;
+    
+    // Also update mainAudioSrcRef for consistency
+    if (!isCrossfadeActive) {
       mainAudioSrcRef.current = desiredSrc;
-      audio.src = desiredSrc;
-      audio.load();
     }
-
-    if (isPlaying) {
-      audio.play().catch(console.error);
-    }
-  }, [currentTrack?.audioUrl, crossfade, isCrossfadeActive, isPlaying, normalizeUrl]);
+  }, [currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, isPlaying, normalizeUrl]);
 
   useEffect(() => {
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
@@ -578,6 +598,9 @@ const PlayerBar = () => {
           // Update React state to the new track
           // Do this AFTER toggling active audio so the effect doesn't try to reload
           setCurrentTrackDirect(next.track);
+          
+          // Mark this track as already set to prevent the src-setting effect from reloading
+          lastSetTrackIdRef.current = next.id;
           
           // Reset preload state for the next transition
           // Keep isCrossfadingRef true briefly to block the src-setting effect
