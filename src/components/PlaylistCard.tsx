@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Play, Pencil } from "lucide-react";
+import { useState, useRef } from "react";
+import { Play, Pencil, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Playlist } from "@/data/musicData";
 import { useAuth } from "@/contexts/AuthContext";
 import SignedImage from "@/components/SignedImage";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface PlaylistCardProps {
   playlist: Playlist;
@@ -18,12 +20,42 @@ interface PlaylistCardProps {
 
 const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps) => {
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editData, setEditData] = useState({
     name: playlist.name,
     description: playlist.description,
     cover: playlist.cover,
   });
+
+  const handleCoverUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Error", description: "Please select an image file", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const fileName = `playlist-covers/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("audio")
+        .upload(fileName, file, { contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+      setEditData(prev => ({ ...prev, cover: urlData.publicUrl }));
+      toast({ title: "Success", description: "Cover uploaded" });
+    } catch (err: any) {
+      console.error("Cover upload error:", err);
+      toast({ title: "Error", description: err.message || "Failed to upload", variant: "destructive" });
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
 
   const handleSave = () => {
     onUpdate?.(playlist.id, editData);
@@ -100,16 +132,48 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-cover">Cover URL</Label>
-              <Input
-                id="edit-cover"
-                value={editData.cover}
-                onChange={(e) => setEditData({ ...editData, cover: e.target.value })}
-                className="bg-background"
-              />
-              {editData.cover && (
-                <img src={editData.cover} alt="Preview" className="w-20 h-20 object-cover rounded-lg mt-2" />
-              )}
+              <Label>Cover Image</Label>
+              <div className="flex items-center gap-3">
+                {editData.cover && (
+                  <SignedImage 
+                    src={editData.cover} 
+                    alt="Preview" 
+                    className="w-20 h-20 object-cover rounded-lg"
+                    fallbackSrc="/placeholder.svg"
+                  />
+                )}
+                <div className="flex-1 space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleCoverUpload(file);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingCover}
+                  >
+                    {isUploadingCover ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
+                    ) : (
+                      <><Upload className="w-4 h-4 mr-2" /> Upload Image</>
+                    )}
+                  </Button>
+                  <Input
+                    placeholder="Or paste image URL"
+                    value={editData.cover}
+                    onChange={(e) => setEditData({ ...editData, cover: e.target.value })}
+                    className="bg-background text-xs"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>
