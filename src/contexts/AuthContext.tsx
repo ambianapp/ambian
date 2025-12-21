@@ -110,7 +110,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
-        console.error("Error registering session:", error);
+        // Don't fail silently - just log, the app should continue working
+        console.warn("Session registration failed (non-critical):", error);
         return;
       }
 
@@ -119,13 +120,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log(`Kicked out ${data.removedSessions} older device(s)`);
       }
     } catch (error) {
-      console.error("Error registering session:", error);
+      // Network errors during registration shouldn't break the app
+      console.warn("Session registration error (non-critical):", error);
     }
   }, []);
 
   // Validate current session against active_sessions table
-  const validateSession = useCallback(async (currentSession: Session) => {
-    if (isSigningOut.current) return true;
+  // Returns: 'valid' | 'kicked' | 'error'
+  const validateSession = useCallback(async (currentSession: Session): Promise<'valid' | 'kicked' | 'error'> => {
+    if (isSigningOut.current) return 'valid';
     
     try {
       const sessionId = currentSession.access_token.slice(-32);
@@ -139,20 +142,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (error) {
-        console.error("Error validating session:", error);
-        return true; // Don't kick out on error
+        console.warn("Error validating session (will retry):", error);
+        return 'error'; // Network error, don't kick out
       }
 
-      // If session not found, user was kicked out
+      // If session not found, it could mean:
+      // 1. User was kicked out from another device
+      // 2. Session record was cleaned up (shouldn't happen but be safe)
+      // 3. Network/timing issue
       if (!data) {
-        console.log("Session invalidated - logged in from another device");
-        return false;
+        console.log("Session not found in active_sessions - may have been kicked");
+        return 'kicked';
       }
 
-      return true;
+      return 'valid';
     } catch (error) {
-      console.error("Error validating session:", error);
-      return true; // Don't kick out on error
+      console.warn("Error validating session (will retry):", error);
+      return 'error'; // Network error, don't kick out
     }
   }, []);
 
@@ -223,7 +229,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => authSubscription.unsubscribe();
   }, [registerSession]);
 
-  // Session validation interval - check every 30 seconds, but only when page is visible
+  // Session validation interval - check periodically, but be very forgiving
+  // For a background music app, we prioritize staying logged in
+  const consecutiveKicksRef = useRef(0);
+  const MAX_CONSECUTIVE_KICKS = 3; // Require 3 consecutive "kicked" results to actually log out
+  
   useEffect(() => {
     if (!session) return;
 
@@ -231,28 +241,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Skip validation if page is hidden (device sleeping/screen off)
       // This prevents false logouts when the app is backgrounded overnight
       if (document.visibilityState === 'hidden') {
-        console.log("Skipping session validation while page is hidden");
+        return; // Silent skip, no logging
+      }
+      
+      const result = await validateSession(session);
+      
+      if (result === 'valid') {
+        // Reset consecutive kick counter on successful validation
+        consecutiveKicksRef.current = 0;
         return;
       }
       
-      const isValid = await validateSession(session);
-      if (!isValid && !isSigningOut.current) {
+      if (result === 'error') {
+        // Network error - don't increment counter, just wait for next check
+        return;
+      }
+      
+      // result === 'kicked'
+      consecutiveKicksRef.current++;
+      console.log(`Session kicked check ${consecutiveKicksRef.current}/${MAX_CONSECUTIVE_KICKS}`);
+      
+      // Only actually log out after multiple consecutive kicks
+      // This prevents false logouts from temporary network issues or timing problems
+      if (consecutiveKicksRef.current >= MAX_CONSECUTIVE_KICKS && !isSigningOut.current) {
         toast.error("You've been logged out because your account was accessed from another device.");
         await signOut();
       }
     };
 
-    // Initial validation after a short delay
-    const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
+    // Initial validation after a longer delay (give time for session to be registered)
+    const initialTimeout = setTimeout(validateAndKickIfNeeded, 10000);
     
-    // Periodic validation - only runs when visible
-    const interval = setInterval(validateAndKickIfNeeded, 30000);
+    // Periodic validation every 5 minutes instead of 30 seconds
+    // For a background music app, aggressive validation is counterproductive
+    const interval = setInterval(validateAndKickIfNeeded, 5 * 60 * 1000);
 
     // Re-validate when page becomes visible again (user wakes device)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Short delay to let network reconnect after device wake
-        setTimeout(validateAndKickIfNeeded, 2000);
+        // Re-register this session when coming back to foreground
+        // This ensures the session stays active even after long sleep
+        setTimeout(async () => {
+          // First re-register, then validate
+          await registerSession(session.user.id, session.access_token);
+          // Wait a moment for registration, then validate
+          setTimeout(validateAndKickIfNeeded, 3000);
+        }, 2000);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -262,7 +296,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [session, validateSession]);
+  }, [session, validateSession, registerSession]);
 
   // Auto-refresh subscription every minute
   useEffect(() => {
