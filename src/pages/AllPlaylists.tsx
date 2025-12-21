@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "@/components/PlaylistCard";
+import PlaylistDetailView from "@/components/PlaylistDetailView";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,20 +14,47 @@ import type { Track } from "@/data/musicData";
 
 type DbPlaylist = Tables<"playlists">;
 
+interface SelectedPlaylist {
+  id: string;
+  name: string;
+  cover: string | null;
+  description: string | null;
+}
+
 const AllPlaylists = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { handleTrackSelect } = usePlayer();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"mood" | "genre">("mood");
+  const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
 
   useEffect(() => {
     loadPlaylists();
   }, []);
+
+  // Handle playlist query param on load
+  useEffect(() => {
+    const playlistId = searchParams.get("playlist");
+    if (playlistId && !selectedPlaylist) {
+      // Find the playlist in our lists
+      const allPlaylists = [...moodPlaylists, ...genrePlaylists];
+      const playlist = allPlaylists.find(p => p.id === playlistId);
+      if (playlist) {
+        setSelectedPlaylist({
+          id: playlist.id,
+          name: playlist.name,
+          cover: playlist.cover_url,
+          description: playlist.description,
+        });
+      }
+    }
+  }, [searchParams, moodPlaylists, genrePlaylists, selectedPlaylist]);
 
   const loadPlaylists = async () => {
     setIsLoading(true);
@@ -53,12 +81,24 @@ const AllPlaylists = () => {
 
   const handlePlaylistClick = async (playlist: DbPlaylist) => {
     if (user) {
-      await supabase.from("play_history").insert({
+      supabase.from("play_history").insert({
         user_id: user.id,
         playlist_id: playlist.id,
       });
     }
-    navigate(`/?playlist=${playlist.id}`);
+    // Set selected playlist locally and update URL
+    setSelectedPlaylist({
+      id: playlist.id,
+      name: playlist.name,
+      cover: playlist.cover_url,
+      description: playlist.description,
+    });
+    setSearchParams({ playlist: playlist.id });
+  };
+
+  const handleBackFromPlaylist = () => {
+    setSelectedPlaylist(null);
+    setSearchParams({});
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
@@ -118,6 +158,25 @@ const AllPlaylists = () => {
   };
 
   const currentPlaylists = activeTab === "mood" ? moodPlaylists : genrePlaylists;
+
+  // Show playlist detail view when a playlist is selected
+  if (selectedPlaylist) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PlaylistDetailView
+          playlistId={selectedPlaylist.id}
+          playlistName={selectedPlaylist.name}
+          playlistCover={selectedPlaylist.cover}
+          playlistDescription={selectedPlaylist.description}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          onTrackSelect={handleTrackSelect}
+          onBack={handleBackFromPlaylist}
+          onPlayAll={() => {}}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-40 md:pb-32">
