@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3 } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3, Repeat } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -115,6 +115,13 @@ const Help = () => {
                   <span className="font-medium">{t("help.shuffle")}</span>
                 </div>
                 <span className="text-muted-foreground">{t("help.shuffleDesc")}</span>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
+                <div className="flex items-center gap-2 min-w-[140px]">
+                  <Repeat className="w-5 h-5 text-muted-foreground" />
+                  <span className="font-medium">{t("help.repeat")}</span>
+                </div>
+                <span className="text-muted-foreground">{t("help.repeatDesc")}</span>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
                 <div className="flex items-center gap-2 min-w-[140px]">
