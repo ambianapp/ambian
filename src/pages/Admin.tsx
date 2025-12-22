@@ -4,9 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ListMusic, Users } from "lucide-react";
+import { ArrowLeft, ListMusic, Users, Settings } from "lucide-react";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 import { UserManager } from "@/components/admin/UserManager";
+import { PriceMigration } from "@/components/admin/PriceMigration";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -39,7 +40,7 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="playlists" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="playlists" className="flex items-center gap-2">
               <ListMusic className="w-4 h-4" />
               {t("admin.playlists")}
@@ -47,6 +48,10 @@ const Admin = () => {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               {t("admin.users")}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -58,6 +63,11 @@ const Admin = () => {
           {/* Users Tab */}
           <TabsContent value="users" className="mt-6">
             <UserManager />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="mt-6">
+            <PriceMigration />
           </TabsContent>
         </Tabs>
       </div>
