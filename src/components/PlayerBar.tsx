@@ -517,10 +517,16 @@ const PlayerBar = () => {
   ]);
 
   useEffect(() => {
+    // Skip play/pause management during crossfade - the crossfade logic handles everything
+    if (isCrossfadingRef.current || crossfadeCompleteRef.current) return;
+    
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (activeAudio) {
       if (isPlaying && (currentTrack?.audioUrl || isCrossfadeActive)) {
-        activeAudio.play().catch(console.error);
+        // Only call play if audio is actually paused to avoid interrupting playback
+        if (activeAudio.paused) {
+          activeAudio.play().catch(console.error);
+        }
       } else {
         activeAudio.pause();
       }
@@ -655,11 +661,12 @@ const PlayerBar = () => {
           isPreloadingRef.current = false;
           
           // Delay resetting crossfade flags to allow React state to settle
+          // Use a longer delay to prevent the isPlaying effect from triggering a reload
           setTimeout(() => {
             isCrossfadingRef.current = false;
             crossfadeCompleteRef.current = false;
             crossfadeTrackSwitchedRef.current = false;
-          }, 100);
+          }, 500);
         }
       }
     }, stepTime);
