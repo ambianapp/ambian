@@ -419,7 +419,7 @@ const Profile = () => {
         </Card>
 
         {/* Install App Card */}
-        {canInstall && !isInstalled && (
+        {!isInstalled && (
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -429,10 +429,17 @@ const Profile = () => {
               <CardDescription>Install Ambian as a desktop app for quick access</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={promptInstall} className="w-full sm:w-auto">
-                <Download className="w-4 h-4 mr-2" />
-                Install Ambian
-              </Button>
+              {canInstall ? (
+                <Button onClick={promptInstall} className="w-full sm:w-auto">
+                  <Download className="w-4 h-4 mr-2" />
+                  Install Ambian
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => navigate("/install")} className="w-full sm:w-auto">
+                  <Smartphone className="w-4 h-4 mr-2" />
+                  View Install Instructions
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
