@@ -59,7 +59,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrack, setCurrentTrack] = useState<(Track & { audioUrl?: string }) | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState<"off" | "all" | "one">("off");
+  const [repeat, setRepeat] = useState<"off" | "all" | "one">("all");
   const [crossfade, setCrossfade] = useState(() => {
     const saved = localStorage.getItem("ambian_crossfade");
     return saved === "true";
