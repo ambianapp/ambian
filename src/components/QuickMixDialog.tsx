@@ -216,7 +216,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
         </div>
 
         {/* Playlist List */}
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 min-h-0 h-[300px] -mx-6 px-6">
           <div className="space-y-1 py-2">
             {isLoading ? (
               <p className="text-center text-muted-foreground py-8">Loading...</p>
