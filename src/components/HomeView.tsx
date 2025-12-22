@@ -300,6 +300,12 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           </div>
         </div>
 
+        {/* Industry Collections */}
+        <IndustryCollections
+          onPlaylistSelect={onPlaylistSelect}
+          onTrackSelect={onTrackSelect}
+        />
+
         {/* Recently Played */}
         {recentlyPlayed.length > 0 && (
           <section className="animate-fade-in">
@@ -332,12 +338,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             </div>
           </section>
         )}
-
-        {/* Industry Collections */}
-        <IndustryCollections
-          onPlaylistSelect={onPlaylistSelect}
-          onTrackSelect={onTrackSelect}
-        />
 
         {/* Playlists by Mood */}
         {renderPlaylistSection(
