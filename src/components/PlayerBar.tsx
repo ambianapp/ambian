@@ -865,14 +865,35 @@ const PlayerBar = () => {
   }, [isCrossfadeActive]);
 
   // Reset UI timing when the track changes (prevents stale duration/currentTime from previous element)
+  // NOTE: Do NOT include isCrossfadeActive in deps - it toggles during crossfade swap and would
+  // reset timing when the new track is already ~5s in, causing the "restart at 5 seconds" bug.
   useEffect(() => {
+    // During crossfade, the track switches but we want to preserve the faded-in audio's current time
+    // Only reset timing if we're not in an active crossfade
+    if (isCrossfadingRef.current) return;
+    
     lastObservedTimeRef.current = 0;
     lastObservedTrackIdRef.current = currentTrack?.id ?? null;
-    setCurrentTime(0);
-    setProgress([0]);
-    setDuration(0);
+    
+    // Get the current time from the active audio element (may be >0 after crossfade)
+    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    if (activeAudio && activeAudio.currentTime > 0.5) {
+      // Track already playing (crossfade completed) - sync UI to actual position
+      const time = activeAudio.currentTime;
+      const dur = activeAudio.duration;
+      setCurrentTime(time);
+      if (isFinite(dur) && dur > 0) {
+        setDuration(dur);
+        setProgress([(time / dur) * 100]);
+      }
+    } else {
+      // New track starting from beginning
+      setCurrentTime(0);
+      setProgress([0]);
+      setDuration(0);
+    }
     dbg("trackChange", { trackId: currentTrack?.id, isCrossfadeActive });
-  }, [currentTrack?.id, dbg, isCrossfadeActive]);
+  }, [currentTrack?.id, dbg]);
 
   const handleTimeUpdate = (audioEl: HTMLAudioElement) => {
     // Only trust timeupdate from the currently active element.
