@@ -66,10 +66,10 @@ const Pricing = () => {
   const [companyName, setCompanyName] = useState("");
   const [companyAddress, setCompanyAddress] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  
 
   // Handle payment verification on return from Stripe
   useEffect(() => {
@@ -134,6 +134,7 @@ const Pricing = () => {
         body: { 
           priceId: plans[selectedPlan].priceId,
           paymentMode: paymentType === "subscription" ? "subscription" : "payment",
+          promoCode: promoCode.trim() || undefined,
         },
       });
 
@@ -401,6 +402,16 @@ const Pricing = () => {
             </div>
           ) : (
             <>
+              {/* Promo Code Input */}
+              <div className="flex gap-2 max-w-md mx-auto">
+                <Input
+                  placeholder="Promo code (optional)"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="text-center uppercase"
+                />
+              </div>
+
               {/* Payment Method Selection */}
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Pay Now Option */}
