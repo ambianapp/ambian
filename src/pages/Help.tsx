@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -63,6 +63,20 @@ const Help = () => {
                   <span className="font-medium">{t("help.scheduling")}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{t("help.schedulingDesc")}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shuffle className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{t("help.quickMix")}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{t("help.quickMixDesc")}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{t("help.industryCollections")}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{t("help.industryCollectionsDesc")}</p>
               </div>
             </div>
           </CardContent>
