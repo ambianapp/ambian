@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -35,6 +36,57 @@ interface UserWithDetails extends UserProfile {
   role?: "admin" | "user";
 }
 
+interface StripeCustomer {
+  id: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+  address: {
+    line1: string | null;
+    line2: string | null;
+    city: string | null;
+    state: string | null;
+    postal_code: string | null;
+    country: string | null;
+  } | null;
+  metadata: Record<string, string>;
+  created: number;
+  currency: string | null;
+  balance: number;
+  delinquent: boolean;
+  subscriptions: Array<{
+    id: string;
+    status: string;
+    current_period_start: number;
+    current_period_end: number;
+    cancel_at_period_end: boolean;
+    items: Array<{
+      price_id: string;
+      product_id: string;
+      amount: number;
+      currency: string;
+      interval: string;
+    }>;
+  }>;
+  invoices: Array<{
+    id: string;
+    number: string;
+    status: string;
+    amount_due: number;
+    amount_paid: number;
+    currency: string;
+    created: number;
+    hosted_invoice_url: string;
+  }>;
+  paymentMethods: Array<{
+    id: string;
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  }>;
+}
+
 type FilterStatus = "all" | "active" | "trialing" | "canceled" | "inactive" | "none";
 type FilterRole = "all" | "admin" | "user";
 
@@ -44,6 +96,11 @@ export function UserManager() {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [cancelingUserId, setCancelingUserId] = useState<string | null>(null);
   
+  // Customer detail modal
+  const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
+  const [customerData, setCustomerData] = useState<StripeCustomer | null>(null);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
+  
   // Search and filters
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
@@ -52,7 +109,6 @@ export function UserManager() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -60,21 +116,18 @@ export function UserManager() {
 
       if (profilesError) throw profilesError;
 
-      // Fetch all subscriptions
       const { data: subscriptions, error: subsError } = await supabase
         .from("subscriptions")
         .select("*");
 
       if (subsError) throw subsError;
 
-      // Fetch all user roles
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*");
 
       if (rolesError) throw rolesError;
 
-      // Combine data
       const usersWithDetails: UserWithDetails[] = (profiles || []).map((profile) => {
         const subscription = subscriptions?.find((s) => s.user_id === profile.user_id);
         const userRole = roles?.find((r) => r.user_id === profile.user_id);
@@ -98,21 +151,44 @@ export function UserManager() {
     loadUsers();
   }, []);
 
-  // Sanitize search query for safe filtering
+  const loadCustomerDetails = async (email: string) => {
+    setLoadingCustomer(true);
+    setCustomerData(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-stripe-customer", {
+        body: { email },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setCustomerData(data.customer);
+    } catch (error: any) {
+      console.error("Error loading customer:", error);
+      toast.error(error.message || "Failed to load customer details");
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
+
+  const handleViewCustomer = (user: UserWithDetails) => {
+    setSelectedUser(user);
+    if (user.email) {
+      loadCustomerDetails(user.email);
+    }
+  };
+
   const sanitizeSearchQuery = (q: string): string => {
     return q.slice(0, 100);
   };
 
-  // Filtered users based on search and filters
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      // Search filter - sanitize input
       const searchLower = sanitizeSearchQuery(searchQuery).toLowerCase();
       const matchesSearch = !searchQuery || 
         user.email?.toLowerCase().includes(searchLower) ||
         user.full_name?.toLowerCase().includes(searchLower);
 
-      // Status filter
       let matchesStatus = true;
       if (statusFilter !== "all") {
         if (statusFilter === "none") {
@@ -122,7 +198,6 @@ export function UserManager() {
         }
       }
 
-      // Role filter
       const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
       return matchesSearch && matchesStatus && matchesRole;
@@ -194,6 +269,21 @@ export function UserManager() {
       month: "short",
       day: "numeric",
     });
+  };
+
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100);
   };
 
   const clearFilters = () => {
@@ -271,7 +361,7 @@ export function UserManager() {
               <TableHead>Role</TableHead>
               <TableHead>Subscription</TableHead>
               <TableHead>Joined</TableHead>
-              <TableHead className="w-[120px]">Actions</TableHead>
+              <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -304,6 +394,16 @@ export function UserManager() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    {/* View Customer Details */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleViewCustomer(user)}
+                      title="View Stripe customer details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+
                     {/* Cancel Subscription Button */}
                     {user.subscription?.status === "active" && user.subscription?.stripe_subscription_id && (
                       <AlertDialog>
@@ -395,6 +495,188 @@ export function UserManager() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Customer Detail Modal */}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Stripe Customer Details
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingCustomer ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : !customerData ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No Stripe customer found for this user.</p>
+              <p className="text-sm mt-2">They haven't completed a checkout yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Customer Info */}
+              <div className="space-y-3">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Customer Info
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span>{customerData.email || "No email"}</span>
+                  </div>
+                  {customerData.name && (
+                    <div className="flex items-center gap-2">
+                      <Building className="w-4 h-4 text-muted-foreground" />
+                      <span>{customerData.name}</span>
+                    </div>
+                  )}
+                  {customerData.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{customerData.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span>Customer since {formatTimestamp(customerData.created)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address */}
+              {customerData.address && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Billing Address
+                  </h4>
+                  <div className="text-sm bg-muted/50 rounded-lg p-3">
+                    {customerData.address.line1 && <p>{customerData.address.line1}</p>}
+                    {customerData.address.line2 && <p>{customerData.address.line2}</p>}
+                    <p>
+                      {[customerData.address.city, customerData.address.state, customerData.address.postal_code]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
+                    {customerData.address.country && <p>{customerData.address.country}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Company name from metadata */}
+              {customerData.metadata?.company_name && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Building className="w-4 h-4" />
+                    Company
+                  </h4>
+                  <p className="text-sm bg-muted/50 rounded-lg p-3">{customerData.metadata.company_name}</p>
+                </div>
+              )}
+
+              {/* Payment Methods */}
+              {customerData.paymentMethods.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Payment Methods
+                  </h4>
+                  <div className="space-y-2">
+                    {customerData.paymentMethods.map((pm) => (
+                      <div key={pm.id} className="text-sm bg-muted/50 rounded-lg p-3 flex items-center gap-2">
+                        <span className="capitalize">{pm.brand}</span>
+                        <span>•••• {pm.last4}</span>
+                        <span className="text-muted-foreground">
+                          Expires {pm.exp_month}/{pm.exp_year}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Subscriptions */}
+              {customerData.subscriptions.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Subscriptions</h4>
+                  <div className="space-y-2">
+                    {customerData.subscriptions.map((sub) => (
+                      <div key={sub.id} className="text-sm bg-muted/50 rounded-lg p-3 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge className={sub.status === "active" ? "bg-green-500/20 text-green-400" : ""}>
+                            {sub.status}
+                          </Badge>
+                          {sub.cancel_at_period_end && (
+                            <Badge variant="outline" className="text-orange-400">Cancels at period end</Badge>
+                          )}
+                        </div>
+                        {sub.items.map((item, i) => (
+                          <p key={i}>
+                            {formatCurrency(item.amount, item.currency)}/{item.interval}
+                          </p>
+                        ))}
+                        <p className="text-muted-foreground">
+                          Current period: {formatTimestamp(sub.current_period_start)} - {formatTimestamp(sub.current_period_end)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Invoices */}
+              {customerData.invoices.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Receipt className="w-4 h-4" />
+                    Recent Invoices
+                  </h4>
+                  <div className="space-y-2">
+                    {customerData.invoices.map((inv) => (
+                      <div key={inv.id} className="text-sm bg-muted/50 rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{inv.number || inv.id}</p>
+                          <p className="text-muted-foreground">{formatTimestamp(inv.created)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p>{formatCurrency(inv.amount_paid, inv.currency)}</p>
+                          <Badge className={inv.status === "paid" ? "bg-green-500/20 text-green-400" : ""}>
+                            {inv.status}
+                          </Badge>
+                        </div>
+                        {inv.hosted_invoice_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(inv.hosted_invoice_url, "_blank")}
+                          >
+                            View
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Stripe Dashboard Link */}
+              <div className="pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => window.open(`https://dashboard.stripe.com/customers/${customerData.id}`, "_blank")}
+                >
+                  Open in Stripe Dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
