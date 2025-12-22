@@ -13,8 +13,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const Auth = () => {
   const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -108,6 +110,111 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setErrors({ email: t("auth.validEmail") });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setResetEmailSent(true);
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Forgot Password View
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6 animate-fade-in">
+          <div className="text-center">
+            <img src={ambianLogo} alt="Ambian" className="h-16 mx-auto mb-6" />
+            {resetEmailSent ? (
+              <>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Mail className="w-8 h-8 text-primary" />
+                </div>
+                <h1 className="text-2xl font-bold text-foreground mb-2">
+                  {t("auth.resetEmailSent")}
+                </h1>
+                <p className="text-muted-foreground">
+                  {t("auth.resetEmailSentDesc")}
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-foreground mb-2">
+                  {t("auth.forgotPassword")}
+                </h1>
+                <p className="text-muted-foreground">
+                  {t("auth.forgotPasswordDesc") || "Enter your email and we'll send you a link to reset your password."}
+                </p>
+              </>
+            )}
+          </div>
+
+          {!resetEmailSent && (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">{t("auth.email")}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12 bg-card border-border"
+                    required
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full h-12" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  t("auth.sendResetLink") || "Send Reset Link"
+                )}
+              </Button>
+            </form>
+          )}
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsForgotPassword(false);
+                setResetEmailSent(false);
+                setErrors({});
+              }}
+              className="text-sm text-primary hover:underline"
+            >
+              {t("auth.backToLogin") || "Back to login"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex relative overflow-hidden">
@@ -279,31 +386,9 @@ const Auth = () => {
                 {isLogin && (
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!email) {
-                        toast({
-                          title: t("auth.enterEmail"),
-                          description: t("auth.enterEmailDesc"),
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      try {
-                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                          redirectTo: `${window.location.origin}/reset-password`,
-                        });
-                        if (error) throw error;
-                        toast({
-                          title: t("auth.resetEmailSent"),
-                          description: t("auth.resetEmailSentDesc"),
-                        });
-                      } catch (error: any) {
-                        toast({
-                          title: t("common.error"),
-                          description: error.message,
-                          variant: "destructive",
-                        });
-                      }
+                    onClick={() => {
+                      setIsForgotPassword(true);
+                      setResetEmailSent(false);
                     }}
                     className="text-xs text-primary hover:underline"
                   >

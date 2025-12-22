@@ -90,6 +90,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Update Password",
     "auth.invalidResetLink": "Invalid reset link",
     "auth.invalidResetLinkDesc": "This password reset link is invalid or has expired",
+    "auth.forgotPasswordDesc": "Enter your email and we'll send you a link to reset your password.",
+    "auth.sendResetLink": "Send Reset Link",
+    "auth.backToLogin": "Back to login",
     
     // Profile
     "profile.title": "Profile Settings",
@@ -437,6 +440,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Uppdatera lösenord",
     "auth.invalidResetLink": "Ogiltig återställningslänk",
     "auth.invalidResetLinkDesc": "Denna återställningslänk är ogiltig eller har gått ut",
+    "auth.forgotPasswordDesc": "Ange din e-post så skickar vi en länk för att återställa ditt lösenord.",
+    "auth.sendResetLink": "Skicka återställningslänk",
+    "auth.backToLogin": "Tillbaka till inloggning",
     
     // Profile
     "profile.title": "Profilinställningar",
@@ -784,6 +790,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Päivitä salasana",
     "auth.invalidResetLink": "Virheellinen palautuslinkki",
     "auth.invalidResetLinkDesc": "Tämä salasanan palautuslinkki on virheellinen tai vanhentunut",
+    "auth.forgotPasswordDesc": "Syötä sähköpostiosoitteesi, niin lähetämme sinulle linkin salasanan nollaamiseen.",
+    "auth.sendResetLink": "Lähetä palautuslinkki",
+    "auth.backToLogin": "Takaisin kirjautumiseen",
     
     // Profile
     "profile.title": "Profiiliasetukset",
@@ -1131,6 +1140,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Passwort aktualisieren",
     "auth.invalidResetLink": "Ungültiger Reset-Link",
     "auth.invalidResetLinkDesc": "Dieser Passwort-Reset-Link ist ungültig oder abgelaufen",
+    "auth.forgotPasswordDesc": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.",
+    "auth.sendResetLink": "Reset-Link senden",
+    "auth.backToLogin": "Zurück zur Anmeldung",
     
     // Profile
     "profile.title": "Profileinstellungen",
@@ -1478,6 +1490,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Mettre à jour le mot de passe",
     "auth.invalidResetLink": "Lien de réinitialisation invalide",
     "auth.invalidResetLinkDesc": "Ce lien de réinitialisation est invalide ou a expiré",
+    "auth.forgotPasswordDesc": "Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "auth.sendResetLink": "Envoyer le lien",
+    "auth.backToLogin": "Retour à la connexion",
     
     // Profile
     "profile.title": "Paramètres du profil",
