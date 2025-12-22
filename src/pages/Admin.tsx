@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ListMusic, Users, Settings } from "lucide-react";
+import { ArrowLeft, ListMusic, Users, Settings, BarChart3 } from "lucide-react";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 import { UserManager } from "@/components/admin/UserManager";
 import { PriceMigration } from "@/components/admin/PriceMigration";
+import { Analytics } from "@/components/admin/Analytics";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -39,8 +40,12 @@ const Admin = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="playlists" className="w-full">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <Tabs defaultValue="analytics" className="w-full">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
             <TabsTrigger value="playlists" className="flex items-center gap-2">
               <ListMusic className="w-4 h-4" />
               {t("admin.playlists")}
@@ -54,6 +59,11 @@ const Admin = () => {
               Settings
             </TabsTrigger>
           </TabsList>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="mt-6">
+            <Analytics />
+          </TabsContent>
 
           {/* Playlists Tab */}
           <TabsContent value="playlists" className="mt-6">
