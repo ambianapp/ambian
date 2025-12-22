@@ -35,7 +35,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const { canInstall, isInstalled, promptInstall } = usePWAInstall();
+  const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
 
   useEffect(() => {
     // Check if returning from device slot purchase
@@ -426,25 +426,42 @@ const Profile = () => {
                 <Smartphone className="w-5 h-5" />
                 Install App
               </CardTitle>
-              <CardDescription>Install Ambian as a desktop app for quick access</CardDescription>
+              <CardDescription>Install Ambian as an app for quick access</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
+              <Button
                 onClick={() => {
+                  // iOS never exposes the install prompt programmatically
+                  if (isIOS) {
+                    navigate("/install");
+                    return;
+                  }
+
                   if (canInstall) {
                     promptInstall();
-                  } else {
-                    toast({
-                      title: "Install from your browser",
-                      description: "Use Chrome or Edge menu → 'Install Ambian' or 'Add to Home Screen' to install the app.",
-                    });
+                    return;
                   }
-                }} 
+
+                  toast({
+                    title: "Install from browser menu",
+                    description:
+                      "On Mac, open this site in Chrome or Edge → menu → 'Install Ambian'. Safari doesn't support one-click install.",
+                  });
+                }}
                 className="w-full sm:w-auto"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Install Ambian
               </Button>
+              {!canInstall && !isIOS && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/install")}
+                  className="w-full sm:w-auto mt-3"
+                >
+                  View Install Instructions
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
