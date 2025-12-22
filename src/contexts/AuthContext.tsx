@@ -257,7 +257,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log(`Session kicked check ${consecutiveKicksRef.current}/${MAX_CONSECUTIVE_KICKS}`);
       
       if (consecutiveKicksRef.current >= MAX_CONSECUTIVE_KICKS && !isSigningOut.current) {
-        toast.error("You've been logged out because your account was accessed from another device.");
+        toast.error("You've been logged out because your account was accessed from another device.", { duration: Infinity });
         await signOut();
       }
     };
