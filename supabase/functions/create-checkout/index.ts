@@ -138,24 +138,25 @@ serve(async (req) => {
 
     // If a promo code is provided, look it up and apply it
     if (promoCode && promoCode.trim()) {
-      const codeToCheck = promoCode.trim().toUpperCase();
-      logStep("Looking up promo code", { promoCode: codeToCheck });
-      
+      const rawCode = promoCode.trim();
+      const promoCodeUpper = rawCode.toUpperCase();
+      logStep("Looking up promo code", { promoCode: promoCodeUpper });
+
       try {
-        // First try to find a promotion code
+        // First try to find a Promotion Code (case-insensitive)
         const promotionCodes = await stripe.promotionCodes.list({
-          code: codeToCheck,
+          code: promoCodeUpper,
           active: true,
           limit: 1,
         });
-        
+
         if (promotionCodes.data.length > 0) {
           sessionOptions.discounts = [{ promotion_code: promotionCodes.data[0].id }];
           logStep("Applied promotion code", { promoCodeId: promotionCodes.data[0].id });
         } else {
-          // Try to find a coupon directly by ID
+          // Fallback: treat input as a Coupon ID (case-sensitive)
           try {
-            const coupon = await stripe.coupons.retrieve(codeToCheck);
+            const coupon = await stripe.coupons.retrieve(rawCode);
             if (coupon && coupon.valid) {
               sessionOptions.discounts = [{ coupon: coupon.id }];
               logStep("Applied coupon directly", { couponId: coupon.id });
@@ -163,7 +164,7 @@ serve(async (req) => {
               logStep("Coupon not valid, allowing manual entry");
               sessionOptions.allow_promotion_codes = true;
             }
-          } catch (couponError) {
+          } catch (_couponError) {
             logStep("Promo/coupon not found, allowing manual entry");
             sessionOptions.allow_promotion_codes = true;
           }
