@@ -53,6 +53,14 @@ const PlayerBar = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Debug logging (enable in DevTools: localStorage.setItem('ambian_debug_crossfade','true'))
+  const debugCrossfadeRef = useRef<boolean>(
+    typeof window !== "undefined" && localStorage.getItem("ambian_debug_crossfade") === "true"
+  );
+  const dbg = useCallback((...args: any[]) => {
+    if (debugCrossfadeRef.current) console.log("[crossfade]", ...args);
+  }, []);
+
   // Playback monitoring state
   const retryCountRef = useRef(0);
   const lastProgressTimeRef = useRef(Date.now());
@@ -268,7 +276,11 @@ const PlayerBar = () => {
 
       // If no progress for 10 seconds while playing, try recovery
       if (timeSinceLastProgress > 10000 && !activeAudio.paused) {
-        console.log("Detected playback stall, attempting recovery...");
+        dbg("stallRecovery: load()", {
+          trackId: currentTrack?.id,
+          t: activeAudio.currentTime,
+          src: activeAudio.src,
+        });
 
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current++;
@@ -292,7 +304,7 @@ const PlayerBar = () => {
         clearInterval(stallCheckIntervalRef.current);
       }
     };
-  }, [isPlaying, currentTrack?.audioUrl, handleNext, isOffline, crossfade, isCrossfadeActive]);
+  }, [isPlaying, currentTrack?.audioUrl, handleNext, isOffline, crossfade, isCrossfadeActive, dbg, currentTrack?.id]);
 
   // Reset retry count on successful track change
   useEffect(() => {
@@ -505,10 +517,6 @@ const PlayerBar = () => {
     const desiredSrc = normalizeUrl(currentTrack.audioUrl);
     const currentSrc = normalizeUrl(activeAudio.src || "");
 
-    // If the element is already playing (e.g. we just completed a crossfade),
-    // never force a reload mid-playback *unless* the user has actually switched to a different track.
-    // This prevents the "restarts at ~5s" bug while still allowing manual skipping.
-    //
     // Extra safety: right after a crossfade swap, some browsers briefly report a different "src"
     // (redirected URL vs. original). Avoid touching src during this window.
     if (
@@ -518,6 +526,10 @@ const PlayerBar = () => {
       activeAudio.currentTime > 0.5 &&
       Date.now() - lastCrossfadeSwapAtRef.current < 2000
     ) {
+      dbg("srcEffect: skip (post-swap window)", {
+        trackId: currentTrack.id,
+        t: activeAudio.currentTime,
+      });
       lastSetTrackIdRef.current = currentTrack.id;
       return;
     }
@@ -529,18 +541,22 @@ const PlayerBar = () => {
       activeAudio.currentTime > 0.5 &&
       currentSrc === desiredSrc
     ) {
+      dbg("srcEffect: skip (already playing correct src)", {
+        trackId: currentTrack.id,
+        t: activeAudio.currentTime,
+      });
       lastSetTrackIdRef.current = currentTrack.id;
       return;
     }
 
     // Only load if the active audio doesn't already have this track
     if (currentSrc !== desiredSrc) {
-      console.log(
-        "Setting active audio src:",
-        currentTrack.id,
-        "isCrossfadeActive:",
-        isCrossfadeActive
-      );
+      dbg("srcEffect: SET SRC + load()", {
+        trackId: currentTrack.id,
+        isCrossfadeActive,
+        desiredSrc,
+        currentSrc,
+      });
       activeAudio.src = desiredSrc;
       activeAudio.load();
 
@@ -562,6 +578,7 @@ const PlayerBar = () => {
     isPlaying,
     normalizeUrl,
     crossfade,
+    dbg,
   ]);
 
   useEffect(() => {
@@ -630,96 +647,107 @@ const PlayerBar = () => {
   const startCrossfade = useCallback(() => {
     if (isCrossfadingRef.current || !crossfade || repeat === "one") return;
     if (!crossfadeAudioRef.current || !audioRef.current) return;
-    
+
     // Check if preloaded track is ready
     if (!preloadedNextTrackRef.current) {
-      console.log('Crossfade: next track not preloaded, skipping crossfade');
+      dbg("startCrossfade: next track not preloaded -> skip", {
+        activeEl: isCrossfadeActive ? "crossfade" : "main",
+        currentTrackId: currentTrack?.id,
+      });
       return;
     }
-    
-    console.log('Starting crossfade, active element:', isCrossfadeActive ? 'crossfade' : 'main');
+
+    dbg("startCrossfade: begin", {
+      activeEl: isCrossfadeActive ? "crossfade" : "main",
+      fromTrackId: currentTrack?.id,
+      toTrackId: preloadedNextTrackRef.current.id,
+    });
+
     isCrossfadingRef.current = true;
     crossfadeCompleteRef.current = false;
     crossfadeTrackSwitchedRef.current = false;
     nextTrackPreloadedRef.current = preloadedNextTrackRef.current.id;
-    
+
     // Determine which audio is fading out and which is fading in
     const fadingOutAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     const fadingInAudio = isCrossfadeActive ? audioRef.current : crossfadeAudioRef.current;
     const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
-    
+
     // Start playing the fading-in audio (already preloaded)
     fadingInAudio.volume = 0;
-    fadingInAudio.play().catch(console.error);
-    
+    fadingInAudio.play().catch((err) => {
+      dbg("startCrossfade: fading-in play() failed", err);
+      console.error(err);
+    });
+
     const steps = 50;
     const stepTime = (CROSSFADE_DURATION * 1000) / steps;
     let step = 0;
     const startVolume = fadingOutAudio.volume;
-    
+
     crossfadeIntervalRef.current = setInterval(() => {
       step++;
       const progress = Math.min(1, step / steps);
-      
+
       // Fade out current, fade in next
       fadingOutAudio.volume = Math.max(0, startVolume * (1 - progress));
       fadingInAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
-      
+
       if (step >= steps) {
         if (crossfadeIntervalRef.current) {
           clearInterval(crossfadeIntervalRef.current);
           crossfadeIntervalRef.current = null;
         }
         crossfadeCompleteRef.current = true;
-        
+
         // Crossfade complete - swap active audio element (no reload needed!)
         if (!crossfadeTrackSwitchedRef.current && preloadedNextTrackRef.current) {
           crossfadeTrackSwitchedRef.current = true;
 
           const next = preloadedNextTrackRef.current;
 
+          dbg("startCrossfade: swap", {
+            nextTrackId: next.id,
+            nextUrl: next.audioUrl,
+            swapTo: isCrossfadeActive ? "main" : "crossfade",
+          });
+
           // Update mainAudioSrcRef BEFORE updating React state to prevent the effect from reloading
           if (isCrossfadeActive) {
             // Switching TO main audio - update its src ref
             mainAudioSrcRef.current = normalizeUrl(next.audioUrl);
-          } else {
-            // Switching TO crossfade audio - main audio will be inactive, but update ref anyway
-            // to prevent future reload when we eventually switch back
           }
 
           // Stop the faded-out audio and clear its src
           fadingOutAudio.pause();
           fadingOutAudio.src = "";
 
-           // Toggle which audio element is active BEFORE updating track state
-           // This ensures the effect at line 415 sees the correct isCrossfadeActive value
-           lastCrossfadeSwapAtRef.current = Date.now();
-           setIsCrossfadeActive(prev => !prev);
+          // Toggle which audio element is active BEFORE updating track state
+          lastCrossfadeSwapAtRef.current = Date.now();
+          setIsCrossfadeActive((prev) => !prev);
 
-           // Update React state to the new track
-           // Do this AFTER toggling active audio so the effect doesn't try to reload
-           setCurrentTrackDirect(next.track);
-          
+          // Update React state to the new track
+          setCurrentTrackDirect(next.track);
+
           // Mark this track as already set to prevent the src-setting effect from reloading
           lastSetTrackIdRef.current = next.id;
-          
+
           // Reset preload state for the next transition
-          // Keep isCrossfadingRef true briefly to block the src-setting effect
           nextTrackPreloadedRef.current = null;
           preloadedNextTrackRef.current = null;
           isPreloadingRef.current = false;
-          
+
           // Delay resetting crossfade flags to allow React state to settle
-          // Use a longer delay to prevent the isPlaying effect from triggering a reload
           setTimeout(() => {
             isCrossfadingRef.current = false;
             crossfadeCompleteRef.current = false;
             crossfadeTrackSwitchedRef.current = false;
+            dbg("startCrossfade: done/flags reset");
           }, 500);
         }
       }
     }, stepTime);
-  }, [crossfade, repeat, isMuted, setCurrentTrackDirect, normalizeUrl, isCrossfadeActive]);
+  }, [crossfade, repeat, isMuted, setCurrentTrackDirect, normalizeUrl, isCrossfadeActive, dbg, currentTrack?.id]);
 
   // Monitor for crossfade trigger point - works for whichever audio element is active
   useEffect(() => {
@@ -829,6 +857,8 @@ const PlayerBar = () => {
 
   // Save current position for persistence
   const savePositionRef = useRef<NodeJS.Timeout | null>(null);
+  const lastObservedTimeRef = useRef<number>(0);
+  const lastObservedTrackIdRef = useRef<string | null>(null);
 
   const getActiveAudio = useCallback(() => {
     return isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
@@ -836,10 +866,13 @@ const PlayerBar = () => {
 
   // Reset UI timing when the track changes (prevents stale duration/currentTime from previous element)
   useEffect(() => {
+    lastObservedTimeRef.current = 0;
+    lastObservedTrackIdRef.current = currentTrack?.id ?? null;
     setCurrentTime(0);
     setProgress([0]);
     setDuration(0);
-  }, [currentTrack?.id]);
+    dbg("trackChange", { trackId: currentTrack?.id, isCrossfadeActive });
+  }, [currentTrack?.id, dbg, isCrossfadeActive]);
 
   const handleTimeUpdate = (audioEl: HTMLAudioElement) => {
     // Only trust timeupdate from the currently active element.
@@ -848,6 +881,25 @@ const PlayerBar = () => {
     if (!activeAudio || audioEl !== activeAudio) return;
 
     const time = activeAudio.currentTime;
+
+    // Detect the reported bug: time jumps backwards near ~5s on the new track
+    const prev = lastObservedTimeRef.current;
+    const trackId = currentTrack?.id ?? null;
+    if (trackId && lastObservedTrackIdRef.current !== trackId) {
+      lastObservedTrackIdRef.current = trackId;
+      lastObservedTimeRef.current = 0;
+    } else if (prev > 4.0 && time < prev - 1.0) {
+      dbg("TIME JUMP BACK", {
+        trackId,
+        prev,
+        now: time,
+        activeEl: isCrossfadeActive ? "crossfade" : "main",
+        src: activeAudio.src,
+      });
+    }
+
+    lastObservedTimeRef.current = time;
+
     setCurrentTime(time);
     const dur = activeAudio.duration;
     if (isFinite(dur) && dur > 0) setDuration(dur);
@@ -883,6 +935,13 @@ const PlayerBar = () => {
 
     const dur = activeAudio.duration;
     if (isFinite(dur) && dur > 0) setDuration(dur);
+
+    dbg("loadedmetadata", {
+      trackId: currentTrack?.id,
+      activeEl: isCrossfadeActive ? "crossfade" : "main",
+      duration: dur,
+      src: activeAudio.src,
+    });
 
     // Seek to restored position if available (apply to the active element only)
     if (seekPosition !== null && seekPosition > 0) {
