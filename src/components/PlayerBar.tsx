@@ -472,13 +472,14 @@ const PlayerBar = () => {
     const currentSrc = normalizeUrl(activeAudio.src || "");
 
     // If the element is already playing (e.g. we just completed a crossfade),
-    // never force a reload mid-playback even if the browser reports a slightly different src.
-    // This prevents the "restarts at ~5s" bug.
+    // never force a reload mid-playback *unless* the user has actually switched to a different track.
+    // This prevents the "restarts at ~5s" bug while still allowing manual skipping.
     if (
       crossfade &&
       isPlaying &&
       !activeAudio.paused &&
-      activeAudio.currentTime > 0.5
+      activeAudio.currentTime > 0.5 &&
+      currentSrc === desiredSrc
     ) {
       lastSetTrackIdRef.current = currentTrack.id;
       return;
