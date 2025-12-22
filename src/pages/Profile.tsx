@@ -35,7 +35,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
+  const { canInstall, isInstalled, isIOS, isMacOS, promptInstall } = usePWAInstall();
 
   useEffect(() => {
     // Check if returning from device slot purchase
@@ -428,39 +428,29 @@ const Profile = () => {
               </CardTitle>
               <CardDescription>Install Ambian as an app for quick access</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => {
-                  // iOS never exposes the install prompt programmatically
-                  if (isIOS) {
-                    navigate("/install");
-                    return;
-                  }
-
-                  if (canInstall) {
-                    promptInstall();
-                    return;
-                  }
-
-                  toast({
-                    title: "Install from browser menu",
-                    description:
-                      "On Mac, open this site in Chrome or Edge → menu → 'Install Ambian'. Safari doesn't support one-click install.",
-                  });
-                }}
-                className="w-full sm:w-auto"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Install Ambian
-              </Button>
-              {!canInstall && !isIOS && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/install")}
-                  className="w-full sm:w-auto mt-3"
-                >
-                  View Install Instructions
+            <CardContent className="space-y-3">
+              {canInstall ? (
+                <Button onClick={promptInstall} className="w-full sm:w-auto">
+                  <Download className="w-4 h-4 mr-2" />
+                  Install Ambian
                 </Button>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    {isIOS
+                      ? "Tap Share → 'Add to Home Screen' in Safari."
+                      : isMacOS
+                      ? "In Chrome/Edge: click the install icon in the address bar, or Menu → 'Install Ambian'. This only works on the published site, not in preview."
+                      : "Use your browser's menu to install this app."}
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/install")}
+                    className="w-full sm:w-auto"
+                  >
+                    View Install Instructions
+                  </Button>
+                </>
               )}
             </CardContent>
           </Card>
