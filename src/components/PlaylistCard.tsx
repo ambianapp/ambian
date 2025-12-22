@@ -16,9 +16,10 @@ interface PlaylistCardProps {
   onClick: () => void;
   onPlay?: () => void;
   onUpdate?: (id: string, data: { name: string; description: string; cover: string }) => void;
+  compact?: boolean;
 }
 
-const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps) => {
+const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: PlaylistCardProps) => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -64,22 +65,22 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps
 
   return (
     <>
-      <div className="group p-4 rounded-xl bg-card/50 hover:bg-card transition-all duration-300 text-left relative">
+      <div className={`group rounded-xl bg-card/50 hover:bg-card transition-all duration-300 text-left relative ${compact ? "p-2" : "p-4"}`}>
         {isAdmin && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
+            className={`absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background ${compact ? "w-6 h-6" : ""}`}
             onClick={(e) => {
               e.stopPropagation();
               setIsEditing(true);
             }}
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className={compact ? "w-3 h-3" : "w-4 h-4"} />
           </Button>
         )}
         <button onClick={onClick} className="w-full text-left">
-          <div className="relative mb-4">
+          <div className={`relative ${compact ? "mb-2" : "mb-4"}`}>
             <SignedImage
               src={playlist.cover}
               alt={`${playlist.name} playlist cover`}
@@ -88,8 +89,8 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps
             />
             <Button
               variant="player"
-              size="iconLg"
-              className="absolute bottom-2 right-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-2xl"
+              size={compact ? "icon" : "iconLg"}
+              className={`absolute bottom-1 right-1 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-2xl ${compact ? "w-8 h-8" : ""}`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (onPlay) {
@@ -99,11 +100,11 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate }: PlaylistCardProps
                 }
               }}
             >
-              <Play className="w-6 h-6 ml-0.5" />
+              <Play className={compact ? "w-4 h-4 ml-0.5" : "w-6 h-6 ml-0.5"} />
             </Button>
           </div>
-          <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{playlist.description}</p>
+          <h3 className={`font-semibold text-foreground truncate ${compact ? "text-xs" : ""}`}>{playlist.name}</h3>
+          {!compact && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{playlist.description}</p>}
         </button>
       </div>
 
