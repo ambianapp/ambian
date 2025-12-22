@@ -110,11 +110,20 @@ serve(async (req) => {
 
     if (hasActiveStripeSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      const interval = subscription.items.data[0].price.recurring?.interval;
+      const subscriptionItem = subscription.items.data[0];
+      
+      // Period dates are on the subscription item in the new API structure
+      const periodEnd = subscriptionItem.current_period_end ?? subscription.current_period_end;
+      const periodStart = subscriptionItem.current_period_start ?? subscription.current_period_start;
+      
+      if (periodEnd) {
+        subscriptionEnd = new Date(periodEnd * 1000).toISOString();
+      }
+      
+      const interval = subscriptionItem.price.recurring?.interval;
       planType = interval === "year" ? "yearly" : "monthly";
       isRecurring = true;
-      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType });
+      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType, periodEnd, periodStart });
 
       await supabaseClient
         .from("subscriptions")
@@ -124,7 +133,7 @@ serve(async (req) => {
           stripe_subscription_id: subscription.id,
           status: "active",
           plan_type: planType,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
           current_period_end: subscriptionEnd,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
