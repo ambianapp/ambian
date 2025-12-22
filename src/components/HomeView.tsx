@@ -211,15 +211,17 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     title: string,
     playlists: DbPlaylist[],
     showAll: boolean,
-    onToggle: () => void
+    onToggle: () => void,
+    compact: boolean = false
   ) => {
-    const displayedPlaylists = showAll ? playlists : playlists.slice(0, 4);
+    const displayCount = compact ? 10 : 4;
+    const displayedPlaylists = showAll ? playlists : playlists.slice(0, displayCount);
 
     return (
       <section className="animate-fade-in bg-secondary/30 rounded-2xl p-5 border border-border/50">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-foreground">{title}</h2>
-          {playlists.length > 4 && (
+          {playlists.length > displayCount && (
             <Button
               variant="ghost"
               size="sm"
@@ -232,7 +234,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           )}
         </div>
         {playlists.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={compact ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-3" : "grid grid-cols-2 lg:grid-cols-4 gap-4"}>
             {displayedPlaylists.map((playlist) => (
               <PlaylistCard
                 key={playlist.id}
@@ -252,6 +254,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                 })}
                 onPlay={() => handlePlayPlaylist(playlist.id)}
                 onUpdate={handlePlaylistUpdate}
+                compact={compact}
               />
             ))}
           </div>
@@ -321,7 +324,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           t("home.byMood"),
           moodPlaylists,
           showAllMoods,
-          () => setShowAllMoods(!showAllMoods)
+          () => setShowAllMoods(!showAllMoods),
+          true
         )}
 
         {/* Playlists by Genre */}
@@ -329,7 +333,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           t("home.byGenre"),
           genrePlaylists,
           showAllGenres,
-          () => setShowAllGenres(!showAllGenres)
+          () => setShowAllGenres(!showAllGenres),
+          true
         )}
 
         {/* Recently Updated & New Playlists - Side by Side */}
