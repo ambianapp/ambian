@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 import {
   Dialog,
@@ -183,7 +183,7 @@ const Pricing = () => {
 
       toast({
         title: "Invoice Sent!",
-        description: data.message || "Check your email for the invoice. You have 14 days to pay.",
+        description: data.message || "Check your email for the invoice. You have 7 days to pay.",
       });
       setShowInvoiceDialog(false);
       setCompanyName("");
@@ -433,9 +433,15 @@ const Pricing = () => {
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <FileText className="w-5 h-5 text-primary" />
                       Pay by Invoice
+                      <div className="relative group">
+                        <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                          <p className="font-normal">Your subscription starts immediately. We'll send an invoice to your email with 7 days to complete the payment.</p>
+                        </div>
+                      </div>
                     </CardTitle>
                     <CardDescription>
-                      Receive invoice with 14 days payment terms
+                      Receive invoice with 7 days payment terms
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -463,7 +469,7 @@ const Pricing = () => {
             <DialogHeader>
               <DialogTitle>Request Invoice</DialogTitle>
               <DialogDescription>
-                Enter your company details for the invoice. You'll have 14 days to pay.
+                Enter your company details for the invoice. You'll have 7 days to pay.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
