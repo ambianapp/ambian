@@ -130,6 +130,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "View and download your payment history",
     "invoices.none": "No invoices found.",
     "invoices.paid": "Paid",
+    "invoices.preview": "Preview",
+    "invoices.download": "Download",
     
     // Pricing
     "pricing.title": "Subscribe to Listen",
@@ -480,6 +482,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Visa och ladda ner din betalningshistorik",
     "invoices.none": "Inga fakturor hittades.",
     "invoices.paid": "Betald",
+    "invoices.preview": "Förhandsgranska",
+    "invoices.download": "Ladda ner",
     
     // Pricing
     "pricing.title": "Prenumerera för att lyssna",
@@ -830,6 +834,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Näytä ja lataa maksuhistoriasi",
     "invoices.none": "Laskuja ei löytynyt.",
     "invoices.paid": "Maksettu",
+    "invoices.preview": "Esikatselu",
+    "invoices.download": "Lataa",
     
     // Pricing
     "pricing.title": "Tilaa kuunnellaksesi",
@@ -1180,6 +1186,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Zeige und lade deine Zahlungshistorie herunter",
     "invoices.none": "Keine Rechnungen gefunden.",
     "invoices.paid": "Bezahlt",
+    "invoices.preview": "Vorschau",
+    "invoices.download": "Herunterladen",
     
     // Pricing
     "pricing.title": "Abonnieren zum Hören",
@@ -1530,6 +1538,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Consultez et téléchargez votre historique de paiement",
     "invoices.none": "Aucune facture trouvée.",
     "invoices.paid": "Payée",
+    "invoices.preview": "Aperçu",
+    "invoices.download": "Télécharger",
     
     // Pricing
     "pricing.title": "Abonnez-vous pour écouter",
