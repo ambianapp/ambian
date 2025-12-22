@@ -292,19 +292,19 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
             <p className="text-sm text-muted-foreground">Curated music for your business</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {collections.map((collection) => {
             const Icon = getIcon(collection.icon);
             return (
               <button
                 key={collection.id}
                 onClick={() => handleCollectionClick(collection)}
-                className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-background/60 hover:bg-background border border-border/50 hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-primary/10"
+                className="group flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg-background/60 hover:bg-background border border-border/50 hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-primary/10"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-                  <Icon className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
-                <span className="text-sm font-medium text-foreground text-center leading-tight">
+                <span className="text-xs sm:text-sm font-medium text-foreground text-center leading-tight line-clamp-2">
                   {collection.name}
                 </span>
               </button>
