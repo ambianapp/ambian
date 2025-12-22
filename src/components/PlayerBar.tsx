@@ -95,6 +95,24 @@ const PlayerBar = () => {
     setIsCrossfadeActive(false);
   }, []);
 
+  // Safety: if the track changes for any reason while a crossfade timer is still running,
+  // stop that timer so it can’t “complete” ~5s later and interfere with the new song.
+  useEffect(() => {
+    // During an active crossfade we expect the track to change (swap). Don’t fight it.
+    if (isCrossfadingRef.current) return;
+
+    if (crossfadeIntervalRef.current) {
+      clearInterval(crossfadeIntervalRef.current);
+      crossfadeIntervalRef.current = null;
+    }
+
+    crossfadeCompleteRef.current = false;
+    crossfadeTrackSwitchedRef.current = false;
+    nextTrackPreloadedRef.current = null;
+    preloadedNextTrackRef.current = null;
+    isPreloadingRef.current = false;
+  }, [currentTrack?.id]);
+
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
     const requestWakeLock = async () => {
