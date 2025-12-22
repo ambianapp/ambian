@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2 } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -94,19 +94,34 @@ const Help = () => {
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
-                <span className="font-medium min-w-[100px]">{t("help.playPause")}</span>
+                <div className="flex items-center gap-2 min-w-[120px]">
+                  <div className="flex items-center gap-1 text-primary">
+                    <Play className="w-4 h-4" />
+                    <Pause className="w-4 h-4" />
+                  </div>
+                  <span className="font-medium">{t("help.playPause")}</span>
+                </div>
                 <span className="text-muted-foreground">{t("help.playPauseDesc")}</span>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
-                <span className="font-medium min-w-[100px]">{t("help.skipTrack")}</span>
+                <div className="flex items-center gap-2 min-w-[120px]">
+                  <SkipForward className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{t("help.skipTrack")}</span>
+                </div>
                 <span className="text-muted-foreground">{t("help.skipTrackDesc")}</span>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
-                <span className="font-medium min-w-[100px]">{t("help.shuffle")}</span>
+                <div className="flex items-center gap-2 min-w-[120px]">
+                  <Shuffle className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{t("help.shuffle")}</span>
+                </div>
                 <span className="text-muted-foreground">{t("help.shuffleDesc")}</span>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
-                <span className="font-medium min-w-[100px]">{t("help.crossfade")}</span>
+                <div className="flex items-center gap-2 min-w-[120px]">
+                  <Disc className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{t("help.crossfade")}</span>
+                </div>
                 <span className="text-muted-foreground">{t("help.crossfadeDesc")}</span>
               </div>
             </div>
