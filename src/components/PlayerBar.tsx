@@ -834,43 +834,52 @@ const PlayerBar = () => {
     return isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
   }, [isCrossfadeActive]);
 
-  const handleTimeUpdate = () => {
+  // Reset UI timing when the track changes (prevents stale duration/currentTime from previous element)
+  useEffect(() => {
+    setCurrentTime(0);
+    setProgress([0]);
+    setDuration(0);
+  }, [currentTrack?.id]);
+
+  const handleTimeUpdate = (audioEl: HTMLAudioElement) => {
+    // Only trust timeupdate from the currently active element.
+    // During crossfade both elements can emit events; processing the inactive one can trigger wrong timers.
     const activeAudio = getActiveAudio();
-    if (activeAudio) {
-      const time = activeAudio.currentTime;
-      setCurrentTime(time);
-      const dur = activeAudio.duration;
-      if (isFinite(dur) && dur > 0) setDuration(dur);
+    if (!activeAudio || audioEl !== activeAudio) return;
 
-      const progressPercent = dur ? (time / dur) * 100 : 0;
-      setProgress([isNaN(progressPercent) ? 0 : progressPercent]);
+    const time = activeAudio.currentTime;
+    setCurrentTime(time);
+    const dur = activeAudio.duration;
+    if (isFinite(dur) && dur > 0) setDuration(dur);
 
-      // Update last progress time for stall detection
-      lastProgressTimeRef.current = Date.now();
+    const progressPercent = dur ? (time / dur) * 100 : 0;
+    setProgress([isNaN(progressPercent) ? 0 : progressPercent]);
 
-      // Save position to localStorage (throttled)
-      if (!savePositionRef.current) {
-        savePositionRef.current = setTimeout(() => {
-          try {
-            const saved = localStorage.getItem("ambian_playback_state");
-            if (saved) {
-              const state = JSON.parse(saved);
-              state.position = time;
-              state.savedAt = Date.now();
-              localStorage.setItem("ambian_playback_state", JSON.stringify(state));
-            }
-          } catch (e) {
-            // Ignore errors
+    // Update last progress time for stall detection
+    lastProgressTimeRef.current = Date.now();
+
+    // Save position to localStorage (throttled)
+    if (!savePositionRef.current) {
+      savePositionRef.current = setTimeout(() => {
+        try {
+          const saved = localStorage.getItem("ambian_playback_state");
+          if (saved) {
+            const state = JSON.parse(saved);
+            state.position = time;
+            state.savedAt = Date.now();
+            localStorage.setItem("ambian_playback_state", JSON.stringify(state));
           }
-          savePositionRef.current = null;
-        }, 5000); // Save every 5 seconds
-      }
+        } catch (e) {
+          // Ignore errors
+        }
+        savePositionRef.current = null;
+      }, 5000); // Save every 5 seconds
     }
   };
 
-  const handleLoadedMetadata = (audioEl?: HTMLAudioElement) => {
-    const activeAudio = audioEl ?? getActiveAudio();
-    if (!activeAudio) return;
+  const handleLoadedMetadata = (audioEl: HTMLAudioElement) => {
+    const activeAudio = getActiveAudio();
+    if (!activeAudio || audioEl !== activeAudio) return;
 
     const dur = activeAudio.duration;
     if (isFinite(dur) && dur > 0) setDuration(dur);
@@ -906,7 +915,7 @@ const PlayerBar = () => {
         <audio
           ref={audioRef}
           preload="auto"
-          onTimeUpdate={handleTimeUpdate}
+          onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
           onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
           onError={(e) => handleAudioError(e.currentTarget)}
           onStalled={(e) => handleStalled(e.currentTarget)}
@@ -946,7 +955,7 @@ const PlayerBar = () => {
       <audio 
         ref={crossfadeAudioRef}
         preload="auto"
-        onTimeUpdate={handleTimeUpdate}
+        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
         onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
         onError={(e) => handleAudioError(e.currentTarget)}
         onStalled={(e) => handleStalled(e.currentTarget)}
