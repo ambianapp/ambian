@@ -39,15 +39,15 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: 
 
     setIsUploadingCover(true);
     try {
-      const fileName = `playlist-covers/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
       
       const { error: uploadError } = await supabase.storage
-        .from("audio")
+        .from("playlist-covers")
         .upload(fileName, file, { contentType: file.type });
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage.from("playlist-covers").getPublicUrl(fileName);
       setEditData(prev => ({ ...prev, cover: urlData.publicUrl }));
       toast({ title: "Success", description: "Cover uploaded" });
     } catch (err: any) {
