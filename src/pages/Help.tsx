@@ -291,12 +291,12 @@ const Help = () => {
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2">
               <button 
-                onClick={() => window.location.href = 'mailto:support@ambian.fi'}
+                onClick={() => window.location.href = 'mailto:info@ambian.fi'}
                 className="p-4 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors text-center cursor-pointer"
               >
                 <Mail className="w-6 h-6 mx-auto mb-2 text-primary" />
                 <p className="font-medium">{t("help.emailSupport")}</p>
-                <p className="text-sm text-muted-foreground">support@ambian.fi</p>
+                <p className="text-sm text-muted-foreground">info@ambian.fi</p>
               </button>
               <button 
                 onClick={() => {
