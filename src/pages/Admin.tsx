@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ListMusic, Users, Settings, BarChart3 } from "lucide-react";
+import { ArrowLeft, ListMusic, Users, Settings, BarChart3, Building2 } from "lucide-react";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
+import IndustryCollectionManager from "@/components/admin/IndustryCollectionManager";
 import { UserManager } from "@/components/admin/UserManager";
 import { PriceMigration } from "@/components/admin/PriceMigration";
 import { Analytics } from "@/components/admin/Analytics";
@@ -41,7 +42,7 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Analytics
@@ -49,6 +50,10 @@ const Admin = () => {
             <TabsTrigger value="playlists" className="flex items-center gap-2">
               <ListMusic className="w-4 h-4" />
               {t("admin.playlists")}
+            </TabsTrigger>
+            <TabsTrigger value="industries" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              Industries
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -68,6 +73,11 @@ const Admin = () => {
           {/* Playlists Tab */}
           <TabsContent value="playlists" className="mt-6">
             <AdminPlaylistManager />
+          </TabsContent>
+
+          {/* Industries Tab */}
+          <TabsContent value="industries" className="mt-6">
+            <IndustryCollectionManager />
           </TabsContent>
 
           {/* Users Tab */}

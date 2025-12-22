@@ -41,6 +41,81 @@ export type Database = {
         }
         Relationships: []
       }
+      industry_collection_playlists: {
+        Row: {
+          collection_id: string
+          created_at: string
+          display_order: number | null
+          id: string
+          playlist_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          playlist_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          playlist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "industry_collection_playlists_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "industry_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "industry_collection_playlists_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      industry_collections: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       liked_playlists: {
         Row: {
           created_at: string
