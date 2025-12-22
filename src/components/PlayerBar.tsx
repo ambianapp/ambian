@@ -434,39 +434,62 @@ const PlayerBar = () => {
   
   useEffect(() => {
     if (!currentTrack?.audioUrl) return;
-    
+
     // Skip if we already set this track (prevents duplicate loads)
     if (lastSetTrackIdRef.current === currentTrack.id) return;
-    
+
     // During active crossfade, don't touch audio elements - the crossfade logic handles everything
     if (isCrossfadingRef.current) return;
-    
-    // After crossfade completes, the active audio is already playing the correct track
-    // Only need to set src on the ACTIVE element if it doesn't match
+
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (!activeAudio) return;
-    
+
     const desiredSrc = normalizeUrl(currentTrack.audioUrl);
-    const currentSrc = normalizeUrl(activeAudio.src || '');
-    
+    const currentSrc = normalizeUrl(activeAudio.src || "");
+
+    // If the element is already playing (e.g. we just completed a crossfade),
+    // never force a reload mid-playback even if the browser reports a slightly different src.
+    // This prevents the "restarts at ~5s" bug.
+    if (
+      crossfade &&
+      isPlaying &&
+      !activeAudio.paused &&
+      activeAudio.currentTime > 0.5
+    ) {
+      lastSetTrackIdRef.current = currentTrack.id;
+      return;
+    }
+
     // Only load if the active audio doesn't already have this track
     if (currentSrc !== desiredSrc) {
-      console.log('Setting active audio src:', currentTrack.id, 'isCrossfadeActive:', isCrossfadeActive);
+      console.log(
+        "Setting active audio src:",
+        currentTrack.id,
+        "isCrossfadeActive:",
+        isCrossfadeActive
+      );
       activeAudio.src = desiredSrc;
       activeAudio.load();
-      
+
       if (isPlaying) {
         activeAudio.play().catch(console.error);
       }
     }
-    
+
     lastSetTrackIdRef.current = currentTrack.id;
-    
+
     // Also update mainAudioSrcRef for consistency
     if (!isCrossfadeActive) {
       mainAudioSrcRef.current = desiredSrc;
     }
-  }, [currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, isPlaying, normalizeUrl]);
+  }, [
+    currentTrack?.id,
+    currentTrack?.audioUrl,
+    isCrossfadeActive,
+    isPlaying,
+    normalizeUrl,
+    crossfade,
+  ]);
 
   useEffect(() => {
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
