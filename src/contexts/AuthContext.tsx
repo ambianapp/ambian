@@ -237,11 +237,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!session) return;
 
     const validateAndKickIfNeeded = async () => {
-      // Skip validation if page is hidden (device sleeping/screen off)
-      if (document.visibilityState === 'hidden') {
-        return;
-      }
-      
+      // NOTE: We still validate in background to enforce device limits.
+      // (Mobile/PWA often runs with document.visibilityState === 'hidden' while audio plays.)
+
       const result = await validateSession(session);
       
       if (result === 'valid') {
