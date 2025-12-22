@@ -126,6 +126,12 @@ serve(async (req) => {
           label: { type: "custom", custom: "Company Name" },
           type: "text",
         },
+        {
+          key: "company_address",
+          label: { type: "custom", custom: "Company Address" },
+          type: "text",
+          optional: true,
+        },
       ],
     });
 
