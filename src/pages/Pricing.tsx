@@ -407,8 +407,8 @@ const Pricing = () => {
                 <Input
                   placeholder="Promo code (optional)"
                   value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  className="text-center uppercase"
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  className="text-center"
                 />
               </div>
 
