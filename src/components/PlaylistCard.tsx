@@ -103,7 +103,7 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: 
               <Play className={compact ? "w-4 h-4 ml-0.5" : "w-6 h-6 ml-0.5"} />
             </Button>
           </div>
-          <h3 className={`font-semibold text-foreground truncate ${compact ? "text-xs" : ""}`}>{playlist.name}</h3>
+          <h3 className={`font-semibold text-foreground truncate ${compact ? "text-sm" : ""}`}>{playlist.name}</h3>
           {!compact && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{playlist.description}</p>}
         </button>
       </div>
