@@ -229,25 +229,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => authSubscription.unsubscribe();
   }, [registerSession]);
 
-  // Session validation interval - check periodically, but be very forgiving
-  // For a background music app, we prioritize staying logged in
+  // Session validation interval - check periodically to enforce device limits
   const consecutiveKicksRef = useRef(0);
-  const MAX_CONSECUTIVE_KICKS = 3; // Require 3 consecutive "kicked" results to actually log out
+  const MAX_CONSECUTIVE_KICKS = 2; // Require 2 consecutive "kicked" results to log out (prevents network glitches)
   
   useEffect(() => {
     if (!session) return;
 
     const validateAndKickIfNeeded = async () => {
       // Skip validation if page is hidden (device sleeping/screen off)
-      // This prevents false logouts when the app is backgrounded overnight
       if (document.visibilityState === 'hidden') {
-        return; // Silent skip, no logging
+        return;
       }
       
       const result = await validateSession(session);
       
       if (result === 'valid') {
-        // Reset consecutive kick counter on successful validation
         consecutiveKicksRef.current = 0;
         return;
       }
@@ -261,32 +258,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       consecutiveKicksRef.current++;
       console.log(`Session kicked check ${consecutiveKicksRef.current}/${MAX_CONSECUTIVE_KICKS}`);
       
-      // Only actually log out after multiple consecutive kicks
-      // This prevents false logouts from temporary network issues or timing problems
       if (consecutiveKicksRef.current >= MAX_CONSECUTIVE_KICKS && !isSigningOut.current) {
         toast.error("You've been logged out because your account was accessed from another device.");
         await signOut();
       }
     };
 
-    // Initial validation after a longer delay (give time for session to be registered)
-    const initialTimeout = setTimeout(validateAndKickIfNeeded, 10000);
+    // Initial validation after short delay (session should be registered quickly)
+    const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
     
-    // Periodic validation every 5 minutes instead of 30 seconds
-    // For a background music app, aggressive validation is counterproductive
-    const interval = setInterval(validateAndKickIfNeeded, 5 * 60 * 1000);
+    // Check every 30 seconds to ensure device limits are enforced reasonably quickly
+    const interval = setInterval(validateAndKickIfNeeded, 30 * 1000);
 
-    // Re-validate when page becomes visible again (user wakes device)
+    // Re-validate when page becomes visible again
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Re-register this session when coming back to foreground
-        // This ensures the session stays active even after long sleep
         setTimeout(async () => {
-          // First re-register, then validate
           await registerSession(session.user.id, session.access_token);
-          // Wait a moment for registration, then validate
-          setTimeout(validateAndKickIfNeeded, 3000);
-        }, 2000);
+          setTimeout(validateAndKickIfNeeded, 2000);
+        }, 1000);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
