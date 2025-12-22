@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ChevronRight, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Building2, X } from "lucide-react";
+import { ChevronRight, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Building2, Play, Shuffle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import PlaylistCard from "./PlaylistCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,10 +54,20 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
   const [selectedCollection, setSelectedCollection] = useState<IndustryCollection | null>(null);
   const [collectionPlaylists, setCollectionPlaylists] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set());
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
   useEffect(() => {
     loadCollections();
   }, []);
+
+  // Reset selection when dialog closes
+  useEffect(() => {
+    if (!selectedCollection) {
+      setSelectedPlaylistIds(new Set());
+      setIsMultiSelectMode(false);
+    }
+  }, [selectedCollection]);
 
   const loadCollections = async () => {
     const { data } = await supabase
@@ -98,6 +109,11 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
   };
 
   const handlePlaylistClick = async (playlist: DbPlaylist) => {
+    if (isMultiSelectMode) {
+      togglePlaylistSelection(playlist.id);
+      return;
+    }
+
     if (user) {
       await supabase.from("play_history").insert({
         user_id: user.id,
@@ -110,6 +126,18 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
       name: playlist.name,
       cover: playlist.cover_url,
       description: playlist.description,
+    });
+  };
+
+  const togglePlaylistSelection = (playlistId: string) => {
+    setSelectedPlaylistIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(playlistId)) {
+        newSet.delete(playlistId);
+      } else {
+        newSet.add(playlistId);
+      }
+      return newSet;
     });
   };
 
@@ -167,6 +195,85 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
     }
   };
 
+  // Play all playlists in collection with shuffle
+  const handlePlayAllShuffled = async (playlistIds?: string[]) => {
+    const idsToPlay = playlistIds || collectionPlaylists.map(p => p.id);
+    if (idsToPlay.length === 0) return;
+
+    // Fetch all tracks from selected playlists
+    const { data: allTracksData } = await supabase
+      .from("playlist_tracks")
+      .select("tracks(*), playlist_id")
+      .in("playlist_id", idsToPlay);
+
+    if (!allTracksData || allTracksData.length === 0) return;
+
+    // Convert to Track format
+    const allTracks: Track[] = allTracksData
+      .map((item: any) => item.tracks)
+      .filter(Boolean)
+      .map((t: any) => ({
+        id: t.id,
+        title: t.title,
+        artist: t.artist,
+        album: t.album || "",
+        duration: t.duration || "",
+        cover: t.cover_url || "/placeholder.svg",
+        genre: t.genre || "",
+      }));
+
+    // Remove duplicates (same track might be in multiple playlists)
+    const uniqueTracks = allTracks.filter((track, index, self) => 
+      index === self.findIndex(t => t.id === track.id)
+    );
+
+    if (uniqueTracks.length === 0) return;
+
+    // Shuffle the tracks
+    const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
+
+    // Get signed URL for the first track
+    const firstTrack = shuffledTracks[0];
+    const { data: trackData } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", firstTrack.id)
+      .single();
+
+    const signedAudioUrl = trackData?.audio_url 
+      ? await getSignedAudioUrl(trackData.audio_url)
+      : undefined;
+
+    // Log play history for each playlist
+    if (user) {
+      for (const playlistId of idsToPlay) {
+        await supabase.from("play_history").insert({
+          user_id: user.id,
+          playlist_id: playlistId,
+        });
+      }
+    }
+
+    setSelectedCollection(null);
+    onTrackSelect({
+      ...firstTrack,
+      audioUrl: signedAudioUrl,
+    }, shuffledTracks);
+  };
+
+  const handlePlaySelected = () => {
+    if (selectedPlaylistIds.size === 0) return;
+    handlePlayAllShuffled(Array.from(selectedPlaylistIds));
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPlaylistIds.size === collectionPlaylists.length) {
+      setSelectedPlaylistIds(new Set());
+    } else {
+      setSelectedPlaylistIds(new Set(collectionPlaylists.map(p => p.id)));
+    }
+  };
+
   if (isLoading || collections.length === 0) {
     return null;
   }
@@ -217,7 +324,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                     const Icon = getIcon(selectedCollection.icon);
                     return <Icon className="w-6 h-6 text-primary" />;
                   })()}
-                  <div>
+                  <div className="flex-1">
                     <span>{selectedCollection.name}</span>
                     {selectedCollection.description && (
                       <p className="text-sm font-normal text-muted-foreground mt-1">
@@ -229,23 +336,88 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
               )}
             </DialogTitle>
           </DialogHeader>
+          
+          {/* Action buttons */}
+          {collectionPlaylists.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-2 pb-2 border-b border-border">
+              <Button 
+                onClick={() => handlePlayAllShuffled()} 
+                size="sm"
+                className="gap-2"
+              >
+                <Shuffle className="w-4 h-4" />
+                Play All Shuffled
+              </Button>
+              
+              <Button
+                onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                size="sm"
+                variant={isMultiSelectMode ? "secondary" : "outline"}
+                className="gap-2"
+              >
+                <Check className="w-4 h-4" />
+                {isMultiSelectMode ? "Cancel Selection" : "Select Playlists"}
+              </Button>
+
+              {isMultiSelectMode && (
+                <>
+                  <Button
+                    onClick={handleSelectAll}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {selectedPlaylistIds.size === collectionPlaylists.length ? "Deselect All" : "Select All"}
+                  </Button>
+                  
+                  {selectedPlaylistIds.size > 0 && (
+                    <Button
+                      onClick={handlePlaySelected}
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Play className="w-4 h-4" />
+                      Play {selectedPlaylistIds.size} Selected
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
             {collectionPlaylists.length > 0 ? (
               collectionPlaylists.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={{
-                    id: playlist.id,
-                    name: playlist.name,
-                    description: playlist.description || "",
-                    cover: playlist.cover_url || "/placeholder.svg",
-                    trackCount: 0,
-                    tracks: [],
-                  }}
-                  onClick={() => handlePlaylistClick(playlist)}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  compact
-                />
+                <div key={playlist.id} className="relative">
+                  {isMultiSelectMode && (
+                    <div 
+                      className="absolute top-2 left-2 z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePlaylistSelection(playlist.id);
+                      }}
+                    >
+                      <Checkbox 
+                        checked={selectedPlaylistIds.has(playlist.id)}
+                        className="h-5 w-5 bg-background/80 border-2"
+                      />
+                    </div>
+                  )}
+                  <div className={isMultiSelectMode && selectedPlaylistIds.has(playlist.id) ? "ring-2 ring-primary rounded-lg" : ""}>
+                    <PlaylistCard
+                      playlist={{
+                        id: playlist.id,
+                        name: playlist.name,
+                        description: playlist.description || "",
+                        cover: playlist.cover_url || "/placeholder.svg",
+                        trackCount: 0,
+                        tracks: [],
+                      }}
+                      onClick={() => handlePlaylistClick(playlist)}
+                      onPlay={() => handlePlayPlaylist(playlist.id)}
+                      compact
+                    />
+                  </div>
+                </div>
               ))
             ) : (
               <p className="col-span-full text-center text-muted-foreground py-8">
