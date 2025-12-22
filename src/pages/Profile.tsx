@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface Invoice {
@@ -384,35 +384,54 @@ const Profile = () => {
               <p className="text-sm text-muted-foreground py-4">{t("invoices.none")}</p>
             ) : (
               <div className="space-y-3">
-                {invoices.map((invoice) => (
-                  <div
-                    key={invoice.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">
-                        {invoice.number || "Invoice"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(invoice.date * 1000).toLocaleDateString()} • {formatCurrency(invoice.amount, invoice.currency)}
-                      </p>
+                {invoices.map((invoice) => {
+                  const invoiceDate = new Date(invoice.date * 1000);
+                  const monthYear = invoiceDate.toLocaleDateString(language === 'fi' ? 'fi-FI' : language === 'sv' ? 'sv-SE' : language === 'de' ? 'de-DE' : language === 'fr' ? 'fr-FR' : 'en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                  });
+                  
+                  return (
+                    <div
+                      key={invoice.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                          {monthYear}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {invoiceDate.toLocaleDateString()} • {formatCurrency(invoice.amount, invoice.currency)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary">
+                          {t("invoices.paid")}
+                        </span>
+                        {invoice.hostedUrl && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => window.open(invoice.hostedUrl!, "_blank")}
+                            title={t("invoices.preview") || "Preview"}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {invoice.pdfUrl && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => window.open(invoice.pdfUrl!, "_blank")}
+                            title={t("invoices.download") || "Download"}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary">
-                        {t("invoices.paid")}
-                      </span>
-                      {invoice.pdfUrl && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => window.open(invoice.pdfUrl!, "_blank")}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
