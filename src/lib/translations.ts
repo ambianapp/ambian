@@ -76,6 +76,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noCardNeeded": "No card needed",
     "auth.validEmail": "Please enter a valid email address",
     "auth.passwordMin": "Password must be at least 6 characters",
+    "auth.enterEmail": "Enter your email",
+    "auth.enterEmailDesc": "Please enter your email address first, then click 'Forgot password'",
+    "auth.resetEmailSent": "Reset email sent",
+    "auth.resetEmailSentDesc": "Check your inbox for password reset instructions",
     
     // Profile
     "profile.title": "Profile Settings",
@@ -403,6 +407,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noCardNeeded": "Inget kort krävs",
     "auth.validEmail": "Ange en giltig e-postadress",
     "auth.passwordMin": "Lösenordet måste vara minst 6 tecken",
+    "auth.enterEmail": "Ange din e-post",
+    "auth.enterEmailDesc": "Ange din e-postadress först, klicka sedan på 'Glömt lösenord'",
+    "auth.resetEmailSent": "Återställningsmail skickat",
+    "auth.resetEmailSentDesc": "Kolla din inkorg för instruktioner om lösenordsåterställning",
     
     // Profile
     "profile.title": "Profilinställningar",
@@ -730,6 +738,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noCardNeeded": "Ei korttia",
     "auth.validEmail": "Anna kelvollinen sähköpostiosoite",
     "auth.passwordMin": "Salasanan on oltava vähintään 6 merkkiä",
+    "auth.enterEmail": "Anna sähköpostiosoitteesi",
+    "auth.enterEmailDesc": "Anna ensin sähköpostiosoitteesi ja napsauta sitten 'Unohtuiko salasana'",
+    "auth.resetEmailSent": "Palautusviesti lähetetty",
+    "auth.resetEmailSentDesc": "Tarkista sähköpostisi salasanan palautusohjeiden varalta",
     
     // Profile
     "profile.title": "Profiiliasetukset",
@@ -1057,6 +1069,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noCardNeeded": "Keine Karte",
     "auth.validEmail": "Bitte gib eine gültige E-Mail-Adresse ein",
     "auth.passwordMin": "Das Passwort muss mindestens 6 Zeichen lang sein",
+    "auth.enterEmail": "Gib deine E-Mail ein",
+    "auth.enterEmailDesc": "Gib zuerst deine E-Mail-Adresse ein und klicke dann auf 'Passwort vergessen'",
+    "auth.resetEmailSent": "Reset-E-Mail gesendet",
+    "auth.resetEmailSentDesc": "Prüfe deinen Posteingang für Anweisungen zum Zurücksetzen des Passworts",
     
     // Profile
     "profile.title": "Profileinstellungen",
@@ -1384,6 +1400,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.noCardNeeded": "Sans carte",
     "auth.validEmail": "Veuillez entrer une adresse e-mail valide",
     "auth.passwordMin": "Le mot de passe doit contenir au moins 6 caractères",
+    "auth.enterEmail": "Entrez votre e-mail",
+    "auth.enterEmailDesc": "Entrez d'abord votre adresse e-mail, puis cliquez sur 'Mot de passe oublié'",
+    "auth.resetEmailSent": "E-mail de réinitialisation envoyé",
+    "auth.resetEmailSentDesc": "Vérifiez votre boîte de réception pour les instructions de réinitialisation",
     
     // Profile
     "profile.title": "Paramètres du profil",

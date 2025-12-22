@@ -274,7 +274,43 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t("auth.password")}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t("auth.password")}</Label>
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email) {
+                        toast({
+                          title: t("auth.enterEmail"),
+                          description: t("auth.enterEmailDesc"),
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      try {
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/profile`,
+                        });
+                        if (error) throw error;
+                        toast({
+                          title: t("auth.resetEmailSent"),
+                          description: t("auth.resetEmailSentDesc"),
+                        });
+                      } catch (error: any) {
+                        toast({
+                          title: t("common.error"),
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {t("auth.forgotPassword")}
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
