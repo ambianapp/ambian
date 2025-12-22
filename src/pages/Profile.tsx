@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface Invoice {
   id: string;
@@ -34,6 +35,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { canInstall, isInstalled, promptInstall } = usePWAInstall();
 
   useEffect(() => {
     // Check if returning from device slot purchase
@@ -415,6 +417,25 @@ const Profile = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Install App Card */}
+        {canInstall && !isInstalled && (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5" />
+                Install App
+              </CardTitle>
+              <CardDescription>Install Ambian as a desktop app for quick access</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={promptInstall} className="w-full sm:w-auto">
+                <Download className="w-4 h-4 mr-2" />
+                Install Ambian
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sign Out */}
         <Card className="bg-card border-border">
