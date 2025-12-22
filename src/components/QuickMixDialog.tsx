@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
@@ -216,7 +215,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
         </div>
 
         {/* Playlist List */}
-        <ScrollArea className="flex-1 min-h-0 h-[300px] -mx-6 px-6">
+        <div className="flex-1 min-h-0 h-[300px] -mx-6 px-6 overflow-y-auto overscroll-contain">
           <div className="space-y-1 py-2">
             {isLoading ? (
               <p className="text-center text-muted-foreground py-8">Loading...</p>
@@ -228,15 +227,12 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
                   key={playlist.id}
                   onClick={() => togglePlaylist(playlist.id)}
                   className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                    selectedIds.has(playlist.id) 
-                      ? "bg-primary/10 ring-1 ring-primary/30" 
+                    selectedIds.has(playlist.id)
+                      ? "bg-primary/10 ring-1 ring-primary/30"
                       : "hover:bg-muted/50"
                   }`}
                 >
-                  <Checkbox 
-                    checked={selectedIds.has(playlist.id)}
-                    className="pointer-events-none"
-                  />
+                  <Checkbox checked={selectedIds.has(playlist.id)} className="pointer-events-none" />
                   <img
                     src={playlist.cover_url || "/placeholder.svg"}
                     alt={playlist.name}
@@ -252,7 +248,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
               ))
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Play Button */}
         <div className="pt-4 border-t border-border">
