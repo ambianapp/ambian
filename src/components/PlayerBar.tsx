@@ -69,8 +69,30 @@ const PlayerBar = () => {
   const [isCrossfadeActive, setIsCrossfadeActive] = useState(false);
   const preloadedNextTrackRef = useRef<{ id: string; audioUrl: string; track: Track } | null>(null);
   const isPreloadingRef = useRef(false);
+  const crossfadeCompleteRef = useRef(false);
+  const crossfadeTrackSwitchedRef = useRef(false);
   const userVolumeRef = useRef(75); // Store user's intended volume
   const mainAudioSrcRef = useRef<string | null>(null); // Prevent React re-setting src during crossfade
+
+  // Reset crossfade state - used when user manually skips tracks
+  const resetCrossfadeState = useCallback(() => {
+    if (crossfadeIntervalRef.current) {
+      clearInterval(crossfadeIntervalRef.current);
+      crossfadeIntervalRef.current = null;
+    }
+    isCrossfadingRef.current = false;
+    crossfadeCompleteRef.current = false;
+    crossfadeTrackSwitchedRef.current = false;
+    nextTrackPreloadedRef.current = null;
+    preloadedNextTrackRef.current = null;
+    isPreloadingRef.current = false;
+    lastSetTrackIdRef.current = null;
+    if (crossfadeAudioRef.current) {
+      crossfadeAudioRef.current.pause();
+      crossfadeAudioRef.current.src = "";
+    }
+    setIsCrossfadeActive(false);
+  }, []);
 
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
@@ -338,9 +360,11 @@ const PlayerBar = () => {
       handlePlayPause();
     });
     navigator.mediaSession.setActionHandler('previoustrack', () => {
+      resetCrossfadeState();
       handlePrevious();
     });
     navigator.mediaSession.setActionHandler('nexttrack', () => {
+      resetCrossfadeState();
       handleNext();
     });
     
@@ -509,10 +533,8 @@ const PlayerBar = () => {
     }
   }, [volume, isMuted, isCrossfadeActive]);
 
-  // Crossfade logic
-  const crossfadeCompleteRef = useRef(false);
-  const crossfadeTrackSwitchedRef = useRef(false);
   
+
   // Keep user volume in sync
   useEffect(() => {
     userVolumeRef.current = volume[0];
@@ -923,7 +945,7 @@ const PlayerBar = () => {
             >
               <Shuffle className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground h-11 w-11">
+            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handlePrevious(); }} className="text-foreground h-11 w-11">
               <SkipBack className="w-6 h-6" />
             </Button>
           </div>
@@ -935,7 +957,7 @@ const PlayerBar = () => {
           
           {/* Right controls - justify-start to push buttons toward center */}
           <div className="flex-1 flex items-center justify-start gap-2">
-            <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground h-11 w-11">
+            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handleNext(); }} className="text-foreground h-11 w-11">
               <SkipForward className="w-6 h-6" />
             </Button>
             <Button
@@ -998,13 +1020,13 @@ const PlayerBar = () => {
             >
               <Shuffle className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-foreground">
+            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handlePrevious(); }} className="text-foreground">
               <SkipBack className="w-5 h-5" />
             </Button>
             <Button variant="player" size="iconLg" onClick={handlePlayPause} className="h-12 w-12">
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleNext} className="text-foreground">
+            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handleNext(); }} className="text-foreground">
               <SkipForward className="w-5 h-5" />
             </Button>
             <Button 
