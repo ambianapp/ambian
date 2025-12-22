@@ -102,17 +102,55 @@ serve(async (req) => {
     const price = await stripe.prices.retrieve(priceId);
     logStep("Retrieved price", { priceId, recurring: !!price.recurring });
 
+    // Grant 7-day grace period immediately
+    const gracePeriodDays = 7;
+    const now = new Date();
+    const gracePeriodEnd = new Date(now);
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
+    
+    // Determine plan duration for after payment
+    const planType = price.recurring?.interval === "year" ? "yearly" : "monthly";
+    
+    logStep("Granting grace period", { gracePeriodEnd: gracePeriodEnd.toISOString(), planType });
+
     // Create the invoice
     const invoice = await stripe.invoices.create({
       customer: customerId,
       collection_method: "send_invoice",
-      days_until_due: 14, // 14 days to pay
+      days_until_due: gracePeriodDays, // Match grace period
       auto_advance: true,
       metadata: {
         user_id: user.id,
+        plan_type: planType,
       },
     });
     logStep("Created invoice", { invoiceId: invoice.id });
+
+    // Update subscription with grace period access
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const { error: subError } = await supabaseAdmin
+      .from("subscriptions")
+      .upsert({
+        user_id: user.id,
+        stripe_customer_id: customerId,
+        stripe_subscription_id: null,
+        status: "pending_payment", // Special status for invoice grace period
+        plan_type: planType,
+        current_period_start: now.toISOString(),
+        current_period_end: gracePeriodEnd.toISOString(),
+        updated_at: now.toISOString(),
+      }, { onConflict: "user_id" });
+
+    if (subError) {
+      logStep("Error creating grace period subscription", { error: subError.message });
+    } else {
+      logStep("Grace period subscription created", { userId: user.id, until: gracePeriodEnd.toISOString() });
+    }
 
     // Add the subscription item to the invoice
     if (price.recurring) {
@@ -121,7 +159,7 @@ serve(async (req) => {
         customer: customerId,
         items: [{ price: priceId }],
         collection_method: "send_invoice",
-        days_until_due: 14,
+        days_until_due: gracePeriodDays,
         metadata: {
           user_id: user.id,
         },
@@ -151,8 +189,9 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: "Invoice sent to your email. You have 14 days to pay.",
+        message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment.`,
         subscriptionId: subscription.id,
+        grace_period_until: gracePeriodEnd.toISOString(),
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -173,8 +212,9 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: "Invoice sent to your email. You have 14 days to pay.",
+        message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment.`,
         invoiceId: finalizedInvoice.id,
+        grace_period_until: gracePeriodEnd.toISOString(),
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
