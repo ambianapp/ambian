@@ -130,7 +130,6 @@ serve(async (req) => {
           key: "company_address",
           label: { type: "custom", custom: "Company Address" },
           type: "text",
-          optional: true,
         },
       ],
     });
