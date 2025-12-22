@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, History, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
+import IndustryCollections from "./IndustryCollections";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -318,6 +319,12 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             </div>
           </section>
         )}
+
+        {/* Industry Collections */}
+        <IndustryCollections
+          onPlaylistSelect={onPlaylistSelect}
+          onTrackSelect={onTrackSelect}
+        />
 
         {/* Playlists by Mood */}
         {renderPlaylistSection(
