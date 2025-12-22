@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Download } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ const Pricing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { canInstall, isInstalled, promptInstall } = usePWAInstall();
 
   // Handle payment verification on return from Stripe
   useEffect(() => {
@@ -225,8 +227,20 @@ const Pricing = () => {
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Logo */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-4 relative">
           <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
+          {/* Install App Button */}
+          {canInstall && !isInstalled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={promptInstall}
+              className="absolute right-0 top-4 flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Install App
+            </Button>
+          )}
         </div>
 
         {/* Header */}
