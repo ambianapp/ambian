@@ -429,17 +429,22 @@ const Profile = () => {
               <CardDescription>Install Ambian as a desktop app for quick access</CardDescription>
             </CardHeader>
             <CardContent>
-              {canInstall ? (
-                <Button onClick={promptInstall} className="w-full sm:w-auto">
-                  <Download className="w-4 h-4 mr-2" />
-                  Install Ambian
-                </Button>
-              ) : (
-                <Button variant="outline" onClick={() => navigate("/install")} className="w-full sm:w-auto">
-                  <Smartphone className="w-4 h-4 mr-2" />
-                  View Install Instructions
-                </Button>
-              )}
+              <Button 
+                onClick={() => {
+                  if (canInstall) {
+                    promptInstall();
+                  } else {
+                    toast({
+                      title: "Install from your browser",
+                      description: "Use Chrome or Edge menu → 'Install Ambian' or 'Add to Home Screen' to install the app.",
+                    });
+                  }
+                }} 
+                className="w-full sm:w-auto"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Install Ambian
+              </Button>
             </CardContent>
           </Card>
         )}
