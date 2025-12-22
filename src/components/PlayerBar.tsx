@@ -139,6 +139,21 @@ const PlayerBar = () => {
     };
   }, [isPlaying]);
 
+  // Warn user before closing tab when music is playing
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isPlaying) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isPlaying]);
+
   // Page visibility recovery - resume playback when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
