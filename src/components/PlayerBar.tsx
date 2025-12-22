@@ -73,6 +73,7 @@ const PlayerBar = () => {
   const crossfadeTrackSwitchedRef = useRef(false);
   const userVolumeRef = useRef(75); // Store user's intended volume
   const mainAudioSrcRef = useRef<string | null>(null); // Prevent React re-setting src during crossfade
+  const lastCrossfadeSwapAtRef = useRef<number>(0); // Prevent post-swap reloads
 
   // Reset crossfade state - used when user manually skips tracks
   const resetCrossfadeState = useCallback(() => {
@@ -489,6 +490,20 @@ const PlayerBar = () => {
     // If the element is already playing (e.g. we just completed a crossfade),
     // never force a reload mid-playback *unless* the user has actually switched to a different track.
     // This prevents the "restarts at ~5s" bug while still allowing manual skipping.
+    //
+    // Extra safety: right after a crossfade swap, some browsers briefly report a different "src"
+    // (redirected URL vs. original). Avoid touching src during this window.
+    if (
+      crossfade &&
+      isPlaying &&
+      !activeAudio.paused &&
+      activeAudio.currentTime > 0.5 &&
+      Date.now() - lastCrossfadeSwapAtRef.current < 2000
+    ) {
+      lastSetTrackIdRef.current = currentTrack.id;
+      return;
+    }
+
     if (
       crossfade &&
       isPlaying &&
@@ -658,13 +673,14 @@ const PlayerBar = () => {
           fadingOutAudio.pause();
           fadingOutAudio.src = "";
 
-          // Toggle which audio element is active BEFORE updating track state
-          // This ensures the effect at line 415 sees the correct isCrossfadeActive value
-          setIsCrossfadeActive(prev => !prev);
+           // Toggle which audio element is active BEFORE updating track state
+           // This ensures the effect at line 415 sees the correct isCrossfadeActive value
+           lastCrossfadeSwapAtRef.current = Date.now();
+           setIsCrossfadeActive(prev => !prev);
 
-          // Update React state to the new track
-          // Do this AFTER toggling active audio so the effect doesn't try to reload
-          setCurrentTrackDirect(next.track);
+           // Update React state to the new track
+           // Do this AFTER toggling active audio so the effect doesn't try to reload
+           setCurrentTrackDirect(next.track);
           
           // Mark this track as already set to prevent the src-setting effect from reloading
           lastSetTrackIdRef.current = next.id;
