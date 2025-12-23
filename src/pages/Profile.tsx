@@ -444,25 +444,21 @@ const Profile = () => {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ) : invoices.length === 0 ? (
+            ) : invoices.filter(inv => inv.status === "paid").length === 0 ? (
               <p className="text-sm text-muted-foreground py-4">{t("invoices.none")}</p>
             ) : (
               <div className="space-y-3">
-                {invoices.map((invoice) => {
+                {invoices.filter(inv => inv.status === "paid").map((invoice) => {
                   const invoiceDate = new Date(invoice.date * 1000);
                   const monthYear = invoiceDate.toLocaleDateString(language === 'fi' ? 'fi-FI' : language === 'sv' ? 'sv-SE' : language === 'de' ? 'de-DE' : language === 'fr' ? 'fr-FR' : 'en-US', { 
                     month: 'long', 
                     year: 'numeric' 
                   });
-                  const isOpen = invoice.status === "open";
-                  const dueDate = invoice.dueDate ? new Date(invoice.dueDate * 1000) : null;
                   
                   return (
                     <div
                       key={invoice.id}
-                      className={`flex items-center justify-between p-4 rounded-lg ${
-                        isOpen ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-secondary"
-                      }`}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary"
                     >
                       <div className="flex-1">
                         <p className="font-medium text-foreground">
@@ -471,30 +467,12 @@ const Profile = () => {
                         <p className="text-sm text-muted-foreground">
                           {invoiceDate.toLocaleDateString()} • {formatCurrency(invoice.amount, invoice.currency)}
                         </p>
-                        {isOpen && dueDate && (
-                          <p className="text-sm text-yellow-500">
-                            {t("invoices.dueBy") || "Due by"}: {dueDate.toLocaleDateString()}
-                          </p>
-                        )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          isOpen 
-                            ? "bg-yellow-500/20 text-yellow-500" 
-                            : "bg-primary/20 text-primary"
-                        }`}>
-                          {isOpen ? (t("invoices.pending") || "Pending") : t("invoices.paid")}
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary">
+                          {t("invoices.paid")}
                         </span>
-                        {isOpen && invoice.hostedUrl && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => window.open(invoice.hostedUrl!, "_blank")}
-                          >
-                            {t("invoices.payNow") || "Pay Now"}
-                          </Button>
-                        )}
-                        {!isOpen && invoice.hostedUrl && (
+                        {invoice.hostedUrl && (
                           <Button
                             variant="ghost"
                             size="icon"
