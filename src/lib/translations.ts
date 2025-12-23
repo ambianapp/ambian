@@ -35,6 +35,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.shuffle": "Shuffle",
     "common.repeat": "Repeat",
     
+    // Welcome dialog
+    "welcome.title": "Welcome to Ambian!",
+    "welcome.subtitle": "Your free trial has started",
+    "welcome.daysFreeTrial": "Days Free Trial",
+    "welcome.noCardRequired": "No credit card required",
+    "welcome.feature1": "50+ curated playlists for every mood",
+    "welcome.feature2": "Smart scheduling - set it and forget it",
+    "welcome.feature3": "No music licenses needed - we handle it all",
+    "welcome.getStarted": "Let's Get Started",
+    
     // Auth
     "auth.signIn": "Sign In",
     "auth.signUp": "Sign Up",
@@ -438,7 +448,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Navigation
     "nav.home": "Hem",
     "nav.search": "Sök",
-    "nav.library": "Ditt Bibliotek",
+    "nav.library": "Ditt bibliotek",
     "nav.schedule": "Schema",
     "nav.profile": "Profil",
     "nav.help": "Hjälp",
@@ -449,7 +459,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.cancel": "Avbryt",
     "common.loading": "Laddar...",
     "common.error": "Fel",
-    "common.success": "Klart",
+    "common.success": "Lyckades",
     "common.back": "Tillbaka",
     "common.signOut": "Logga ut",
     "common.subscribe": "Prenumerera",
@@ -459,6 +469,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.previous": "Föregående",
     "common.shuffle": "Blanda",
     "common.repeat": "Upprepa",
+    
+    // Welcome dialog
+    "welcome.title": "Välkommen till Ambian!",
+    "welcome.subtitle": "Din gratis provperiod har börjat",
+    "welcome.daysFreeTrial": "Dagars gratis provperiod",
+    "welcome.noCardRequired": "Inget kreditkort krävs",
+    "welcome.feature1": "50+ kurerade spellistor för alla stämningar",
+    "welcome.feature2": "Smart schemaläggning - ställ in och glöm",
+    "welcome.feature3": "Inga musiklicenser behövs - vi ordnar allt",
+    "welcome.getStarted": "Kom igång",
+    
     
     // Auth
     "auth.signIn": "Logga in",
@@ -881,6 +902,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.shuffle": "Sekoita",
     "common.repeat": "Toista",
     
+    // Welcome dialog
+    "welcome.title": "Tervetuloa Ambianiin!",
+    "welcome.subtitle": "Ilmainen kokeilujaksosi on alkanut",
+    "welcome.daysFreeTrial": "Päivää ilmaista kokeilua",
+    "welcome.noCardRequired": "Luottokorttia ei tarvita",
+    "welcome.feature1": "Yli 50 kuratoitua soittolistaa kaikkiin tunnelmiin",
+    "welcome.feature2": "Älykäs aikataulutus - aseta ja unohda",
+    "welcome.feature3": "Ei musiikin lisenssejä tarvita - hoidamme kaiken",
+    "welcome.getStarted": "Aloitetaan",
+    
     // Auth
     "auth.signIn": "Kirjaudu sisään",
     "auth.signUp": "Rekisteröidy",
@@ -1302,6 +1333,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.shuffle": "Zufällig",
     "common.repeat": "Wiederholen",
     
+    // Welcome dialog
+    "welcome.title": "Willkommen bei Ambian!",
+    "welcome.subtitle": "Ihre kostenlose Testphase hat begonnen",
+    "welcome.daysFreeTrial": "Tage kostenlos testen",
+    "welcome.noCardRequired": "Keine Kreditkarte erforderlich",
+    "welcome.feature1": "Über 50 kuratierte Playlists für jede Stimmung",
+    "welcome.feature2": "Intelligente Planung - einrichten und vergessen",
+    "welcome.feature3": "Keine Musiklizenzen nötig - wir kümmern uns um alles",
+    "welcome.getStarted": "Los geht's",
+    
     // Auth
     "auth.signIn": "Anmelden",
     "auth.signUp": "Registrieren",
@@ -1722,6 +1763,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.previous": "Précédent",
     "common.shuffle": "Aléatoire",
     "common.repeat": "Répéter",
+    
+    // Welcome dialog
+    "welcome.title": "Bienvenue sur Ambian !",
+    "welcome.subtitle": "Votre essai gratuit a commencé",
+    "welcome.daysFreeTrial": "Jours d'essai gratuit",
+    "welcome.noCardRequired": "Aucune carte de crédit requise",
+    "welcome.feature1": "Plus de 50 playlists pour toutes les ambiances",
+    "welcome.feature2": "Programmation intelligente - configurez et oubliez",
+    "welcome.feature3": "Pas de licences musicales nécessaires - nous gérons tout",
+    "welcome.getStarted": "C'est parti",
     
     // Auth
     "auth.signIn": "Connexion",
