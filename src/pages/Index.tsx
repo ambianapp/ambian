@@ -147,7 +147,7 @@ const Index = () => {
 
   // On first load (no cached subscription), wait for subscription to resolve.
   if (isSubscriptionLoading) {
-    return <AmbianLoadingScreen label="Checking subscription…" />;
+    return <AmbianLoadingScreen />;
   }
 
   if (!subscription.subscribed && !subscription.isTrial && !isAdmin) {
