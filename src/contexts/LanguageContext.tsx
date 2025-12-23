@@ -53,7 +53,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     loadLanguageFromProfile();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes
 
   const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
@@ -70,7 +71,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.error("Failed to save language preference:", error);
       }
     }
-  }, [user]);
+  }, [user?.id]);
 
   const t = useCallback((key: string, replacements?: Record<string, string | number>): string => {
     let text = translations[language][key] || translations.en[key] || key;

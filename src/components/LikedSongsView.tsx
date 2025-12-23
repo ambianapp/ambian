@@ -29,7 +29,8 @@ const LikedSongsView = ({
 
   useEffect(() => {
     loadLikedSongs();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes
 
   const loadLikedSongs = async () => {
     if (!user) return;

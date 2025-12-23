@@ -64,7 +64,8 @@ const Profile = () => {
     };
 
     loadProfile();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes
 
   useEffect(() => {
     const loadInvoices = async () => {
@@ -83,7 +84,8 @@ const Profile = () => {
     };
 
     loadInvoices();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes
 
   const handleUpdateProfile = async () => {
     if (!user) return;

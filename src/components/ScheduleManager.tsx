@@ -66,10 +66,11 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
   const [formPriority, setFormPriority] = useState(0);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       loadData();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes
 
   const loadData = async () => {
     setIsLoading(true);

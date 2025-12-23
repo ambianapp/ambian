@@ -97,11 +97,12 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
 
   useEffect(() => {
     fetchPlaylists();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes
 
   // Subscribe to liked_playlists changes for real-time updates
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     const channel = supabase
       .channel('sidebar-liked-playlists')
@@ -122,7 +123,8 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const navItems = [
     { id: "home", label: t("nav.home"), icon: Home },
