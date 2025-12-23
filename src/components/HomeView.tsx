@@ -272,10 +272,10 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     <div className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
       <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="animate-fade-in flex items-start justify-between">
+        <div className="animate-fade-in space-y-3">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{getGreeting()}</h1>
-            <p className="text-muted-foreground mt-2">{t("home.subtitle")}</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground whitespace-nowrap">{getGreeting()}</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">{t("home.subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <QuickMixDialog
