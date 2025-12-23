@@ -231,7 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Session validation interval - check periodically to enforce device limits
   const consecutiveKicksRef = useRef(0);
-  const MAX_CONSECUTIVE_KICKS = 2; // Require 2 consecutive "kicked" results to log out (prevents network glitches)
+  const MAX_CONSECUTIVE_KICKS = 1; // Log out immediately when kicked (was 2, causing delays)
   
   useEffect(() => {
     if (!session) return;
@@ -271,7 +271,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
 
     // Check every 30 seconds to ensure device limits are enforced reasonably quickly
-    const interval = setInterval(validateAndKickIfNeeded, 30 * 1000);
+    const interval = setInterval(validateAndKickIfNeeded, 15 * 1000); // Check every 15 seconds (was 30)
 
     // Re-validate when page becomes visible again
     const handleVisibilityChange = () => {
