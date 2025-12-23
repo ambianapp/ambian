@@ -240,22 +240,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // NOTE: We still validate in background to enforce device limits.
       // (Mobile/PWA often runs with document.visibilityState === 'hidden' while audio plays.)
 
-      const result = await validateSession(session);
-      
+      // Always validate against the LATEST session from the auth client.
+      // This avoids false "kicked" results during token refreshes where access_token changes.
+      const latestSession = (await supabase.auth.getSession()).data.session;
+      if (!latestSession) return;
+
+      const result = await validateSession(latestSession);
+
       if (result === 'valid') {
         consecutiveKicksRef.current = 0;
         return;
       }
-      
+
       if (result === 'error') {
-        // Network error - don't increment counter, just wait for next check
+        // Network/auth error - don't increment counter, just wait for next check
         return;
       }
-      
+
       // result === 'kicked'
       consecutiveKicksRef.current++;
       console.log(`Session kicked check ${consecutiveKicksRef.current}/${MAX_CONSECUTIVE_KICKS}`);
-      
+
       if (consecutiveKicksRef.current >= MAX_CONSECUTIVE_KICKS && !isSigningOut.current) {
         toast.error("You've been logged out because your account was accessed from another device.", { duration: Infinity });
         await signOut();
@@ -264,7 +269,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Initial validation after short delay (session should be registered quickly)
     const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
-    
+
     // Check every 30 seconds to ensure device limits are enforced reasonably quickly
     const interval = setInterval(validateAndKickIfNeeded, 30 * 1000);
 
@@ -272,8 +277,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         setTimeout(async () => {
-          await registerSession(session.user.id, session.access_token);
-          setTimeout(validateAndKickIfNeeded, 2000);
+          const latestSession = (await supabase.auth.getSession()).data.session;
+          if (latestSession?.user) {
+            await registerSession(latestSession.user.id, latestSession.access_token);
+            setTimeout(validateAndKickIfNeeded, 2000);
+          }
         }, 1000);
       }
     };
