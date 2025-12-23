@@ -28,10 +28,8 @@ const AllPlaylists = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   
-  const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
-  const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
+  const [allPlaylists, setAllPlaylists] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"mood" | "genre">("mood");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
 
   useEffect(() => {
@@ -41,9 +39,7 @@ const AllPlaylists = () => {
   // Handle playlist query param on load
   useEffect(() => {
     const playlistId = searchParams.get("playlist");
-    if (playlistId && !selectedPlaylist) {
-      // Find the playlist in our lists
-      const allPlaylists = [...moodPlaylists, ...genrePlaylists];
+    if (playlistId && !selectedPlaylist && allPlaylists.length > 0) {
       const playlist = allPlaylists.find(p => p.id === playlistId);
       if (playlist) {
         setSelectedPlaylist({
@@ -54,28 +50,18 @@ const AllPlaylists = () => {
         });
       }
     }
-  }, [searchParams, moodPlaylists, genrePlaylists, selectedPlaylist]);
+  }, [searchParams, allPlaylists, selectedPlaylist]);
 
   const loadPlaylists = async () => {
     setIsLoading(true);
 
-    const [moodRes, genreRes] = await Promise.all([
-      supabase
-        .from("playlists")
-        .select("*")
-        .eq("is_system", true)
-        .eq("category", "mood")
-        .order("name", { ascending: true }),
-      supabase
-        .from("playlists")
-        .select("*")
-        .eq("is_system", true)
-        .eq("category", "genre")
-        .order("name", { ascending: true }),
-    ]);
+    const { data } = await supabase
+      .from("playlists")
+      .select("*")
+      .eq("is_system", true)
+      .order("name", { ascending: true });
 
-    setMoodPlaylists(moodRes.data || []);
-    setGenrePlaylists(genreRes.data || []);
+    setAllPlaylists(data || []);
     setIsLoading(false);
   };
 
@@ -86,7 +72,6 @@ const AllPlaylists = () => {
         playlist_id: playlist.id,
       });
     }
-    // Set selected playlist locally and update URL
     setSelectedPlaylist({
       id: playlist.id,
       name: playlist.name,
@@ -157,8 +142,6 @@ const AllPlaylists = () => {
     }
   };
 
-  const currentPlaylists = activeTab === "mood" ? moodPlaylists : genrePlaylists;
-
   // Show playlist detail view when a playlist is selected
   if (selectedPlaylist) {
     return (
@@ -200,30 +183,10 @@ const AllPlaylists = () => {
                 {t("home.allPlaylists") || "All Playlists"}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {moodPlaylists.length + genrePlaylists.length} {t("library.playlists") || "playlists"}
+                {allPlaylists.length} {t("library.playlists") || "playlists"}
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 px-4 pb-4 md:px-6">
-          <Button
-            variant={activeTab === "mood" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("mood")}
-            className="rounded-full"
-          >
-            {t("home.byMood") || "By Mood"} ({moodPlaylists.length})
-          </Button>
-          <Button
-            variant={activeTab === "genre" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("genre")}
-            className="rounded-full"
-          >
-            {t("home.byGenre") || "By Genre"} ({genrePlaylists.length})
-          </Button>
         </div>
       </div>
 
@@ -238,9 +201,9 @@ const AllPlaylists = () => {
               />
             ))}
           </div>
-        ) : currentPlaylists.length > 0 ? (
+        ) : allPlaylists.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {currentPlaylists.map((playlist) => (
+            {allPlaylists.map((playlist) => (
               <PlaylistCard
                 key={playlist.id}
                 playlist={{
