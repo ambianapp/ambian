@@ -44,8 +44,11 @@ const PlaylistDetailView = ({
 
   useEffect(() => {
     loadPlaylistTracks();
+  }, [playlistId]);
+
+  useEffect(() => {
     checkIfLiked();
-  }, [playlistId, user]);
+  }, [playlistId, user?.id]);
 
   useEffect(() => {
     let cancelled = false;
