@@ -71,6 +71,10 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
+      customer_update: customerId ? {
+        name: "auto",
+        address: "auto",
+      } : undefined,
       line_items: [
         {
           price: DEVICE_SLOT_PRICE_ID,
@@ -78,7 +82,22 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      allow_promotion_codes: true, // Enable coupon/promo code entry
+      allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
+      billing_address_collection: "required",
+      custom_fields: [
+        {
+          key: "company_name",
+          label: { type: "custom", custom: "Company Name" },
+          type: "text",
+        },
+        {
+          key: "company_address",
+          label: { type: "custom", custom: "Company Address" },
+          type: "text",
+        },
+      ],
       success_url: `${returnOrigin}/profile?device_added=true`,
       cancel_url: `${returnOrigin}/profile`,
       metadata: {
