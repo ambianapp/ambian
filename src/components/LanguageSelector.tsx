@@ -21,9 +21,8 @@ const LanguageSelector = () => {
 
   return (
     <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
-      <SelectTrigger className="w-auto gap-2 bg-secondary/50 border-border/50 hover:bg-secondary/80 h-9 px-3">
+      <SelectTrigger className="w-auto bg-secondary/50 border-border/50 hover:bg-secondary/80 h-9 px-3 [&>span:last-child]:hidden">
         <span className="text-lg">{languageFlags[language]}</span>
-        <SelectValue />
       </SelectTrigger>
       <SelectContent className="bg-popover border-border z-50">
         {availableLanguages.map((lang) => (
