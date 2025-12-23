@@ -330,7 +330,7 @@ const Profile = () => {
             )}
 
             {/* Plan Change Options */}
-            {subscription.subscribed && (
+            {subscription.subscribed && !subscription.isTrial && (
               <div className="p-4 rounded-lg border border-border">
                 <p className="font-medium text-foreground mb-3">{t("subscription.changePlan")}</p>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -367,6 +367,20 @@ const Profile = () => {
                     </Button>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Subscribe Now for Trial Users */}
+            {subscription.isTrial && (
+              <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                <p className="font-medium text-foreground mb-3">{t("subscription.subscribeNow")}</p>
+                <Button
+                  variant="default"
+                  onClick={() => navigate("/pricing")}
+                  className="w-full sm:w-auto"
+                >
+                  {t("subscription.subscribeNow")}
+                </Button>
               </div>
             )}
 
