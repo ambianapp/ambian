@@ -53,6 +53,16 @@ serve(async (req) => {
     { global: { headers: { Authorization: authHeader } } }
   );
 
+  // Admin client for subscription checks and rollback
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
+  let rollbackUserId: string | null = null;
+  let didUpsertPendingPayment = false;
+
   try {
     logStep("Function started");
 
@@ -63,20 +73,14 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
+    rollbackUserId = user.id;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Create admin client for subscription checks
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // Check if user already has a pending payment or unpaid invoice history
+    // Check if user already has a pending payment (and verify Stripe state)
     const { data: existingSub } = await supabaseAdmin
       .from("subscriptions")
       .select("status, current_period_end")
@@ -85,9 +89,40 @@ serve(async (req) => {
 
     if (existingSub?.status === "pending_payment") {
       const periodEnd = existingSub.current_period_end ? new Date(existingSub.current_period_end) : null;
+
+      // If grace period is still active, only block if there's actually an open invoice in Stripe.
       if (periodEnd && periodEnd > new Date()) {
-        logStep("User already has pending invoice", { until: periodEnd.toISOString() });
-        throw new Error("You already have a pending invoice. Please check your email or wait for it to expire before requesting a new one.");
+        const customersForPending = await stripe.customers.list({ email: user.email, limit: 1 });
+        const pendingCustomerId = customersForPending.data[0]?.id;
+
+        if (pendingCustomerId) {
+          const openInvoices = await stripe.invoices.list({
+            customer: pendingCustomerId,
+            status: "open",
+            limit: 10,
+          });
+
+          if (openInvoices.data.length > 0) {
+            logStep("User already has pending invoice", { until: periodEnd.toISOString(), open: openInvoices.data.length });
+            throw new Error(
+              "You already have a pending invoice. Please check your email or wait for it to expire before requesting a new one."
+            );
+          }
+        }
+
+        // No open invoice found -> clear stale pending state
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            status: "inactive",
+            current_period_start: null,
+            current_period_end: null,
+            stripe_subscription_id: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id);
+
+        logStep("Cleared stale pending_payment state (no open invoices found)");
       }
     }
 
@@ -225,6 +260,7 @@ serve(async (req) => {
     if (subError) {
       logStep("Error creating grace period subscription", { error: subError.message });
     } else {
+      didUpsertPendingPayment = true;
       logStep("Grace period subscription created", { userId: user.id, until: gracePeriodEnd.toISOString() });
     }
 
@@ -315,6 +351,27 @@ serve(async (req) => {
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Roll back pending access if invoice/subscription creation failed
+    if (rollbackUserId && didUpsertPendingPayment) {
+      const { error: rollbackError } = await supabaseAdmin
+        .from("subscriptions")
+        .update({
+          status: "inactive",
+          current_period_start: null,
+          current_period_end: null,
+          stripe_subscription_id: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", rollbackUserId);
+
+      if (rollbackError) {
+        logStep("Rollback failed", { error: rollbackError.message });
+      } else {
+        logStep("Rolled back pending_payment after failure", { userId: rollbackUserId });
+      }
+    }
+
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

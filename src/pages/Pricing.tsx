@@ -201,20 +201,40 @@ const Pricing = () => {
       setPostalCode("");
       setCountry("FI");
     } catch (error: any) {
-      const errorMessage = error.message || "Failed to create invoice";
-      
+      // Supabase edge function errors sometimes come back as a generic message even when the
+      // function returns JSON like { error: "..." }. Try to extract the real message.
+      let errorMessage = error?.message || "Failed to create invoice";
+
+      const maybeBody = error?.context?.body;
+      if (typeof maybeBody === "string") {
+        try {
+          const parsed = JSON.parse(maybeBody);
+          if (parsed?.error) errorMessage = parsed.error;
+        } catch {
+          // ignore
+        }
+      } else if (maybeBody && typeof maybeBody === "object" && maybeBody.error) {
+        errorMessage = maybeBody.error;
+      }
+
       // Parse specific error cases for clearer UI
       let title = "Invoice Error";
       let description = errorMessage;
-      
-      if (errorMessage.includes("unpaid invoice")) {
+
+      if (errorMessage.includes("pending invoice")) {
+        title = "Invoice Already Sent";
+        description = "You already have an open invoice. Please check your email and pay it (or wait until it expires) before requesting a new one.";
+      } else if (errorMessage.includes("location isn't recognized")) {
+        title = "Address Needed for VAT";
+        description = "Please enter your full address (street, postal code, city, country) so VAT can be calculated.";
+      } else if (errorMessage.includes("unpaid invoice")) {
         title = "Unpaid Invoice Exists";
         description = "You have an unpaid invoice. Please check your email and pay the existing invoice first, or contact support if you need help.";
       } else if (errorMessage.includes("invoice history")) {
         title = "Invoice Payment Required";
         description = "Due to previous unpaid invoices, please use card payment instead.";
       }
-      
+
       toast({
         title,
         description,
