@@ -90,14 +90,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Update Password",
     "auth.invalidResetLink": "Invalid reset link",
     "auth.invalidResetLinkDesc": "This password reset link is invalid or has expired",
-    "auth.forgotPasswordDesc": "Enter your email and we'll send you a code to reset your password.",
+    "auth.forgotPasswordDesc": "Enter your email and we'll send you a link to reset your password.",
     "auth.sendResetLink": "Send Reset Link",
-    "auth.sendCode": "Send Code",
-    "auth.enterCode": "Enter Reset Code",
-    "auth.enterCodeDesc": "We sent a 6-character code to your email. Enter it below with your new password.",
-    "auth.verificationCode": "Verification Code",
-    "auth.invalidCode": "Invalid verification code",
-    "auth.enterOtp": "Please enter the 6-character code",
+    "auth.checkEmail": "Check your email",
+    "auth.resetLinkSent": "Reset link sent",
+    "auth.resetLinkSentDesc": "We've sent a password reset link to your email. Click the link to set a new password.",
+    "auth.didntReceive": "Didn't receive the email? Check your spam folder or",
+    "auth.tryAgain": "Try again",
     "auth.backToLogin": "Back to login",
     
     // Profile
@@ -450,6 +449,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.invalidResetLinkDesc": "Denna återställningslänk är ogiltig eller har gått ut",
     "auth.forgotPasswordDesc": "Ange din e-post så skickar vi en länk för att återställa ditt lösenord.",
     "auth.sendResetLink": "Skicka återställningslänk",
+    "auth.checkEmail": "Kolla din e-post",
+    "auth.resetLinkSent": "Återställningslänk skickad",
+    "auth.resetLinkSentDesc": "Vi har skickat en länk till din e-post. Klicka på länken för att ange ett nytt lösenord.",
+    "auth.didntReceive": "Fick du inte mejlet? Kolla skräpposten eller",
+    "auth.tryAgain": "Försök igen",
     "auth.backToLogin": "Tillbaka till inloggning",
     
     // Profile
@@ -802,6 +806,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.invalidResetLinkDesc": "Tämä salasanan palautuslinkki on virheellinen tai vanhentunut",
     "auth.forgotPasswordDesc": "Syötä sähköpostiosoitteesi, niin lähetämme sinulle linkin salasanan nollaamiseen.",
     "auth.sendResetLink": "Lähetä palautuslinkki",
+    "auth.checkEmail": "Tarkista sähköpostisi",
+    "auth.resetLinkSent": "Palautuslinkki lähetetty",
+    "auth.resetLinkSentDesc": "Olemme lähettäneet salasanan palautuslinkin sähköpostiisi. Klikkaa linkkiä asettaaksesi uuden salasanan.",
+    "auth.didntReceive": "Etkö saanut sähköpostia? Tarkista roskaposti tai",
+    "auth.tryAgain": "Yritä uudelleen",
     "auth.backToLogin": "Takaisin kirjautumiseen",
     
     // Profile
@@ -1154,6 +1163,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.invalidResetLinkDesc": "Dieser Passwort-Reset-Link ist ungültig oder abgelaufen",
     "auth.forgotPasswordDesc": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.",
     "auth.sendResetLink": "Reset-Link senden",
+    "auth.checkEmail": "Überprüfen Sie Ihre E-Mail",
+    "auth.resetLinkSent": "Reset-Link gesendet",
+    "auth.resetLinkSentDesc": "Wir haben einen Link zum Zurücksetzen Ihres Passworts an Ihre E-Mail gesendet. Klicken Sie auf den Link, um ein neues Passwort festzulegen.",
+    "auth.didntReceive": "E-Mail nicht erhalten? Überprüfen Sie den Spam-Ordner oder",
+    "auth.tryAgain": "Erneut versuchen",
     "auth.backToLogin": "Zurück zur Anmeldung",
     
     // Profile
@@ -1506,6 +1520,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.invalidResetLinkDesc": "Ce lien de réinitialisation est invalide ou a expiré",
     "auth.forgotPasswordDesc": "Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
     "auth.sendResetLink": "Envoyer le lien",
+    "auth.checkEmail": "Vérifiez votre email",
+    "auth.resetLinkSent": "Lien envoyé",
+    "auth.resetLinkSentDesc": "Nous avons envoyé un lien de réinitialisation à votre email. Cliquez sur le lien pour définir un nouveau mot de passe.",
+    "auth.didntReceive": "Vous n'avez pas reçu l'email ? Vérifiez vos spams ou",
+    "auth.tryAgain": "Réessayer",
     "auth.backToLogin": "Retour à la connexion",
     
     // Profile
