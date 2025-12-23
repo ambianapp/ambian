@@ -121,6 +121,25 @@ const PlayerBar = () => {
     isPreloadingRef.current = false;
   }, [currentTrack?.id]);
 
+  // Global keyboard shortcut for space bar play/pause
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if not typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      
+      if (e.code === 'Space' && currentTrack) {
+        e.preventDefault();
+        handlePlayPause();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentTrack, handlePlayPause]);
+
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
     const requestWakeLock = async () => {
