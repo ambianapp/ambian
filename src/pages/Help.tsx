@@ -5,17 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-// Custom AirPlay icon matching iOS design (triangle with concentric arcs)
-const AirPlayIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06 12.04 12.04 0 0 1 3.52 8.5.75.75 0 0 0 1.5 0c0-3.52-1.42-6.72-3.96-9.06Z" opacity="0.5"/>
-    <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06c4.68 4.68 7.28 10.92 7.28 17.47a.75.75 0 0 0 1.5 0c0-6.92-2.76-13.51-7.72-18.53Z" opacity="0.3"/>
-    <path d="M17.72 5.22a.75.75 0 0 1 1.06 1.06 12.04 12.04 0 0 0-3.52 8.5.75.75 0 0 1-1.5 0c0-3.52 1.42-6.72 3.96-9.06Z" opacity="0.5"/>
-    <path d="M20.47 2.47a.75.75 0 0 1 1.06 1.06c-4.68 4.68-7.28 10.92-7.28 17.47a.75.75 0 0 1-1.5 0c0-6.92 2.76-13.51 7.72-18.53Z" opacity="0.3"/>
-    <path d="M12 12l-5 8h10l-5-8Z"/>
-  </svg>
-);
-
 const Help = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -149,7 +138,7 @@ const Help = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AirPlayIcon className="w-5 h-5 text-primary" />
+              <Speaker className="w-5 h-5 text-primary" />
               {t("help.airplay")}
             </CardTitle>
             <CardDescription>{t("help.airplayDesc")}</CardDescription>
@@ -162,9 +151,7 @@ const Help = () => {
               </h4>
               <ol className="list-decimal list-inside space-y-2 text-muted-foreground ml-2">
                 <li>{t("help.airplayStep1")}</li>
-                <li>
-                  {t("help.airplayStep2Pre")} <AirPlayIcon className="inline w-4 h-4 text-primary mx-1" />
-                </li>
+                <li>{t("help.airplayStep2")}</li>
                 <li>{t("help.airplayStep3")}</li>
                 <li>{t("help.airplayStep4")}</li>
               </ol>
