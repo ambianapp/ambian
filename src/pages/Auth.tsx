@@ -90,6 +90,15 @@ const Auth = () => {
         });
         if (error) throw error;
         
+        // Add user to Resend audience (don't block signup if this fails)
+        try {
+          await supabase.functions.invoke('add-to-audience', {
+            body: { email }
+          });
+        } catch (audienceError) {
+          console.error('Failed to add to audience:', audienceError);
+        }
+        
         toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
         navigate("/");
       }
