@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
 import { usePlaylistScheduler } from "@/hooks/usePlaylistScheduler";
+import { useNavigate } from "react-router-dom";
 
 interface SelectedPlaylist {
   id: string;
@@ -34,10 +35,22 @@ const Index = () => {
   // Auto-play scheduled playlists
   const { isEnabled: schedulerEnabled, toggleScheduler } = usePlaylistScheduler();
 
-  // Handle checkout callback
+  const navigate = useNavigate();
+  const { syncDeviceSlots } = useAuth();
+
+  // Handle checkout callback and device added
   useEffect(() => {
     const checkoutStatus = searchParams.get("checkout");
-    if (checkoutStatus === "success") {
+    const deviceAdded = searchParams.get("device_added");
+    
+    if (deviceAdded === "true") {
+      syncDeviceSlots();
+      toast({
+        title: "Device slot added!",
+        description: "You can now use your account on an additional device.",
+      });
+      navigate("/", { replace: true });
+    } else if (checkoutStatus === "success") {
       toast({
         title: "Welcome to Ambian!",
         description: "Your subscription is now active. Enjoy the music!",
@@ -52,7 +65,7 @@ const Index = () => {
       });
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [searchParams, checkSubscription, toast]);
+  }, [searchParams, checkSubscription, syncDeviceSlots, toast, navigate]);
 
   // Real-time trial expiry check - lock user out when trial ends
   useEffect(() => {
