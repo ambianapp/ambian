@@ -138,11 +138,18 @@ const Profile = () => {
     setIsChangingPlan(true);
     try {
       const { data, error } = await supabase.functions.invoke("change-subscription-plan", {
-        body: { newPlan }
+        body: { newPlan },
       });
       if (error) throw error;
-      
-      // Open Stripe billing portal for plan change confirmation
+
+      if (data?.fallback) {
+        toast({
+          title: t("subscription.manageBtn"),
+          description: t("subscription.changePlan") + ".",
+        });
+      }
+
+      // Open Stripe portal (either confirm flow or standard portal fallback)
       if (data?.url) {
         window.open(data.url, "_blank");
       }
