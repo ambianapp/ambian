@@ -290,9 +290,18 @@ const Profile = () => {
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
               <div>
                 <p className="font-medium text-foreground">
-                  {subscription.subscribed ? t("subscription.active") : t("subscription.inactive")}
+                  {subscription.isTrial 
+                    ? t("subscription.trial") 
+                    : subscription.subscribed 
+                      ? t("subscription.active") 
+                      : t("subscription.inactive")}
                 </p>
-                {subscription.subscribed && (
+                {subscription.isTrial && (
+                  <p className="text-sm text-muted-foreground">
+                    {t("subscription.trialDaysRemaining", { days: subscription.trialDaysRemaining })}
+                  </p>
+                )}
+                {subscription.subscribed && !subscription.isTrial && subscription.planType && (
                   <p className="text-sm text-muted-foreground">
                     {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
                   </p>
@@ -301,11 +310,13 @@ const Profile = () => {
               <div
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   subscription.subscribed
-                    ? "bg-primary/20 text-primary"
+                    ? subscription.isTrial 
+                      ? "bg-yellow-500/20 text-yellow-500"
+                      : "bg-primary/20 text-primary"
                     : "bg-destructive/20 text-destructive"
                 }`}
               >
-                {subscription.subscribed ? "Active" : "Inactive"}
+                {subscription.isTrial ? t("subscription.trial") : subscription.subscribed ? "Active" : "Inactive"}
               </div>
             </div>
 
