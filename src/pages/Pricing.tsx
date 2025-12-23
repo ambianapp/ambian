@@ -406,19 +406,36 @@ const Pricing = () => {
           ) : (
             <>
               {/* Invoice Option */}
-              <div className="flex flex-col items-center gap-4">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={() => setShowInvoiceDialog(true)}
-                >
-                  <FileText className="w-4 h-4" />
-                  Pay by Invoice
-                </Button>
-                <p className="text-sm text-muted-foreground text-center">
-                  Prices shown exclude VAT. VAT will be calculated based on your location.
-                </p>
-              </div>
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Pay by Invoice
+                    <div className="relative group">
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <p className="font-normal">Your subscription starts immediately. We'll send an invoice to your email with 7 days to complete the payment.</p>
+                      </div>
+                    </div>
+                  </CardTitle>
+                  <CardDescription>
+                    Receive invoice with 7 days payment terms
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowInvoiceDialog(true)}
+                  >
+                    Request Invoice
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <p className="text-sm text-muted-foreground text-center">
+                Prices shown exclude VAT. VAT will be calculated based on your location.
+              </p>
             </>
           )}
         </div>
