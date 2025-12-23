@@ -294,7 +294,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   return (
     <>
       {/* Welcome dialog for new users */}
-      {user && <WelcomeDialog userId={user.id} />}
+      {user && <WelcomeDialog userId={user.id} userCreatedAt={user.created_at} />}
       
       <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
         <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
