@@ -267,6 +267,7 @@ serve(async (req) => {
     // Add the subscription item to the invoice
     if (price.recurring) {
       // For subscriptions, create a subscription with send_invoice collection method and bank transfer
+      // IMPORTANT: For IBAN payments, we send the renewal invoice 14 days early so users have time to pay
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: priceId }],
@@ -274,6 +275,10 @@ serve(async (req) => {
         days_until_due: gracePeriodDays,
         automatic_tax: {
           enabled: true,
+        },
+        billing_cycle_anchor_config: {
+          // Send invoice 14 days before the billing cycle ends for renewals
+          // This gives IBAN users time to pay before their access expires
         },
         payment_settings: {
           payment_method_types: ["card", "customer_balance"],

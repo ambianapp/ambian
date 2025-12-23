@@ -96,6 +96,36 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Handle invoice.upcoming - sent ~3 days before renewal for send_invoice subscriptions
+    // This is our cue to extend access grace period for IBAN payers
+    if (event.type === "invoice.upcoming") {
+      const invoice = event.data.object as Stripe.Invoice;
+      logStep("Upcoming invoice", { customerId: invoice.customer, subscriptionId: invoice.subscription });
+      
+      // Get user from subscription metadata
+      if (invoice.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+        const userId = subscription.metadata?.user_id;
+        
+        if (userId) {
+          // Extend grace period by 14 days from now to cover IBAN payment time
+          const gracePeriodEnd = new Date();
+          gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 14);
+          
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({
+              status: "pending_payment",
+              current_period_end: gracePeriodEnd.toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", userId);
+          
+          logStep("Extended grace period for upcoming renewal", { userId, until: gracePeriodEnd.toISOString() });
+        }
+      }
+    }
+
     // Handle invoice events
     if (event.type === "invoice.paid") {
       const invoice = event.data.object as Stripe.Invoice;
