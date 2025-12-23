@@ -99,10 +99,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Get or create a persistent device ID (survives token refreshes)
+  const getDeviceId = useCallback(() => {
+    const storageKey = 'ambian_device_id';
+    let deviceId = localStorage.getItem(storageKey);
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem(storageKey, deviceId);
+    }
+    return deviceId;
+  }, []);
+
   // Register session via edge function (uses service role to kick out older devices)
-  const registerSession = useCallback(async (userId: string, sessionAccessToken: string) => {
+  const registerSession = useCallback(async (userId: string) => {
     try {
-      const sessionId = sessionAccessToken.slice(-32);
+      const sessionId = getDeviceId(); // Use persistent device ID instead of token
       const deviceInfo = navigator.userAgent;
 
       const { data, error } = await supabase.functions.invoke("register-session", {
@@ -123,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Network errors during registration shouldn't break the app
       console.warn("Session registration error (non-critical):", error);
     }
-  }, []);
+  }, [getDeviceId]);
 
   // Validate current session against active_sessions table
   // Returns: 'valid' | 'kicked' | 'error'
@@ -131,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (isSigningOut.current) return 'valid';
     
     try {
-      const sessionId = currentSession.access_token.slice(-32);
+      const sessionId = getDeviceId(); // Use persistent device ID
       
       // Check if this session is in the active sessions list
       const { data, error } = await supabase
@@ -160,14 +171,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn("Error validating session (will retry):", error);
       return 'error'; // Network error, don't kick out
     }
-  }, []);
+  }, [getDeviceId]);
 
   const signOut = async () => {
     isSigningOut.current = true;
     try {
       // Clear only this device's session, not all sessions
-      if (user && session) {
-        const sessionId = session.access_token.slice(-32);
+      if (user) {
+        const sessionId = getDeviceId(); // Use persistent device ID
         await supabase
           .from("active_sessions")
           .delete()
@@ -202,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             // Register session on sign in to kick out other devices
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-              registerSession(session.user.id, session.access_token);
+              registerSession(session.user.id);
             }
           }, 0);
         } else {
@@ -222,7 +233,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         checkAdminRole(session.user.id);
         checkSubscription(session);
         // Register session on app load
-        registerSession(session.user.id, session.access_token);
+        registerSession(session.user.id);
       }
     });
 
@@ -279,7 +290,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTimeout(async () => {
           const latestSession = (await supabase.auth.getSession()).data.session;
           if (latestSession?.user) {
-            await registerSession(latestSession.user.id, latestSession.access_token);
+            await registerSession(latestSession.user.id);
             setTimeout(validateAndKickIfNeeded, 2000);
           }
         }, 1000);
