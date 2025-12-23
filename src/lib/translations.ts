@@ -370,6 +370,19 @@ export const translations: Record<Language, Record<string, string>> = {
     "schedule.dayThu": "Thu",
     "schedule.dayFri": "Fri",
     "schedule.daySat": "Sat",
+    
+    // Quick Mix
+    "quickMix.title": "Quick Mix",
+    "quickMix.button": "Quick Mix",
+    "quickMix.description": "Select multiple playlists to shuffle their songs together",
+    "quickMix.searchPlaylists": "Search playlists...",
+    "quickMix.selectAll": "Select All",
+    "quickMix.deselectAll": "Deselect All",
+    "quickMix.selected": "{count} selected",
+    "quickMix.loading": "Loading...",
+    "quickMix.noPlaylists": "No playlists found",
+    "quickMix.playMix": "Play Mix ({count} playlists)",
+    "quickMix.loadingPlay": "Loading...",
   },
   
   sv: {
@@ -733,6 +746,19 @@ export const translations: Record<Language, Record<string, string>> = {
     "schedule.dayThu": "Tor",
     "schedule.dayFri": "Fre",
     "schedule.daySat": "Lör",
+    
+    // Quick Mix
+    "quickMix.title": "Snabbmix",
+    "quickMix.button": "Snabbmix",
+    "quickMix.description": "Välj flera spellistor för att blanda deras låtar",
+    "quickMix.searchPlaylists": "Sök spellistor...",
+    "quickMix.selectAll": "Välj alla",
+    "quickMix.deselectAll": "Avmarkera alla",
+    "quickMix.selected": "{count} valda",
+    "quickMix.loading": "Laddar...",
+    "quickMix.noPlaylists": "Inga spellistor hittades",
+    "quickMix.playMix": "Spela mix ({count} spellistor)",
+    "quickMix.loadingPlay": "Laddar...",
   },
   
   fi: {
@@ -1096,6 +1122,19 @@ export const translations: Record<Language, Record<string, string>> = {
     "schedule.dayThu": "To",
     "schedule.dayFri": "Pe",
     "schedule.daySat": "La",
+    
+    // Quick Mix
+    "quickMix.title": "Pikamix",
+    "quickMix.button": "Pikamix",
+    "quickMix.description": "Valitse useita soittolistoja sekoittaaksesi niiden kappaleet",
+    "quickMix.searchPlaylists": "Hae soittolistoja...",
+    "quickMix.selectAll": "Valitse kaikki",
+    "quickMix.deselectAll": "Poista valinnat",
+    "quickMix.selected": "{count} valittu",
+    "quickMix.loading": "Ladataan...",
+    "quickMix.noPlaylists": "Soittolistoja ei löytynyt",
+    "quickMix.playMix": "Toista mix ({count} soittolistaa)",
+    "quickMix.loadingPlay": "Ladataan...",
   },
   
   de: {
@@ -1459,6 +1498,19 @@ export const translations: Record<Language, Record<string, string>> = {
     "schedule.dayThu": "Do",
     "schedule.dayFri": "Fr",
     "schedule.daySat": "Sa",
+    
+    // Quick Mix
+    "quickMix.title": "Schnellmix",
+    "quickMix.button": "Schnellmix",
+    "quickMix.description": "Wähle mehrere Playlists aus, um ihre Songs zu mischen",
+    "quickMix.searchPlaylists": "Playlists suchen...",
+    "quickMix.selectAll": "Alle auswählen",
+    "quickMix.deselectAll": "Alle abwählen",
+    "quickMix.selected": "{count} ausgewählt",
+    "quickMix.loading": "Laden...",
+    "quickMix.noPlaylists": "Keine Playlists gefunden",
+    "quickMix.playMix": "Mix abspielen ({count} Playlists)",
+    "quickMix.loadingPlay": "Laden...",
   },
   
   fr: {
@@ -1822,5 +1874,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "schedule.dayThu": "Jeu",
     "schedule.dayFri": "Ven",
     "schedule.daySat": "Sam",
+    
+    // Quick Mix
+    "quickMix.title": "Mix rapide",
+    "quickMix.button": "Mix rapide",
+    "quickMix.description": "Sélectionnez plusieurs playlists pour mélanger leurs chansons",
+    "quickMix.searchPlaylists": "Rechercher des playlists...",
+    "quickMix.selectAll": "Tout sélectionner",
+    "quickMix.deselectAll": "Tout désélectionner",
+    "quickMix.selected": "{count} sélectionnées",
+    "quickMix.loading": "Chargement...",
+    "quickMix.noPlaylists": "Aucune playlist trouvée",
+    "quickMix.playMix": "Lancer le mix ({count} playlists)",
+    "quickMix.loadingPlay": "Chargement...",
   },
 };

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Track } from "@/data/musicData";
 
@@ -24,6 +25,7 @@ interface QuickMixDialogProps {
 
 const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [allPlaylists, setAllPlaylists] = useState<DbPlaylist[]>([]);
   const [filteredPlaylists, setFilteredPlaylists] = useState<DbPlaylist[]>([]);
@@ -169,7 +171,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
         {trigger || (
           <Button variant="outline" className="gap-2">
             <Shuffle className="w-4 h-4" />
-            Quick Mix
+            {t("quickMix.button")}
           </Button>
         )}
       </DialogTrigger>
@@ -177,19 +179,19 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shuffle className="w-5 h-5 text-primary" />
-            Quick Mix
+            {t("quickMix.title")}
           </DialogTitle>
         </DialogHeader>
         
         <p className="text-sm text-muted-foreground">
-          Select multiple playlists to shuffle their songs together
+          {t("quickMix.description")}
         </p>
 
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search playlists..."
+            placeholder={t("quickMix.searchPlaylists")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -204,12 +206,12 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
             onClick={handleSelectAll}
           >
             {selectedIds.size === filteredPlaylists.length && filteredPlaylists.length > 0 
-              ? "Deselect All" 
-              : "Select All"}
+              ? t("quickMix.deselectAll")
+              : t("quickMix.selectAll")}
           </Button>
           {selectedIds.size > 0 && (
             <span className="text-sm text-muted-foreground">
-              {selectedIds.size} selected
+              {t("quickMix.selected").replace("{count}", String(selectedIds.size))}
             </span>
           )}
         </div>
@@ -218,9 +220,9 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
         <div className="flex-1 min-h-0 h-[300px] -mx-6 px-6 overflow-y-auto overscroll-contain">
           <div className="space-y-1 py-2">
             {isLoading ? (
-              <p className="text-center text-muted-foreground py-8">Loading...</p>
+              <p className="text-center text-muted-foreground py-8">{t("quickMix.loading")}</p>
             ) : filteredPlaylists.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No playlists found</p>
+              <p className="text-center text-muted-foreground py-8">{t("quickMix.noPlaylists")}</p>
             ) : (
               filteredPlaylists.map((playlist) => (
                 <button
@@ -258,7 +260,9 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
             className="w-full gap-2"
           >
             <Play className="w-4 h-4" />
-            {isPlaying ? "Loading..." : `Play Mix (${selectedIds.size} playlists)`}
+            {isPlaying 
+              ? t("quickMix.loadingPlay")
+              : t("quickMix.playMix").replace("{count}", String(selectedIds.size))}
           </Button>
         </div>
       </DialogContent>
