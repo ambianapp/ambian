@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, Send, X, Loader2, Bot, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,17 +28,29 @@ const AIChatbot: React.FC = () => {
   }, [messages]);
 
   const streamChat = async (userMessages: Message[]) => {
+    // Get the current session for authenticated requests
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error("Please sign in to use the AI assistant");
+    }
+
     const response = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+      
+      if (response.status === 401) {
+        throw new Error("Please sign in to use the AI assistant");
+      }
+      
       throw new Error(errorData.error || `Request failed with status ${response.status}`);
     }
 
