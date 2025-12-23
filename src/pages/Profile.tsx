@@ -19,6 +19,7 @@ interface Invoice {
   currency: string;
   date: number;
   status: string;
+  dueDate: number | null;
   pdfUrl: string | null;
   hostedUrl: string | null;
 }
@@ -290,21 +291,41 @@ const Profile = () => {
             <CardDescription>{t("subscription.manage")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Pending Payment Alert */}
+            {subscription.isPendingPayment && (
+              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <div className="flex items-center gap-2 text-yellow-500 mb-2">
+                  <Mail className="w-5 h-5" />
+                  <span className="font-semibold">{t("subscription.pendingPayment") || "Invoice Sent"}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("subscription.pendingPaymentDesc") || "Check your email for the invoice. You have access until the payment deadline."}
+                </p>
+                {subscription.subscriptionEnd && (
+                  <p className="text-sm text-yellow-500/80 mt-2">
+                    {t("subscription.paymentDeadline") || "Payment deadline"}: {new Date(subscription.subscriptionEnd).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
               <div>
                 <p className="font-medium text-foreground">
-                  {subscription.isTrial 
-                    ? t("subscription.trial") 
-                    : subscription.subscribed 
-                      ? t("subscription.active") 
-                      : t("subscription.inactive")}
+                  {subscription.isPendingPayment
+                    ? t("subscription.awaitingPayment") || "Awaiting Payment"
+                    : subscription.isTrial 
+                      ? t("subscription.trial") 
+                      : subscription.subscribed 
+                        ? t("subscription.active") 
+                        : t("subscription.inactive")}
                 </p>
                 {subscription.isTrial && (
                   <p className="text-sm text-muted-foreground">
                     {t("subscription.trialDaysRemaining", { days: subscription.trialDaysRemaining })}
                   </p>
                 )}
-                {subscription.subscribed && !subscription.isTrial && subscription.planType && (
+                {subscription.subscribed && !subscription.isTrial && !subscription.isPendingPayment && subscription.planType && (
                   <p className="text-sm text-muted-foreground">
                     {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
                   </p>
@@ -312,14 +333,22 @@ const Profile = () => {
               </div>
               <div
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  subscription.subscribed
-                    ? subscription.isTrial 
-                      ? "bg-yellow-500/20 text-yellow-500"
-                      : "bg-primary/20 text-primary"
-                    : "bg-destructive/20 text-destructive"
+                  subscription.isPendingPayment
+                    ? "bg-yellow-500/20 text-yellow-500"
+                    : subscription.subscribed
+                      ? subscription.isTrial 
+                        ? "bg-yellow-500/20 text-yellow-500"
+                        : "bg-primary/20 text-primary"
+                      : "bg-destructive/20 text-destructive"
                 }`}
               >
-                {subscription.isTrial ? t("subscription.trial") : subscription.subscribed ? "Active" : "Inactive"}
+                {subscription.isPendingPayment 
+                  ? t("subscription.pending") || "Pending" 
+                  : subscription.isTrial 
+                    ? t("subscription.trial") 
+                    : subscription.subscribed 
+                      ? "Active" 
+                      : "Inactive"}
               </div>
             </div>
 
@@ -506,11 +535,15 @@ const Profile = () => {
                     month: 'long', 
                     year: 'numeric' 
                   });
+                  const isOpen = invoice.status === "open";
+                  const dueDate = invoice.dueDate ? new Date(invoice.dueDate * 1000) : null;
                   
                   return (
                     <div
                       key={invoice.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-secondary"
+                      className={`flex items-center justify-between p-4 rounded-lg ${
+                        isOpen ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-secondary"
+                      }`}
                     >
                       <div className="flex-1">
                         <p className="font-medium text-foreground">
@@ -519,12 +552,30 @@ const Profile = () => {
                         <p className="text-sm text-muted-foreground">
                           {invoiceDate.toLocaleDateString()} • {formatCurrency(invoice.amount, invoice.currency)}
                         </p>
+                        {isOpen && dueDate && (
+                          <p className="text-sm text-yellow-500">
+                            {t("invoices.dueBy") || "Due by"}: {dueDate.toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary">
-                          {t("invoices.paid")}
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          isOpen 
+                            ? "bg-yellow-500/20 text-yellow-500" 
+                            : "bg-primary/20 text-primary"
+                        }`}>
+                          {isOpen ? (t("invoices.pending") || "Pending") : t("invoices.paid")}
                         </span>
-                        {invoice.hostedUrl && (
+                        {isOpen && invoice.hostedUrl && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => window.open(invoice.hostedUrl!, "_blank")}
+                          >
+                            {t("invoices.payNow") || "Pay Now"}
+                          </Button>
+                        )}
+                        {!isOpen && invoice.hostedUrl && (
                           <Button
                             variant="ghost"
                             size="icon"

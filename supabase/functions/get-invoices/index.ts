@@ -12,9 +12,15 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith(".lovable.app") ||
+      origin.endsWith(".lovableproject.com"))
+      ? origin
+      : ALLOWED_ORIGINS[0];
   return {
-    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
@@ -54,20 +60,31 @@ serve(async (req) => {
 
     const customerId = customers.data[0].id;
 
+    // Fetch open invoices (pending payment)
+    const openInvoices = await stripe.invoices.list({
+      customer: customerId,
+      status: "open",
+      limit: 10,
+    });
+
     // Fetch paid invoices
-    const invoices = await stripe.invoices.list({
+    const paidInvoices = await stripe.invoices.list({
       customer: customerId,
       status: "paid",
       limit: 20,
     });
 
-    const formattedInvoices = invoices.data.map((invoice: any) => ({
+    // Combine and format - open invoices first
+    const allInvoices = [...openInvoices.data, ...paidInvoices.data];
+
+    const formattedInvoices = allInvoices.map((invoice: any) => ({
       id: invoice.id,
       number: invoice.number,
-      amount: invoice.amount_paid,
+      amount: invoice.status === "paid" ? invoice.amount_paid : invoice.amount_due,
       currency: invoice.currency,
       date: invoice.created,
       status: invoice.status,
+      dueDate: invoice.due_date,
       pdfUrl: invoice.invoice_pdf,
       hostedUrl: invoice.hosted_invoice_url,
     }));
