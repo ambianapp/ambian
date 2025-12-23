@@ -32,30 +32,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true); // Start true, set false when we know there's no session or check completes
+  const SUBSCRIPTION_CACHE_KEY = "ambian_subscription_cache";
+  const SUBSCRIPTION_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+  const loadSubscriptionCache = (): SubscriptionInfo | null => {
+    try {
+      const raw = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { savedAt: number; value: SubscriptionInfo };
+      if (!parsed?.savedAt || !parsed?.value) return null;
+      if (Date.now() - parsed.savedAt > SUBSCRIPTION_CACHE_TTL_MS) return null;
+      return parsed.value;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeSubscriptionCache = (value: SubscriptionInfo) => {
+    try {
+      localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), value }));
+    } catch {
+      // ignore
+    }
+  };
+
+  const cachedSubscription = loadSubscriptionCache();
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [subscription, setSubscription] = useState<SubscriptionInfo>({
-    subscribed: false,
-    planType: null,
-    subscriptionEnd: null,
-    isTrial: false,
-    trialDaysRemaining: 0,
-    trialEnd: null,
-    isRecurring: false,
-    deviceSlots: 1,
-  });
+  const [subscription, setSubscription] = useState<SubscriptionInfo>(
+    cachedSubscription ?? {
+      subscribed: false,
+      planType: null,
+      subscriptionEnd: null,
+      isTrial: false,
+      trialDaysRemaining: 0,
+      trialEnd: null,
+      isRecurring: false,
+      deviceSlots: 1,
+    }
+  );
   
   const isSigningOut = useRef(false);
   const initialLoadComplete = useRef(false);
 
   const checkSubscription = async (overrideSession?: Session | null, isInitialLoad = false) => {
-    // Only set loading state on initial load to avoid glitchy re-renders
-    if (isInitialLoad) {
+    // Only show blocking loading if we have no cache to fall back to
+    if (isInitialLoad && !cachedSubscription) {
       setIsSubscriptionLoading(true);
     }
     try {
-      const currentSession =
-        overrideSession ?? (await supabase.auth.getSession()).data.session;
+      const currentSession = overrideSession ?? (await supabase.auth.getSession()).data.session;
       if (!currentSession) {
         setIsSubscriptionLoading(false);
         return;
@@ -64,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
 
-      setSubscription({
+      const next: SubscriptionInfo = {
         subscribed: data.subscribed,
         planType: data.plan_type,
         subscriptionEnd: data.subscription_end,
@@ -73,7 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         trialEnd: data.trial_end || null,
         isRecurring: data.is_recurring || false,
         deviceSlots: data.device_slots || 1,
-      });
+      };
+
+      setSubscription(next);
+      writeSubscriptionCache(next);
     } catch (error) {
       console.error("Error checking subscription:", error);
     } finally {
@@ -250,7 +279,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
 
       if (session?.user) {
-        setIsSubscriptionLoading(true);
+        // Only block UI if there's no cached subscription state
+        setIsSubscriptionLoading(!cachedSubscription);
         checkAdminRole(session.user.id);
         checkSubscription(session, true).finally(() => {
           initialLoadComplete.current = true;
