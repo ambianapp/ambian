@@ -27,7 +27,7 @@ interface SelectedPlaylist {
 const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
-  const { subscription, checkSubscription, isAdmin } = useAuth();
+  const { subscription, checkSubscription, isAdmin, isLoading } = useAuth();
   const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -96,6 +96,17 @@ const Index = () => {
     setActiveView(view);
     setSelectedPlaylist(null); // Clear playlist when changing views
   }, []);
+
+  // Show loading while checking subscription status
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse">
+          <img src="/ambian-logo.png" alt="Ambian" className="h-16 opacity-50" />
+        </div>
+      </div>
+    );
+  }
 
   if (!subscription.subscribed && !isAdmin) {
     return <SubscriptionGate />;
