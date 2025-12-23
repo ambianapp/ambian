@@ -22,7 +22,7 @@ const Terms = () => {
         <div className="prose prose-invert max-w-none">
           <h1 className="text-3xl font-bold text-foreground mb-6">{t("terms.title")}</h1>
           
-          <p className="text-muted-foreground mb-6">{t("terms.lastUpdated")}: 23.12.2024</p>
+          <p className="text-muted-foreground mb-6">{t("terms.lastUpdated")}: 23.12.2025</p>
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section1Title")}</h2>
