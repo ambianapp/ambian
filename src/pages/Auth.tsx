@@ -91,15 +91,16 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        // Add user to Resend audience only if they opted in
-        if (acceptedMarketing) {
-          try {
-            await supabase.functions.invoke('add-to-audience', {
-              body: { email }
-            });
-          } catch (audienceError) {
-            console.error('Failed to add to audience:', audienceError);
-          }
+        // Add user to Resend audiences
+        try {
+          await supabase.functions.invoke('add-to-audience', {
+            body: { 
+              email,
+              audienceType: acceptedMarketing ? "both" : "all"
+            }
+          });
+        } catch (audienceError) {
+          console.error('Failed to add to audience:', audienceError);
         }
         
         toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
