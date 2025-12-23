@@ -314,14 +314,31 @@ const Pricing = () => {
                 {paymentType === "subscription" ? "Billed monthly" : "One-time payment"}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-foreground mb-1">
-                {currentPlans.monthly.price}
-                {paymentType === "subscription" && (
-                  <span className="text-lg font-normal text-muted-foreground">/month</span>
-                )}
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-4xl font-bold text-foreground mb-1">
+                  {currentPlans.monthly.price}
+                  {paymentType === "subscription" && (
+                    <span className="text-lg font-normal text-muted-foreground">/month</span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">excl. VAT</p>
               </div>
-              <p className="text-xs text-muted-foreground">excl. VAT</p>
+              {selectedPlan === "monthly" && user && (
+                <Button
+                  className="w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCheckout();
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  {paymentType === "subscription" ? "Subscribe Monthly" : "Buy Monthly"}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -341,15 +358,32 @@ const Pricing = () => {
               <CardTitle>{paymentType === "subscription" ? "Yearly" : "1 Year Access"}</CardTitle>
               <CardDescription>{currentPlans.yearly.savings}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-foreground mb-1">
-                {currentPlans.yearly.price}
-                {paymentType === "subscription" && (
-                  <span className="text-lg font-normal text-muted-foreground">/year</span>
-                )}
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-4xl font-bold text-foreground mb-1">
+                  {currentPlans.yearly.price}
+                  {paymentType === "subscription" && (
+                    <span className="text-lg font-normal text-muted-foreground">/year</span>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">≈ €7.40/month</p>
+                <p className="text-xs text-muted-foreground">excl. VAT</p>
               </div>
-              <p className="text-sm text-muted-foreground">≈ €7.40/month</p>
-              <p className="text-xs text-muted-foreground">excl. VAT</p>
+              {selectedPlan === "yearly" && user && (
+                <Button
+                  className="w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCheckout();
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  {paymentType === "subscription" ? "Subscribe Yearly" : "Buy Yearly"}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -371,65 +405,20 @@ const Pricing = () => {
             </div>
           ) : (
             <>
-              {/* Payment Method Selection */}
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Pay Now Option */}
-                <Card className="border-border hover:border-primary/50 transition-all">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <CreditCard className="w-5 h-5 text-primary" />
-                      Pay Now
-                    </CardTitle>
-                    <CardDescription>
-                      Pay immediately with card and receive invoice
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      className="w-full"
-                      onClick={handleCheckout}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : null}
-                      {paymentType === "subscription" ? "Subscribe" : "Buy"} {selectedPlan === "yearly" ? "Yearly" : "Monthly"}
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Invoice Option */}
-                <Card className="border-border hover:border-primary/50 transition-all">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <FileText className="w-5 h-5 text-primary" />
-                      Pay by Invoice
-                      <div className="relative group">
-                        <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                          <p className="font-normal">Your subscription starts immediately. We'll send an invoice to your email with 7 days to complete the payment.</p>
-                        </div>
-                      </div>
-                    </CardTitle>
-                    <CardDescription>
-                      Receive invoice with 7 days payment terms
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setShowInvoiceDialog(true)}
-                    >
-                      Request Invoice
-                    </Button>
-                  </CardContent>
-                </Card>
+              {/* Invoice Option */}
+              <div className="flex flex-col items-center gap-4">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => setShowInvoiceDialog(true)}
+                >
+                  <FileText className="w-4 h-4" />
+                  Pay by Invoice
+                </Button>
+                <p className="text-sm text-muted-foreground text-center">
+                  Prices shown exclude VAT. VAT will be calculated based on your location.
+                </p>
               </div>
-
-              <p className="text-sm text-muted-foreground text-center">
-                Prices shown exclude VAT. VAT will be calculated based on your location.
-              </p>
             </>
           )}
         </div>
