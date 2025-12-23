@@ -213,74 +213,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Profile Card */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              {t("profile.personalInfo")}
-            </CardTitle>
-            <CardDescription>{t("profile.updateDetails")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t("auth.email")}</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={user.email || ""}
-                  disabled
-                  className="pl-10 bg-secondary"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fullName">{t("profile.fullName")}</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Your name"
-                className="bg-card"
-              />
-            </div>
-
-            <Button onClick={handleUpdateProfile} disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {t("common.save")}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Language Card */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              {t("profile.language")}
-            </CardTitle>
-            <CardDescription>{t("profile.selectLanguage")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={language} onValueChange={(value) => setLanguage(value as any)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableLanguages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
-                    {languageNames[lang]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-
         {/* Subscription Card */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -459,58 +391,6 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Device Slots Card */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Monitor className="w-5 h-5" />
-              {t("devices.title")}
-            </CardTitle>
-            <CardDescription>{t("devices.subtitle")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
-              <div>
-                <p className="font-medium text-foreground">{t("devices.active")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.canPlay", { count: subscription.deviceSlots })}
-                </p>
-              </div>
-              <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
-                {subscription.deviceSlots}
-              </div>
-            </div>
-
-            <div className="p-4 rounded-lg border border-border">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
-                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
-                </div>
-                <Button
-                  onClick={handleAddDeviceSlot}
-                  disabled={isLoadingDevice || !subscription.subscribed}
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
-                  {isLoadingDevice ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Plus className="w-4 h-4 mr-2" />
-                  )}
-                  {t("devices.addBtn")}
-                </Button>
-              </div>
-            </div>
-
-            {!subscription.subscribed && (
-              <p className="text-sm text-muted-foreground">
-                {t("devices.subscribeFirst")}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Invoices Card */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -600,6 +480,126 @@ const Profile = () => {
                   );
                 })}
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Profile Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              {t("profile.personalInfo")}
+            </CardTitle>
+            <CardDescription>{t("profile.updateDetails")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("auth.email")}</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={user.email || ""}
+                  disabled
+                  className="pl-10 bg-secondary"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fullName">{t("profile.fullName")}</Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your name"
+                className="bg-card"
+              />
+            </div>
+
+            <Button onClick={handleUpdateProfile} disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {t("common.save")}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Language Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              {t("profile.language")}
+            </CardTitle>
+            <CardDescription>{t("profile.selectLanguage")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={language} onValueChange={(value) => setLanguage(value as any)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableLanguages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {languageNames[lang]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        {/* Device Slots Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="w-5 h-5" />
+              {t("devices.title")}
+            </CardTitle>
+            <CardDescription>{t("devices.subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+              <div>
+                <p className="font-medium text-foreground">{t("devices.active")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.canPlay", { count: subscription.deviceSlots })}
+                </p>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
+                {subscription.deviceSlots}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg border border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
+                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
+                </div>
+                <Button
+                  onClick={handleAddDeviceSlot}
+                  disabled={isLoadingDevice || !subscription.subscribed}
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  {isLoadingDevice ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
+                  {t("devices.addBtn")}
+                </Button>
+              </div>
+            </div>
+
+            {!subscription.subscribed && (
+              <p className="text-sm text-muted-foreground">
+                {t("devices.subscribeFirst")}
+              </p>
             )}
           </CardContent>
         </Card>
