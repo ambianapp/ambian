@@ -144,8 +144,8 @@ const generateEmailHtml = (
               <p style="color: ${brandColors.textMuted}; font-size: 12px; margin: 0 0 4px 0;">
                 © ${new Date().getFullYear()} Ambian. Premium background music for businesses.
               </p>
-              <a href="https://ambian.app" style="color: ${brandColors.primary}; font-size: 12px; text-decoration: none;">
-                ambian.app
+              <a href="https://ambianmusic.com" style="color: ${brandColors.primary}; font-size: 12px; text-decoration: none;">
+                ambianmusic.com
               </a>
             </td>
           </tr>
@@ -225,10 +225,9 @@ serve(async (req) => {
     const content = getEmailContent(type);
     const html = generateEmailHtml(content, otp, email);
 
-    // Send the email via Resend
-    // Use Resend's default domain for testing - update to your verified domain for production
+    // Send the email via Resend using verified domain
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Ambian <onboarding@resend.dev>",
+      from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: content.subject,
       html,
