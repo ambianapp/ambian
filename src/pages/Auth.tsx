@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles } from "lucide-react";
+import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles, KeyRound } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const Auth = () => {
   const { t } = useLanguage();
@@ -17,9 +18,13 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [otpStep, setOtpStep] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; otp?: string; newPassword?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -111,6 +116,8 @@ const Auth = () => {
     }
   };
 
+  const [recoveryToken, setRecoveryToken] = useState("");
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
@@ -120,11 +127,85 @@ const Auth = () => {
     
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Call our custom edge function to send branded email
+      const response = await supabase.functions.invoke('send-auth-email', {
+        body: { email, type: 'recovery' }
       });
-      if (error) throw error;
+      
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+      
+      // Store the token for verification
+      setRecoveryToken(response.data?.token || '');
       setResetEmailSent(true);
+      setOtpStep(true);
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (otp.length !== 6) {
+      setErrors({ otp: t("auth.enterOtp") || "Please enter the 6-digit code" });
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setErrors({ newPassword: t("auth.passwordMin") });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setErrors({ newPassword: t("auth.passwordsNoMatch") });
+      return;
+    }
+    
+    // Check if entered OTP matches the token prefix
+    if (otp.toUpperCase() !== recoveryToken.substring(0, 6).toUpperCase()) {
+      setErrors({ otp: t("auth.invalidCode") || "Invalid verification code" });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Verify using the full token
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: recoveryToken,
+        type: 'recovery'
+      });
+      
+      if (error) throw error;
+      
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (updateError) throw updateError;
+      
+      toast({
+        title: t("auth.passwordUpdated"),
+        description: t("auth.passwordUpdatedDesc"),
+      });
+      
+      // Reset state and go back to login
+      setIsForgotPassword(false);
+      setResetEmailSent(false);
+      setOtpStep(false);
+      setOtp("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setRecoveryToken("");
+      setErrors({});
     } catch (error: any) {
       toast({
         title: t("common.error"),
@@ -143,16 +224,16 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-6 animate-fade-in">
           <div className="text-center">
             <img src={ambianLogo} alt="Ambian" className="h-16 mx-auto mb-6" />
-            {resetEmailSent ? (
+            {otpStep ? (
               <>
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Mail className="w-8 h-8 text-primary" />
+                  <KeyRound className="w-8 h-8 text-primary" />
                 </div>
                 <h1 className="text-2xl font-bold text-foreground mb-2">
-                  {t("auth.resetEmailSent")}
+                  {t("auth.enterCode") || "Enter Reset Code"}
                 </h1>
                 <p className="text-muted-foreground">
-                  {t("auth.resetEmailSentDesc")}
+                  {t("auth.enterCodeDesc") || "We sent a 6-digit code to your email. Enter it below along with your new password."}
                 </p>
               </>
             ) : (
@@ -161,13 +242,81 @@ const Auth = () => {
                   {t("auth.forgotPassword")}
                 </h1>
                 <p className="text-muted-foreground">
-                  {t("auth.forgotPasswordDesc") || "Enter your email and we'll send you a link to reset your password."}
+                  {t("auth.forgotPasswordDesc") || "Enter your email and we'll send you a code to reset your password."}
                 </p>
               </>
             )}
           </div>
 
-          {!resetEmailSent && (
+          {otpStep ? (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t("auth.verificationCode") || "Verification Code"}</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    value={otp}
+                    onChange={setOtp}
+                    maxLength={6}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                {errors.otp && (
+                  <p className="text-sm text-destructive text-center">{errors.otp}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-password">{t("auth.newPassword")}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-10 h-12 bg-card border-border"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">{t("auth.confirmPassword")}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 h-12 bg-card border-border"
+                    required
+                  />
+                </div>
+                {errors.newPassword && (
+                  <p className="text-sm text-destructive">{errors.newPassword}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full h-12" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  t("auth.updatePassword")
+                )}
+              </Button>
+            </form>
+          ) : (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="reset-email">{t("auth.email")}</Label>
@@ -192,7 +341,7 @@ const Auth = () => {
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  t("auth.sendResetLink") || "Send Reset Link"
+                  t("auth.sendCode") || "Send Reset Code"
                 )}
               </Button>
             </form>
@@ -204,6 +353,10 @@ const Auth = () => {
               onClick={() => {
                 setIsForgotPassword(false);
                 setResetEmailSent(false);
+                setOtpStep(false);
+                setOtp("");
+                setNewPassword("");
+                setConfirmPassword("");
                 setErrors({});
               }}
               className="text-sm text-primary hover:underline"
