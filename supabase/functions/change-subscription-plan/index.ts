@@ -88,7 +88,6 @@ serve(async (req) => {
     }
 
     const subscription = subscriptions.data[0];
-    const currentItemId = subscription.items.data[0].id;
     const currentPriceId = subscription.items.data[0].price.id;
     const newPriceId = SUBSCRIPTION_PRICES[newPlan as keyof typeof SUBSCRIPTION_PRICES];
 
@@ -103,46 +102,36 @@ serve(async (req) => {
       throw new Error(`Already on ${newPlan} plan`);
     }
 
-    // Update the subscription
-    const updatedSubscription = await stripe.subscriptions.update(subscription.id, {
-      items: [
-        {
-          id: currentItemId,
-          deleted: true,
+    const returnOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+
+    // Create a Billing Portal session with flow_data to update subscription
+    // This shows the user the proration and lets them confirm
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${returnOrigin}/profile?plan_changed=true`,
+      flow_data: {
+        type: "subscription_update_confirm",
+        subscription_update_confirm: {
+          subscription: subscription.id,
+          items: [
+            {
+              id: subscription.items.data[0].id,
+              price: newPriceId,
+              quantity: 1,
+            },
+          ],
         },
-        {
-          price: newPriceId,
-        },
-      ],
-      proration_behavior: "create_prorations",
+      },
     });
 
-    logStep("Subscription updated", { 
-      subscriptionId: updatedSubscription.id,
-      newPriceId 
+    logStep("Portal session created for plan change", { 
+      url: portalSession.url,
+      newPlan 
     });
-
-    // Update local database
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    await adminClient
-      .from("subscriptions")
-      .update({ 
-        plan_type: newPlan,
-        updated_at: new Date().toISOString()
-      })
-      .eq("user_id", user.id);
-
-    logStep("Database updated");
 
     return new Response(JSON.stringify({ 
-      success: true, 
+      url: portalSession.url,
       newPlan,
-      message: `Successfully changed to ${newPlan} plan`
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
