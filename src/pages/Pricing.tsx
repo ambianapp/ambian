@@ -646,6 +646,10 @@ const Pricing = () => {
                   <option value="US">United States</option>
                 </select>
               </div>
+              <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                <Clock className="w-3 h-3 inline mr-1" />
+                Note: Bank transfers (IBAN) may take several days to process.
+              </p>
               <div className="pt-2">
                 <Button
                   className="w-full"
