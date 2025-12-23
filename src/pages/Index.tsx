@@ -10,6 +10,7 @@ import ScheduleManager from "@/components/ScheduleManager";
 import MobileNav from "@/components/MobileNav";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
+import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 // import AIChatbot from "@/components/AIChatbot"; // Disabled for now
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -139,26 +140,14 @@ const Index = () => {
     setSelectedPlaylist(null); // Clear playlist when changing views
   }, []);
 
-  // Show loading while checking auth (subscription loads in background)
+  // Show loading while checking auth (login / hard refresh)
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse">
-          <img src="/ambian-logo.png" alt="Ambian" className="h-16 opacity-50" />
-        </div>
-      </div>
-    );
+    return <AmbianLoadingScreen label="Loading Ambian…" />;
   }
 
   // On first load (no cached subscription), wait for subscription to resolve.
   if (isSubscriptionLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse">
-          <img src="/ambian-logo.png" alt="Ambian" className="h-16 opacity-50" />
-        </div>
-      </div>
-    );
+    return <AmbianLoadingScreen label="Checking subscription…" />;
   }
 
   if (!subscription.subscribed && !subscription.isTrial && !isAdmin) {
