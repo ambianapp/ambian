@@ -122,7 +122,7 @@ serve(async (req) => {
       const subscriptionItem = subscription.items.data[0];
       const collectionMethod = subscription.collection_method;
       
-      // For invoice-based subscriptions, verify the latest invoice is actually paid
+      // For invoice-based subscriptions, check invoice status
       if (collectionMethod === "send_invoice") {
         const invoices = await stripe.invoices.list({
           subscription: subscription.id,
@@ -133,14 +133,62 @@ serve(async (req) => {
           const latestInvoice = invoices.data[0];
           logStep("Checking invoice status for send_invoice subscription", { 
             invoiceId: latestInvoice.id, 
-            status: latestInvoice.status 
+            status: latestInvoice.status,
+            dueDate: latestInvoice.due_date ? new Date(latestInvoice.due_date * 1000).toISOString() : null
           });
           
-          // If invoice is not paid (void, uncollectible, open), this subscription is not valid
-          if (latestInvoice.status !== "paid") {
-            logStep("Invoice not paid, subscription not valid", { status: latestInvoice.status });
+          // Invoice is paid - subscription is fully active
+          if (latestInvoice.status === "paid") {
+            logStep("Invoice paid, subscription valid");
+            // Continue to normal active subscription handling below
+          }
+          // Invoice is open - give grace period until due date
+          else if (latestInvoice.status === "open") {
+            const dueDate = latestInvoice.due_date ? new Date(latestInvoice.due_date * 1000) : null;
+            const gracePeriodEnd = dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
             
-            // Cancel the subscription in Stripe since invoice was voided/not paid
+            logStep("Invoice open, granting access until due date", { gracePeriodEnd: gracePeriodEnd.toISOString() });
+            
+            // Update local status to pending_payment with grace period
+            await supabaseClient
+              .from("subscriptions")
+              .upsert({
+                user_id: user.id,
+                stripe_customer_id: customerId,
+                stripe_subscription_id: subscription.id,
+                status: "pending_payment",
+                plan_type: subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+                current_period_end: gracePeriodEnd.toISOString(),
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "user_id" });
+            
+            // Get device slots
+            const { data: subData } = await supabaseClient
+              .from("subscriptions")
+              .select("device_slots")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            
+            return new Response(JSON.stringify({
+              subscribed: true,
+              is_trial: false,
+              trial_days_remaining: 0,
+              trial_end: null,
+              plan_type: subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+              subscription_end: gracePeriodEnd.toISOString(),
+              is_recurring: true,
+              is_pending_payment: true,
+              collection_method: collectionMethod,
+              device_slots: subData?.device_slots ?? 1,
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            });
+          }
+          // Invoice is void or uncollectible - cancel subscription
+          else if (latestInvoice.status === "void" || latestInvoice.status === "uncollectible") {
+            logStep("Invoice void/uncollectible, canceling subscription", { status: latestInvoice.status });
+            
             try {
               await stripe.subscriptions.cancel(subscription.id);
               logStep("Canceled invalid subscription", { subscriptionId: subscription.id });
