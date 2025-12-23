@@ -374,28 +374,12 @@ const Auth = () => {
       {/* Right Side - Auth Form */}
       <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-4 md:pt-4 overflow-auto relative z-10">
         <div className="w-full max-w-md space-y-3 md:space-y-6 animate-fade-in">
-          {/* Mobile/Tablet Logo & Info */}
+          {/* Mobile/Tablet Logo */}
           <div className="lg:hidden">
             <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-3" />
-            
-            {/* Compact Brand Info for Mobile */}
-            <div className="mb-3 space-y-2">
-              <p className="text-xs text-muted-foreground text-center">
-                {t("auth.noLicensesShort")}
-              </p>
-              
-              <div className="flex items-center justify-center gap-4">
-                <div className="text-center">
-                  <div className="text-base font-bold text-foreground">€7.40<span className="text-xs font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
-                  <div className="text-xs text-muted-foreground">{t("auth.billedYearly")}</div>
-                </div>
-                <div className="h-8 w-px bg-border/50" />
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
-                  <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
-                </div>
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground text-center mb-2">
+              {t("auth.noLicensesShort")}
+            </p>
           </div>
           
           {/* Header */}
@@ -566,10 +550,25 @@ const Auth = () => {
               </button>
             </p>
             {isLogin && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden lg:block">
                 {t("auth.trialInfo")}
               </p>
             )}
+          </div>
+
+          {/* Mobile Pricing Info - Bottom */}
+          <div className="lg:hidden mt-4 pt-4 border-t border-border/50">
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-center">
+                <div className="text-base font-bold text-foreground">€7.40<span className="text-xs font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
+                <div className="text-xs text-muted-foreground">{t("auth.billedYearly")}</div>
+              </div>
+              <div className="h-8 w-px bg-border/50" />
+              <div className="text-center">
+                <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
+                <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
