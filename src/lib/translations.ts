@@ -838,7 +838,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.home": "Koti",
     "nav.search": "Haku",
     "nav.library": "Kirjastosi",
-    "nav.schedule": "Aikataulu",
+    "nav.schedule": "Aikataulutus",
     "nav.profile": "Profiili",
     "nav.help": "Ohje",
     "nav.more": "Lisää",
