@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, History, Music, Shuffle } from "lucide-react";
+import LanguageSelector from "./LanguageSelector";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
@@ -302,6 +303,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             </div>
             {/* Desktop: buttons on the right */}
             <div className="hidden lg:flex items-center gap-2">
+              <LanguageSelector />
               <QuickMixDialog
                 onTrackSelect={onTrackSelect}
                 trigger={
@@ -324,6 +326,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           </div>
           {/* Mobile/Tablet: buttons below */}
           <div className="flex lg:hidden items-center gap-2">
+            <LanguageSelector />
             <QuickMixDialog
               onTrackSelect={onTrackSelect}
               trigger={
