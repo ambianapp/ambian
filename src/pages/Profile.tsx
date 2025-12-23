@@ -31,6 +31,7 @@ const Profile = () => {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const navigate = useNavigate();
@@ -404,7 +405,21 @@ const Profile = () => {
                   {t("subscription.subscribeNow")}
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => checkSubscription()} className="w-full sm:w-auto">
+              <Button 
+                variant="ghost" 
+                onClick={async () => {
+                  setIsRefreshing(true);
+                  await checkSubscription();
+                  setIsRefreshing(false);
+                }} 
+                disabled={isRefreshing}
+                className="w-full sm:w-auto"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
                 {t("subscription.refreshStatus")}
               </Button>
             </div>
