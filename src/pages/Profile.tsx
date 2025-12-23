@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface Invoice {
@@ -546,6 +546,21 @@ const Profile = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Terms & Conditions */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Scale className="w-5 h-5" />
+              {t("terms.title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => navigate("/terms")}>
+              {t("profile.viewTerms")}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Sign Out */}
         <Card className="bg-card border-border">

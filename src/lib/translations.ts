@@ -107,6 +107,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.fullName": "Full Name",
     "profile.language": "Language",
     "profile.selectLanguage": "Select your preferred language",
+    "profile.viewTerms": "View Terms & Conditions",
     
     // Subscription
     "subscription.title": "Subscription",
@@ -504,6 +505,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.fullName": "Fullständigt namn",
     "profile.language": "Språk",
     "profile.selectLanguage": "Välj ditt föredragna språk",
+    "profile.viewTerms": "Visa villkor",
     
     // Subscription
     "subscription.title": "Prenumeration",
@@ -901,6 +903,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.fullName": "Koko nimi",
     "profile.language": "Kieli",
     "profile.selectLanguage": "Valitse haluamasi kieli",
+    "profile.viewTerms": "Näytä käyttöehdot",
     
     // Subscription
     "subscription.title": "Tilaus",
@@ -1298,6 +1301,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.fullName": "Vollständiger Name",
     "profile.language": "Sprache",
     "profile.selectLanguage": "Wähle deine bevorzugte Sprache",
+    "profile.viewTerms": "AGB anzeigen",
     
     // Subscription
     "subscription.title": "Abonnement",
@@ -1695,6 +1699,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.fullName": "Nom complet",
     "profile.language": "Langue",
     "profile.selectLanguage": "Sélectionnez votre langue préférée",
+    "profile.viewTerms": "Voir les conditions",
     
     // Subscription
     "subscription.title": "Abonnement",
