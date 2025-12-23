@@ -753,13 +753,17 @@ const PlayerBar = () => {
   useEffect(() => {
     if (!crossfade || !isPlaying || repeat === "one" || isCrossfadingRef.current) return;
 
+    // Don't trigger crossfade within 10 seconds of a swap (prevents double-triggering)
+    const timeSinceSwap = Date.now() - lastCrossfadeSwapAtRef.current;
+    if (timeSinceSwap < 10000) return;
+
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (!activeAudio || !isFinite(activeAudio.duration) || activeAudio.duration === 0) return;
 
     const timeRemaining = activeAudio.duration - activeAudio.currentTime;
 
-    // Trigger once when we enter the crossfade window
-    if (timeRemaining <= CROSSFADE_DURATION && timeRemaining > 0.25) {
+    // Trigger once when we enter the crossfade window (with minimum duration check)
+    if (timeRemaining <= CROSSFADE_DURATION && timeRemaining > 0.25 && activeAudio.duration > CROSSFADE_DURATION + 5) {
       startCrossfade();
     }
   }, [currentTime, crossfade, isPlaying, repeat, startCrossfade, isCrossfadeActive]);
