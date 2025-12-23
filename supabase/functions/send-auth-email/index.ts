@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
@@ -26,62 +27,53 @@ const getEmailContent = (emailType: string) => {
       return {
         subject: "Reset Your Ambian Password",
         heading: "Reset Your Password",
-        description: "We received a request to reset your password. Click the button below to create a new password.",
-        buttonText: "Reset Password",
+        description: "Use the verification code below to reset your password.",
         footerNote: "If you didn't request a password reset, you can safely ignore this email.",
       };
     case "signup":
       return {
         subject: "Welcome to Ambian - Confirm Your Email",
         heading: "Welcome to Ambian!",
-        description: "Thanks for signing up. Please confirm your email address to get started with premium background music for your business.",
-        buttonText: "Confirm Email",
+        description: "Thanks for signing up. Use the code below to verify your email address.",
         footerNote: "If you didn't create an Ambian account, you can safely ignore this email.",
       };
     case "magiclink":
       return {
-        subject: "Your Ambian Login Link",
+        subject: "Your Ambian Login Code",
         heading: "Sign In to Ambian",
-        description: "Click the button below to securely sign in to your account. This link expires in 1 hour.",
-        buttonText: "Sign In",
-        footerNote: "If you didn't request this login link, you can safely ignore this email.",
+        description: "Use this verification code to sign in to your account. This code expires in 1 hour.",
+        footerNote: "If you didn't request this login code, you can safely ignore this email.",
       };
     case "invite":
       return {
         subject: "You're Invited to Ambian",
         heading: "You've Been Invited!",
-        description: "You've been invited to join Ambian. Click below to accept your invitation and set up your account.",
-        buttonText: "Accept Invitation",
+        description: "You've been invited to join Ambian. Use the code below to set up your account.",
         footerNote: "If you weren't expecting this invitation, you can safely ignore this email.",
       };
     case "email_change":
       return {
         subject: "Confirm Your New Email - Ambian",
         heading: "Confirm Email Change",
-        description: "Please confirm your new email address by clicking the button below.",
-        buttonText: "Confirm New Email",
+        description: "Use this verification code to confirm your new email address.",
         footerNote: "If you didn't request this change, please contact support immediately.",
       };
     default:
       return {
         subject: "Ambian",
         heading: "Hello!",
-        description: "Click the button below to continue.",
-        buttonText: "Continue",
+        description: "Use the code below to continue.",
         footerNote: "",
       };
   }
 };
 
-// Generate branded HTML email
+// Generate branded HTML email with OTP
 const generateEmailHtml = (
   content: ReturnType<typeof getEmailContent>,
-  actionUrl: string,
-  userEmail: string,
-  otp?: string
+  otp: string,
+  userEmail: string
 ) => {
-  const showOtp = otp && otp.length > 0;
-  
   return `
 <!DOCTYPE html>
 <html>
@@ -115,29 +107,22 @@ const generateEmailHtml = (
                 ${content.description}
               </p>
               
-              <!-- CTA Button -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom: 32px;">
-                    <a href="${actionUrl}" style="background-color: ${brandColors.primary}; border-radius: 8px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: 600; padding: 14px 32px; text-decoration: none; text-align: center;">
-                      ${content.buttonText}
-                    </a>
-                  </td>
-                </tr>
-              </table>
+              <!-- OTP Code -->
+              <div style="background-color: ${brandColors.background}; border: 2px solid ${brandColors.primary}; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 32px 0;">
+                <p style="color: ${brandColors.textMuted}; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">
+                  Verification Code
+                </p>
+                <p style="color: ${brandColors.text}; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: monospace; margin: 0;">
+                  ${otp}
+                </p>
+              </div>
+              
+              <p style="color: ${brandColors.textMuted}; font-size: 14px; text-align: center; margin: 0 0 24px 0;">
+                Enter this code in the app to continue. This code expires in 1 hour.
+              </p>
               
               <!-- Divider -->
               <hr style="border: none; border-top: 1px solid ${brandColors.border}; margin: 24px 0;">
-              
-              ${showOtp ? `
-              <!-- OTP Code -->
-              <p style="color: ${brandColors.textMuted}; font-size: 14px; text-align: center; margin: 0 0 12px 0;">
-                Or use this verification code:
-              </p>
-              <p style="background-color: ${brandColors.background}; border: 1px solid ${brandColors.border}; border-radius: 8px; color: ${brandColors.text}; font-size: 28px; font-weight: 700; letter-spacing: 4px; padding: 16px; text-align: center; margin: 0 0 24px 0;">
-                ${otp}
-              </p>
-              ` : ''}
               
               <!-- Footer note -->
               <p style="color: ${brandColors.textMuted}; font-size: 13px; text-align: center; margin: 0 0 8px 0;">
@@ -176,8 +161,6 @@ const generateEmailHtml = (
 interface EmailRequest {
   email: string;
   type: "recovery" | "signup" | "magiclink" | "invite" | "email_change";
-  actionUrl: string;
-  otp?: string;
 }
 
 serve(async (req) => {
@@ -194,37 +177,75 @@ serve(async (req) => {
   }
 
   try {
-    const { email, type, actionUrl, otp }: EmailRequest = await req.json();
+    const { email, type }: EmailRequest = await req.json();
 
-    if (!email || !type || !actionUrl) {
+    if (!email || !type) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: email, type, actionUrl" }),
+        JSON.stringify({ error: "Missing required fields: email, type" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log("Processing email for:", email, "type:", type);
 
+    // Create Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Generate recovery link using Supabase Auth Admin API
+    const { data, error: generateError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+    });
+
+    if (generateError) {
+      console.error("Generate link error:", generateError);
+      throw generateError;
+    }
+
+    // Extract the token from the generated link
+    const actionLink = data?.properties?.action_link || '';
+    console.log("Action link generated for:", email);
+    
+    // Parse the URL to get the token
+    const url = new URL(actionLink);
+    const token = url.searchParams.get('token') || '';
+    
+    if (!token) {
+      throw new Error("Failed to generate verification token");
+    }
+
+    // Generate a 6-digit OTP from the token for display purposes
+    // The actual verification will use the full token
+    const otp = token.substring(0, 6).toUpperCase();
+
     const content = getEmailContent(type);
-    const html = generateEmailHtml(content, actionUrl, email, otp);
+    const html = generateEmailHtml(content, otp, email);
 
     // Send the email via Resend
-    // IMPORTANT: Update the "from" address to use your verified domain
-    const { data, error } = await resend.emails.send({
+    const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Ambian <noreply@ambian.app>",
       to: [email],
       subject: content.subject,
       html,
     });
 
-    if (error) {
-      console.error("Resend error:", error);
-      throw error;
+    if (emailError) {
+      console.error("Resend error:", emailError);
+      throw emailError;
     }
 
-    console.log("Email sent successfully:", data);
+    console.log("Email sent successfully:", emailData);
 
-    return new Response(JSON.stringify({ success: true, data }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Verification code sent",
+      // Return the token for client-side verification (first 6 chars shown to user as OTP)
+      token: token
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
