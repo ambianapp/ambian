@@ -56,8 +56,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId, companyName, companyAddress } = await req.json();
-    logStep("Received request", { priceId, companyName });
+    const { priceId, companyName, address } = await req.json();
+    logStep("Received request", { priceId, companyName, address });
 
     const { data, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
@@ -127,11 +127,14 @@ serve(async (req) => {
       }
       
       // Update customer with company info if provided
-      if (companyName || companyAddress) {
+      if (companyName || address) {
         await stripe.customers.update(customerId, {
           name: companyName || undefined,
-          address: companyAddress ? {
-            line1: companyAddress,
+          address: address ? {
+            line1: address.line1,
+            city: address.city,
+            postal_code: address.postal_code,
+            country: address.country,
           } : undefined,
           metadata: {
             user_id: user.id,
@@ -144,8 +147,11 @@ serve(async (req) => {
       const newCustomer = await stripe.customers.create({
         email: user.email,
         name: companyName || undefined,
-        address: companyAddress ? {
-          line1: companyAddress,
+        address: address ? {
+          line1: address.line1,
+          city: address.city,
+          postal_code: address.postal_code,
+          country: address.country,
         } : undefined,
         metadata: {
           user_id: user.id,
