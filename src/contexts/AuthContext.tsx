@@ -34,13 +34,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const SUBSCRIPTION_CACHE_KEY = "ambian_subscription_cache";
   const SUBSCRIPTION_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+  const SHOWN_LOADING_KEY = "ambian_shown_initial_loading";
 
-  const loadSubscriptionCache = (): SubscriptionInfo | null => {
+  const loadSubscriptionCache = (userId?: string): SubscriptionInfo | null => {
     try {
       const raw = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
       if (!raw) return null;
-      const parsed = JSON.parse(raw) as { savedAt: number; value: SubscriptionInfo };
+      const parsed = JSON.parse(raw) as { savedAt: number; userId?: string; value: SubscriptionInfo };
       if (!parsed?.savedAt || !parsed?.value) return null;
+      // Cache must be for the same user
+      if (userId && parsed.userId && parsed.userId !== userId) return null;
       if (Date.now() - parsed.savedAt > SUBSCRIPTION_CACHE_TTL_MS) return null;
       return parsed.value;
     } catch {
@@ -48,19 +51,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const writeSubscriptionCache = (value: SubscriptionInfo) => {
+  const writeSubscriptionCache = (value: SubscriptionInfo, userId?: string) => {
     try {
-      localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), value }));
+      localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), userId, value }));
     } catch {
       // ignore
     }
   };
 
-  const cachedSubscription = loadSubscriptionCache();
+  // Check if we've already shown the initial loading screen this browser session
+  const hasShownInitialLoading = (): boolean => {
+    return sessionStorage.getItem(SHOWN_LOADING_KEY) === "true";
+  };
+
+  const markInitialLoadingShown = () => {
+    sessionStorage.setItem(SHOWN_LOADING_KEY, "true");
+  };
+
+  // On mount, try to load cached subscription (without user ID check initially)
+  const cachedSubscriptionRef = useRef<SubscriptionInfo | null>(loadSubscriptionCache());
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionInfo>(
-    cachedSubscription ?? {
+    cachedSubscriptionRef.current ?? {
       subscribed: false,
       planType: null,
       subscriptionEnd: null,
@@ -76,8 +89,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const initialLoadComplete = useRef(false);
 
   const checkSubscription = async (overrideSession?: Session | null, isInitialLoad = false) => {
-    // Only show blocking loading if we have no cache to fall back to
-    if (isInitialLoad && !cachedSubscription) {
+    // Only show blocking loading if we have no cache to fall back to AND haven't shown loading this session
+    const hasCachedData = cachedSubscriptionRef.current !== null;
+    if (isInitialLoad && !hasCachedData && !hasShownInitialLoading()) {
       setIsSubscriptionLoading(true);
     }
     try {
@@ -102,7 +116,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       setSubscription(next);
-      writeSubscriptionCache(next);
+      cachedSubscriptionRef.current = next;
+      writeSubscriptionCache(next, currentSession.user.id);
+      markInitialLoadingShown();
     } catch (error) {
       console.error("Error checking subscription:", error);
     } finally {
@@ -279,8 +295,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
 
       if (session?.user) {
-        // Only block UI if there's no cached subscription state
-        setIsSubscriptionLoading(!cachedSubscription);
+        // Re-check cache with user ID now that we know the user
+        const validCache = loadSubscriptionCache(session.user.id);
+        cachedSubscriptionRef.current = validCache;
+        if (validCache) {
+          setSubscription(validCache);
+        }
+        
+        // Only block UI if there's no valid cached subscription state AND we haven't shown loading this session
+        const shouldShowLoading = !validCache && !hasShownInitialLoading();
+        setIsSubscriptionLoading(shouldShowLoading);
+        
         checkAdminRole(session.user.id);
         checkSubscription(session, true).finally(() => {
           initialLoadComplete.current = true;
