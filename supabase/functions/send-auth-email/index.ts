@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
-const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 // Brand colors matching the app
 const brandColors = {
@@ -17,8 +20,8 @@ const brandColors = {
 };
 
 // Get email content based on type
-const getEmailContent = (emailActionType: string) => {
-  switch (emailActionType) {
+const getEmailContent = (emailType: string) => {
+  switch (emailType) {
     case "recovery":
       return {
         subject: "Reset Your Ambian Password",
@@ -74,11 +77,10 @@ const getEmailContent = (emailActionType: string) => {
 const generateEmailHtml = (
   content: ReturnType<typeof getEmailContent>,
   actionUrl: string,
-  token: string,
   userEmail: string,
-  emailActionType: string
+  otp?: string
 ) => {
-  const showOtp = emailActionType !== "invite";
+  const showOtp = otp && otp.length > 0;
   
   return `
 <!DOCTYPE html>
@@ -133,7 +135,7 @@ const generateEmailHtml = (
                 Or use this verification code:
               </p>
               <p style="background-color: ${brandColors.background}; border: 1px solid ${brandColors.border}; border-radius: 8px; color: ${brandColors.text}; font-size: 28px; font-weight: 700; letter-spacing: 4px; padding: 16px; text-align: center; margin: 0 0 24px 0;">
-                ${token}
+                ${otp}
               </p>
               ` : ''}
               
@@ -171,45 +173,46 @@ const generateEmailHtml = (
 `;
 };
 
+interface EmailRequest {
+  email: string;
+  type: "recovery" | "signup" | "magiclink" | "invite" | "email_change";
+  actionUrl: string;
+  otp?: string;
+}
+
 serve(async (req) => {
   console.log("send-auth-email function invoked");
 
-  if (req.method !== "POST") {
-    console.log("Invalid method:", req.method);
-    return new Response("Method not allowed", { status: 405 });
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
-  const payload = await req.text();
-  const headers = Object.fromEntries(req.headers);
+  if (req.method !== "POST") {
+    console.log("Invalid method:", req.method);
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  }
 
   try {
-    const wh = new Webhook(hookSecret);
-    const {
-      user,
-      email_data: { token, token_hash, redirect_to, email_action_type },
-    } = wh.verify(payload, headers) as {
-      user: { email: string };
-      email_data: {
-        token: string;
-        token_hash: string;
-        redirect_to: string;
-        email_action_type: string;
-      };
-    };
+    const { email, type, actionUrl, otp }: EmailRequest = await req.json();
 
-    console.log("Processing email for:", user.email, "type:", email_action_type);
+    if (!email || !type || !actionUrl) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: email, type, actionUrl" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const actionUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`;
-    
-    const content = getEmailContent(email_action_type);
-    const html = generateEmailHtml(content, actionUrl, token, user.email, email_action_type);
+    console.log("Processing email for:", email, "type:", type);
+
+    const content = getEmailContent(type);
+    const html = generateEmailHtml(content, actionUrl, email, otp);
 
     // Send the email via Resend
     // IMPORTANT: Update the "from" address to use your verified domain
     const { data, error } = await resend.emails.send({
       from: "Ambian <noreply@ambian.app>",
-      to: [user.email],
+      to: [email],
       subject: content.subject,
       html,
     });
@@ -221,23 +224,18 @@ serve(async (req) => {
 
     console.log("Email sent successfully:", data);
 
-    return new Response(JSON.stringify({}), {
+    return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in send-auth-email:", error);
     return new Response(
-      JSON.stringify({
-        error: {
-          http_code: 500,
-          message: errorMessage,
-        },
-      }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
