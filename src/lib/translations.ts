@@ -129,6 +129,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.yearlySave": "Save 2 months",
     "subscription.trial": "Free Trial",
     "subscription.trialDaysRemaining": "{days} day(s) remaining",
+    "subscription.paymentDue": "Payment Due",
     
     // Device slots
     "devices.title": "Multiple Locations",
@@ -544,6 +545,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.yearlySave": "Spara 2 månader",
     "subscription.trial": "Gratis provperiod",
     "subscription.trialDaysRemaining": "{days} dag(ar) kvar",
+    "subscription.paymentDue": "Betalning förfallen",
     
     // Device slots
     "devices.title": "Flera platser",
@@ -959,6 +961,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.yearlySave": "Säästä 2 kuukautta",
     "subscription.trial": "Ilmainen kokeilu",
     "subscription.trialDaysRemaining": "{days} päivää jäljellä",
+    "subscription.paymentDue": "Maksu erääntyy",
     
     // Device slots
     "devices.title": "Useita sijainteja",
@@ -1374,6 +1377,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.yearlySave": "2 Monate sparen",
     "subscription.trial": "Kostenlose Testversion",
     "subscription.trialDaysRemaining": "{days} Tag(e) verbleibend",
+    "subscription.paymentDue": "Zahlung fällig",
     
     // Device slots
     "devices.title": "Mehrere Standorte",
@@ -1789,6 +1793,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.yearlySave": "Économisez 2 mois",
     "subscription.trial": "Essai gratuit",
     "subscription.trialDaysRemaining": "{days} jour(s) restant(s)",
+    "subscription.paymentDue": "Paiement dû",
     
     // Device slots
     "devices.title": "Emplacements multiples",
