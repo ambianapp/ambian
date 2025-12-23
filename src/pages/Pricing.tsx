@@ -64,7 +64,10 @@ const Pricing = () => {
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [companyName, setCompanyName] = useState("");
-  const [companyAddress, setCompanyAddress] = useState("");
+  const [addressLine, setAddressLine] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("FI");
   const [isVerifying, setIsVerifying] = useState(false);
   
   const navigate = useNavigate();
@@ -160,10 +163,10 @@ const Pricing = () => {
       return;
     }
 
-    if (!companyName.trim()) {
+    if (!companyName.trim() || !addressLine.trim() || !city.trim() || !postalCode.trim()) {
       toast({
-        title: "Company name required",
-        description: "Please enter your company name for the invoice.",
+        title: "Missing information",
+        description: "Please fill in all company and address fields for the invoice.",
         variant: "destructive",
       });
       return;
@@ -176,7 +179,12 @@ const Pricing = () => {
         body: { 
           priceId: plans[selectedPlan].priceId,
           companyName: companyName.trim(),
-          companyAddress: companyAddress.trim(),
+          address: {
+            line1: addressLine.trim(),
+            city: city.trim(),
+            postal_code: postalCode.trim(),
+            country: country,
+          },
         },
       });
 
@@ -188,7 +196,10 @@ const Pricing = () => {
       });
       setShowInvoiceDialog(false);
       setCompanyName("");
-      setCompanyAddress("");
+      setAddressLine("");
+      setCity("");
+      setPostalCode("");
+      setCountry("FI");
     } catch (error: any) {
       const errorMessage = error.message || "Failed to create invoice";
       
@@ -561,13 +572,59 @@ const Pricing = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyAddress">Company Address</Label>
+                <Label htmlFor="addressLine">Street Address *</Label>
                 <Input
-                  id="companyAddress"
-                  value={companyAddress}
-                  onChange={(e) => setCompanyAddress(e.target.value)}
-                  placeholder="123 Business Street, City"
+                  id="addressLine"
+                  value={addressLine}
+                  onChange={(e) => setAddressLine(e.target.value)}
+                  placeholder="123 Business Street"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="postalCode">Postal Code *</Label>
+                  <Input
+                    id="postalCode"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="00100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">City *</Label>
+                  <Input
+                    id="city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Helsinki"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">Country *</Label>
+                <select
+                  id="country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="FI">Finland</option>
+                  <option value="SE">Sweden</option>
+                  <option value="DE">Germany</option>
+                  <option value="FR">France</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="BE">Belgium</option>
+                  <option value="AT">Austria</option>
+                  <option value="ES">Spain</option>
+                  <option value="IT">Italy</option>
+                  <option value="PT">Portugal</option>
+                  <option value="NO">Norway</option>
+                  <option value="DK">Denmark</option>
+                  <option value="PL">Poland</option>
+                  <option value="IE">Ireland</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="US">United States</option>
+                </select>
               </div>
               <div className="pt-2">
                 <Button
