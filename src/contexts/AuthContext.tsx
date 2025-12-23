@@ -273,6 +273,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const shouldShowLoading = event === "SIGNED_IN";
           if (shouldShowLoading) {
             sessionStorage.removeItem(SHOWN_LOADING_KEY);
+            // Clear all saved scroll positions so user starts fresh at the top
+            Object.keys(sessionStorage).forEach((key) => {
+              if (key.startsWith("ambian_scroll:")) {
+                sessionStorage.removeItem(key);
+              }
+            });
             setIsSubscriptionLoading(true);
           }
 
