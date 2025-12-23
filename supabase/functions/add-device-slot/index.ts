@@ -98,7 +98,7 @@ serve(async (req) => {
           type: "text",
         },
       ],
-      success_url: `${returnOrigin}/profile?device_added=true`,
+      success_url: `${returnOrigin}/?device_added=true`,
       cancel_url: `${returnOrigin}/profile`,
       metadata: {
         user_id: user.id,

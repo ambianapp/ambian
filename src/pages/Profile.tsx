@@ -24,7 +24,7 @@ interface Invoice {
 }
 
 const Profile = () => {
-  const { user, subscription, checkSubscription, signOut, syncDeviceSlots } = useAuth();
+  const { user, subscription, checkSubscription, signOut } = useAuth();
   const { language, setLanguage, t, languageNames, availableLanguages } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,19 +39,13 @@ const Profile = () => {
   const { canInstall, isInstalled, isIOS, isMacOS, promptInstall } = usePWAInstall();
 
   useEffect(() => {
-    // Check if returning from device slot purchase
-    if (searchParams.get("device_added") === "true") {
-      syncDeviceSlots();
-      toast({ title: "Device slot added!", description: "You can now use your account on an additional device." });
-      navigate("/profile", { replace: true });
-    }
     // Check if returning from plan change
     if (searchParams.get("plan_changed") === "true") {
       checkSubscription();
       toast({ title: t("subscription.planChanged"), description: t("subscription.planChangedDesc") });
       navigate("/profile", { replace: true });
     }
-  }, [searchParams, syncDeviceSlots, checkSubscription, toast, navigate, t]);
+  }, [searchParams, checkSubscription, toast, navigate, t]);
 
   useEffect(() => {
     const loadProfile = async () => {
