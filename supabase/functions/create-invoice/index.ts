@@ -171,12 +171,15 @@ serve(async (req) => {
     
     logStep("Granting grace period", { gracePeriodEnd: gracePeriodEnd.toISOString(), planType });
 
-    // Create the invoice with bank transfer enabled
+    // Create the invoice with bank transfer enabled and automatic tax
     const invoice = await stripe.invoices.create({
       customer: customerId,
       collection_method: "send_invoice",
       days_until_due: gracePeriodDays, // Match grace period
       auto_advance: true,
+      automatic_tax: {
+        enabled: true,
+      },
       payment_settings: {
         payment_method_types: ["card", "customer_balance"],
         payment_method_options: {
@@ -227,6 +230,9 @@ serve(async (req) => {
         items: [{ price: priceId }],
         collection_method: "send_invoice",
         days_until_due: gracePeriodDays,
+        automatic_tax: {
+          enabled: true,
+        },
         payment_settings: {
           payment_method_types: ["card", "customer_balance"],
           payment_method_options: {
