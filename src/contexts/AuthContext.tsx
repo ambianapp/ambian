@@ -268,8 +268,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
 
         if (session?.user) {
-          // When user actively signs in, show the loading screen while we fetch subscription
+          // When user actively signs in, show the loading screen while we fetch subscription.
+          // Also reset the "already shown" flag so login always shows the loading screen.
           const shouldShowLoading = event === "SIGNED_IN";
+          if (shouldShowLoading) {
+            sessionStorage.removeItem(SHOWN_LOADING_KEY);
+            setIsSubscriptionLoading(true);
+          }
 
           setTimeout(() => {
             checkAdminRole(session.user.id);
