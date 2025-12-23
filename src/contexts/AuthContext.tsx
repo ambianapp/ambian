@@ -262,6 +262,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Handle adding OAuth users to Resend audience after sign-in
+  const handleOAuthAudienceSignup = useCallback(async (userEmail: string) => {
+    const marketingOptIn = localStorage.getItem('ambian_marketing_optin');
+    const alreadyAdded = localStorage.getItem('ambian_audience_added');
+    
+    // Only add to audience if this is a new OAuth signup and we haven't already processed it
+    if (!alreadyAdded) {
+      try {
+        const audienceType = marketingOptIn === 'true' ? 'both' : 'all';
+        await supabase.functions.invoke('add-to-audience', {
+          body: { 
+            email: userEmail,
+            audienceType
+          }
+        });
+        // Mark as added so we don't add again on future logins
+        localStorage.setItem('ambian_audience_added', 'true');
+        console.log('Added OAuth user to Resend audience');
+      } catch (error) {
+        console.error('Failed to add OAuth user to audience:', error);
+      } finally {
+        // Clean up the marketing opt-in flag
+        localStorage.removeItem('ambian_marketing_optin');
+      }
+    }
+  }, []);
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
@@ -295,6 +322,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Register session on sign in to kick out other devices
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
               registerSession(session.user.id);
+            }
+            
+            // Handle OAuth signup - add to Resend audience
+            if (event === "SIGNED_IN" && session.user.email) {
+              handleOAuthAudienceSignup(session.user.email);
             }
           }, 0);
         } else {
