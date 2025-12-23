@@ -108,7 +108,7 @@ const Index = () => {
     );
   }
 
-  if (!subscription.subscribed && !isAdmin) {
+  if (!subscription.subscribed && !subscription.isTrial && !isAdmin) {
     return <SubscriptionGate />;
   }
 
