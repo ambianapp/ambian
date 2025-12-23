@@ -13,6 +13,7 @@ interface SubscriptionInfo {
   isRecurring: boolean;
   isPendingPayment: boolean;
   deviceSlots: number;
+  collectionMethod: 'charge_automatically' | 'send_invoice' | null;
 }
 
 interface AuthContextType {
@@ -84,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isRecurring: false,
       isPendingPayment: false,
       deviceSlots: 1,
+      collectionMethod: null,
     }
   );
   
@@ -116,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isRecurring: data.is_recurring || false,
         isPendingPayment: data.is_pending_payment || false,
         deviceSlots: data.device_slots || 1,
+        collectionMethod: data.collection_method || null,
       };
 
       setSubscription(next);
@@ -254,7 +257,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAdmin(false);
       setIsSubscriptionLoading(false);
-      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1 });
+      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null });
       isSigningOut.current = false;
     }
   };
@@ -297,7 +300,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(false);
           setIsSubscriptionLoading(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1 });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null });
         }
       }
     );
