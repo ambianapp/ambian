@@ -282,7 +282,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               trigger={
                 <Button variant="default" size="sm" className="gap-2">
                   <Shuffle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Quick Mix</span>
+                  <span className="hidden sm:inline">{t("quickMix.button")}</span>
                   <span className="sm:hidden">Mix</span>
                 </Button>
               }
@@ -294,8 +294,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               className="shrink-0 gap-2"
             >
               <Music className="w-4 h-4" />
-              <span className="hidden sm:inline">Show all playlists</span>
-              <span className="sm:hidden">All</span>
+              <span className="hidden sm:inline">{t("home.allPlaylists")}</span>
+              <span className="sm:hidden">{t("home.showMore")}</span>
             </Button>
           </div>
         </div>
