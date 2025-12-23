@@ -45,7 +45,13 @@ const Profile = () => {
       toast({ title: "Device slot added!", description: "You can now use your account on an additional device." });
       navigate("/profile", { replace: true });
     }
-  }, [searchParams, syncDeviceSlots, toast, navigate]);
+    // Check if returning from plan change
+    if (searchParams.get("plan_changed") === "true") {
+      checkSubscription();
+      toast({ title: t("subscription.planChanged"), description: t("subscription.planChangedDesc") });
+      navigate("/profile", { replace: true });
+    }
+  }, [searchParams, syncDeviceSlots, checkSubscription, toast, navigate, t]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -136,13 +142,10 @@ const Profile = () => {
       });
       if (error) throw error;
       
-      toast({
-        title: t("subscription.planChanged"),
-        description: t("subscription.planChangedDesc"),
-      });
-      
-      // Refresh subscription status
-      await checkSubscription();
+      // Open Stripe billing portal for plan change confirmation
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
     } catch (error: any) {
       toast({
         title: "Error",
