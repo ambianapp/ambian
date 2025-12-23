@@ -46,9 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   
   const isSigningOut = useRef(false);
+  const initialLoadComplete = useRef(false);
 
-  const checkSubscription = async (overrideSession?: Session | null) => {
-    setIsSubscriptionLoading(true);
+  const checkSubscription = async (overrideSession?: Session | null, isInitialLoad = false) => {
+    // Only set loading state on initial load to avoid glitchy re-renders
+    if (isInitialLoad) {
+      setIsSubscriptionLoading(true);
+    }
     try {
       const currentSession =
         overrideSession ?? (await supabase.auth.getSession()).data.session;
@@ -211,15 +215,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Skip if initial load already handled this
+        if (!initialLoadComplete.current) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
 
         if (session?.user) {
-          setIsSubscriptionLoading(true);
           setTimeout(() => {
             checkAdminRole(session.user.id);
-            checkSubscription(session);
+            checkSubscription(session, false); // Not initial load, don't show loading screen
 
             // Register session on sign in to kick out other devices
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
@@ -234,19 +240,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session
+    // Check for existing session - this is the initial load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
-      if (session?.user) setIsSubscriptionLoading(true);
-      else setIsSubscriptionLoading(false);
 
       if (session?.user) {
+        setIsSubscriptionLoading(true);
         checkAdminRole(session.user.id);
-        checkSubscription(session);
+        checkSubscription(session, true).finally(() => {
+          initialLoadComplete.current = true;
+        });
         // Register session on app load
         registerSession(session.user.id);
+      } else {
+        setIsSubscriptionLoading(false);
+        initialLoadComplete.current = true;
       }
     });
 
