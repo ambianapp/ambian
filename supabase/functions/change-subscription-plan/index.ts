@@ -104,38 +104,65 @@ serve(async (req) => {
 
     const returnOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
 
-    // Create a Billing Portal session with flow_data to update subscription
-    // This shows the user the proration and lets them confirm
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${returnOrigin}/profile?plan_changed=true`,
-      flow_data: {
-        type: "subscription_update_confirm",
-        subscription_update_confirm: {
-          subscription: subscription.id,
-          items: [
-            {
-              id: subscription.items.data[0].id,
-              price: newPriceId,
-              quantity: 1,
-            },
-          ],
+    // Prefer a dedicated confirmation flow (shows proration + requires explicit confirmation).
+    // If the portal isn't configured to allow subscription updates, fall back to the standard portal.
+    try {
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${returnOrigin}/profile?plan_changed=true`,
+        flow_data: {
+          type: "subscription_update_confirm",
+          subscription_update_confirm: {
+            subscription: subscription.id,
+            items: [
+              {
+                id: subscription.items.data[0].id,
+                price: newPriceId,
+                quantity: 1,
+              },
+            ],
+          },
         },
-      },
-    });
+      });
 
-    logStep("Portal session created for plan change", { 
-      url: portalSession.url,
-      newPlan 
-    });
+      logStep("Portal session created for plan change", {
+        url: portalSession.url,
+        newPlan,
+      });
 
-    return new Response(JSON.stringify({ 
-      url: portalSession.url,
-      newPlan,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      return new Response(
+        JSON.stringify({
+          url: portalSession.url,
+          newPlan,
+          fallback: false,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    } catch (portalError) {
+      const msg = portalError instanceof Error ? portalError.message : String(portalError);
+      logStep("Portal confirm flow unavailable, falling back", { message: msg });
+
+      const fallbackSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${returnOrigin}/profile?plan_changed=true`,
+      });
+
+      return new Response(
+        JSON.stringify({
+          url: fallbackSession.url,
+          newPlan,
+          fallback: true,
+          reason: "portal_subscription_update_disabled",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
