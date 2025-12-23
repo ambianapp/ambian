@@ -185,7 +185,7 @@ serve(async (req) => {
             bank_transfer: {
               type: "eu_bank_transfer",
               eu_bank_transfer: {
-                country: "FI", // Finland for SEPA
+                country: "DE", // Germany for SEPA (supported: BE, DE, FR, IE, NL)
               },
             },
           },
@@ -235,7 +235,7 @@ serve(async (req) => {
               bank_transfer: {
                 type: "eu_bank_transfer",
                 eu_bank_transfer: {
-                  country: "FI",
+                  country: "DE",
                 },
               },
             },
