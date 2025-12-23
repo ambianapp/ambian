@@ -258,7 +258,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           <HelpCircle className="w-5 h-5" />
           {t("nav.help")}
         </Button>
-        <div className="px-2 py-1">
+        <div className="px-3 py-1">
           <LanguageSelector />
         </div>
         {isAdmin && (
