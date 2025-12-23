@@ -239,9 +239,19 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Logo */}
-        <div className="flex justify-center pt-4">
+        {/* Back button and Logo */}
+        <div className="flex items-center justify-between pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
           <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
+          <div className="w-16" /> {/* Spacer for centering */}
         </div>
 
         {/* Header */}
