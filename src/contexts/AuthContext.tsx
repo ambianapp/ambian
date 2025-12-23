@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true); // Start true, set false when we know there's no session or check completes
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionInfo>({
     subscribed: false,
