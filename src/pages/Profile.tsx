@@ -223,8 +223,47 @@ const Profile = () => {
             <CardDescription>{t("subscription.manage")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Pending Payment Alert */}
-            {subscription.isPendingPayment && (
+            {/* Open Invoice Alert - show if there's an unpaid invoice */}
+            {invoices.some(inv => inv.status === "open") && (
+              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-yellow-500 mb-1">
+                      <FileText className="w-5 h-5" />
+                      <span className="font-semibold">{t("subscription.paymentDue") || "Payment Due"}</span>
+                    </div>
+                    {(() => {
+                      const openInvoice = invoices.find(inv => inv.status === "open");
+                      if (!openInvoice) return null;
+                      const dueDate = openInvoice.dueDate ? new Date(openInvoice.dueDate * 1000) : null;
+                      return (
+                        <p className="text-sm text-muted-foreground">
+                          {formatCurrency(openInvoice.amount, openInvoice.currency)}
+                          {dueDate && ` • ${t("invoices.dueBy")}: ${dueDate.toLocaleDateString()}`}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  {(() => {
+                    const openInvoice = invoices.find(inv => inv.status === "open");
+                    if (!openInvoice?.hostedUrl) return null;
+                    return (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => window.open(openInvoice.hostedUrl!, "_blank")}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                      >
+                        {t("invoices.payNow")}
+                      </Button>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Pending Payment Alert - fallback for when invoice data isn't loaded yet */}
+            {subscription.isPendingPayment && !invoices.some(inv => inv.status === "open") && (
               <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
                 <div className="flex items-center gap-2 text-yellow-500 mb-2">
                   <Mail className="w-5 h-5" />
