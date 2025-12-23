@@ -145,6 +145,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "View and download your payment history",
     "invoices.none": "No invoices found.",
     "invoices.paid": "Paid",
+    "invoices.pending": "Pending",
+    "invoices.dueBy": "Due by",
+    "invoices.payNow": "Pay Now",
     "invoices.preview": "Preview",
     "invoices.download": "Download",
     
@@ -557,6 +560,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Visa och ladda ner din betalningshistorik",
     "invoices.none": "Inga fakturor hittades.",
     "invoices.paid": "Betald",
+    "invoices.pending": "Väntar",
+    "invoices.dueBy": "Förfaller",
+    "invoices.payNow": "Betala nu",
     "invoices.preview": "Förhandsgranska",
     "invoices.download": "Ladda ner",
     
@@ -969,6 +975,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Näytä ja lataa maksuhistoriasi",
     "invoices.none": "Laskuja ei löytynyt.",
     "invoices.paid": "Maksettu",
+    "invoices.pending": "Odottaa",
+    "invoices.dueBy": "Eräpäivä",
+    "invoices.payNow": "Maksa nyt",
     "invoices.preview": "Esikatselu",
     "invoices.download": "Lataa",
     
@@ -1381,6 +1390,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Zeige und lade deine Zahlungshistorie herunter",
     "invoices.none": "Keine Rechnungen gefunden.",
     "invoices.paid": "Bezahlt",
+    "invoices.pending": "Ausstehend",
+    "invoices.dueBy": "Fällig am",
+    "invoices.payNow": "Jetzt bezahlen",
     "invoices.preview": "Vorschau",
     "invoices.download": "Herunterladen",
     
@@ -1793,6 +1805,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.subtitle": "Consultez et téléchargez votre historique de paiement",
     "invoices.none": "Aucune facture trouvée.",
     "invoices.paid": "Payée",
+    "invoices.pending": "En attente",
+    "invoices.dueBy": "Échéance",
+    "invoices.payNow": "Payer maintenant",
     "invoices.preview": "Aperçu",
     "invoices.download": "Télécharger",
     
