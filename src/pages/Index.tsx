@@ -27,7 +27,7 @@ interface SelectedPlaylist {
 const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
-  const { subscription, checkSubscription, isAdmin, isLoading } = useAuth();
+  const { subscription, checkSubscription, isAdmin, isLoading, isSubscriptionLoading } = useAuth();
   const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -97,8 +97,8 @@ const Index = () => {
     setSelectedPlaylist(null); // Clear playlist when changing views
   }, []);
 
-  // Show loading while checking subscription status
-  if (isLoading) {
+  // Show loading while checking auth or subscription status
+  if (isLoading || isSubscriptionLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse">
