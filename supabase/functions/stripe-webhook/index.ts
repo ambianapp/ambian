@@ -87,6 +87,151 @@ async function sendUpcomingPaymentEmail(
   }
 }
 
+async function sendPaymentConfirmationEmail(
+  email: string,
+  customerName: string | null,
+  amount: number,
+  currency: string,
+  planType: string,
+  periodEnd: Date,
+  invoiceNumber: string | null
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+  
+  const formattedPeriodEnd = periodEnd.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #1a1a1a; margin: 0;">Ambian</h1>
+      </div>
+      
+      <div style="background: #f0fdf4; border-radius: 12px; padding: 30px; margin-bottom: 20px; border: 1px solid #86efac;">
+        <h2 style="color: #166534; margin-top: 0;">✓ Payment Confirmed</h2>
+        <p>Hi${customerName ? ` ${customerName}` : ''},</p>
+        <p>Thank you for your payment! Your Ambian subscription is now active.</p>
+        
+        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e5e7eb;">
+          ${invoiceNumber ? `<p style="margin: 0 0 10px 0;"><strong>Invoice:</strong> ${invoiceNumber}</p>` : ''}
+          <p style="margin: 0 0 10px 0;"><strong>Plan:</strong> ${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</p>
+          <p style="margin: 0 0 10px 0;"><strong>Amount paid:</strong> ${formattedAmount}</p>
+          <p style="margin: 0;"><strong>Access until:</strong> ${formattedPeriodEnd}</p>
+        </div>
+        
+        <p>You can start enjoying unlimited background music for your business right away!</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://ambianmusic.com" style="background: #166534; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 500;">Open Ambian</a>
+        </div>
+      </div>
+      
+      <div style="text-align: center; color: #6b7280; font-size: 14px;">
+        <p>You can manage your subscription anytime at <a href="https://ambianmusic.com/profile" style="color: #4f46e5;">ambianmusic.com/profile</a></p>
+        <p style="margin-top: 20px;">&copy; ${new Date().getFullYear()} Ambian. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: `Payment Confirmed - Your Ambian subscription is active`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending payment confirmation email", { error });
+      return false;
+    }
+
+    logStep("Payment confirmation email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send payment confirmation email", { error: String(error) });
+    return false;
+  }
+}
+
+async function sendPaymentConfirmationEmailForInvoice(
+  stripe: Stripe,
+  invoice: Stripe.Invoice,
+  customerEmail: string
+) {
+  // Get customer name
+  const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+  let customerName: string | null = null;
+  
+  if (customerId) {
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      customerName = (customer as any).name;
+    } catch (e) {
+      logStep("Could not retrieve customer name", { error: String(e) });
+    }
+  }
+
+  // Determine plan type and period end
+  let planType = "monthly";
+  let periodEnd = new Date();
+  
+  if (invoice.subscription) {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+      planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+      periodEnd = new Date((subscription as any).current_period_end * 1000);
+    } catch (e) {
+      logStep("Could not retrieve subscription details", { error: String(e) });
+      // Fallback: calculate from invoice
+      if (planType === 'yearly') {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      } else {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      }
+    }
+  } else {
+    // For one-time invoices, check line items for interval
+    const lineItems = invoice.lines?.data || [];
+    for (const item of lineItems) {
+      if (item.price?.recurring?.interval === 'year') {
+        planType = 'yearly';
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        break;
+      }
+    }
+    if (planType === 'monthly') {
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+    }
+  }
+
+  await sendPaymentConfirmationEmail(
+    customerEmail,
+    customerName,
+    invoice.amount_paid || 0,
+    invoice.currency || 'eur',
+    planType,
+    periodEnd,
+    invoice.number
+  );
+}
+
 const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
 async function syncDeviceSlotsForUser(
@@ -284,8 +429,21 @@ serve(async (req) => {
         }
 
         await updateSubscriptionFromInvoice(supabaseAdmin, profile.user_id, invoice, stripe);
+        
+        // Send confirmation email
+        await sendPaymentConfirmationEmailForInvoice(stripe, invoice, customerEmail);
       } else {
         await updateSubscriptionFromInvoice(supabaseAdmin, userId, invoice, stripe);
+        
+        // Send confirmation email - get customer email
+        const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+        if (customerId) {
+          const customer = await stripe.customers.retrieve(customerId);
+          const customerEmail = (customer as any).email;
+          if (customerEmail) {
+            await sendPaymentConfirmationEmailForInvoice(stripe, invoice, customerEmail);
+          }
+        }
       }
 
       logStep("Subscription updated from invoice payment");
