@@ -7,12 +7,21 @@ const ALLOWED_ORIGINS = [
   "https://preview--ambian.lovable.app",
   "http://localhost:5173",
   "http://localhost:8080",
+  "https://ambianmusic.com",
+  "https://www.ambianmusic.com",
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith(".lovable.app") ||
+      origin.endsWith(".lovableproject.com"))
+      ? origin
+      : ALLOWED_ORIGINS[0];
+
   return {
-    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
