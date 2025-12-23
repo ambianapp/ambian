@@ -120,6 +120,17 @@ const Auth = () => {
   };
 
   const handleGoogleLogin = async () => {
+    // If in signup mode, require terms acceptance
+    if (!isLogin && !acceptedTerms) {
+      setErrors({ terms: t("auth.mustAcceptTerms") });
+      toast({
+        title: t("common.error"),
+        description: t("auth.mustAcceptTerms"),
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -129,6 +140,11 @@ const Auth = () => {
         },
       });
       if (error) throw error;
+      
+      // If user opted in for marketing emails, store in localStorage to handle after OAuth callback
+      if (!isLogin && acceptedMarketing) {
+        localStorage.setItem('ambian_marketing_optin', 'true');
+      }
     } catch (error: any) {
       toast({
         title: t("common.error"),
