@@ -226,8 +226,9 @@ serve(async (req) => {
     const html = generateEmailHtml(content, otp, email);
 
     // Send the email via Resend
+    // Use Resend's default domain for testing - update to your verified domain for production
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Ambian <noreply@ambian.app>",
+      from: "Ambian <onboarding@resend.dev>",
       to: [email],
       subject: content.subject,
       html,
