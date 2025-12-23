@@ -90,8 +90,14 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.updatePassword": "Update Password",
     "auth.invalidResetLink": "Invalid reset link",
     "auth.invalidResetLinkDesc": "This password reset link is invalid or has expired",
-    "auth.forgotPasswordDesc": "Enter your email and we'll send you a link to reset your password.",
+    "auth.forgotPasswordDesc": "Enter your email and we'll send you a code to reset your password.",
     "auth.sendResetLink": "Send Reset Link",
+    "auth.sendCode": "Send Code",
+    "auth.enterCode": "Enter Reset Code",
+    "auth.enterCodeDesc": "We sent a 6-character code to your email. Enter it below with your new password.",
+    "auth.verificationCode": "Verification Code",
+    "auth.invalidCode": "Invalid verification code",
+    "auth.enterOtp": "Please enter the 6-character code",
     "auth.backToLogin": "Back to login",
     
     // Profile
