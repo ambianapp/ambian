@@ -206,18 +206,13 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 gap-6">
-      {/* Language Selector & Logo */}
-      <div className="flex flex-col gap-3">
-        <div className="flex justify-start px-2">
-          <LanguageSelector />
-        </div>
-        <div className="flex items-center gap-3 px-2 py-2">
-          <img 
-            src="/ambian-logo.png" 
-            alt="Ambian" 
-            className="h-24 object-contain"
-          />
-        </div>
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-2 py-4">
+        <img 
+          src="/ambian-logo.png" 
+          alt="Ambian" 
+          className="h-24 object-contain"
+        />
       </div>
 
       {/* Main Navigation */}
@@ -263,6 +258,9 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           <HelpCircle className="w-5 h-5" />
           {t("nav.help")}
         </Button>
+        <div className="px-2 py-1">
+          <LanguageSelector />
+        </div>
         {isAdmin && (
           <Button
             variant="ghost"
