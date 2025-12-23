@@ -72,8 +72,8 @@ const Terms = () => {
               {t("terms.contactContent")}
             </p>
             <p className="text-muted-foreground mt-2">
-              <a href="mailto:support@ambianmusic.com" className="text-primary hover:underline">
-                support@ambianmusic.com
+              <a href="mailto:info@ambian.fi" className="text-primary hover:underline">
+                info@ambian.fi
               </a>
             </p>
           </section>
