@@ -60,6 +60,28 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    // Create admin client for subscription checks
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Check if user already has a pending payment or unpaid invoice history
+    const { data: existingSub } = await supabaseAdmin
+      .from("subscriptions")
+      .select("status, current_period_end")
+      .eq("user_id", user.id)
+      .single();
+
+    if (existingSub?.status === "pending_payment") {
+      const periodEnd = existingSub.current_period_end ? new Date(existingSub.current_period_end) : null;
+      if (periodEnd && periodEnd > new Date()) {
+        logStep("User already has pending invoice", { until: periodEnd.toISOString() });
+        throw new Error("You already have a pending invoice. Please check your email or wait for it to expire before requesting a new one.");
+      }
+    }
+
     // Check for existing customer or create one
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string;
@@ -67,6 +89,37 @@ serve(async (req) => {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Found existing customer", { customerId });
+
+      // Check for any open/unpaid invoices in Stripe
+      const openInvoices = await stripe.invoices.list({
+        customer: customerId,
+        status: "open",
+        limit: 10,
+      });
+
+      if (openInvoices.data.length > 0) {
+        logStep("User has open invoices in Stripe", { count: openInvoices.data.length });
+        throw new Error("You have an unpaid invoice. Please pay it first before requesting a new one.");
+      }
+
+      // Check for past unpaid invoices (void or uncollectible) - prevent abuse
+      const voidInvoices = await stripe.invoices.list({
+        customer: customerId,
+        status: "void",
+        limit: 5,
+      });
+
+      const uncollectibleInvoices = await stripe.invoices.list({
+        customer: customerId,
+        status: "uncollectible",
+        limit: 5,
+      });
+
+      const unpaidHistory = voidInvoices.data.length + uncollectibleInvoices.data.length;
+      if (unpaidHistory >= 2) {
+        logStep("User has history of unpaid invoices", { voidCount: voidInvoices.data.length, uncollectibleCount: uncollectibleInvoices.data.length });
+        throw new Error("Invoice payment is not available for your account. Please use card payment instead.");
+      }
       
       // Update customer with company info if provided
       if (companyName || companyAddress) {
@@ -127,11 +180,6 @@ serve(async (req) => {
     logStep("Created invoice", { invoiceId: invoice.id });
 
     // Update subscription with grace period access
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
 
     const { error: subError } = await supabaseAdmin
       .from("subscriptions")
