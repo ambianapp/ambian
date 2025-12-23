@@ -220,18 +220,19 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     const displayedPlaylists = showAll ? playlists : playlists.slice(0, displayCount);
 
     return (
-      <section className="animate-fade-in bg-secondary/30 rounded-2xl p-5 border border-border/50">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+      <section className="animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
           {playlists.length > displayCount && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onToggle}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground shrink-0 text-xs sm:text-sm px-2 sm:px-3"
             >
-              {showAll ? t("home.showLess") : `${t("home.showMore")} ${title.toLowerCase()}`}
-              <ChevronRight className={`w-4 h-4 ml-1 transition-transform ${showAll ? "rotate-90" : ""}`} />
+              <span className="hidden sm:inline">{showAll ? t("home.showLess") : t("home.showMore")}</span>
+              <span className="sm:hidden">{showAll ? "−" : "+"}</span>
+              <ChevronRight className={`w-4 h-4 ml-1 transition-transform hidden sm:block ${showAll ? "rotate-90" : ""}`} />
             </Button>
           )}
         </div>
@@ -268,8 +269,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
-      <div className="p-6 md:p-8 space-y-8">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
+      <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="animate-fade-in flex items-start justify-between">
           <div>
