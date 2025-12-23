@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles } from "lucide-react";
-import ambianLogo from "@/assets/ambian-logo-new.png";
+import ambianLogo from "@/assets/ambian-logo-original.png";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 
