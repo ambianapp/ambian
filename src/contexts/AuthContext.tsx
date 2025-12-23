@@ -310,16 +310,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check every 30 seconds to ensure device limits are enforced reasonably quickly
     const interval = setInterval(validateAndKickIfNeeded, 15 * 1000); // Check every 15 seconds (was 30)
 
-    // Re-validate when page becomes visible again
+    // Re-validate when page becomes visible again (silently, no loading state)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        // Delay to avoid triggering immediately on unlock
         setTimeout(async () => {
           const latestSession = (await supabase.auth.getSession()).data.session;
           if (latestSession?.user) {
-            await registerSession(latestSession.user.id);
+            // Silently register session and validate - no UI changes
+            registerSession(latestSession.user.id);
+            // Only validate after a delay, don't show any loading
             setTimeout(validateAndKickIfNeeded, 2000);
           }
-        }, 1000);
+        }, 1500); // Longer delay to let the UI settle first
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
