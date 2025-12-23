@@ -10,7 +10,7 @@ import ScheduleManager from "@/components/ScheduleManager";
 import MobileNav from "@/components/MobileNav";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
-import AIChatbot from "@/components/AIChatbot";
+// import AIChatbot from "@/components/AIChatbot"; // Disabled for now
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
@@ -182,7 +182,7 @@ const Index = () => {
       </div>
 
       <MobileNav activeView={activeView} onViewChange={handleViewChange} />
-      <AIChatbot />
+      {/* <AIChatbot /> */}
     </div>
   );
 };
