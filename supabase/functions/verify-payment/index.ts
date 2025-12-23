@@ -5,6 +5,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
   "https://preview--ambian.lovable.app",
+  "https://ambianmusic.com",
+  "https://www.ambianmusic.com",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
