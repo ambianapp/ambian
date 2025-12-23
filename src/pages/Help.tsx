@@ -1,9 +1,17 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3, Repeat, Airplay, Speaker } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3, Repeat, Speaker } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+// Custom AirPlay icon matching iOS design (triangle with radio waves)
+const AirPlayIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1" />
+    <polygon points="12 15 17 21 7 21 12 15" fill="currentColor" />
+  </svg>
+);
 
 const Help = () => {
   const navigate = useNavigate();
@@ -138,7 +146,7 @@ const Help = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Airplay className="w-5 h-5 text-primary" />
+              <AirPlayIcon className="w-5 h-5 text-primary" />
               {t("help.airplay")}
             </CardTitle>
             <CardDescription>{t("help.airplayDesc")}</CardDescription>
@@ -152,7 +160,7 @@ const Help = () => {
               <ol className="list-decimal list-inside space-y-2 text-muted-foreground ml-2">
                 <li>{t("help.airplayStep1")}</li>
                 <li>
-                  {t("help.airplayStep2Pre")} <Airplay className="inline w-4 h-4 text-primary mx-1" />
+                  {t("help.airplayStep2Pre")} <AirPlayIcon className="inline w-4 h-4 text-primary mx-1" />
                 </li>
                 <li>{t("help.airplayStep3")}</li>
                 <li>{t("help.airplayStep4")}</li>
