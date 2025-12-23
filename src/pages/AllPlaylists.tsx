@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Music } from "lucide-react";
+import { ArrowLeft, Music, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PlaylistCard from "@/components/PlaylistCard";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -202,21 +201,36 @@ const AllPlaylists = () => {
             ))}
           </div>
         ) : allPlaylists.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="flex flex-col gap-1">
             {allPlaylists.map((playlist) => (
-              <PlaylistCard
+              <div
                 key={playlist.id}
-                playlist={{
-                  id: playlist.id,
-                  name: playlist.name,
-                  description: playlist.description || "",
-                  cover: playlist.cover_url || "/placeholder.svg",
-                  trackCount: 0,
-                  tracks: [],
-                }}
                 onClick={() => handlePlaylistClick(playlist)}
-                onPlay={() => handlePlayPlaylist(playlist.id)}
-              />
+                className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors group"
+              >
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-secondary shrink-0">
+                  <img
+                    src={playlist.cover_url || "/placeholder.svg"}
+                    alt={playlist.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayPlaylist(playlist.id);
+                    }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Play className="w-5 h-5 text-white fill-white" />
+                  </button>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-foreground truncate">{playlist.name}</h3>
+                  {playlist.description && (
+                    <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         ) : (
