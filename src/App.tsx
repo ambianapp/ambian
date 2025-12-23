@@ -8,6 +8,7 @@ import { PlayerProvider } from "@/contexts/PlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import PlayerBar from "@/components/PlayerBar";
 import MobileNav from "@/components/MobileNav";
+import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -26,11 +27,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <AmbianLoadingScreen label="Loading your account…" />;
   }
 
   if (!user) {
@@ -44,11 +41,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <AmbianLoadingScreen label="Loading Ambian…" />;
   }
 
   if (user) {
