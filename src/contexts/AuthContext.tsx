@@ -223,9 +223,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
 
         if (session?.user) {
+          // When user actively signs in, show the loading screen while we fetch subscription
+          const shouldShowLoading = event === "SIGNED_IN";
+
           setTimeout(() => {
             checkAdminRole(session.user.id);
-            checkSubscription(session, false); // Not initial load, don't show loading screen
+            checkSubscription(session, shouldShowLoading);
 
             // Register session on sign in to kick out other devices
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
