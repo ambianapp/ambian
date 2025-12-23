@@ -387,9 +387,10 @@ const PlayerBar = () => {
     // Get absolute URL for cover image (iOS requires full URLs)
     const getCoverUrl = () => {
       if (!currentTrack.cover || currentTrack.cover === '/placeholder.svg') {
-        return null;
+        // Fallback to Ambian logo if no cover
+        return `${window.location.origin}/ambian-logo.png`;
       }
-      // If already absolute URL, use as is
+      // If already absolute URL (e.g., signed Supabase URL), use as is
       if (currentTrack.cover.startsWith('http')) {
         return currentTrack.cover;
       }
@@ -397,23 +398,20 @@ const PlayerBar = () => {
       return `${window.location.origin}${currentTrack.cover}`;
     };
 
-    const coverUrl = getCoverUrl();
+    const artworkUrl = getCoverUrl();
     
-    // Always use Ambian logo for lock screen artwork
-    const logoUrl = `${window.location.origin}/ambian-logo.png`;
-    
-    // Set metadata
+    // Set metadata with track's cover image
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title || 'Unknown Track',
-      artist: 'Ambian',
-      album: 'Ambian Music',
+      artist: currentTrack.artist || 'Ambian',
+      album: currentTrack.album || 'Ambian Music',
       artwork: [
-        { src: logoUrl, sizes: '96x96', type: 'image/png' },
-        { src: logoUrl, sizes: '128x128', type: 'image/png' },
-        { src: logoUrl, sizes: '192x192', type: 'image/png' },
-        { src: logoUrl, sizes: '256x256', type: 'image/png' },
-        { src: logoUrl, sizes: '384x384', type: 'image/png' },
-        { src: logoUrl, sizes: '512x512', type: 'image/png' },
+        { src: artworkUrl, sizes: '96x96', type: 'image/png' },
+        { src: artworkUrl, sizes: '128x128', type: 'image/png' },
+        { src: artworkUrl, sizes: '192x192', type: 'image/png' },
+        { src: artworkUrl, sizes: '256x256', type: 'image/png' },
+        { src: artworkUrl, sizes: '384x384', type: 'image/png' },
+        { src: artworkUrl, sizes: '512x512', type: 'image/png' },
       ],
     });
 
