@@ -24,6 +24,13 @@ interface SelectedPlaylist {
   description: string | null;
 }
 
+const UI_STATE_KEY = "ambian_ui_state";
+
+type UiState = {
+  activeView: string;
+  selectedPlaylist: SelectedPlaylist | null;
+};
+
 const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
@@ -32,12 +39,36 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { toast } = useToast();
-  
+
   // Auto-play scheduled playlists
   const { isEnabled: schedulerEnabled, toggleScheduler } = usePlaylistScheduler();
 
   const navigate = useNavigate();
   const { syncDeviceSlots } = useAuth();
+
+  // Restore last UI state on mount (helps when the preview/browser remounts the app)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(UI_STATE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as UiState;
+      if (saved?.activeView) setActiveView(saved.activeView);
+      if (saved?.selectedPlaylist !== undefined) setSelectedPlaylist(saved.selectedPlaylist);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist UI state when it changes
+  useEffect(() => {
+    try {
+      const next: UiState = { activeView, selectedPlaylist };
+      sessionStorage.setItem(UI_STATE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  }, [activeView, selectedPlaylist]);
 
   // Handle navigation state from other pages (e.g., Profile -> Search)
   useEffect(() => {
