@@ -149,9 +149,18 @@ const Help = () => {
                 <Speaker className="w-4 h-4 text-primary" />
                 {t("help.airplaySteps")}
               </h4>
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground ml-2">
+              <ol className="list-decimal list-inside space-y-3 text-muted-foreground ml-2">
                 <li>{t("help.airplayStep1")}</li>
-                <li>{t("help.airplayStep2")}</li>
+                <li className="flex items-start gap-2">
+                  <span>2.</span>
+                  <span className="flex items-center gap-2 flex-wrap">
+                    {t("help.airplayStep2Pre")}
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20 border border-primary/30">
+                      <Airplay className="w-4 h-4 text-primary" />
+                    </span>
+                    {t("help.airplayStep2Post")}
+                  </span>
+                </li>
                 <li>{t("help.airplayStep3")}</li>
                 <li>{t("help.airplayStep4")}</li>
               </ol>
