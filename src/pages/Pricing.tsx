@@ -66,7 +66,7 @@ const Pricing = () => {
   const [companyName, setCompanyName] = useState("");
   const [companyAddress, setCompanyAddress] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
+  
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -134,7 +134,6 @@ const Pricing = () => {
         body: { 
           priceId: plans[selectedPlan].priceId,
           paymentMode: paymentType === "subscription" ? "subscription" : "payment",
-          promoCode: promoCode.trim() || undefined,
         },
       });
 
@@ -355,36 +354,6 @@ const Pricing = () => {
           </Card>
         </div>
 
-        {/* Features */}
-        <Card className="bg-card/50 border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music2 className="w-5 h-5 text-primary" />
-              What's Included
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid md:grid-cols-2 gap-3">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-primary" />
-                  </div>
-                  <span className="text-foreground">{feature}</span>
-                </li>
-              ))}
-              <li className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-primary" />
-                </div>
-                <span className="text-foreground">
-                  {paymentType === "subscription" ? "Cancel anytime" : "No auto-renewal"}
-                </span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-
         {/* Payment Options */}
         <div className="space-y-6">
           {!user ? (
@@ -402,16 +371,6 @@ const Pricing = () => {
             </div>
           ) : (
             <>
-              {/* Promo Code Input */}
-              <div className="flex gap-2 max-w-md mx-auto">
-                <Input
-                  placeholder="Promo code (optional)"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="text-center"
-                />
-              </div>
-
               {/* Payment Method Selection */}
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Pay Now Option */}
@@ -474,6 +433,36 @@ const Pricing = () => {
             </>
           )}
         </div>
+
+        {/* Features */}
+        <Card className="bg-card/50 border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Music2 className="w-5 h-5 text-primary" />
+              What's Included
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid md:grid-cols-2 gap-3">
+              {features.map((feature, index) => (
+                <li key={index} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary" />
+                  </div>
+                  <span className="text-foreground">{feature}</span>
+                </li>
+              ))}
+              <li className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-foreground">
+                  {paymentType === "subscription" ? "Cancel anytime" : "No auto-renewal"}
+                </span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
 
         {/* Invoice Request Dialog */}
         <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
