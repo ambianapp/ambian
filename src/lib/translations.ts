@@ -131,6 +131,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trialDaysRemaining": "{days} day(s) remaining",
     "subscription.paymentDue": "Payment Due",
     "subscription.awaitingPayment": "Awaiting payment",
+    "subscription.pending": "Pending",
+    "subscription.pendingPayment": "Invoice sent",
+    "subscription.pendingPaymentDesc": "Check your email for the invoice. You have access until the payment deadline.",
     "subscription.payByInvoice": "Pay by Invoice",
     "subscription.payByCard": "Automatic Card Payment",
 
