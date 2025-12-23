@@ -319,6 +319,10 @@ const Pricing = () => {
               <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>{" "}
               to complete the payment.
             </p>
+            <p className="text-xs text-yellow-600 mt-2">
+              <Clock className="w-3 h-3 inline mr-1" />
+              Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process.
+            </p>
           </div>
         )}
 
