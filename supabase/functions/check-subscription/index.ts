@@ -185,20 +185,26 @@ serve(async (req) => {
     }
 
     let hasPrepaidAccess = false;
-    if (localSub && localSub.current_period_end && localSub.status === "active") {
+    let isPendingPayment = false;
+    
+    // Check for active or pending_payment status (invoice grace period)
+    if (localSub && localSub.current_period_end && (localSub.status === "active" || localSub.status === "pending_payment")) {
       const periodEnd = new Date(localSub.current_period_end);
       hasPrepaidAccess = periodEnd > now;
+      isPendingPayment = localSub.status === "pending_payment";
+      
       if (hasPrepaidAccess) {
         subscriptionEnd = localSub.current_period_end;
         planType = localSub.plan_type;
-        logStep("Prepaid access found", { periodEnd: periodEnd.toISOString() });
+        logStep("Access found", { status: localSub.status, periodEnd: periodEnd.toISOString() });
       } else {
-        // Prepaid access expired, update status
-        logStep("Prepaid access expired, updating status");
+        // Access expired, update status
+        logStep("Access expired, updating status", { previousStatus: localSub.status });
         await supabaseClient
           .from("subscriptions")
           .update({ status: "inactive", updated_at: new Date().toISOString() })
           .eq("user_id", user.id);
+        isPendingPayment = false;
       }
     }
 
@@ -228,6 +234,7 @@ serve(async (req) => {
       plan_type: planType,
       subscription_end: subscriptionEnd,
       is_recurring: false,
+      is_pending_payment: isPendingPayment,
       device_slots: deviceSlots,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

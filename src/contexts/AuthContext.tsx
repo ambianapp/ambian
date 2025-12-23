@@ -11,6 +11,7 @@ interface SubscriptionInfo {
   trialDaysRemaining: number;
   trialEnd: string | null;
   isRecurring: boolean;
+  isPendingPayment: boolean;
   deviceSlots: number;
 }
 
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       trialDaysRemaining: 0,
       trialEnd: null,
       isRecurring: false,
+      isPendingPayment: false,
       deviceSlots: 1,
     }
   );
@@ -112,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         trialDaysRemaining: data.trial_days_remaining || 0,
         trialEnd: data.trial_end || null,
         isRecurring: data.is_recurring || false,
+        isPendingPayment: data.is_pending_payment || false,
         deviceSlots: data.device_slots || 1,
       };
 
@@ -251,7 +254,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAdmin(false);
       setIsSubscriptionLoading(false);
-      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, deviceSlots: 1 });
+      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1 });
       isSigningOut.current = false;
     }
   };
@@ -294,7 +297,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(false);
           setIsSubscriptionLoading(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, deviceSlots: 1 });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1 });
         }
       }
     );

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 import {
   Dialog,
@@ -252,8 +252,23 @@ const Pricing = () => {
           </div>
         )}
 
+        {/* Pending invoice message */}
+        {subscription.subscribed && subscription.isPendingPayment && subscription.subscriptionEnd && (
+          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
+            <div className="flex items-center justify-center gap-2 text-yellow-500 mb-2">
+              <Mail className="w-5 h-5" />
+              <span className="font-semibold">Invoice Sent - Check Your Email</span>
+            </div>
+            <p className="text-muted-foreground">
+              We've sent an invoice to your email. You have access until{" "}
+              <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>{" "}
+              to complete the payment.
+            </p>
+          </div>
+        )}
+
         {/* Active subscription/access message */}
-        {subscription.subscribed && !subscription.isTrial && subscription.subscriptionEnd && (
+        {subscription.subscribed && !subscription.isTrial && !subscription.isPendingPayment && subscription.subscriptionEnd && (
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
             <div className="flex items-center justify-center gap-2 text-primary mb-2">
               <Calendar className="w-5 h-5" />
