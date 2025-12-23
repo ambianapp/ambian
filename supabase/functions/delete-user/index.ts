@@ -4,15 +4,23 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
   "https://preview--ambian.lovable.app",
-  "https://b2275b84-52e0-4644-803f-6bb24a552122.lovableproject.com",
+  "https://ambianmusic.com",
+  "https://www.ambianmusic.com",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith(".lovable.app") ||
+      origin.endsWith(".lovableproject.com"))
+      ? origin
+      : ALLOWED_ORIGINS[0];
+
   return {
-    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
