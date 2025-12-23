@@ -27,51 +27,57 @@ const getEmailContent = (emailType: string) => {
       return {
         subject: "Reset Your Ambian Password",
         heading: "Reset Your Password",
-        description: "Use the verification code below to reset your password.",
+        description: "Click the button below to reset your password. This link expires in 1 hour.",
         footerNote: "If you didn't request a password reset, you can safely ignore this email.",
+        buttonText: "Reset Password",
       };
     case "signup":
       return {
         subject: "Welcome to Ambian - Confirm Your Email",
         heading: "Welcome to Ambian!",
-        description: "Thanks for signing up. Use the code below to verify your email address.",
+        description: "Thanks for signing up. Click the button below to verify your email address.",
         footerNote: "If you didn't create an Ambian account, you can safely ignore this email.",
+        buttonText: "Verify Email",
       };
     case "magiclink":
       return {
-        subject: "Your Ambian Login Code",
+        subject: "Your Ambian Login Link",
         heading: "Sign In to Ambian",
-        description: "Use this verification code to sign in to your account. This code expires in 1 hour.",
-        footerNote: "If you didn't request this login code, you can safely ignore this email.",
+        description: "Click the button below to sign in to your account. This link expires in 1 hour.",
+        footerNote: "If you didn't request this login link, you can safely ignore this email.",
+        buttonText: "Sign In",
       };
     case "invite":
       return {
         subject: "You're Invited to Ambian",
         heading: "You've Been Invited!",
-        description: "You've been invited to join Ambian. Use the code below to set up your account.",
+        description: "You've been invited to join Ambian. Click the button below to set up your account.",
         footerNote: "If you weren't expecting this invitation, you can safely ignore this email.",
+        buttonText: "Accept Invitation",
       };
     case "email_change":
       return {
         subject: "Confirm Your New Email - Ambian",
         heading: "Confirm Email Change",
-        description: "Use this verification code to confirm your new email address.",
+        description: "Click the button below to confirm your new email address.",
         footerNote: "If you didn't request this change, please contact support immediately.",
+        buttonText: "Confirm Email",
       };
     default:
       return {
         subject: "Ambian",
         heading: "Hello!",
-        description: "Use the code below to continue.",
+        description: "Click the button below to continue.",
         footerNote: "",
+        buttonText: "Continue",
       };
   }
 };
 
-// Generate branded HTML email with OTP
+// Generate branded HTML email with link button
 const generateEmailHtml = (
   content: ReturnType<typeof getEmailContent>,
-  otp: string,
+  resetLink: string,
   userEmail: string
 ) => {
   return `
@@ -107,18 +113,18 @@ const generateEmailHtml = (
                 ${content.description}
               </p>
               
-              <!-- OTP Code -->
-              <div style="background-color: ${brandColors.background}; border: 2px solid ${brandColors.primary}; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 32px 0;">
-                <p style="color: ${brandColors.textMuted}; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">
-                  Verification Code
-                </p>
-                <p style="color: ${brandColors.text}; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: monospace; margin: 0;">
-                  ${otp}
-                </p>
+              <!-- CTA Button -->
+              <div style="text-align: center; margin: 0 0 32px 0;">
+                <a href="${resetLink}" style="display: inline-block; background-color: ${brandColors.primary}; color: ${brandColors.text}; font-size: 16px; font-weight: 600; text-decoration: none; padding: 16px 32px; border-radius: 8px;">
+                  ${content.buttonText}
+                </a>
               </div>
               
-              <p style="color: ${brandColors.textMuted}; font-size: 14px; text-align: center; margin: 0 0 24px 0;">
-                Enter this code in the app to continue. This code expires in 1 hour.
+              <p style="color: ${brandColors.textMuted}; font-size: 13px; text-align: center; margin: 0 0 24px 0;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="color: ${brandColors.primary}; font-size: 12px; text-align: center; word-break: break-all; margin: 0 0 24px 0;">
+                ${resetLink}
               </p>
               
               <!-- Divider -->
@@ -155,7 +161,7 @@ const generateEmailHtml = (
   </table>
 </body>
 </html>
-`;
+`
 };
 
 interface EmailRequest {
@@ -199,6 +205,9 @@ serve(async (req) => {
     const { data, error: generateError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
+      options: {
+        redirectTo: `${Deno.env.get("SITE_URL") || "https://ambianmusic.com"}/reset-password`,
+      }
     });
 
     if (generateError) {
@@ -206,24 +215,16 @@ serve(async (req) => {
       throw generateError;
     }
 
-    // Extract the token from the generated link
+    // Get the action link from Supabase
     const actionLink = data?.properties?.action_link || '';
     console.log("Action link generated for:", email);
     
-    // Parse the URL to get the token
-    const url = new URL(actionLink);
-    const token = url.searchParams.get('token') || '';
-    
-    if (!token) {
-      throw new Error("Failed to generate verification token");
+    if (!actionLink) {
+      throw new Error("Failed to generate reset link");
     }
 
-    // Generate a 6-digit OTP from the token for display purposes
-    // The actual verification will use the full token
-    const otp = token.substring(0, 6).toUpperCase();
-
     const content = getEmailContent(type);
-    const html = generateEmailHtml(content, otp, email);
+    const html = generateEmailHtml(content, actionLink, email);
 
     // Send the email via Resend using verified domain
     const { data: emailData, error: emailError } = await resend.emails.send({
@@ -242,9 +243,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Verification code sent",
-      // Return the token for client-side verification (first 6 chars shown to user as OTP)
-      token: token
+      message: "Reset link sent"
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
