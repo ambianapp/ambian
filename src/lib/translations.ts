@@ -130,6 +130,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trial": "Free Trial",
     "subscription.trialDaysRemaining": "{days} day(s) remaining",
     "subscription.paymentDue": "Payment Due",
+    "subscription.payByInvoice": "Pay by Invoice",
+    "subscription.payByCard": "Automatic Card Payment",
     
     // Device slots
     "devices.title": "Multiple Locations",
@@ -546,6 +548,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trial": "Gratis provperiod",
     "subscription.trialDaysRemaining": "{days} dag(ar) kvar",
     "subscription.paymentDue": "Betalning förfallen",
+    "subscription.payByInvoice": "Betala via faktura",
+    "subscription.payByCard": "Automatisk kortbetalning",
     
     // Device slots
     "devices.title": "Flera platser",
@@ -962,6 +966,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trial": "Ilmainen kokeilu",
     "subscription.trialDaysRemaining": "{days} päivää jäljellä",
     "subscription.paymentDue": "Maksu erääntyy",
+    "subscription.payByInvoice": "Maksa laskulla",
+    "subscription.payByCard": "Automaattinen korttimaksu",
     
     // Device slots
     "devices.title": "Useita sijainteja",
@@ -1378,6 +1384,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trial": "Kostenlose Testversion",
     "subscription.trialDaysRemaining": "{days} Tag(e) verbleibend",
     "subscription.paymentDue": "Zahlung fällig",
+    "subscription.payByInvoice": "Zahlung per Rechnung",
+    "subscription.payByCard": "Automatische Kartenzahlung",
     
     // Device slots
     "devices.title": "Mehrere Standorte",
@@ -1794,6 +1802,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trial": "Essai gratuit",
     "subscription.trialDaysRemaining": "{days} jour(s) restant(s)",
     "subscription.paymentDue": "Paiement dû",
+    "subscription.payByInvoice": "Paiement par facture",
+    "subscription.payByCard": "Paiement automatique par carte",
     
     // Device slots
     "devices.title": "Emplacements multiples",

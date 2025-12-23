@@ -299,6 +299,13 @@ const Profile = () => {
                 {subscription.subscribed && !subscription.isTrial && !subscription.isPendingPayment && subscription.planType && (
                   <p className="text-sm text-muted-foreground">
                     {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                    {subscription.collectionMethod && (
+                      <span className="ml-2">
+                        • {subscription.collectionMethod === "send_invoice" 
+                          ? t("subscription.payByInvoice") 
+                          : t("subscription.payByCard")}
+                      </span>
+                    )}
                   </p>
                 )}
               </div>

@@ -132,7 +132,10 @@ serve(async (req) => {
       const interval = subscriptionItem.price.recurring?.interval;
       planType = interval === "year" ? "yearly" : "monthly";
       isRecurring = true;
-      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType, periodEnd, periodStart });
+      
+      // Get collection method: 'charge_automatically' (card) or 'send_invoice'
+      const collectionMethod = subscription.collection_method;
+      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType, periodEnd, periodStart, collectionMethod });
 
       await supabaseClient
         .from("subscriptions")
@@ -164,6 +167,7 @@ serve(async (req) => {
         plan_type: planType,
         subscription_end: subscriptionEnd,
         is_recurring: true,
+        collection_method: collectionMethod,
         device_slots: deviceSlots,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
