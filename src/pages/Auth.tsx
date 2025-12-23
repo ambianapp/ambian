@@ -77,8 +77,6 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
-        
-        toast({ title: t("auth.welcomeToast"), description: t("auth.signInSuccess") });
         navigate("/");
       } else {
         const redirectUrl = `${window.location.origin}/`;
