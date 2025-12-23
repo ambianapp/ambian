@@ -10,7 +10,7 @@ const Terms = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto p-6 md:p-8">
+      <div className="max-w-3xl mx-auto p-6 pb-32 md:p-8 md:pb-40">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
