@@ -19,6 +19,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedMarketing, setAcceptedMarketing] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; terms?: string }>({});
@@ -90,13 +91,15 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        // Add user to Resend audience (don't block signup if this fails)
-        try {
-          await supabase.functions.invoke('add-to-audience', {
-            body: { email }
-          });
-        } catch (audienceError) {
-          console.error('Failed to add to audience:', audienceError);
+        // Add user to Resend audience only if they opted in
+        if (acceptedMarketing) {
+          try {
+            await supabase.functions.invoke('add-to-audience', {
+              body: { email }
+            });
+          } catch (audienceError) {
+            console.error('Failed to add to audience:', audienceError);
+          }
         }
         
         toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
@@ -463,7 +466,7 @@ const Auth = () => {
 
             {/* Terms Checkbox - Only show for signup */}
             {!isLogin && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id="terms"
@@ -481,6 +484,19 @@ const Auth = () => {
                 {errors.terms && (
                   <p className="text-sm text-destructive">{errors.terms}</p>
                 )}
+                
+                {/* Marketing opt-in checkbox */}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="marketing"
+                    checked={acceptedMarketing}
+                    onCheckedChange={(checked) => setAcceptedMarketing(checked === true)}
+                    className="mt-1"
+                  />
+                  <Label htmlFor="marketing" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                    {t("auth.marketingOptIn")}
+                  </Label>
+                </div>
               </div>
             )}
 
