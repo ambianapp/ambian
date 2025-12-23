@@ -272,6 +272,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.newPlaylists": "New Playlists",
     "home.showLess": "Show less",
     "home.showMore": "More",
+    "home.industryTitle": "Playlists by Industry",
+    "home.industrySubtitle": "Curated music for your business",
     
     // Help page
     "help.title": "Help Center",
@@ -690,6 +692,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.newPlaylists": "Nya spellistor",
     "home.showLess": "Visa mindre",
     "home.showMore": "Mer",
+    "home.industryTitle": "Spellistor per bransch",
+    "home.industrySubtitle": "Kurerad musik för ditt företag",
     
     // Help page
     "help.title": "Hjälpcenter",
@@ -1108,6 +1112,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.newPlaylists": "Uudet soittolistat",
     "home.showLess": "Näytä vähemmän",
     "home.showMore": "Lisää",
+    "home.industryTitle": "Soittolistat toimialoittain",
+    "home.industrySubtitle": "Kuratoitua musiikkia yrityksellesi",
     
     // Help page
     "help.title": "Ohjekeskus",
@@ -1526,6 +1532,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.newPlaylists": "Neue Playlists",
     "home.showLess": "Weniger anzeigen",
     "home.showMore": "Mehr",
+    "home.industryTitle": "Playlists nach Branche",
+    "home.industrySubtitle": "Kuratierte Musik für Ihr Unternehmen",
     
     // Help page
     "help.title": "Hilfecenter",
@@ -1944,6 +1952,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.newPlaylists": "Nouvelles playlists",
     "home.showLess": "Afficher moins",
     "home.showMore": "Plus",
+    "home.industryTitle": "Playlists par secteur",
+    "home.industrySubtitle": "Musique sélectionnée pour votre entreprise",
     
     // Help page
     "help.title": "Centre d'aide",
