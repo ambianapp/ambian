@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3, Repeat } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3, Repeat, Airplay, Speaker } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -130,6 +130,37 @@ const Help = () => {
                 </div>
                 <span className="text-muted-foreground">{t("help.crossfadeDesc")}</span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AirPlay & Sonos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Airplay className="w-5 h-5 text-primary" />
+              {t("help.airplay")}
+            </CardTitle>
+            <CardDescription>{t("help.airplayDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 rounded-lg bg-secondary/50 space-y-3">
+              <h4 className="font-medium flex items-center gap-2">
+                <Speaker className="w-4 h-4 text-primary" />
+                {t("help.airplaySteps")}
+              </h4>
+              <ol className="list-decimal list-inside space-y-2 text-muted-foreground ml-2">
+                <li>{t("help.airplayStep1")}</li>
+                <li>{t("help.airplayStep2")}</li>
+                <li>{t("help.airplayStep3")}</li>
+                <li>{t("help.airplayStep4")}</li>
+              </ol>
+            </div>
+            <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+              <p className="text-sm">
+                <span className="font-medium text-primary">{t("help.airplayTip")}</span>{" "}
+                <span className="text-muted-foreground">{t("help.airplayTipDesc")}</span>
+              </p>
             </div>
           </CardContent>
         </Card>
