@@ -288,8 +288,8 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
       <section className="animate-fade-in bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/10 rounded-2xl p-5 border border-primary/20">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-foreground">Playlists by Industry</h2>
-            <p className="text-sm text-muted-foreground">Curated music for your business</p>
+            <h2 className="text-xl font-bold text-foreground">{t("home.industryTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("home.industrySubtitle")}</p>
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
