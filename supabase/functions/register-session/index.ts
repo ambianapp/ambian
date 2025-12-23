@@ -7,6 +7,8 @@ const ALLOWED_ORIGINS = [
   "https://lovable.dev",
   "https://ambian.fi",
   "https://ambian.app",
+  "https://ambianmusic.com",
+  "https://www.ambianmusic.com",
   "https://hjecjqyonxvrrvprbvgr.supabase.co",
 ];
 
