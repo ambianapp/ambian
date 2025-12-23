@@ -136,6 +136,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.pendingPaymentDesc": "Check your email for the invoice. You have access until the payment deadline.",
     "subscription.payByInvoice": "Pay by Invoice",
     "subscription.payByCard": "Automatic Card Payment",
+    "subscription.ibanNote": "Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process.",
 
     // Device slots
     "devices.title": "Multiple Locations",
@@ -556,6 +557,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.paymentDue": "Betalning förfallen",
     "subscription.payByInvoice": "Betala via faktura",
     "subscription.payByCard": "Automatisk kortbetalning",
+    "subscription.ibanNote": "Obs: Vid betalning via banköverföring (IBAN), vänligen betala några dagar tidigare då överföringar kan ta tid.",
     
     // Device slots
     "devices.title": "Flera platser",
@@ -976,6 +978,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.paymentDue": "Maksu erääntyy",
     "subscription.payByInvoice": "Maksa laskulla",
     "subscription.payByCard": "Automaattinen korttimaksu",
+    "subscription.ibanNote": "Huom: Jos maksat pankkisiirrolla (IBAN), maksa muutama päivä aikaisemmin, sillä siirrot voivat kestää.",
     
     // Device slots
     "devices.title": "Useita sijainteja",
@@ -1396,6 +1399,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.paymentDue": "Zahlung fällig",
     "subscription.payByInvoice": "Zahlung per Rechnung",
     "subscription.payByCard": "Automatische Kartenzahlung",
+    "subscription.ibanNote": "Hinweis: Bei Zahlung per Banküberweisung (IBAN) bitte einige Tage früher zahlen, da Überweisungen Zeit benötigen können.",
     
     // Device slots
     "devices.title": "Mehrere Standorte",
@@ -1816,6 +1820,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.paymentDue": "Paiement dû",
     "subscription.payByInvoice": "Paiement par facture",
     "subscription.payByCard": "Paiement automatique par carte",
+    "subscription.ibanNote": "Remarque : Si vous payez par virement bancaire (IBAN), veuillez payer quelques jours plus tôt car les virements peuvent prendre du temps.",
     
     // Device slots
     "devices.title": "Emplacements multiples",

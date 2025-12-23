@@ -261,7 +261,7 @@ const Profile = () => {
                 </div>
                 <p className="text-xs text-yellow-600 mt-3 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process.
+                  {t("subscription.ibanNote")}
                 </p>
               </div>
             )}
