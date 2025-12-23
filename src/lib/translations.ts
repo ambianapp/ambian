@@ -119,6 +119,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.manageBtn": "Manage Subscription",
     "subscription.subscribeNow": "Subscribe Now",
     "subscription.refreshStatus": "Refresh Status",
+    "subscription.changePlan": "Change Plan",
+    "subscription.switchToYearly": "Switch to Yearly",
+    "subscription.switchToMonthly": "Switch to Monthly",
+    "subscription.planChanged": "Plan changed",
+    "subscription.planChangedDesc": "Your subscription has been updated successfully",
+    "subscription.yearlySave": "Save 2 months",
     
     // Device slots
     "devices.title": "Multiple Locations",
@@ -476,6 +482,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.manageBtn": "Hantera prenumeration",
     "subscription.subscribeNow": "Prenumerera nu",
     "subscription.refreshStatus": "Uppdatera status",
+    "subscription.changePlan": "Ändra plan",
+    "subscription.switchToYearly": "Byt till årsplan",
+    "subscription.switchToMonthly": "Byt till månadsplan",
+    "subscription.planChanged": "Plan ändrad",
+    "subscription.planChangedDesc": "Din prenumeration har uppdaterats",
+    "subscription.yearlySave": "Spara 2 månader",
     
     // Device slots
     "devices.title": "Flera platser",
@@ -833,6 +845,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.manageBtn": "Hallitse tilausta",
     "subscription.subscribeNow": "Tilaa nyt",
     "subscription.refreshStatus": "Päivitä tila",
+    "subscription.changePlan": "Vaihda tilausta",
+    "subscription.switchToYearly": "Vaihda vuositilaukseen",
+    "subscription.switchToMonthly": "Vaihda kuukausitilaukseen",
+    "subscription.planChanged": "Tilaus vaihdettu",
+    "subscription.planChangedDesc": "Tilauksesi on päivitetty onnistuneesti",
+    "subscription.yearlySave": "Säästä 2 kuukautta",
     
     // Device slots
     "devices.title": "Useita sijainteja",
@@ -1190,6 +1208,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.manageBtn": "Abonnement verwalten",
     "subscription.subscribeNow": "Jetzt abonnieren",
     "subscription.refreshStatus": "Status aktualisieren",
+    "subscription.changePlan": "Plan ändern",
+    "subscription.switchToYearly": "Zu Jahresplan wechseln",
+    "subscription.switchToMonthly": "Zu Monatsplan wechseln",
+    "subscription.planChanged": "Plan geändert",
+    "subscription.planChangedDesc": "Ihr Abonnement wurde erfolgreich aktualisiert",
+    "subscription.yearlySave": "2 Monate sparen",
     
     // Device slots
     "devices.title": "Mehrere Standorte",
@@ -1547,6 +1571,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.manageBtn": "Gérer l'abonnement",
     "subscription.subscribeNow": "S'abonner maintenant",
     "subscription.refreshStatus": "Actualiser le statut",
+    "subscription.changePlan": "Changer de plan",
+    "subscription.switchToYearly": "Passer au plan annuel",
+    "subscription.switchToMonthly": "Passer au plan mensuel",
+    "subscription.planChanged": "Plan modifié",
+    "subscription.planChangedDesc": "Votre abonnement a été mis à jour avec succès",
+    "subscription.yearlySave": "Économisez 2 mois",
     
     // Device slots
     "devices.title": "Emplacements multiples",

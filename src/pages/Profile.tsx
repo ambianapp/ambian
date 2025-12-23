@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface Invoice {
@@ -30,6 +30,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const navigate = useNavigate();
@@ -124,6 +125,32 @@ const Profile = () => {
       });
     } finally {
       setIsLoadingPortal(false);
+    }
+  };
+
+  const handleChangePlan = async (newPlan: "monthly" | "yearly") => {
+    setIsChangingPlan(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("change-subscription-plan", {
+        body: { newPlan }
+      });
+      if (error) throw error;
+      
+      toast({
+        title: t("subscription.planChanged"),
+        description: t("subscription.planChangedDesc"),
+      });
+      
+      // Refresh subscription status
+      await checkSubscription();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPlan(false);
     }
   };
 
@@ -284,6 +311,47 @@ const Profile = () => {
                 <span>
                   {t("subscription.renewsOn")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
                 </span>
+              </div>
+            )}
+
+            {/* Plan Change Options */}
+            {subscription.subscribed && (
+              <div className="p-4 rounded-lg border border-border">
+                <p className="font-medium text-foreground mb-3">{t("subscription.changePlan")}</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {subscription.planType === "monthly" ? (
+                    <Button
+                      variant="default"
+                      onClick={() => handleChangePlan("yearly")}
+                      disabled={isChangingPlan}
+                      className="w-full sm:w-auto"
+                    >
+                      {isChangingPlan ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      {t("subscription.switchToYearly")}
+                      <span className="ml-2 text-xs bg-primary-foreground/20 px-2 py-0.5 rounded">
+                        {t("subscription.yearlySave")}
+                      </span>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleChangePlan("monthly")}
+                      disabled={isChangingPlan}
+                      className="w-full sm:w-auto"
+                    >
+                      {isChangingPlan ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      {t("subscription.switchToMonthly")}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
 
