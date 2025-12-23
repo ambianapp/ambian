@@ -171,12 +171,26 @@ serve(async (req) => {
     
     logStep("Granting grace period", { gracePeriodEnd: gracePeriodEnd.toISOString(), planType });
 
-    // Create the invoice
+    // Create the invoice with bank transfer enabled
     const invoice = await stripe.invoices.create({
       customer: customerId,
       collection_method: "send_invoice",
       days_until_due: gracePeriodDays, // Match grace period
       auto_advance: true,
+      payment_settings: {
+        payment_method_types: ["card", "customer_balance"],
+        payment_method_options: {
+          customer_balance: {
+            funding_type: "bank_transfer",
+            bank_transfer: {
+              type: "eu_bank_transfer",
+              eu_bank_transfer: {
+                country: "FI", // Finland for SEPA
+              },
+            },
+          },
+        },
+      },
       metadata: {
         user_id: user.id,
         plan_type: planType,
@@ -207,12 +221,26 @@ serve(async (req) => {
 
     // Add the subscription item to the invoice
     if (price.recurring) {
-      // For subscriptions, create a subscription with send_invoice collection method
+      // For subscriptions, create a subscription with send_invoice collection method and bank transfer
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: priceId }],
         collection_method: "send_invoice",
         days_until_due: gracePeriodDays,
+        payment_settings: {
+          payment_method_types: ["card", "customer_balance"],
+          payment_method_options: {
+            customer_balance: {
+              funding_type: "bank_transfer",
+              bank_transfer: {
+                type: "eu_bank_transfer",
+                eu_bank_transfer: {
+                  country: "FI",
+                },
+              },
+            },
+          },
+        },
         metadata: {
           user_id: user.id,
         },
