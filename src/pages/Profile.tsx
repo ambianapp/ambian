@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface Invoice {
@@ -259,6 +259,10 @@ const Profile = () => {
                     );
                   })()}
                 </div>
+                <p className="text-xs text-yellow-600 mt-3 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {t("subscription.ibanNote") || "Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process."}
+                </p>
               </div>
             )}
 
