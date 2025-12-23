@@ -8,25 +8,44 @@ const WELCOME_SHOWN_KEY = "ambian_welcome_shown";
 
 interface WelcomeDialogProps {
   userId: string;
+  userCreatedAt?: string; // ISO date string from auth.users.created_at
 }
 
-const WelcomeDialog = ({ userId }: WelcomeDialogProps) => {
+const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     // Check if we've already shown the welcome dialog for this user
     const shownUsers = JSON.parse(localStorage.getItem(WELCOME_SHOWN_KEY) || "[]");
-    if (!shownUsers.includes(userId)) {
-      // Show the dialog after a short delay for better UX
-      const timeout = setTimeout(() => {
-        setOpen(true);
-        // Mark as shown for this user
-        localStorage.setItem(WELCOME_SHOWN_KEY, JSON.stringify([...shownUsers, userId]));
-      }, 500);
-      return () => clearTimeout(timeout);
+    
+    // Don't show for users who have already seen it
+    if (shownUsers.includes(userId)) {
+      return;
     }
-  }, [userId]);
+
+    // Only show for truly new users (created within the last 5 minutes)
+    // This prevents showing the dialog for old accounts on new devices/browsers
+    if (userCreatedAt) {
+      const createdAt = new Date(userCreatedAt);
+      const now = new Date();
+      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+      
+      if (createdAt < fiveMinutesAgo) {
+        // User account is older than 5 minutes, mark as shown and don't display
+        localStorage.setItem(WELCOME_SHOWN_KEY, JSON.stringify([...shownUsers, userId]));
+        return;
+      }
+    }
+
+    // Show the dialog after a short delay for better UX
+    const timeout = setTimeout(() => {
+      setOpen(true);
+      // Mark as shown for this user
+      localStorage.setItem(WELCOME_SHOWN_KEY, JSON.stringify([...shownUsers, userId]));
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [userId, userCreatedAt]);
 
   const handleClose = () => {
     setOpen(false);
