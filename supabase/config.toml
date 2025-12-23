@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.add-to-audience]
 verify_jwt = false
+
+[functions.sync-users-to-audience]
+verify_jwt = true
