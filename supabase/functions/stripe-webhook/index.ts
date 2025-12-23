@@ -7,6 +7,51 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
+
+async function syncDeviceSlotsForUser(
+  supabase: any,
+  userId: string,
+  stripe: Stripe,
+  customerId: string
+) {
+  logStep("Syncing device slots for user", { userId, customerId });
+
+  // Count active device slot subscriptions
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+  });
+
+  let deviceSlotCount = 1; // Base slot
+  for (const sub of subscriptions.data) {
+    for (const item of sub.items.data) {
+      const productId = typeof item.price.product === 'string' 
+        ? item.price.product 
+        : (item.price.product as any).id;
+      
+      if (productId === DEVICE_SLOT_PRODUCT_ID) {
+        deviceSlotCount += item.quantity || 1;
+        logStep("Found device slot subscription", { subscriptionId: sub.id, quantity: item.quantity });
+      }
+    }
+  }
+
+  logStep("Total device slots calculated", { deviceSlotCount });
+
+  // Update local database
+  const { error } = await supabase
+    .from("subscriptions")
+    .update({ device_slots: deviceSlotCount, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+
+  if (error) {
+    logStep("Error updating device slots", { error: error.message });
+  } else {
+    logStep("Device slots updated in database", { userId, deviceSlotCount });
+  }
+}
+
 serve(async (req) => {
   // Webhooks are server-to-server, no CORS needed
   if (req.method === "OPTIONS") {
@@ -55,6 +100,24 @@ serve(async (req) => {
     if (event.type === "invoice.paid") {
       const invoice = event.data.object as Stripe.Invoice;
       logStep("Invoice paid", { invoiceId: invoice.id, customerId: invoice.customer });
+
+      // Check if this is a device slot payment
+      const isDeviceSlot = invoice.metadata?.type === "device_slot" || 
+        invoice.lines?.data?.some((line: any) => line.metadata?.type === "device_slot");
+
+      if (isDeviceSlot) {
+        logStep("Device slot payment detected");
+        // Handle device slot - sync device slots for this user
+        const userId = invoice.metadata?.user_id;
+        if (userId) {
+          await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, invoice.customer as string);
+          logStep("Device slots synced after payment", { userId });
+        }
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
 
       // Get user_id from invoice metadata
       const userId = invoice.metadata?.user_id;
