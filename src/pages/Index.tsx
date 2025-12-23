@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import HomeView from "@/components/HomeView";
 import SearchView from "@/components/SearchView";
@@ -30,6 +30,7 @@ const Index = () => {
   const { subscription, checkSubscription, isAdmin, isLoading, isSubscriptionLoading } = useAuth();
   const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { toast } = useToast();
   
   // Auto-play scheduled playlists
@@ -37,6 +38,16 @@ const Index = () => {
 
   const navigate = useNavigate();
   const { syncDeviceSlots } = useAuth();
+
+  // Handle navigation state from other pages (e.g., Profile -> Search)
+  useEffect(() => {
+    const state = location.state as { view?: string } | null;
+    if (state?.view) {
+      setActiveView(state.view);
+      // Clear the state to prevent re-triggering on refresh
+      navigate("/", { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   // Handle checkout callback and device added
   useEffect(() => {
