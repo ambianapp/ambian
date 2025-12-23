@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  isSubscriptionLoading: boolean;
   isAdmin: boolean;
   subscription: SubscriptionInfo;
   signOut: () => Promise<void>;
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionInfo>({
     subscribed: false,
@@ -49,7 +51,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const currentSession =
         overrideSession ?? (await supabase.auth.getSession()).data.session;
-      if (!currentSession) return;
+      if (!currentSession) {
+        setIsSubscriptionLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
@@ -66,6 +71,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (error) {
       console.error("Error checking subscription:", error);
+    } finally {
+      setIsSubscriptionLoading(false);
     }
   };
 
@@ -321,6 +328,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         session,
         isLoading,
+        isSubscriptionLoading,
         isAdmin,
         subscription,
         signOut,
