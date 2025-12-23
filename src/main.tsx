@@ -7,13 +7,14 @@ import { registerSW } from "virtual:pwa-register";
 // music-metadata-browser expects Buffer to exist in the browser runtime
 (globalThis as any).Buffer = Buffer;
 
-// Register service worker and auto-refresh when a new version is available.
+// Register service worker and prompt when a new version is available (avoid auto-refresh that resets scroll/state).
 let updateSW: ((reloadPage?: boolean) => Promise<void>) | undefined;
 updateSW = registerSW({
   immediate: true,
   onNeedRefresh() {
-    // Activate the new service worker and reload so updated assets (like logos) are used.
-    updateSW?.(true);
+    // Don't auto-reload on tab focus; it feels like the app "refreshes".
+    // Users can refresh manually when convenient.
+    console.info("New version available. Refresh the page to update.");
   },
 });
 

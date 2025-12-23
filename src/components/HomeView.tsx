@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 type DbPlaylist = Tables<"playlists">;
 
@@ -34,6 +35,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const scrollRef = useScrollRestoration("home");
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyUpdated, setRecentlyUpdated] = useState<DbPlaylist[]>([]);
@@ -289,7 +291,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
       <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="animate-fade-in space-y-3">
