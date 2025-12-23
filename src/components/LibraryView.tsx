@@ -114,7 +114,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     };
 
     fetchLibrary();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes, not on every user object update
 
   const handleLikedSongsClick = () => {
     if (isSelectMode) return;

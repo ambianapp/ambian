@@ -47,7 +47,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
   useEffect(() => {
     loadData();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only reload when user ID changes, not on every user object update
 
   const loadData = async () => {
     setIsLoading(true);
