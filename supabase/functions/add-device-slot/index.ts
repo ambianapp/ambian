@@ -78,6 +78,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
+      allow_promotion_codes: true, // Enable coupon/promo code entry
       success_url: `${returnOrigin}/profile?device_added=true`,
       cancel_url: `${returnOrigin}/profile`,
       metadata: {
