@@ -111,22 +111,18 @@ serve(async (req) => {
         throw new Error("You have an unpaid invoice. Please pay it first before requesting a new one.");
       }
 
-      // Check for past unpaid invoices (void or uncollectible) - prevent abuse
-      const voidInvoices = await stripe.invoices.list({
-        customer: customerId,
-        status: "void",
-        limit: 5,
-      });
-
+      // Check for past genuinely unpaid invoices (uncollectible) - prevent abuse
+      // NOTE: "void" invoices can happen for legitimate reasons (test invoices, corrections),
+      // so we do NOT treat them as unpaid-abuse signals.
       const uncollectibleInvoices = await stripe.invoices.list({
         customer: customerId,
         status: "uncollectible",
-        limit: 5,
+        limit: 10,
       });
 
-      const unpaidHistory = voidInvoices.data.length + uncollectibleInvoices.data.length;
-      if (unpaidHistory >= 2) {
-        logStep("User has history of unpaid invoices", { voidCount: voidInvoices.data.length, uncollectibleCount: uncollectibleInvoices.data.length });
+      const uncollectibleCount = uncollectibleInvoices.data.length;
+      if (uncollectibleCount >= 2) {
+        logStep("User has history of uncollectible invoices", { uncollectibleCount });
         throw new Error("Invoice payment is not available for your account. Please use card payment instead.");
       }
       
