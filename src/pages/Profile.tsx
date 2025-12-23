@@ -340,15 +340,17 @@ const Profile = () => {
                       variant="default"
                       onClick={() => handleChangePlan("yearly")}
                       disabled={isChangingPlan}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto flex-wrap h-auto py-2"
                     >
-                      {isChangingPlan ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                      )}
-                      {t("subscription.switchToYearly")}
-                      <span className="ml-2 text-xs bg-primary-foreground/20 px-2 py-0.5 rounded">
+                      <span className="flex items-center">
+                        {isChangingPlan ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                        )}
+                        {t("subscription.switchToYearly")}
+                      </span>
+                      <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded ml-2">
                         {t("subscription.yearlySave")}
                       </span>
                     </Button>
