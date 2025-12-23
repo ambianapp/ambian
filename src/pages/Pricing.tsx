@@ -480,6 +480,38 @@ const Pricing = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Plan Selection in Dialog */}
+              <div className="space-y-2">
+                <Label>Select Plan</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      selectedPlan === "monthly"
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedPlan("monthly")}
+                  >
+                    <div className="font-medium text-foreground">Monthly</div>
+                    <div className="text-sm text-muted-foreground">{currentPlans.monthly.price}</div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      selectedPlan === "yearly"
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedPlan("yearly")}
+                  >
+                    <div className="font-medium text-foreground">Yearly</div>
+                    <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}</div>
+                    <div className="text-xs text-primary mt-1">{currentPlans.yearly.savings}</div>
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="companyName">Company Name *</Label>
                 <Input
@@ -499,11 +531,6 @@ const Pricing = () => {
                 />
               </div>
               <div className="pt-2">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Selected: <span className="font-medium text-foreground">
-                    {selectedPlan === "yearly" ? "Yearly" : "Monthly"} ({paymentType === "subscription" ? "Subscription" : "One-time"})
-                  </span> ({currentPlans[selectedPlan].price})
-                </p>
                 <Button
                   className="w-full"
                   onClick={handleInvoiceRequest}
@@ -512,7 +539,7 @@ const Pricing = () => {
                   {isInvoiceLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Send Invoice to My Email
+                  Send Invoice ({currentPlans[selectedPlan].price})
                 </Button>
               </div>
             </div>
