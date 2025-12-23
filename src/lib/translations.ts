@@ -98,6 +98,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.didntReceive": "Didn't receive the email? Check your spam folder or",
     "auth.tryAgain": "Try again",
     "auth.backToLogin": "Back to login",
+    "auth.marketingOptIn": "Send me updates, tips, and special offers via email",
     
     // Profile
     "profile.title": "Profile Settings",
@@ -496,6 +497,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.didntReceive": "Fick du inte mejlet? Kolla skräpposten eller",
     "auth.tryAgain": "Försök igen",
     "auth.backToLogin": "Tillbaka till inloggning",
+    "auth.marketingOptIn": "Skicka mig uppdateringar, tips och specialerbjudanden via e-post",
     
     // Profile
     "profile.title": "Profilinställningar",
@@ -894,6 +896,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.didntReceive": "Etkö saanut sähköpostia? Tarkista roskaposti tai",
     "auth.tryAgain": "Yritä uudelleen",
     "auth.backToLogin": "Takaisin kirjautumiseen",
+    "auth.marketingOptIn": "Lähetä minulle päivityksiä, vinkkejä ja erikoistarjouksia sähköpostitse",
     
     // Profile
     "profile.title": "Profiiliasetukset",
@@ -1292,6 +1295,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.didntReceive": "E-Mail nicht erhalten? Überprüfen Sie den Spam-Ordner oder",
     "auth.tryAgain": "Erneut versuchen",
     "auth.backToLogin": "Zurück zur Anmeldung",
+    "auth.marketingOptIn": "Senden Sie mir Updates, Tipps und Sonderangebote per E-Mail",
     
     // Profile
     "profile.title": "Profileinstellungen",
@@ -1690,6 +1694,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.didntReceive": "Vous n'avez pas reçu l'email ? Vérifiez vos spams ou",
     "auth.tryAgain": "Réessayer",
     "auth.backToLogin": "Retour à la connexion",
+    "auth.marketingOptIn": "Envoyez-moi des mises à jour, des conseils et des offres spéciales par e-mail",
     
     // Profile
     "profile.title": "Paramètres du profil",
