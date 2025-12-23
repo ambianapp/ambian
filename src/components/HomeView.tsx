@@ -295,11 +295,35 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="animate-fade-in space-y-3">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground whitespace-nowrap">{getGreeting()}</h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">{t("home.subtitle")}</p>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground whitespace-nowrap">{getGreeting()}</h1>
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">{t("home.subtitle")}</p>
+            </div>
+            {/* Desktop: buttons on the right */}
+            <div className="hidden lg:flex items-center gap-2">
+              <QuickMixDialog
+                onTrackSelect={onTrackSelect}
+                trigger={
+                  <Button variant="default" size="sm" className="gap-2">
+                    <Shuffle className="w-4 h-4" />
+                    <span>{t("quickMix.button")}</span>
+                  </Button>
+                }
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/playlists")}
+                className="shrink-0 gap-2"
+              >
+                <Music className="w-4 h-4" />
+                <span>{t("home.allPlaylists")}</span>
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Mobile/Tablet: buttons below */}
+          <div className="flex lg:hidden items-center gap-2">
             <QuickMixDialog
               onTrackSelect={onTrackSelect}
               trigger={
