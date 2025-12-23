@@ -237,30 +237,45 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           )}
         </div>
         {playlists.length > 0 ? (
-          <div className={compact ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-3" : "grid grid-cols-2 lg:grid-cols-4 gap-4"}>
-            {displayedPlaylists.map((playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                playlist={{
-                  id: playlist.id,
-                  name: playlist.name,
-                  description: playlist.description || "",
-                  cover: playlist.cover_url || "/placeholder.svg",
-                  trackCount: 0,
-                  tracks: [],
-                }}
-                onClick={() => handlePlaylistClick({
-                  id: playlist.id,
-                  name: playlist.name,
-                  cover: playlist.cover_url,
-                  description: playlist.description,
-                })}
-                onPlay={() => handlePlayPlaylist(playlist.id)}
-                onUpdate={handlePlaylistUpdate}
-                compact={compact}
-              />
-            ))}
-          </div>
+          <>
+            <div className={compact ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-3" : "grid grid-cols-2 lg:grid-cols-4 gap-4"}>
+              {displayedPlaylists.map((playlist) => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={{
+                    id: playlist.id,
+                    name: playlist.name,
+                    description: playlist.description || "",
+                    cover: playlist.cover_url || "/placeholder.svg",
+                    trackCount: 0,
+                    tracks: [],
+                  }}
+                  onClick={() => handlePlaylistClick({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
+                  onPlay={() => handlePlayPlaylist(playlist.id)}
+                  onUpdate={handlePlaylistUpdate}
+                  compact={compact}
+                />
+              ))}
+            </div>
+            {playlists.length > displayCount && !showAll && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onToggle}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  {t("home.showMore")}
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <p className="text-muted-foreground">No playlists yet. Create one in the admin panel.</p>
         )}
