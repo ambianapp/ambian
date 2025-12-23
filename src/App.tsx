@@ -17,6 +17,7 @@ import Install from "./pages/Install";
 import Help from "./pages/Help";
 import AllPlaylists from "./pages/AllPlaylists";
 import ResetPassword from "./pages/ResetPassword";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -102,6 +103,7 @@ const AppRoutes = () => {
       />
       <Route path="/install" element={<Install />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/terms" element={<Terms />} />
       <Route
         path="/help"
         element={

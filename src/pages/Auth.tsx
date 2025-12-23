@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
@@ -17,9 +18,10 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; terms?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -31,15 +33,30 @@ const Auth = () => {
   const validateForm = () => {
     try {
       authSchema.parse({ email, password });
+      const fieldErrors: { email?: string; password?: string; terms?: string } = {};
+      
+      // Check terms acceptance for signup
+      if (!isLogin && !acceptedTerms) {
+        fieldErrors.terms = t("auth.mustAcceptTerms");
+      }
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors);
+        return false;
+      }
+      
       setErrors({});
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: { email?: string; password?: string } = {};
+        const fieldErrors: { email?: string; password?: string; terms?: string } = {};
         error.errors.forEach((err) => {
           if (err.path[0] === "email") fieldErrors.email = err.message;
           if (err.path[0] === "password") fieldErrors.password = err.message;
         });
+        if (!isLogin && !acceptedTerms) {
+          fieldErrors.terms = t("auth.mustAcceptTerms");
+        }
         setErrors(fieldErrors);
       }
       return false;
@@ -434,6 +451,29 @@ const Auth = () => {
                 <p className="text-sm text-destructive">{errors.password}</p>
               )}
             </div>
+
+            {/* Terms Checkbox - Only show for signup */}
+            {!isLogin && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="terms"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                    className="mt-1"
+                  />
+                  <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                    {t("auth.iAccept")}{" "}
+                    <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                      {t("auth.termsAndConditions")}
+                    </Link>
+                  </Label>
+                </div>
+                {errors.terms && (
+                  <p className="text-sm text-destructive">{errors.terms}</p>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"
