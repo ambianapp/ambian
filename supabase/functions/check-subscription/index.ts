@@ -120,6 +120,57 @@ serve(async (req) => {
     if (hasActiveStripeSub) {
       const subscription = subscriptions.data[0];
       const subscriptionItem = subscription.items.data[0];
+      const collectionMethod = subscription.collection_method;
+      
+      // For invoice-based subscriptions, verify the latest invoice is actually paid
+      if (collectionMethod === "send_invoice") {
+        const invoices = await stripe.invoices.list({
+          subscription: subscription.id,
+          limit: 1,
+        });
+        
+        if (invoices.data.length > 0) {
+          const latestInvoice = invoices.data[0];
+          logStep("Checking invoice status for send_invoice subscription", { 
+            invoiceId: latestInvoice.id, 
+            status: latestInvoice.status 
+          });
+          
+          // If invoice is not paid (void, uncollectible, open), this subscription is not valid
+          if (latestInvoice.status !== "paid") {
+            logStep("Invoice not paid, subscription not valid", { status: latestInvoice.status });
+            
+            // Cancel the subscription in Stripe since invoice was voided/not paid
+            try {
+              await stripe.subscriptions.cancel(subscription.id);
+              logStep("Canceled invalid subscription", { subscriptionId: subscription.id });
+            } catch (cancelError) {
+              logStep("Error canceling subscription", { error: String(cancelError) });
+            }
+            
+            // Update local status
+            await supabaseClient
+              .from("subscriptions")
+              .upsert({
+                user_id: user.id,
+                stripe_customer_id: customerId,
+                status: isInTrial ? "trialing" : "inactive",
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "user_id" });
+            
+            return new Response(JSON.stringify({
+              subscribed: isInTrial,
+              is_trial: isInTrial,
+              trial_days_remaining: trialDaysRemaining,
+              trial_end: trialEndDate.toISOString(),
+              device_slots: 1,
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            });
+          }
+        }
+      }
       
       // Period dates are on the subscription item in the new API structure
       const periodEnd = subscriptionItem.current_period_end ?? subscription.current_period_end;
@@ -133,8 +184,6 @@ serve(async (req) => {
       planType = interval === "year" ? "yearly" : "monthly";
       isRecurring = true;
       
-      // Get collection method: 'charge_automatically' (card) or 'send_invoice'
-      const collectionMethod = subscription.collection_method;
       logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType, periodEnd, periodStart, collectionMethod });
 
       await supabaseClient
