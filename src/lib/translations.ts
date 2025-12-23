@@ -130,9 +130,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.trial": "Free Trial",
     "subscription.trialDaysRemaining": "{days} day(s) remaining",
     "subscription.paymentDue": "Payment Due",
+    "subscription.awaitingPayment": "Awaiting payment",
     "subscription.payByInvoice": "Pay by Invoice",
     "subscription.payByCard": "Automatic Card Payment",
-    
+
     // Device slots
     "devices.title": "Multiple Locations",
     "devices.subtitle": "Play music in multiple locations at the same time",
