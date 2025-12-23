@@ -384,27 +384,14 @@ const PlayerBar = () => {
   useEffect(() => {
     if (!('mediaSession' in navigator) || !currentTrack) return;
 
-    // Get absolute URL for cover image (iOS requires full URLs)
-    const getCoverUrl = () => {
-      if (!currentTrack.cover || currentTrack.cover === '/placeholder.svg') {
-        // Fallback to Ambian logo if no cover
-        return `${window.location.origin}/ambian-logo.png`;
-      }
-      // If already absolute URL (e.g., signed Supabase URL), use as is
-      if (currentTrack.cover.startsWith('http')) {
-        return currentTrack.cover;
-      }
-      // Convert relative URL to absolute
-      return `${window.location.origin}${currentTrack.cover}`;
-    };
-
-    const artworkUrl = getCoverUrl();
+    // Always use Ambian logo for lock screen artwork
+    const artworkUrl = `${window.location.origin}/ambian-logo.png`;
     
-    // Set metadata with track's cover image
+    // Set metadata with Ambian branding
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title || 'Unknown Track',
       artist: currentTrack.artist || 'Ambian',
-      album: currentTrack.album || 'Ambian Music',
+      album: 'Ambian',
       artwork: [
         { src: artworkUrl, sizes: '96x96', type: 'image/png' },
         { src: artworkUrl, sizes: '128x128', type: 'image/png' },
