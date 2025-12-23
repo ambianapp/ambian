@@ -1,11 +1,91 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
+
+async function sendUpcomingPaymentEmail(
+  email: string,
+  customerName: string | null,
+  amount: number,
+  currency: string,
+  dueDate: Date,
+  planType: string
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+  
+  const formattedDueDate = dueDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #1a1a1a; margin: 0;">Ambian</h1>
+      </div>
+      
+      <div style="background: #f9fafb; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
+        <h2 style="color: #1a1a1a; margin-top: 0;">Upcoming Payment Reminder</h2>
+        <p>Hi${customerName ? ` ${customerName}` : ''},</p>
+        <p>This is a friendly reminder that your Ambian subscription renewal is coming up.</p>
+        
+        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e5e7eb;">
+          <p style="margin: 0 0 10px 0;"><strong>Plan:</strong> ${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</p>
+          <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> ${formattedAmount}</p>
+          <p style="margin: 0;"><strong>Due by:</strong> ${formattedDueDate}</p>
+        </div>
+        
+        <p>If you're paying by bank transfer (IBAN), please ensure payment is made before the due date to avoid any interruption to your service.</p>
+        
+        <p>You can view your invoice and payment details in your profile at <a href="https://ambianmusic.com/profile" style="color: #4f46e5;">ambianmusic.com/profile</a>.</p>
+      </div>
+      
+      <div style="text-align: center; color: #6b7280; font-size: 14px;">
+        <p>If you have any questions, please contact us at support@ambianmusic.com</p>
+        <p style="margin-top: 20px;">&copy; ${new Date().getFullYear()} Ambian. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: `Payment Reminder: Your Ambian subscription renews soon (${formattedAmount})`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending upcoming payment email", { error });
+      return false;
+    }
+
+    logStep("Upcoming payment email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send upcoming payment email", { error: String(error) });
+    return false;
+  }
+}
 
 const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
@@ -97,7 +177,7 @@ serve(async (req) => {
     );
 
     // Handle invoice.upcoming - sent ~3 days before renewal for send_invoice subscriptions
-    // This is our cue to extend access grace period for IBAN payers
+    // This is our cue to extend access grace period for IBAN payers and send reminder email
     if (event.type === "invoice.upcoming") {
       const invoice = event.data.object as Stripe.Invoice;
       logStep("Upcoming invoice", { customerId: invoice.customer, subscriptionId: invoice.subscription });
@@ -122,6 +202,31 @@ serve(async (req) => {
             .eq("user_id", userId);
           
           logStep("Extended grace period for upcoming renewal", { userId, until: gracePeriodEnd.toISOString() });
+
+          // Get customer details for email
+          const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+          if (customerId) {
+            const customer = await stripe.customers.retrieve(customerId);
+            const customerEmail = (customer as any).email;
+            const customerName = (customer as any).name;
+            
+            if (customerEmail) {
+              // Calculate invoice amount and due date
+              const amount = invoice.amount_due || 0;
+              const currency = invoice.currency || 'eur';
+              const planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+              
+              // Due date is the grace period end
+              await sendUpcomingPaymentEmail(
+                customerEmail,
+                customerName,
+                amount,
+                currency,
+                gracePeriodEnd,
+                planType
+              );
+            }
+          }
         }
       }
     }
