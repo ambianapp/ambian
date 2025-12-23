@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isSigningOut = useRef(false);
 
   const checkSubscription = async (overrideSession?: Session | null) => {
+    setIsSubscriptionLoading(true);
     try {
       const currentSession =
         overrideSession ?? (await supabase.auth.getSession()).data.session;
@@ -200,6 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUser(null);
       setIsAdmin(false);
+      setIsSubscriptionLoading(false);
       setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, deviceSlots: 1 });
       isSigningOut.current = false;
     }
@@ -214,10 +216,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
 
         if (session?.user) {
+          setIsSubscriptionLoading(true);
           setTimeout(() => {
             checkAdminRole(session.user.id);
             checkSubscription(session);
-            
+
             // Register session on sign in to kick out other devices
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
               registerSession(session.user.id);
@@ -225,6 +228,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsSubscriptionLoading(false);
           setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, deviceSlots: 1 });
         }
       }
@@ -235,6 +239,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
+      if (session?.user) setIsSubscriptionLoading(true);
 
       if (session?.user) {
         checkAdminRole(session.user.id);
