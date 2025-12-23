@@ -560,13 +560,13 @@ const Auth = () => {
           <div className="lg:hidden mt-4 pt-4 border-t border-border/50">
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
-                <div className="text-base font-bold text-foreground">€7.40<span className="text-xs font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
-                <div className="text-xs text-muted-foreground">{t("auth.billedYearly")}</div>
+                <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
+                <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
               </div>
               <div className="h-8 w-px bg-border/50" />
               <div className="text-center">
-                <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
-                <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
+                <div className="text-base font-bold text-foreground">€7.40<span className="text-xs font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
+                <div className="text-xs text-muted-foreground">{t("auth.billedYearly")}</div>
               </div>
             </div>
           </div>
