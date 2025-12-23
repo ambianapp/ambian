@@ -8,13 +8,9 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
-  };
-
+  // Webhooks are server-to-server, no CORS needed
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 405 }); // Method Not Allowed
   }
 
   try {
@@ -27,7 +23,7 @@ serve(async (req) => {
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
       logStep("ERROR: No signature");
-      return new Response(JSON.stringify({ error: "No signature" }), { status: 400 });
+      return new Response(null, { status: 400 });
     }
 
     const body = await req.text();
@@ -35,7 +31,7 @@ serve(async (req) => {
     
     if (!webhookSecret) {
       logStep("ERROR: No webhook secret configured");
-      return new Response(JSON.stringify({ error: "Webhook secret not configured" }), { status: 500 });
+      return new Response(null, { status: 500 });
     }
 
     let event: Stripe.Event;
@@ -43,7 +39,7 @@ serve(async (req) => {
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } catch (err: any) {
       logStep("ERROR: Signature verification failed", { error: err.message });
-      return new Response(JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }), { status: 400 });
+      return new Response(null, { status: 400 });
     }
 
     logStep("Event verified", { type: event.type });
@@ -68,7 +64,10 @@ serve(async (req) => {
         const customerEmail = typeof invoice.customer_email === 'string' ? invoice.customer_email : null;
         if (!customerEmail) {
           logStep("No user_id or customer_email found");
-          return new Response(JSON.stringify({ received: true, message: "No user identifier" }), { status: 200 });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          });
         }
 
         // Find profile by email
@@ -80,7 +79,10 @@ serve(async (req) => {
 
         if (!profile) {
           logStep("No user found for email", { email: customerEmail });
-          return new Response(JSON.stringify({ received: true, message: "No user found" }), { status: 200 });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          });
         }
 
         await updateSubscriptionFromInvoice(supabaseAdmin, profile.user_id, invoice, stripe);
@@ -131,16 +133,14 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { "Content-Type": "application/json" },
-      status: 500,
-    });
+    // Return generic error to client, detailed error logged server-side only
+    return new Response(null, { status: 400 });
   }
 });
 
