@@ -190,9 +190,23 @@ const Pricing = () => {
       setCompanyName("");
       setCompanyAddress("");
     } catch (error: any) {
+      const errorMessage = error.message || "Failed to create invoice";
+      
+      // Parse specific error cases for clearer UI
+      let title = "Invoice Error";
+      let description = errorMessage;
+      
+      if (errorMessage.includes("unpaid invoice")) {
+        title = "Unpaid Invoice Exists";
+        description = "You have an unpaid invoice. Please check your email and pay the existing invoice first, or contact support if you need help.";
+      } else if (errorMessage.includes("invoice history")) {
+        title = "Invoice Payment Required";
+        description = "Due to previous unpaid invoices, please use card payment instead.";
+      }
+      
       toast({
-        title: "Error",
-        description: error.message,
+        title,
+        description,
         variant: "destructive",
       });
     } finally {
