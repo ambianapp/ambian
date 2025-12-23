@@ -232,7 +232,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               variant="ghost"
               size="sm"
               onClick={onToggle}
-              className="text-muted-foreground hover:text-foreground shrink-0 text-xs sm:text-sm px-2 sm:px-3"
+              className="text-primary hover:text-primary hover:bg-primary/10 shrink-0 text-xs sm:text-sm px-2 sm:px-3"
             >
               <span className="hidden sm:inline">{showAll ? t("home.showLess") : t("home.showMore")}</span>
               <span className="sm:hidden">{showAll ? "−" : "+"}</span>
@@ -272,7 +272,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                   variant="outline"
                   size="sm"
                   onClick={onToggle}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
                 >
                   {t("home.showMore")}
                   <ChevronRight className="w-4 h-4 ml-1" />
