@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
+import WelcomeDialog from "./WelcomeDialog";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -291,8 +292,12 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
-      <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
+    <>
+      {/* Welcome dialog for new users */}
+      {user && <WelcomeDialog userId={user.id} />}
+      
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
+        <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="animate-fade-in space-y-3">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -471,6 +476,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         )}
       </div>
     </div>
+    </>
   );
 };
 
