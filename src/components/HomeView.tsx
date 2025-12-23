@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -32,6 +33,7 @@ interface HomeViewProps {
 const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: HomeViewProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
   const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyUpdated, setRecentlyUpdated] = useState<DbPlaylist[]>([]);
@@ -214,9 +216,11 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     playlists: DbPlaylist[],
     showAll: boolean,
     onToggle: () => void,
-    compact: boolean = false
+    compact: boolean = false,
+    mobileDisplayCount?: number
   ) => {
-    const displayCount = compact ? 10 : 4;
+    const defaultDisplayCount = compact ? 10 : 4;
+    const displayCount = isMobile && mobileDisplayCount !== undefined ? mobileDisplayCount : defaultDisplayCount;
     const displayedPlaylists = showAll ? playlists : playlists.slice(0, displayCount);
 
     return (
@@ -362,7 +366,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           moodPlaylists,
           showAllMoods,
           () => setShowAllMoods(!showAllMoods),
-          true
+          true,
+          4 // Show only 4 on mobile
         )}
 
         {/* Playlists by Genre */}
