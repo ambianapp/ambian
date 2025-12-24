@@ -133,13 +133,13 @@ serve(async (req) => {
       });
     }
 
-    // Clean up stale sessions (not updated in 30 minutes = likely closed/inactive)
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    // Clean up stale sessions (not updated in 10 minutes = likely closed/inactive)
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { data: staleRemoved } = await adminClient
       .from("active_sessions")
       .delete()
       .eq("user_id", user.id)
-      .lt("updated_at", thirtyMinutesAgo)
+      .lt("updated_at", tenMinutesAgo)
       .select("session_id");
     
     if (staleRemoved && staleRemoved.length > 0) {
