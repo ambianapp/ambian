@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink } from "lucide-react";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -275,6 +275,13 @@ export function UserManager() {
     });
   };
 
+  const isNewUser = (createdAt: string) => {
+    const userDate = new Date(createdAt);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return userDate > sevenDaysAgo;
+  };
+
   const formatTimestamp = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleDateString("en-US", {
       year: "numeric",
@@ -373,7 +380,15 @@ export function UserManager() {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-medium">{user.full_name || "No name"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{user.full_name || "No name"}</span>
+                      {isNewUser(user.created_at) && (
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          New
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-sm text-muted-foreground">{user.email || "No email"}</span>
                   </div>
                 </TableCell>

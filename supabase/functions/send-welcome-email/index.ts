@@ -188,6 +188,109 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
 `;
 };
 
+const generateAdminNotificationHtml = (email: string, name?: string) => {
+  const displayName = name || email.split('@')[0];
+  const signupDate = new Date().toLocaleString('en-US', { 
+    dateStyle: 'full', 
+    timeStyle: 'short',
+    timeZone: 'Europe/Helsinki'
+  });
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color: ${brandColors.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 40px 20px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background-color: ${brandColors.cardBackground}; border-radius: 16px; border: 1px solid ${brandColors.border}; max-width: 520px;">
+          <tr>
+            <td style="padding: 40px;">
+              <!-- Logo -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 24px;">
+                    <img src="https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1/object/public/playlist-covers/ambian-logo.png" alt="Ambian" width="100" style="display: block;">
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- New User Icon -->
+              <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-block; width: 56px; height: 56px; background-color: ${brandColors.success}20; border-radius: 50%; line-height: 56px; font-size: 28px;">
+                  🎉
+                </div>
+              </div>
+              
+              <!-- Heading -->
+              <h1 style="color: ${brandColors.text}; font-size: 24px; font-weight: 700; text-align: center; margin: 0 0 24px 0;">
+                New User Signup!
+              </h1>
+              
+              <!-- User Info Box -->
+              <div style="background-color: ${brandColors.background}; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid ${brandColors.border};">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Name</span>
+                      <p style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">${displayName}</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Email</span>
+                      <p style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">
+                        <a href="mailto:${email}" style="color: ${brandColors.primary}; text-decoration: none;">${email}</a>
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Signed up</span>
+                      <p style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">${signupDate}</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Trial Status</span>
+                      <p style="color: ${brandColors.success}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">7-day free trial started</p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
+              <!-- CTA Button -->
+              <div style="text-align: center;">
+                <a href="https://ambianmusic.com/admin" style="display: inline-block; background-color: ${brandColors.primary}; color: ${brandColors.text}; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 32px; border-radius: 8px;">
+                  View in Admin Panel
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+        
+        <!-- Footer -->
+        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+          <tr>
+            <td align="center" style="padding-top: 20px;">
+              <p style="color: ${brandColors.textMuted}; font-size: 12px; margin: 0;">
+                This is an automated notification from Ambian.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+};
+
 serve(async (req) => {
   console.log("send-welcome-email function invoked");
 
@@ -213,14 +316,14 @@ serve(async (req) => {
 
     console.log("Sending welcome email to:", email);
 
-    const html = generateWelcomeEmailHtml(email, name);
+    const welcomeHtml = generateWelcomeEmailHtml(email, name);
 
-    // Send the email via Resend
+    // Send the welcome email to the user
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: "Welcome to Ambian! 🎵 Your free trial has started",
-      html,
+      html: welcomeHtml,
     });
 
     if (emailError) {
@@ -229,6 +332,28 @@ serve(async (req) => {
     }
 
     console.log("Welcome email sent successfully:", emailData);
+
+    // Send admin notification email
+    try {
+      const adminHtml = generateAdminNotificationHtml(email, name);
+      
+      const { error: adminEmailError } = await resend.emails.send({
+        from: "Ambian <noreply@ambianmusic.com>",
+        to: ["info@ambian.fi"],
+        subject: `🎉 New signup: ${name || email}`,
+        html: adminHtml,
+      });
+
+      if (adminEmailError) {
+        console.error("Admin notification email error:", adminEmailError);
+        // Don't throw - we still want to return success for the welcome email
+      } else {
+        console.log("Admin notification email sent successfully");
+      }
+    } catch (adminError) {
+      console.error("Error sending admin notification:", adminError);
+      // Don't throw - the main welcome email was sent successfully
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
