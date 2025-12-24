@@ -407,12 +407,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Handle adding OAuth users to Resend audience and sending welcome email after sign-in
-  const handleOAuthAudienceSignup = useCallback(async (userEmail: string, userName?: string) => {
+  // Only sends for users created within the last 2 minutes (truly new signups)
+  const handleOAuthAudienceSignup = useCallback(async (userEmail: string, userName?: string, userCreatedAt?: string) => {
     const marketingOptIn = localStorage.getItem('ambian_marketing_optin');
-    const alreadyAdded = localStorage.getItem('ambian_audience_added');
     
-    // Only add to audience and send welcome email if this is a new OAuth signup
-    if (!alreadyAdded) {
+    // Check if user was JUST created (within last 2 minutes) - this indicates a truly new signup
+    const createdAt = userCreatedAt ? new Date(userCreatedAt).getTime() : 0;
+    const now = Date.now();
+    const isNewUser = now - createdAt < 2 * 60 * 1000; // 2 minutes
+    
+    // Only add to audience and send welcome email for truly new users
+    if (isNewUser) {
+      console.log('New OAuth user detected, sending welcome email and adding to audience');
       try {
         const audienceType = marketingOptIn === 'true' ? 'both' : 'all';
         
@@ -432,15 +438,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         });
         
-        // Mark as added so we don't add again on future logins
-        localStorage.setItem('ambian_audience_added', 'true');
-        console.log('Added OAuth user to Resend audience and sent welcome email');
+        console.log('Added new OAuth user to Resend audience and sent welcome email');
       } catch (error) {
         console.error('Failed to add OAuth user to audience or send welcome email:', error);
       } finally {
         // Clean up the marketing opt-in flag
         localStorage.removeItem('ambian_marketing_optin');
       }
+    } else {
+      console.log('Existing user login, skipping welcome email (created:', userCreatedAt, ')');
     }
   }, []);
 
@@ -501,7 +507,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const isRecentSignIn = Date.now() - lastSignInAt < 5000;
             if (event === "SIGNED_IN" && session.user.email && isRecentSignIn) {
               const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
-              handleOAuthAudienceSignup(session.user.email, userName);
+              handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at);
             }
           }, 0);
         } else {
