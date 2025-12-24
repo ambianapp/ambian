@@ -406,26 +406,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Handle adding OAuth users to Resend audience after sign-in
-  const handleOAuthAudienceSignup = useCallback(async (userEmail: string) => {
+  // Handle adding OAuth users to Resend audience and sending welcome email after sign-in
+  const handleOAuthAudienceSignup = useCallback(async (userEmail: string, userName?: string) => {
     const marketingOptIn = localStorage.getItem('ambian_marketing_optin');
     const alreadyAdded = localStorage.getItem('ambian_audience_added');
     
-    // Only add to audience if this is a new OAuth signup and we haven't already processed it
+    // Only add to audience and send welcome email if this is a new OAuth signup
     if (!alreadyAdded) {
       try {
         const audienceType = marketingOptIn === 'true' ? 'both' : 'all';
+        
+        // Add to audience
         await supabase.functions.invoke('add-to-audience', {
           body: { 
             email: userEmail,
             audienceType
           }
         });
+        
+        // Send welcome email
+        await supabase.functions.invoke('send-welcome-email', {
+          body: { 
+            email: userEmail,
+            name: userName
+          }
+        });
+        
         // Mark as added so we don't add again on future logins
         localStorage.setItem('ambian_audience_added', 'true');
-        console.log('Added OAuth user to Resend audience');
+        console.log('Added OAuth user to Resend audience and sent welcome email');
       } catch (error) {
-        console.error('Failed to add OAuth user to audience:', error);
+        console.error('Failed to add OAuth user to audience or send welcome email:', error);
       } finally {
         // Clean up the marketing opt-in flag
         localStorage.removeItem('ambian_marketing_optin');
@@ -485,11 +496,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               }
             }
             
-            // Handle OAuth signup - add to Resend audience (only on recent sign-in)
+            // Handle OAuth signup - add to Resend audience and send welcome email (only on recent sign-in)
             const lastSignInAt = session.user.last_sign_in_at ? new Date(session.user.last_sign_in_at).getTime() : 0;
             const isRecentSignIn = Date.now() - lastSignInAt < 5000;
             if (event === "SIGNED_IN" && session.user.email && isRecentSignIn) {
-              handleOAuthAudienceSignup(session.user.email);
+              const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+              handleOAuthAudienceSignup(session.user.email, userName);
             }
           }, 0);
         } else {
