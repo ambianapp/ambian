@@ -101,6 +101,15 @@ const Auth = () => {
           console.error('Failed to add to audience:', audienceError);
         }
         
+        // Send welcome email
+        try {
+          await supabase.functions.invoke('send-welcome-email', {
+            body: { email }
+          });
+        } catch (welcomeError) {
+          console.error('Failed to send welcome email:', welcomeError);
+        }
+        
         toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
         navigate("/");
       }

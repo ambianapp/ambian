@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.send-auth-email]
 verify_jwt = false
 
+[functions.send-welcome-email]
+verify_jwt = false
+
 [functions.add-to-audience]
 verify_jwt = false
 
