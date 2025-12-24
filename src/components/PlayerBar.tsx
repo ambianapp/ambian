@@ -53,11 +53,56 @@ const PlayerBar = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Debug logging - temporarily always on to diagnose 5-second restart bug
-  const debugCrossfadeRef = useRef<boolean>(true); // Always on for debugging
-  const dbg = useCallback((...args: any[]) => {
-    if (debugCrossfadeRef.current) console.log("[crossfade]", ...args);
+  // Crossfade debug buffer (stored in localStorage so you can inspect after the issue happens)
+  const CROSSFADE_DEBUG_KEY = "ambian_crossfade_debug";
+  const debugCrossfadeRef = useRef<boolean>(true); // keep on for now; we'll switch back once fixed
+  const isCrossfadeActiveRef = useRef(false);
+
+  const pushCrossfadeDebug = useCallback((entry: Record<string, unknown>) => {
+    try {
+      const raw = localStorage.getItem(CROSSFADE_DEBUG_KEY);
+      const list = (raw ? (JSON.parse(raw) as any[]) : []) ?? [];
+      const next = [
+        ...list,
+        {
+          ts: new Date().toISOString(),
+          ...entry,
+        },
+      ].slice(-200);
+      localStorage.setItem(CROSSFADE_DEBUG_KEY, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
   }, []);
+
+  const dbg = useCallback(
+    (...args: any[]) => {
+      if (!debugCrossfadeRef.current) return;
+
+      // Keep console output (useful during dev)
+      console.log("[crossfade]", ...args);
+
+      // Also persist a structured entry for Admin → Crossfade Debug panel
+      const message = typeof args[0] === "string" ? args[0] : "event";
+      const payload = args.length > 1 ? args[1] : undefined;
+
+      pushCrossfadeDebug({
+        message,
+        payload,
+        trackId: currentTrack?.id ?? null,
+        isPlaying,
+        isCrossfadeActive: isCrossfadeActiveRef.current,
+        isCrossfading: isCrossfadingRef.current,
+        crossfadeComplete: crossfadeCompleteRef.current,
+        trackSwitched: crossfadeTrackSwitchedRef.current,
+        mainTime: audioRef.current?.currentTime ?? null,
+        crossfadeTime: crossfadeAudioRef.current?.currentTime ?? null,
+        mainSrc: audioRef.current?.src ?? null,
+        crossfadeSrc: crossfadeAudioRef.current?.src ?? null,
+      });
+    },
+    [pushCrossfadeDebug, currentTrack?.id, isPlaying]
+  );
 
   // Playback monitoring state
   const retryCountRef = useRef(0);
@@ -79,6 +124,11 @@ const PlayerBar = () => {
   const crossfadeTrackSwitchedRef = useRef(false);
   const userVolumeRef = useRef(75); // Store user's intended volume
   const mainAudioSrcRef = useRef<string | null>(null); // Prevent React re-setting src during crossfade
+
+  // Keep crossfade active state available to debug logger without creating TS ordering issues
+  useEffect(() => {
+    isCrossfadeActiveRef.current = isCrossfadeActive;
+  }, [isCrossfadeActive]);
   const lastCrossfadeSwapAtRef = useRef<number>(0); // Prevent post-swap reloads
 
   // Reset crossfade state - used when user manually skips tracks

@@ -11,6 +11,7 @@ import { UserManager } from "@/components/admin/UserManager";
 import { PriceMigration } from "@/components/admin/PriceMigration";
 import { Analytics } from "@/components/admin/Analytics";
 import { ActivityLogs } from "@/components/admin/ActivityLogs";
+import { CrossfadeDebugPanel } from "@/components/admin/CrossfadeDebugPanel";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -76,8 +77,9 @@ const Admin = () => {
           </TabsContent>
 
           {/* Logs Tab */}
-          <TabsContent value="logs" className="mt-6">
+          <TabsContent value="logs" className="mt-6 space-y-6">
             <ActivityLogs />
+            <CrossfadeDebugPanel />
           </TabsContent>
 
           {/* Playlists Tab */}
