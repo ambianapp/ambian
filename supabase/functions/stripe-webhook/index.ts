@@ -87,6 +87,122 @@ async function sendUpcomingPaymentEmail(
   }
 }
 
+async function sendPaymentFailedEmail(
+  email: string,
+  customerName: string | null,
+  amount: number,
+  currency: string,
+  planType: string
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center;">
+                  <img src="https://ambian.app/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                    ⚠️ Payment Failed
+                  </h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 20px 40px;">
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Hi${customerName ? ` ${customerName}` : ''},
+                  </p>
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    We were unable to process your payment of <strong style="color: #ffffff;">${formattedAmount}</strong> for your ${planType === 'yearly' ? 'yearly' : 'monthly'} Ambian subscription.
+                  </p>
+                  
+                  <!-- Warning Box -->
+                  <div style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <p style="color: #fca5a5; font-size: 14px; margin: 0;">
+                      <strong>Action required:</strong> Please update your payment method to avoid interruption to your service.
+                    </p>
+                  </div>
+                  
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    This could be due to:
+                  </p>
+                  <ul style="color: #e0e0e0; font-size: 14px; line-height: 1.8; margin: 0 0 20px; padding-left: 20px;">
+                    <li>Insufficient funds</li>
+                    <li>Expired card</li>
+                    <li>Card declined by your bank</li>
+                  </ul>
+                  
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding: 20px 0 30px;">
+                        <a href="https://ambian.app/profile" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                          Update Payment Method
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 0;">
+                    If you believe this is an error, please contact your bank or reach out to us for assistance.
+                  </p>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <p style="color: #888888; font-size: 14px; margin: 0;">
+                    Questions? Visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a> or reply to this email.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambian.app>",
+      to: [email],
+      subject: "Action Required: Your Ambian payment failed",
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending payment failed email", { error });
+      return false;
+    }
+
+    logStep("Payment failed email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send payment failed email", { error: String(error) });
+    return false;
+  }
+}
+
 async function sendSubscriptionConfirmationEmail(
   email: string,
   customerName: string | null,
@@ -604,6 +720,21 @@ serve(async (req) => {
       const invoice = event.data.object as Stripe.Invoice;
       logStep("Invoice payment failed", { invoiceId: invoice.id });
       
+      // Get customer details for email
+      const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+      let customerEmail: string | null = null;
+      let customerName: string | null = null;
+      
+      if (customerId) {
+        try {
+          const customer = await stripe.customers.retrieve(customerId);
+          customerEmail = (customer as any).email;
+          customerName = (customer as any).name;
+        } catch (e) {
+          logStep("Could not retrieve customer", { error: String(e) });
+        }
+      }
+      
       // Get user from metadata or email
       const userId = invoice.metadata?.user_id;
       if (userId) {
@@ -627,11 +758,33 @@ serve(async (req) => {
 
         await supabaseAdmin.from('activity_logs').insert({
           user_id: userId,
-          user_email: profile?.email || null,
+          user_email: profile?.email || customerEmail || null,
           event_type: 'payment_failed',
           event_message: 'Subscription payment failed',
           event_details: { invoiceId: invoice.id, amount: invoice.amount_due, currency: invoice.currency },
         });
+      }
+      
+      // Send payment failed email
+      if (customerEmail) {
+        // Determine plan type from subscription
+        let planType = "monthly";
+        if (invoice.subscription) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+            planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+          } catch (e) {
+            logStep("Could not retrieve subscription for plan type", { error: String(e) });
+          }
+        }
+        
+        await sendPaymentFailedEmail(
+          customerEmail,
+          customerName,
+          invoice.amount_due || 0,
+          invoice.currency || 'eur',
+          planType
+        );
       }
     }
 
