@@ -69,7 +69,7 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
               
               <!-- Description -->
               <p style="color: ${brandColors.textMuted}; font-size: 16px; line-height: 26px; text-align: center; margin: 0 0 32px 0;">
-                Thank you for joining Ambian! You now have access to premium, license-free background music for your business. Your 7-day free trial has started.
+                Thank you for joining Ambian! You now have access to premium, license-free background music for your business. Your 3-day free trial has started.
               </p>
               
               <!-- Features Box -->
@@ -148,7 +148,7 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
               <!-- Trial reminder -->
               <div style="background-color: ${brandColors.primary}15; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid ${brandColors.primary}30;">
                 <p style="color: ${brandColors.text}; font-size: 14px; font-weight: 600; margin: 0 0 4px 0;">
-                  🎁 Your 7-day free trial is active
+                  🎁 Your 3-day free trial is active
                 </p>
                 <p style="color: ${brandColors.textMuted}; font-size: 13px; margin: 0;">
                   No credit card required. Explore everything Ambian has to offer!
@@ -257,7 +257,7 @@ const generateAdminNotificationHtml = (email: string, name?: string) => {
                   <tr>
                     <td style="padding: 8px 0;">
                       <span style="color: ${brandColors.textMuted}; font-size: 13px;">Trial Status</span>
-                      <p style="color: ${brandColors.success}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">7-day free trial started</p>
+                      <p style="color: ${brandColors.success}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">3-day free trial started</p>
                     </td>
                   </tr>
                 </table>
