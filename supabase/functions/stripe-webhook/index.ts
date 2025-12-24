@@ -87,6 +87,156 @@ async function sendUpcomingPaymentEmail(
   }
 }
 
+async function sendSubscriptionConfirmationEmail(
+  email: string,
+  customerName: string | null,
+  planType: string,
+  periodEnd: Date
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const formattedPeriodEnd = periodEnd.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center;">
+                  <img src="https://ambian.app/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                    🎉 Welcome to Ambian!
+                  </h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 20px 40px;">
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Hi${customerName ? ` ${customerName}` : ''},
+                  </p>
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Thank you for subscribing to Ambian! Your subscription is now active and you have full access to our entire music library.
+                  </p>
+                  
+                  <!-- Subscription Details -->
+                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Subscription Active</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">Plan:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">Access until:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedPeriodEnd}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                  
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding: 20px 0 30px;">
+                        <a href="https://ambian.app" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                          Start Listening
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <!-- What's included -->
+                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                    <h3 style="color: #ffffff; font-size: 16px; margin: 0 0 16px;">What's included:</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #10b981; font-size: 16px;">✓</span>
+                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Unlimited access to all playlists</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #10b981; font-size: 16px;">✓</span>
+                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Commercial licensing for your business</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #10b981; font-size: 16px;">✓</span>
+                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Schedule playlists for different times</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #10b981; font-size: 16px;">✓</span>
+                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Priority support</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
+                    Manage your subscription anytime at <a href="https://ambian.app/profile" style="color: #8b5cf6; text-decoration: none;">ambian.app/profile</a>
+                  </p>
+                  <p style="color: #888888; font-size: 14px; margin: 0;">
+                    Questions? Visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambian.app>",
+      to: [email],
+      subject: "Welcome to Ambian! Your subscription is now active 🎉",
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending subscription confirmation email", { error });
+      return false;
+    }
+
+    logStep("Subscription confirmation email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send subscription confirmation email", { error: String(error) });
+    return false;
+  }
+}
+
 async function sendPaymentConfirmationEmail(
   email: string,
   customerName: string | null,
@@ -137,12 +287,12 @@ async function sendPaymentConfirmationEmail(
         <p>You can start enjoying unlimited background music for your business right away!</p>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://ambianmusic.com" style="background: #166534; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 500;">Open Ambian</a>
+          <a href="https://ambian.app" style="background: #166534; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 500;">Open Ambian</a>
         </div>
       </div>
       
       <div style="text-align: center; color: #6b7280; font-size: 14px;">
-        <p>You can manage your subscription anytime at <a href="https://ambianmusic.com/profile" style="color: #4f46e5;">ambianmusic.com/profile</a></p>
+        <p>You can manage your subscription anytime at <a href="https://ambian.app/profile" style="color: #4f46e5;">ambian.app/profile</a></p>
         <p style="margin-top: 20px;">&copy; ${new Date().getFullYear()} Ambian. All rights reserved.</p>
       </div>
     </body>
@@ -151,7 +301,7 @@ async function sendPaymentConfirmationEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Ambian <noreply@ambianmusic.com>",
+      from: "Ambian <noreply@ambian.app>",
       to: [email],
       subject: `Payment Confirmed - Your Ambian subscription is active`,
       html,
@@ -482,6 +632,69 @@ serve(async (req) => {
           event_message: 'Subscription payment failed',
           event_details: { invoiceId: invoice.id, amount: invoice.amount_due, currency: invoice.currency },
         });
+      }
+    }
+
+    // Handle subscription status changes (trial to active)
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const previousAttributes = (event.data as any).previous_attributes;
+      
+      logStep("Subscription updated", { 
+        subscriptionId: subscription.id, 
+        status: subscription.status,
+        previousStatus: previousAttributes?.status 
+      });
+
+      // Check if this is a trial-to-active conversion
+      if (previousAttributes?.status === "trialing" && subscription.status === "active") {
+        logStep("Trial converted to active subscription");
+        
+        const userId = subscription.metadata?.user_id;
+        const customerId = typeof subscription.customer === 'string' 
+          ? subscription.customer 
+          : (subscription.customer as any)?.id;
+        
+        if (customerId) {
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const customerEmail = (customer as any).email;
+            const customerName = (customer as any).name;
+            
+            if (customerEmail) {
+              const planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+              const periodEnd = new Date(subscription.current_period_end * 1000);
+              
+              await sendSubscriptionConfirmationEmail(
+                customerEmail,
+                customerName,
+                planType,
+                periodEnd
+              );
+              
+              logStep("Subscription confirmation email sent for trial conversion", { email: customerEmail });
+            }
+          } catch (e) {
+            logStep("Error sending subscription confirmation email", { error: String(e) });
+          }
+        }
+
+        // Log the conversion activity
+        if (userId) {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("email")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          await supabaseAdmin.from('activity_logs').insert({
+            user_id: userId,
+            user_email: profile?.email || null,
+            event_type: 'trial_converted',
+            event_message: 'Trial converted to active subscription',
+            event_details: { subscriptionId: subscription.id },
+          });
+        }
       }
     }
 
