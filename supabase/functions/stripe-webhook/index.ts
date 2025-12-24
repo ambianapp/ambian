@@ -467,6 +467,21 @@ serve(async (req) => {
           .eq("user_id", userId);
         
         logStep("Subscription marked as past_due", { userId });
+
+        // Log payment failed activity
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        await supabaseAdmin.from('activity_logs').insert({
+          user_id: userId,
+          user_email: profile?.email || null,
+          event_type: 'payment_failed',
+          event_message: 'Subscription payment failed',
+          event_details: { invoiceId: invoice.id, amount: invoice.amount_due, currency: invoice.currency },
+        });
       }
     }
 
@@ -485,6 +500,21 @@ serve(async (req) => {
           .eq("user_id", userId);
 
         logStep("Subscription marked as canceled", { userId });
+
+        // Log subscription canceled activity
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        await supabaseAdmin.from('activity_logs').insert({
+          user_id: userId,
+          user_email: profile?.email || null,
+          event_type: 'subscription_canceled',
+          event_message: 'Subscription canceled',
+          event_details: { subscriptionId: subscription.id },
+        });
       }
     }
 

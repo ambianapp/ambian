@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_logs: {
+        Row: {
+          created_at: string
+          event_details: Json | null
+          event_message: string | null
+          event_type: string
+          id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_details?: Json | null
+          event_message?: string | null
+          event_type: string
+          id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_details?: Json | null
+          event_message?: string | null
+          event_type?: string
+          id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       industry_collection_playlists: {
         Row: {
           collection_id: string

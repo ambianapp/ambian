@@ -4,12 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ListMusic, Users, Settings, BarChart3, Building2 } from "lucide-react";
+import { ArrowLeft, ListMusic, Users, Settings, BarChart3, Building2, ScrollText } from "lucide-react";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 import IndustryCollectionManager from "@/components/admin/IndustryCollectionManager";
 import { UserManager } from "@/components/admin/UserManager";
 import { PriceMigration } from "@/components/admin/PriceMigration";
 import { Analytics } from "@/components/admin/Analytics";
+import { ActivityLogs } from "@/components/admin/ActivityLogs";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -42,32 +43,41 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsList className="grid w-full max-w-4xl grid-cols-6">
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              Analytics
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="flex items-center gap-2">
+              <ScrollText className="w-4 h-4" />
+              <span className="hidden sm:inline">Logs</span>
             </TabsTrigger>
             <TabsTrigger value="playlists" className="flex items-center gap-2">
               <ListMusic className="w-4 h-4" />
-              {t("admin.playlists")}
+              <span className="hidden sm:inline">{t("admin.playlists")}</span>
             </TabsTrigger>
             <TabsTrigger value="industries" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              Industries
+              <span className="hidden sm:inline">Industries</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              {t("admin.users")}
+              <span className="hidden sm:inline">{t("admin.users")}</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Settings
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="mt-6">
             <Analytics />
+          </TabsContent>
+
+          {/* Logs Tab */}
+          <TabsContent value="logs" className="mt-6">
+            <ActivityLogs />
           </TabsContent>
 
           {/* Playlists Tab */}
