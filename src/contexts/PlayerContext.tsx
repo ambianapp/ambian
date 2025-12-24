@@ -241,15 +241,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[]) => {
-    // Block playback if device limit reached
+    // Block playback if device limit reached - show dialog instead of toast
     if (!canPlayMusic) {
-      toast.error("Device limit reached. Tap to manage devices.", { 
-        duration: 5000,
-        action: {
-          label: "Manage",
-          onClick: () => openDeviceLimitDialog(),
-        },
-      });
+      openDeviceLimitDialog();
       return;
     }
 
