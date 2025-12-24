@@ -563,42 +563,52 @@ const PlayerBar = () => {
     // During active crossfade, don't touch audio elements - the crossfade logic handles everything
     if (isCrossfadingRef.current) return;
 
+    // Also skip if crossfade just completed - flags might still be resetting
+    if (crossfadeCompleteRef.current || crossfadeTrackSwitchedRef.current) {
+      dbg("srcEffect: skip (crossfade completing)", {
+        trackId: currentTrack.id,
+        crossfadeComplete: crossfadeCompleteRef.current,
+        trackSwitched: crossfadeTrackSwitchedRef.current,
+      });
+      lastSetTrackIdRef.current = currentTrack.id;
+      return;
+    }
+
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (!activeAudio) return;
 
     const desiredSrc = normalizeUrl(currentTrack.audioUrl);
     const currentSrc = normalizeUrl(activeAudio.src || "");
 
-    // Extra safety: right after a crossfade swap, some browsers briefly report a different "src"
-    // (redirected URL vs. original). Avoid touching src during this window.
-    if (
-      crossfade &&
-      isPlaying &&
-      !activeAudio.paused &&
-      activeAudio.currentTime > 0.5 &&
-      Date.now() - lastCrossfadeSwapAtRef.current < 2000
-    ) {
+    // Extra safety: right after a crossfade swap, don't reload for a longer window
+    const timeSinceSwap = Date.now() - lastCrossfadeSwapAtRef.current;
+    if (crossfade && timeSinceSwap < 5000) {
       dbg("srcEffect: skip (post-swap window)", {
         trackId: currentTrack.id,
         t: activeAudio.currentTime,
+        timeSinceSwap,
       });
       lastSetTrackIdRef.current = currentTrack.id;
       return;
     }
 
+    // If the active audio is already playing and has progressed, don't reload it
     if (
-      crossfade &&
-      isPlaying &&
       !activeAudio.paused &&
       activeAudio.currentTime > 0.5 &&
-      currentSrc === desiredSrc
+      isPlaying
     ) {
-      dbg("srcEffect: skip (already playing correct src)", {
-        trackId: currentTrack.id,
-        t: activeAudio.currentTime,
-      });
-      lastSetTrackIdRef.current = currentTrack.id;
-      return;
+      // Check if the src is similar (same file path, maybe different token)
+      const desiredPath = desiredSrc.split("?")[0];
+      const currentPath = currentSrc.split("?")[0];
+      if (desiredPath === currentPath || currentSrc === desiredSrc) {
+        dbg("srcEffect: skip (already playing correct src)", {
+          trackId: currentTrack.id,
+          t: activeAudio.currentTime,
+        });
+        lastSetTrackIdRef.current = currentTrack.id;
+        return;
+      }
     }
 
     // Only load if the active audio doesn't already have this track
