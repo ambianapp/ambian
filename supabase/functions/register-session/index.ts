@@ -133,7 +133,20 @@ serve(async (req) => {
       });
     }
 
-    // Get all current sessions for this user
+    // Clean up stale sessions (not updated in 30 minutes = likely closed/inactive)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: staleRemoved } = await adminClient
+      .from("active_sessions")
+      .delete()
+      .eq("user_id", user.id)
+      .lt("updated_at", thirtyMinutesAgo)
+      .select("session_id");
+    
+    if (staleRemoved && staleRemoved.length > 0) {
+      console.log(`Cleaned up ${staleRemoved.length} stale session(s) for user ${user.id}`);
+    }
+
+    // Get all current sessions for this user (after cleanup)
     const { data: allSessions, error: countError } = await adminClient
       .from("active_sessions")
       .select("id, created_at, session_id, device_info, updated_at")
