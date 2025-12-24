@@ -53,10 +53,8 @@ const PlayerBar = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Debug logging (enable in DevTools: localStorage.setItem('ambian_debug_crossfade','true'))
-  const debugCrossfadeRef = useRef<boolean>(
-    typeof window !== "undefined" && localStorage.getItem("ambian_debug_crossfade") === "true"
-  );
+  // Debug logging - temporarily always on to diagnose 5-second restart bug
+  const debugCrossfadeRef = useRef<boolean>(true); // Always on for debugging
   const dbg = useCallback((...args: any[]) => {
     if (debugCrossfadeRef.current) console.log("[crossfade]", ...args);
   }, []);
