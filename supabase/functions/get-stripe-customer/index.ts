@@ -85,10 +85,10 @@ serve(async (req) => {
       limit: 10,
     });
 
-    // Get recent invoices
+    // Get all invoices (increased limit for full payment history)
     const invoices = await stripe.invoices.list({
       customer: customer.id,
-      limit: 5,
+      limit: 100,
     });
 
     // Get payment methods
@@ -131,6 +131,10 @@ serve(async (req) => {
         currency: inv.currency,
         created: inv.created,
         hosted_invoice_url: inv.hosted_invoice_url,
+        invoice_pdf: inv.invoice_pdf,
+        description: inv.description,
+        period_start: inv.period_start,
+        period_end: inv.period_end,
       })),
       paymentMethods: paymentMethods.data.map((pm: any) => ({
         id: pm.id,

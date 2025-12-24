@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt } from "lucide-react";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -77,6 +77,10 @@ interface StripeCustomer {
     currency: string;
     created: number;
     hosted_invoice_url: string;
+    invoice_pdf: string | null;
+    description: string | null;
+    period_start: number;
+    period_end: number;
   }>;
   paymentMethods: Array<{
     id: string;
@@ -628,37 +632,79 @@ export function UserManager() {
                 </div>
               )}
 
-              {/* Recent Invoices */}
+              {/* Payment History / Invoices */}
               {customerData.invoices.length > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-semibold flex items-center gap-2">
                     <Receipt className="w-4 h-4" />
-                    Recent Invoices
+                    Payment History ({customerData.invoices.length} invoices)
                   </h4>
-                  <div className="space-y-2">
-                    {customerData.invoices.map((inv) => (
-                      <div key={inv.id} className="text-sm bg-muted/50 rounded-lg p-3 flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{inv.number || inv.id}</p>
-                          <p className="text-muted-foreground">{formatTimestamp(inv.created)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p>{formatCurrency(inv.amount_paid, inv.currency)}</p>
-                          <Badge className={inv.status === "paid" ? "bg-green-500/20 text-green-400" : ""}>
-                            {inv.status}
-                          </Badge>
-                        </div>
-                        {inv.hosted_invoice_url && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(inv.hosted_invoice_url, "_blank")}
-                          >
-                            View
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="text-xs">Invoice</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          <TableHead className="text-xs">Amount</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {customerData.invoices.map((inv) => (
+                          <TableRow key={inv.id}>
+                            <TableCell className="text-xs font-medium">
+                              {inv.number || inv.id.slice(0, 12)}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {formatTimestamp(inv.created)}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {formatCurrency(inv.status === "paid" ? inv.amount_paid : inv.amount_due, inv.currency)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                className={
+                                  inv.status === "paid" 
+                                    ? "bg-green-500/20 text-green-400 text-xs" 
+                                    : inv.status === "open"
+                                    ? "bg-yellow-500/20 text-yellow-400 text-xs"
+                                    : "text-xs"
+                                }
+                              >
+                                {inv.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                {inv.invoice_pdf && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => window.open(inv.invoice_pdf!, "_blank")}
+                                    title="Download PDF"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                {inv.hosted_invoice_url && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => window.open(inv.hosted_invoice_url, "_blank")}
+                                    title="View invoice online"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
