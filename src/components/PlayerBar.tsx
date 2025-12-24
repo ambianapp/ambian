@@ -592,16 +592,23 @@ const PlayerBar = () => {
       return;
     }
 
+    // If the active audio already points to the same file (token may differ), NEVER reload.
+    // Signed URLs change frequently; reloading causes the “restart at 5s” behavior.
+    const desiredPath = desiredSrc.split("?")[0];
+    const currentPath = currentSrc.split("?")[0];
+    if (desiredPath && currentPath && desiredPath === currentPath) {
+      dbg("srcEffect: skip (same file path; token diff ok)", {
+        trackId: currentTrack.id,
+        t: activeAudio.currentTime,
+      });
+      lastSetTrackIdRef.current = currentTrack.id;
+      return;
+    }
+
     // If the active audio is already playing and has progressed, don't reload it
-    if (
-      !activeAudio.paused &&
-      activeAudio.currentTime > 0.5 &&
-      isPlaying
-    ) {
+    if (!activeAudio.paused && activeAudio.currentTime > 0.5 && isPlaying) {
       // Check if the src is similar (same file path, maybe different token)
-      const desiredPath = desiredSrc.split("?")[0];
-      const currentPath = currentSrc.split("?")[0];
-      if (desiredPath === currentPath || currentSrc === desiredSrc) {
+      if (currentSrc === desiredSrc) {
         dbg("srcEffect: skip (already playing correct src)", {
           trackId: currentTrack.id,
           t: activeAudio.currentTime,
