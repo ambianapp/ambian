@@ -441,6 +441,58 @@ const Profile = () => {
           </CardContent>
         </Card>
 
+        {/* Device Slots Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="w-5 h-5" />
+              {t("devices.title")}
+            </CardTitle>
+            <CardDescription>{t("devices.subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+              <div>
+                <p className="font-medium text-foreground">{t("devices.active")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.canPlay", { count: subscription.deviceSlots })}
+                </p>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
+                {subscription.deviceSlots}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg border border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
+                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
+                </div>
+                <Button
+                  onClick={handleAddDeviceSlot}
+                  disabled={isLoadingDevice || !subscription.subscribed}
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  {isLoadingDevice ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
+                  {t("devices.addBtn")}
+                </Button>
+              </div>
+            </div>
+
+            {!subscription.subscribed && (
+              <p className="text-sm text-muted-foreground">
+                {t("devices.subscribeFirst")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Invoices Card */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -580,57 +632,6 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Device Slots Card */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Monitor className="w-5 h-5" />
-              {t("devices.title")}
-            </CardTitle>
-            <CardDescription>{t("devices.subtitle")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
-              <div>
-                <p className="font-medium text-foreground">{t("devices.active")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.canPlay", { count: subscription.deviceSlots })}
-                </p>
-              </div>
-              <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
-                {subscription.deviceSlots}
-              </div>
-            </div>
-
-            <div className="p-4 rounded-lg border border-border">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
-                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
-                </div>
-                <Button
-                  onClick={handleAddDeviceSlot}
-                  disabled={isLoadingDevice || !subscription.subscribed}
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
-                  {isLoadingDevice ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Plus className="w-4 h-4 mr-2" />
-                  )}
-                  {t("devices.addBtn")}
-                </Button>
-              </div>
-            </div>
-
-            {!subscription.subscribed && (
-              <p className="text-sm text-muted-foreground">
-                {t("devices.subscribeFirst")}
-              </p>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Install App Card */}
         {!isInstalled && (
