@@ -123,8 +123,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (isInitialLoad && !hasCachedData && !hasShownInitialLoading()) {
       setIsSubscriptionLoading(true);
     }
+    let currentSession: Session | null = null;
     try {
-      const currentSession = overrideSession ?? (await supabase.auth.getSession()).data.session;
+      currentSession = overrideSession ?? (await supabase.auth.getSession()).data.session;
       if (!currentSession) {
         setIsSubscriptionLoading(false);
         return;
@@ -152,6 +153,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       markInitialLoadingShown();
     } catch (error) {
       console.error("Error checking subscription:", error);
+
+      // Fallback: read from database subscription table (helps on some mobile sessions where
+      // the backend function call can fail during initialization)
+      if (currentSession?.user?.id) {
+        try {
+          const { data: subRow, error: subError } = await supabase
+            .from("subscriptions")
+            .select("status, plan_type, current_period_end, device_slots")
+            .eq("user_id", currentSession.user.id)
+            .maybeSingle();
+
+          if (subError) throw subError;
+
+          const now = new Date();
+          const periodEnd = subRow?.current_period_end ? new Date(subRow.current_period_end) : null;
+          const isActiveByDb =
+            (subRow?.status === "active" || subRow?.status === "trialing" || subRow?.status === "pending_payment") &&
+            (!periodEnd || periodEnd > now);
+
+          const fallback: SubscriptionInfo = {
+            subscribed: !!isActiveByDb,
+            planType: subRow?.plan_type ?? null,
+            subscriptionEnd: subRow?.current_period_end ?? null,
+            isTrial: subRow?.status === "trialing",
+            trialDaysRemaining: 0,
+            trialEnd: null,
+            isRecurring: true,
+            isPendingPayment: subRow?.status === "pending_payment",
+            deviceSlots: subRow?.device_slots ?? 1,
+            collectionMethod: null,
+          };
+
+          setSubscription(fallback);
+          cachedSubscriptionRef.current = fallback;
+          writeSubscriptionCache(fallback, currentSession.user.id);
+          markInitialLoadingShown();
+        } catch (fallbackError) {
+          console.error("Subscription fallback also failed:", fallbackError);
+        }
+      }
     } finally {
       setIsSubscriptionLoading(false);
     }
