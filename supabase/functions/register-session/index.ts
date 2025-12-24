@@ -58,7 +58,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { sessionId, deviceInfo } = await req.json();
+    const { sessionId, deviceInfo, forceRegister, disconnectSessionId } = await req.json();
     if (!sessionId) {
       return new Response(JSON.stringify({ error: "Missing sessionId" }), {
         status: 400,
@@ -68,6 +68,28 @@ serve(async (req) => {
 
     // Use service role client to manage sessions (bypass RLS)
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Handle disconnect request - remove a specific session
+    if (disconnectSessionId) {
+      const { error: deleteError } = await adminClient
+        .from("active_sessions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("session_id", disconnectSessionId);
+
+      if (deleteError) {
+        console.error("Error disconnecting session:", deleteError);
+        return new Response(JSON.stringify({ error: "Failed to disconnect session" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`Disconnected session: ${disconnectSessionId}`);
+      return new Response(JSON.stringify({ success: true, message: "Session disconnected" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Check if user is admin (admins have unlimited devices)
     const { data: roleData } = await adminClient
@@ -106,7 +128,7 @@ serve(async (req) => {
         .update({ device_info: deviceInfo, updated_at: new Date().toISOString() })
         .eq("id", existingSession.id);
 
-      return new Response(JSON.stringify({ success: true, message: "Session updated" }), {
+      return new Response(JSON.stringify({ success: true, message: "Session updated", isRegistered: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -114,7 +136,7 @@ serve(async (req) => {
     // Get all current sessions for this user
     const { data: allSessions, error: countError } = await adminClient
       .from("active_sessions")
-      .select("id, created_at, session_id")
+      .select("id, created_at, session_id, device_info, updated_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
 
@@ -128,8 +150,33 @@ serve(async (req) => {
 
     const currentCount = allSessions?.length || 0;
 
-    // If at or over the limit, remove oldest sessions to make room (skip for admins)
-    if (!isAdmin && currentCount >= deviceSlots) {
+    // If at or over the limit and NOT forcing registration, return conflict with active devices list
+    if (!isAdmin && currentCount >= deviceSlots && !forceRegister) {
+      console.log(`Device limit reached for user ${user.id}: ${currentCount}/${deviceSlots} devices`);
+      
+      // Return list of active devices so user can choose which to disconnect
+      const activeDevices = allSessions?.map(s => ({
+        sessionId: s.session_id,
+        deviceInfo: s.device_info,
+        createdAt: s.created_at,
+        updatedAt: s.updated_at,
+      })) || [];
+
+      return new Response(JSON.stringify({ 
+        success: false, 
+        limitReached: true,
+        deviceSlots,
+        currentDevices: currentCount,
+        activeDevices,
+        message: "Device limit reached. Choose a device to disconnect.",
+      }), {
+        status: 200, // Not an error, just a conflict state
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // If forceRegister is true and at limit, remove oldest session (user explicitly chose this)
+    if (!isAdmin && currentCount >= deviceSlots && forceRegister) {
       const sessionsToRemove = currentCount - deviceSlots + 1;
       const oldestSessions = allSessions?.slice(0, sessionsToRemove) || [];
 
@@ -138,7 +185,7 @@ serve(async (req) => {
           .from("active_sessions")
           .delete()
           .eq("id", oldSession.id);
-        console.log(`Removed old session: ${oldSession.id}`);
+        console.log(`Removed old session (force): ${oldSession.id}`);
       }
     }
 
@@ -162,7 +209,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Session registered",
-      removedSessions: currentCount >= deviceSlots ? currentCount - deviceSlots + 1 : 0
+      isRegistered: true,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

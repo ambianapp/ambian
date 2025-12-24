@@ -2,10 +2,8 @@ import { createContext, useContext, useState, useCallback, useRef, ReactNode, us
 import { Track } from "@/data/musicData";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
-
-// URL refresh interval - 3.5 hours (URLs last 4 hours)
-const URL_REFRESH_INTERVAL = 3.5 * 60 * 60 * 1000;
-const PERSISTENCE_KEY = "ambian_playback_state";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface PlaybackState {
   currentTrackId: string | null;
@@ -55,7 +53,12 @@ export const usePlayer = () => {
   return context;
 };
 
+// URL refresh interval - 3.5 hours (URLs last 4 hours)
+const URL_REFRESH_INTERVAL = 3.5 * 60 * 60 * 1000;
+const PERSISTENCE_KEY = "ambian_playback_state";
+
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
+  const { canPlayMusic } = useAuth();
   const [currentTrack, setCurrentTrack] = useState<(Track & { audioUrl?: string }) | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
@@ -238,6 +241,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[]) => {
+    // Block playback if device limit reached
+    if (!canPlayMusic) {
+      toast.error("Device limit reached. Disconnect a device to play music.", { duration: 5000 });
+      return;
+    }
+
     if (playlistTracks) {
       playlistTracksRef.current = playlistTracks;
     }
@@ -265,7 +274,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentTrack(track);
     }
     setIsPlaying(true);
-  }, []);
+  }, [canPlayMusic]);
 
   const handlePlayPause = useCallback(() => {
     setIsPlaying((prev) => !prev);
