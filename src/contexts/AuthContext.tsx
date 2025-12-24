@@ -16,6 +16,13 @@ interface SubscriptionInfo {
   collectionMethod: 'charge_automatically' | 'send_invoice' | null;
 }
 
+interface ActiveDevice {
+  sessionId: string;
+  deviceInfo: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -23,9 +30,17 @@ interface AuthContextType {
   isSubscriptionLoading: boolean;
   isAdmin: boolean;
   subscription: SubscriptionInfo;
+  // Device limit state
+  isDeviceLimitReached: boolean;
+  activeDevices: ActiveDevice[];
+  showDeviceLimitDialog: boolean;
+  canPlayMusic: boolean;
   signOut: () => Promise<void>;
   checkSubscription: () => Promise<void>;
   syncDeviceSlots: () => Promise<void>;
+  disconnectDevice: (sessionId: string) => Promise<void>;
+  dismissDeviceLimitDialog: () => void;
+  getDeviceId: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +52,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const SUBSCRIPTION_CACHE_KEY = "ambian_subscription_cache";
   const SUBSCRIPTION_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
   const SHOWN_LOADING_KEY = "ambian_shown_initial_loading";
+
+  // Device limit state
+  const [isDeviceLimitReached, setIsDeviceLimitReached] = useState(false);
+  const [activeDevices, setActiveDevices] = useState<ActiveDevice[]>([]);
+  const [showDeviceLimitDialog, setShowDeviceLimitDialog] = useState(false);
+  const [isSessionRegistered, setIsSessionRegistered] = useState(false);
 
   const loadSubscriptionCache = (userId?: string): SubscriptionInfo | null => {
     try {
@@ -91,6 +112,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const isSigningOut = useRef(false);
   const initialLoadComplete = useRef(false);
+
+  // Can play music only if session is registered (not in device limit state)
+  const canPlayMusic = isSessionRegistered && !isDeviceLimitReached;
 
   const checkSubscription = async (overrideSession?: Session | null, isInitialLoad = false) => {
     // Only show blocking loading if we have no cache to fall back to AND haven't shown loading this session
@@ -173,31 +197,79 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return deviceId;
   }, []);
 
-  // Register session via edge function (uses service role to kick out older devices)
-  const registerSession = useCallback(async (userId: string) => {
+  // Register session via edge function - now handles device limit gracefully
+  const registerSession = useCallback(async (userId: string, forceRegister = false): Promise<boolean> => {
     try {
-      const sessionId = getDeviceId(); // Use persistent device ID instead of token
+      const sessionId = getDeviceId();
       const deviceInfo = navigator.userAgent;
 
       const { data, error } = await supabase.functions.invoke("register-session", {
-        body: { sessionId, deviceInfo },
+        body: { sessionId, deviceInfo, forceRegister },
       });
 
       if (error) {
-        // Don't fail silently - just log, the app should continue working
         console.warn("Session registration failed (non-critical):", error);
+        return false;
+      }
+
+      // Check if device limit was reached
+      if (data?.limitReached) {
+        console.log("Device limit reached:", data.currentDevices, "/", data.deviceSlots);
+        setIsDeviceLimitReached(true);
+        setActiveDevices(data.activeDevices || []);
+        setIsSessionRegistered(false);
+        setShowDeviceLimitDialog(true);
+        return false;
+      }
+
+      // Session registered successfully
+      if (data?.success || data?.isRegistered) {
+        console.log("Session registered:", data?.message);
+        setIsDeviceLimitReached(false);
+        setActiveDevices([]);
+        setIsSessionRegistered(true);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.warn("Session registration error (non-critical):", error);
+      return false;
+    }
+  }, [getDeviceId]);
+
+  // Disconnect a specific device
+  const disconnectDevice = useCallback(async (sessionIdToDisconnect: string) => {
+    try {
+      const sessionId = getDeviceId();
+      const deviceInfo = navigator.userAgent;
+
+      // First disconnect the target device
+      const { error: disconnectError } = await supabase.functions.invoke("register-session", {
+        body: { sessionId, deviceInfo, disconnectSessionId: sessionIdToDisconnect },
+      });
+
+      if (disconnectError) {
+        toast.error("Failed to disconnect device");
         return;
       }
 
-      console.log("Session registered:", data?.message);
-      if (data?.removedSessions > 0) {
-        console.log(`Kicked out ${data.removedSessions} older device(s)`);
+      // Now try to register this session
+      const registered = await registerSession(user?.id || "", false);
+      
+      if (registered) {
+        setShowDeviceLimitDialog(false);
+        toast.success("Device disconnected. You can now play music.");
       }
     } catch (error) {
-      // Network errors during registration shouldn't break the app
-      console.warn("Session registration error (non-critical):", error);
+      console.error("Error disconnecting device:", error);
+      toast.error("Failed to disconnect device");
     }
-  }, [getDeviceId]);
+  }, [getDeviceId, registerSession, user?.id]);
+
+  const dismissDeviceLimitDialog = useCallback(() => {
+    setShowDeviceLimitDialog(false);
+  }, []);
 
   // Validate current session against active_sessions table
   // Returns: 'valid' | 'kicked' | 'error'
@@ -205,7 +277,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (isSigningOut.current) return 'valid';
     
     try {
-      const sessionId = getDeviceId(); // Use persistent device ID
+      const sessionId = getDeviceId();
       
       // Check if this session is in the active sessions list
       const { data, error } = await supabase
@@ -217,31 +289,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.warn("Error validating session (will retry):", error);
-        return 'error'; // Network error, don't kick out
+        return 'error';
       }
 
-      // If session not found, it could mean:
-      // 1. User was kicked out from another device
-      // 2. Session record was cleaned up (shouldn't happen but be safe)
-      // 3. Network/timing issue
+      // If session not found, could mean device limit or was disconnected
       if (!data) {
-        console.log("Session not found in active_sessions - may have been kicked");
+        // Check if we're in device limit mode
+        if (isDeviceLimitReached) {
+          return 'valid'; // Don't kick out - user knows they're in read-only mode
+        }
+        console.log("Session not found in active_sessions - may have been disconnected");
         return 'kicked';
       }
 
       return 'valid';
     } catch (error) {
       console.warn("Error validating session (will retry):", error);
-      return 'error'; // Network error, don't kick out
+      return 'error';
     }
-  }, [getDeviceId]);
+  }, [getDeviceId, isDeviceLimitReached]);
 
   const signOut = async () => {
     isSigningOut.current = true;
     try {
       // Clear only this device's session, not all sessions
       if (user) {
-        const sessionId = getDeviceId(); // Use persistent device ID
+        const sessionId = getDeviceId();
         await supabase
           .from("active_sessions")
           .delete()
@@ -258,6 +331,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsSubscriptionLoading(false);
       setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null });
+      setIsDeviceLimitReached(false);
+      setActiveDevices([]);
+      setIsSessionRegistered(false);
       isSigningOut.current = false;
     }
   };
@@ -319,7 +395,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             checkAdminRole(session.user.id);
             checkSubscription(session, shouldShowLoading);
 
-            // Register session on sign in to kick out other devices
+            // Register session on sign in
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
               registerSession(session.user.id);
             }
@@ -333,6 +409,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAdmin(false);
           setIsSubscriptionLoading(false);
           setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null });
+          setIsDeviceLimitReached(false);
+          setActiveDevices([]);
+          setIsSessionRegistered(false);
         }
       }
     );
@@ -372,17 +451,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Session validation interval - check periodically to enforce device limits
   const consecutiveKicksRef = useRef(0);
-  const MAX_CONSECUTIVE_KICKS = 1; // Log out immediately when kicked (was 2, causing delays)
+  const MAX_CONSECUTIVE_KICKS = 1;
   
   useEffect(() => {
     if (!session) return;
 
     const validateAndKickIfNeeded = async () => {
-      // NOTE: We still validate in background to enforce device limits.
-      // (Mobile/PWA often runs with document.visibilityState === 'hidden' while audio plays.)
+      // If in device limit mode, don't validate (user is in read-only mode)
+      if (isDeviceLimitReached) return;
 
       // Always validate against the LATEST session from the auth client.
-      // This avoids false "kicked" results during token refreshes where access_token changes.
       const latestSession = (await supabase.auth.getSession()).data.session;
       if (!latestSession) return;
 
@@ -394,7 +472,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (result === 'error') {
-        // Network/auth error - don't increment counter, just wait for next check
         return;
       }
 
@@ -403,39 +480,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log(`Session kicked check ${consecutiveKicksRef.current}/${MAX_CONSECUTIVE_KICKS}`);
 
       if (consecutiveKicksRef.current >= MAX_CONSECUTIVE_KICKS && !isSigningOut.current) {
-        toast.error("You've been logged out because your account was accessed from another device. Need more locations? You can add extra device slots in your Profile settings.", { duration: Infinity, closeButton: true });
+        toast.error("You've been disconnected from another device. Need more locations? Add extra device slots in your Profile settings.", { duration: Infinity, closeButton: true });
         await signOut();
       }
     };
 
-    // Initial validation after short delay (session should be registered quickly)
+    // Initial validation after short delay
     const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
 
-    // Check every 30 seconds to ensure device limits are enforced reasonably quickly
-    const interval = setInterval(validateAndKickIfNeeded, 15 * 1000); // Check every 15 seconds (was 30)
+    // Check every 15 seconds
+    const interval = setInterval(validateAndKickIfNeeded, 15 * 1000);
 
-    // Re-validate when page becomes visible again (silently, no loading state)
-    // Use a ref to track pending timeouts to avoid state updates during visibility changes
+    // Re-validate when page becomes visible
     let visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
     
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Clear any pending timeout to avoid duplicate calls
         if (visibilityTimeoutId) {
           clearTimeout(visibilityTimeoutId);
         }
         
-        // Delay validation significantly to avoid UI disruption
         visibilityTimeoutId = setTimeout(async () => {
           visibilityTimeoutId = null;
           const latestSession = (await supabase.auth.getSession()).data.session;
           if (latestSession?.user) {
-            // Silently register session - no UI changes
+            // Re-register session when tab becomes visible
             registerSession(latestSession.user.id);
-            // Validate after another delay
             setTimeout(validateAndKickIfNeeded, 3000);
           }
-        }, 2000); // Wait 2 seconds before doing anything
+        }, 2000);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -445,7 +518,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [session, validateSession, registerSession]);
+  }, [session, validateSession, registerSession, isDeviceLimitReached]);
 
   // Auto-refresh subscription every minute
   useEffect(() => {
@@ -466,9 +539,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isSubscriptionLoading,
         isAdmin,
         subscription,
+        isDeviceLimitReached,
+        activeDevices,
+        showDeviceLimitDialog,
+        canPlayMusic,
         signOut,
         checkSubscription,
         syncDeviceSlots,
+        disconnectDevice,
+        dismissDeviceLimitDialog,
+        getDeviceId,
       }}
     >
       {children}

@@ -11,6 +11,7 @@ import MobileNav from "@/components/MobileNav";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
+import { DeviceLimitDialog } from "@/components/DeviceLimitDialog";
 // import AIChatbot from "@/components/AIChatbot"; // Disabled for now
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -35,7 +36,18 @@ type UiState = {
 const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
-  const { subscription, checkSubscription, isAdmin, isLoading, isSubscriptionLoading } = useAuth();
+  const { 
+    subscription, 
+    checkSubscription, 
+    isAdmin, 
+    isLoading, 
+    isSubscriptionLoading,
+    showDeviceLimitDialog,
+    activeDevices,
+    disconnectDevice,
+    dismissDeviceLimitDialog,
+    getDeviceId,
+  } = useAuth();
   const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -236,6 +248,16 @@ const Index = () => {
 
       <MobileNav activeView={activeView} onViewChange={handleViewChange} />
       {/* <AIChatbot /> */}
+
+      {/* Device limit dialog */}
+      <DeviceLimitDialog
+        open={showDeviceLimitDialog}
+        activeDevices={activeDevices}
+        deviceSlots={subscription.deviceSlots}
+        currentSessionId={getDeviceId()}
+        onDisconnect={disconnectDevice}
+        onClose={dismissDeviceLimitDialog}
+      />
     </div>
   );
 };
