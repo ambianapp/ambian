@@ -467,8 +467,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
               registerSession(session.user.id);
               
-              // Log login activity
-              if (event === "SIGNED_IN") {
+              // Log login activity only for actual new logins, not session restoration
+              // Check if the session was just created (within the last 5 seconds)
+              const sessionCreatedAt = session.user.created_at ? new Date(session.user.created_at).getTime() : 0;
+              const lastSignInAt = session.user.last_sign_in_at ? new Date(session.user.last_sign_in_at).getTime() : 0;
+              const now = Date.now();
+              const isRecentSignIn = now - lastSignInAt < 5000; // Within 5 seconds = actual login
+              
+              if (event === "SIGNED_IN" && isRecentSignIn) {
                 logActivity({
                   userId: session.user.id,
                   userEmail: session.user.email || undefined,
@@ -479,8 +485,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               }
             }
             
-            // Handle OAuth signup - add to Resend audience
-            if (event === "SIGNED_IN" && session.user.email) {
+            // Handle OAuth signup - add to Resend audience (only on recent sign-in)
+            const lastSignInAt = session.user.last_sign_in_at ? new Date(session.user.last_sign_in_at).getTime() : 0;
+            const isRecentSignIn = Date.now() - lastSignInAt < 5000;
+            if (event === "SIGNED_IN" && session.user.email && isRecentSignIn) {
               handleOAuthAudienceSignup(session.user.email);
             }
           }, 0);
