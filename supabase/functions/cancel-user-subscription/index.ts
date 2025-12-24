@@ -114,6 +114,27 @@ serve(async (req) => {
 
     logStep("Subscription canceled successfully", { userId, subscriptionId: stripeSubscriptionId });
 
+    // Log subscription cancellation activity
+    const supabaseServiceClient2 = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    
+    // Get user email
+    const { data: profile } = await supabaseServiceClient2
+      .from("profiles")
+      .select("email")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    await supabaseServiceClient2.from('activity_logs').insert({
+      user_id: userId,
+      user_email: profile?.email || null,
+      event_type: 'subscription_canceled_by_admin',
+      event_message: 'Subscription canceled by admin',
+      event_details: { canceledBy: user.id, canceledByEmail: user.email, stripeSubscriptionId },
+    });
+
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

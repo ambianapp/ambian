@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback,
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/activityLogger";
 
 interface SubscriptionInfo {
   subscribed: boolean;
@@ -261,6 +262,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setActiveDevices(data.activeDevices || []);
         setIsSessionRegistered(false);
         setShowDeviceLimitDialog(true);
+        
+        // Log device limit event
+        const currentUser = (await supabase.auth.getUser()).data.user;
+        logActivity({
+          userId: currentUser?.id,
+          userEmail: currentUser?.email || undefined,
+          eventType: "device_limit_reached",
+          eventMessage: `Device limit reached: ${data.currentDevices}/${data.deviceSlots} devices`,
+          eventDetails: { currentDevices: data.currentDevices, deviceSlots: data.deviceSlots },
+        });
+        
         return false;
       }
 
@@ -360,8 +372,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     isSigningOut.current = true;
     try {
-      // Clear only this device's session, not all sessions
+      // Log logout activity before clearing session
       if (user) {
+        logActivity({
+          userId: user.id,
+          userEmail: user.email || undefined,
+          eventType: "logout",
+          eventMessage: "User logged out",
+        });
+        
+        // Clear only this device's session, not all sessions
         const sessionId = getDeviceId();
         await supabase
           .from("active_sessions")
@@ -446,6 +466,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Register session on sign in
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
               registerSession(session.user.id);
+              
+              // Log login activity
+              if (event === "SIGNED_IN") {
+                logActivity({
+                  userId: session.user.id,
+                  userEmail: session.user.email || undefined,
+                  eventType: "login",
+                  eventMessage: "User logged in",
+                  eventDetails: { provider: session.user.app_metadata?.provider || "email" },
+                });
+              }
             }
             
             // Handle OAuth signup - add to Resend audience

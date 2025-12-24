@@ -189,6 +189,15 @@ serve(async (req) => {
 
     logStep("User deleted successfully", { deletedUserId: userId });
 
+    // Log user deletion activity
+    await adminClient.from('activity_logs').insert({
+      user_id: userId,
+      user_email: userEmail || null,
+      event_type: 'user_deleted',
+      event_message: `User account deleted by admin`,
+      event_details: { deletedBy: user.id, deletedByEmail: user.email },
+    });
+
     // Send notification email if we have the email and Resend API key
     if (userEmail && resendApiKey) {
       try {
