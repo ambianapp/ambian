@@ -58,7 +58,7 @@ const URL_REFRESH_INTERVAL = 3.5 * 60 * 60 * 1000;
 const PERSISTENCE_KEY = "ambian_playback_state";
 
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
-  const { canPlayMusic } = useAuth();
+  const { canPlayMusic, openDeviceLimitDialog } = useAuth();
   const [currentTrack, setCurrentTrack] = useState<(Track & { audioUrl?: string }) | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
@@ -243,7 +243,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[]) => {
     // Block playback if device limit reached
     if (!canPlayMusic) {
-      toast.error("Device limit reached. Disconnect a device to play music.", { duration: 5000 });
+      toast.error("Device limit reached. Tap to manage devices.", { 
+        duration: 5000,
+        action: {
+          label: "Manage",
+          onClick: () => openDeviceLimitDialog(),
+        },
+      });
       return;
     }
 
@@ -274,7 +280,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentTrack(track);
     }
     setIsPlaying(true);
-  }, [canPlayMusic]);
+  }, [canPlayMusic, openDeviceLimitDialog]);
 
   const handlePlayPause = useCallback(() => {
     setIsPlaying((prev) => !prev);

@@ -40,6 +40,7 @@ interface AuthContextType {
   syncDeviceSlots: () => Promise<void>;
   disconnectDevice: (sessionId: string) => Promise<void>;
   dismissDeviceLimitDialog: () => void;
+  openDeviceLimitDialog: () => void;
   getDeviceId: () => string;
 }
 
@@ -270,6 +271,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const dismissDeviceLimitDialog = useCallback(() => {
     setShowDeviceLimitDialog(false);
   }, []);
+
+  const openDeviceLimitDialog = useCallback(() => {
+    if (isDeviceLimitReached) {
+      setShowDeviceLimitDialog(true);
+    }
+  }, [isDeviceLimitReached]);
 
   // Validate current session against active_sessions table
   // Returns: 'valid' | 'kicked' | 'error'
@@ -548,6 +555,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         syncDeviceSlots,
         disconnectDevice,
         dismissDeviceLimitDialog,
+        openDeviceLimitDialog,
         getDeviceId,
       }}
     >
