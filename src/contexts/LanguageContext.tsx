@@ -15,20 +15,20 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const STORAGE_KEY = "ambian_language";
 
+// Helper to detect browser language
+const getBrowserLanguage = (): Language => {
+  const browserLang = navigator.language.split("-")[0];
+  if (["en", "sv", "fi", "de", "fr"].includes(browserLang)) {
+    return browserLang as Language;
+  }
+  return "en";
+};
+
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [language, setLanguageState] = useState<Language>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && ["en", "sv", "fi", "de", "fr"].includes(stored)) {
-      return stored as Language;
-    }
-    // Try to detect browser language
-    const browserLang = navigator.language.split("-")[0];
-    if (["en", "sv", "fi", "de", "fr"].includes(browserLang)) {
-      return browserLang as Language;
-    }
-    return "en";
-  });
+  
+  // Always start with browser language - user preferences will be loaded from DB when logged in
+  const [language, setLanguageState] = useState<Language>(getBrowserLanguage);
 
   // Load language preference from profile when user logs in
   useEffect(() => {
