@@ -819,14 +819,18 @@ const PlayerBar = () => {
     if (crossfade && isPlaying && currentTrack?.audioUrl && track.audioUrl && crossfadeAudioRef.current) {
       // Perform crossfade to new scheduled track
       isCrossfadingRef.current = true;
+      crossfadeCompleteRef.current = false;
+      crossfadeTrackSwitchedRef.current = false;
       
-      crossfadeAudioRef.current.src = track.audioUrl;
-      crossfadeAudioRef.current.volume = 0;
-      crossfadeAudioRef.current.play().catch(console.error);
+      // Determine which audio element is currently playing
+      const fadingOutAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+      const fadingInAudio = isCrossfadeActive ? audioRef.current : crossfadeAudioRef.current;
       
-      const mainAudio = audioRef.current;
-      const crossfadeAudio = crossfadeAudioRef.current;
-      const startVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+      fadingInAudio.src = track.audioUrl;
+      fadingInAudio.volume = 0;
+      fadingInAudio.play().catch(console.error);
+      
+      const startVolume = fadingOutAudio.volume;
       const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
       const steps = 50;
       const stepTime = (CROSSFADE_DURATION * 1000) / steps;
@@ -836,22 +840,37 @@ const PlayerBar = () => {
         step++;
         const progress = Math.min(1, step / steps);
         
-        mainAudio.volume = Math.max(0, Math.min(1, startVolume * (1 - progress)));
-        crossfadeAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
+        fadingOutAudio.volume = Math.max(0, startVolume * (1 - progress));
+        fadingInAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
         
         if (step >= steps) {
           clearInterval(intervalId);
+          crossfadeCompleteRef.current = true;
           
-          // Swap: update playlist and set crossfade audio as main
+          // Swap: update playlist and toggle active audio element
           playlistTracksRef.current = playlist;
-          mainAudio.src = track.audioUrl!;
-          mainAudio.volume = targetVolume;
-          mainAudio.play().catch(console.error);
           
-          crossfadeAudio.pause();
-          crossfadeAudio.src = "";
+          // Stop the faded-out audio
+          fadingOutAudio.pause();
+          fadingOutAudio.src = "";
           
-          isCrossfadingRef.current = false;
+          // Mark swap time to prevent src-setting effect from interfering
+          lastCrossfadeSwapAtRef.current = Date.now();
+          
+          // Toggle active audio element - DON'T reload, just switch which is active
+          setIsCrossfadeActive(prev => !prev);
+          
+          // Update track state
+          setCurrentTrackDirect(track);
+          lastSetTrackIdRef.current = track.id;
+          
+          // Reset crossfade state after a short delay
+          setTimeout(() => {
+            isCrossfadingRef.current = false;
+            crossfadeCompleteRef.current = false;
+            crossfadeTrackSwitchedRef.current = false;
+          }, 500);
+          
           clearScheduledTransition();
         }
       }, stepTime);
@@ -861,7 +880,7 @@ const PlayerBar = () => {
       // No crossfade - just switch directly (handled by PlayerContext)
       clearScheduledTransition();
     }
-  }, [pendingScheduledTransition, crossfade, isPlaying, currentTrack?.audioUrl, volume, isMuted, clearScheduledTransition]);
+  }, [pendingScheduledTransition, crossfade, isPlaying, currentTrack?.audioUrl, volume, isMuted, clearScheduledTransition, isCrossfadeActive, setCurrentTrackDirect]);
 
   // Save current position for persistence
   const savePositionRef = useRef<NodeJS.Timeout | null>(null);
@@ -876,9 +895,15 @@ const PlayerBar = () => {
   // NOTE: Do NOT include isCrossfadeActive in deps - it toggles during crossfade swap and would
   // reset timing when the new track is already ~5s in, causing the "restart at 5 seconds" bug.
   useEffect(() => {
-    // During crossfade, the track switches but we want to preserve the faded-in audio's current time
-    // Only reset timing if we're not in an active crossfade
-    if (isCrossfadingRef.current) return;
+    // During crossfade or shortly after swap, don't reset timing - the new track is already playing
+    if (isCrossfadingRef.current || crossfadeCompleteRef.current) return;
+    
+    // Also skip if we just did a crossfade swap (within 2 seconds)
+    const timeSinceSwap = Date.now() - lastCrossfadeSwapAtRef.current;
+    if (timeSinceSwap < 2000) {
+      dbg("trackChange: skip (post-swap window)", { trackId: currentTrack?.id, timeSinceSwap });
+      return;
+    }
     
     lastObservedTimeRef.current = 0;
     lastObservedTrackIdRef.current = currentTrack?.id ?? null;
