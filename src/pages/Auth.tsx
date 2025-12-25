@@ -561,13 +561,13 @@ const Auth = () => {
             Google
           </Button>
 
-          <div className="text-center space-y-1">
-            <p className="text-sm text-muted-foreground">
+          <div className="text-center space-y-2">
+            <p className="text-base text-muted-foreground">
               {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}{" "}
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-primary hover:underline font-medium"
+                className="text-primary hover:underline font-semibold text-base"
               >
                 {isLogin ? t("auth.signUp") : t("auth.signIn")}
               </button>
