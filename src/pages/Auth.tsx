@@ -399,7 +399,7 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-3 md:space-y-6 animate-fade-in">
           {/* Mobile/Tablet Logo */}
           <div className="lg:hidden">
-            <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-3" />
+            <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-1" />
             <p className="text-xs text-muted-foreground text-center mb-2">
               {t("auth.noLicensesShort")}
             </p>
