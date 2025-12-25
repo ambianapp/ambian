@@ -535,8 +535,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSubscription(validCache);
         }
         
-        // Only block UI if there's no valid cached subscription state AND we haven't shown loading this session
-        const shouldShowLoading = !validCache && !hasShownInitialLoading();
+        // Check if this is a fresh OAuth signup (user just created within 2 minutes)
+        const createdAt = session.user.created_at ? new Date(session.user.created_at).getTime() : 0;
+        const now = Date.now();
+        const isNewOAuthUser = now - createdAt < 2 * 60 * 1000; // 2 minutes
+        
+        // For new OAuth users, always show loading screen regardless of cache
+        const shouldShowLoading = isNewOAuthUser || (!validCache && !hasShownInitialLoading());
+        if (isNewOAuthUser) {
+          sessionStorage.removeItem(SHOWN_LOADING_KEY);
+        }
         setIsSubscriptionLoading(shouldShowLoading);
         
         checkAdminRole(session.user.id);
@@ -545,6 +553,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         // Register session on app load
         registerSession(session.user.id);
+        
+        // Handle OAuth signup - add to Resend audience and send welcome email for new users
+        // This handles the case where OAuth redirects back and onAuthStateChange is blocked
+        if (isNewOAuthUser && session.user.email) {
+          const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+          handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at);
+        }
       } else {
         setIsSubscriptionLoading(false);
         initialLoadComplete.current = true;
