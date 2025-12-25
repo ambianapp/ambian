@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { X, Gift, Music, Calendar, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const WELCOME_SHOWN_KEY = "ambian_welcome_shown";
+const WELCOME_OPEN_KEY = "ambian_welcome_open"; // Track if dialog should be open
 
 interface WelcomeDialogProps {
   userId: string;
@@ -14,8 +15,20 @@ interface WelcomeDialogProps {
 const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const hasChecked = useRef(false);
 
   useEffect(() => {
+    // Only check once per mount to prevent re-running on every render
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+    
+    // Check if dialog is currently supposed to be open (survives re-renders)
+    const isCurrentlyOpen = sessionStorage.getItem(WELCOME_OPEN_KEY) === userId;
+    if (isCurrentlyOpen) {
+      setOpen(true);
+      return;
+    }
+    
     // Check if we've already shown the welcome dialog for this user
     const shownUsers = JSON.parse(localStorage.getItem(WELCOME_SHOWN_KEY) || "[]");
     
@@ -41,7 +54,9 @@ const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
     // Show the dialog after a short delay for better UX
     const timeout = setTimeout(() => {
       setOpen(true);
-      // Mark as shown for this user
+      // Mark as open in sessionStorage so it survives re-renders
+      sessionStorage.setItem(WELCOME_OPEN_KEY, userId);
+      // Mark as shown for this user (permanently)
       localStorage.setItem(WELCOME_SHOWN_KEY, JSON.stringify([...shownUsers, userId]));
     }, 500);
     return () => clearTimeout(timeout);
@@ -49,6 +64,8 @@ const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
 
   const handleClose = () => {
     setOpen(false);
+    // Clear the open flag so it doesn't reopen on next mount
+    sessionStorage.removeItem(WELCOME_OPEN_KEY);
   };
 
   return (
