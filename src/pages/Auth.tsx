@@ -13,7 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const Auth = () => {
   const { t } = useLanguage();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false); // Default to register for new customers
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
