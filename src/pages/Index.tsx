@@ -12,6 +12,7 @@ import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import { DeviceLimitDialog } from "@/components/DeviceLimitDialog";
+import WelcomeDialog from "@/components/WelcomeDialog";
 // import AIChatbot from "@/components/AIChatbot"; // Disabled for now
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -37,6 +38,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
   const { 
+    user,
     subscription, 
     checkSubscription, 
     isAdmin, 
@@ -248,6 +250,9 @@ const Index = () => {
 
       <MobileNav activeView={activeView} onViewChange={handleViewChange} />
       {/* <AIChatbot /> */}
+
+      {/* Welcome dialog for new users - at root level to survive re-renders */}
+      {user && <WelcomeDialog userId={user.id} userCreatedAt={user.created_at} />}
 
       {/* Device limit dialog */}
       <DeviceLimitDialog
