@@ -50,7 +50,7 @@ const PlayerBar = () => {
   }, []);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const { user } = useAuth();
+  const { user, getDeviceId } = useAuth();
   const { toast } = useToast();
 
   // Crossfade debug buffer (stored in localStorage so you can inspect after the issue happens)
@@ -232,6 +232,43 @@ const PlayerBar = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isPlaying]);
+
+  // Session heartbeat - keep session alive while music is playing
+  // Pings every 5 minutes to prevent the 10-minute stale session cleanup
+  useEffect(() => {
+    if (!isPlaying || !user) return;
+
+    const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+    const sendHeartbeat = async () => {
+      try {
+        const sessionId = getDeviceId();
+        const deviceInfo = navigator.userAgent;
+        
+        console.log("[Heartbeat] Sending session heartbeat...");
+        
+        const { error } = await supabase.functions.invoke("register-session", {
+          body: { sessionId, deviceInfo },
+        });
+
+        if (error) {
+          console.warn("[Heartbeat] Failed:", error);
+        } else {
+          console.log("[Heartbeat] Session refreshed successfully");
+        }
+      } catch (err) {
+        console.warn("[Heartbeat] Error:", err);
+      }
+    };
+
+    // Send initial heartbeat
+    sendHeartbeat();
+
+    // Then every 5 minutes
+    const interval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, user, getDeviceId]);
 
   // Warn user before closing tab when music is playing
   useEffect(() => {
