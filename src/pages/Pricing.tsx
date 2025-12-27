@@ -30,7 +30,7 @@ const SUBSCRIPTION_PLANS = {
     priceId: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
     price: "€89",
     interval: "year",
-    savings: "Save €17.80/year",
+    savingsKey: "pricing.saveYearly",
   },
 };
 
@@ -45,7 +45,7 @@ const PREPAID_PLANS = {
     priceId: "price_1SfhOZJrU52a7SNLIejHHUh4",
     price: "€89",
     duration: "1 year",
-    savings: "Save €17.80",
+    savingsKey: "pricing.saveOneTime",
   },
 };
 
@@ -254,18 +254,17 @@ const Pricing = () => {
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Back button and Logo */}
-        <div className="flex items-center justify-between pt-4">
+        <div className="relative flex items-center justify-center pt-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(-1)}
-            className="text-muted-foreground hover:text-foreground"
+            className="absolute left-0 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t("common.back")}
           </Button>
           <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
-          <div className="w-16" /> {/* Spacer for centering */}
         </div>
 
         {/* Header */}
@@ -411,7 +410,7 @@ const Pricing = () => {
             </div>
             <CardHeader>
               <CardTitle>{paymentType === "subscription" ? t("pricing.yearly") : t("pricing.yearAccess")}</CardTitle>
-              <CardDescription>{currentPlans.yearly.savings}</CardDescription>
+              <CardDescription>{t(currentPlans.yearly.savingsKey)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -545,7 +544,7 @@ const Pricing = () => {
               <div className="p-3 rounded-lg border border-primary bg-primary/10">
                 <div className="font-medium text-foreground">{t("pricing.yearly")}</div>
                 <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")}</div>
-                <div className="text-xs text-primary mt-1">{currentPlans.yearly.savings}</div>
+                <div className="text-xs text-primary mt-1">{t(currentPlans.yearly.savingsKey)}</div>
               </div>
 
               <div className="space-y-2">

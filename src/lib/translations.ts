@@ -221,6 +221,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Prices shown exclude VAT. VAT will be calculated based on your location.",
     "pricing.exclVat": "excl. VAT",
     "pricing.startTrial": "Start Free Trial",
+    "pricing.saveYearly": "Save €17.80/year",
+    "pricing.saveOneTime": "Save €17.80",
     
     // Billing
     "billing.companyName": "Company Name",
@@ -701,6 +703,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Priser exklusive moms. Moms beräknas baserat på din plats.",
     "pricing.exclVat": "exkl. moms",
     "pricing.startTrial": "Starta gratis provperiod",
+    "pricing.saveYearly": "Spara €17,80/år",
+    "pricing.saveOneTime": "Spara €17,80",
     
     // Billing
     "billing.companyName": "Företagsnamn",
@@ -1151,7 +1155,7 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Pricing
     "pricing.title": "Tilaa kuunnellaksesi",
-    "pricing.subtitle": "Saat rajattoman pääsyn koko musiikkikirjastoomme yrityksellesi.",
+    "pricing.subtitle": "Saat rajattoman pääsyn Ambianin musiikkikirjastoon ja sen ominaisuuksiin.",
     "pricing.trialActive": "Ilmainen kokeilu käynnissä",
     "pricing.daysRemaining": "{days} päivää jäljellä. Tilaa nyt jatkaaksesi kokeilun jälkeen.",
     "pricing.accessActive": "Pääsy aktiivinen",
@@ -1180,6 +1184,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Hinnat eivät sisällä ALV:tä. ALV lasketaan sijaintisi perusteella.",
     "pricing.exclVat": "alv 0%",
     "pricing.startTrial": "Aloita ilmainen kokeilu",
+    "pricing.saveYearly": "Säästä 17,80€/vuosi",
+    "pricing.saveOneTime": "Säästä 17,80€",
     
     // Billing
     "billing.companyName": "Yrityksen nimi",
@@ -1195,7 +1201,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Features
     "features.unlimited": "Rajaton pääsy kaikkeen musiikkiin",
     "features.playlists": "Luo omia soittolistoja",
-    "features.noLicense": "Ei musiikin käyttölupaa tarvita",
+    "features.noLicense": "Ei tarvetta musiikkiluville",
     "features.newSongs": "100+ uutta kappaletta viikossa",
     "features.business": "Täydellinen yritystiloihin",
     "features.trialDays": "3 päivää ilmaista kokeilua",
@@ -1659,6 +1665,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Preise ohne MwSt. MwSt. wird basierend auf deinem Standort berechnet.",
     "pricing.exclVat": "zzgl. MwSt.",
     "pricing.startTrial": "Kostenlos testen",
+    "pricing.saveYearly": "Spare €17,80/Jahr",
+    "pricing.saveOneTime": "Spare €17,80",
     
     // Billing
     "billing.companyName": "Firmenname",
@@ -2138,6 +2146,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Prix hors TVA. La TVA sera calculée selon votre localisation.",
     "pricing.exclVat": "HT",
     "pricing.startTrial": "Essai gratuit",
+    "pricing.saveYearly": "Économisez 17,80€/an",
+    "pricing.saveOneTime": "Économisez 17,80€",
     
     // Billing
     "billing.companyName": "Nom de l'entreprise",
