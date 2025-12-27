@@ -113,14 +113,15 @@ const Index = () => {
         description: "Your subscription is now active. Enjoy the music!",
       });
       checkSubscription();
-      window.history.replaceState({}, "", window.location.pathname);
+      // Use navigate to properly clear URL params (replaceState doesn't update React Router)
+      navigate("/", { replace: true });
     } else if (checkoutStatus === "cancelled") {
       toast({
         title: "Checkout cancelled",
         description: "You can subscribe anytime from the pricing page.",
         variant: "destructive",
       });
-      window.history.replaceState({}, "", window.location.pathname);
+      navigate("/", { replace: true });
     }
   }, [searchParams, checkSubscription, syncDeviceSlots, toast, navigate]);
 
