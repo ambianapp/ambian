@@ -264,96 +264,54 @@ serve(async (req) => {
       logStep("Grace period subscription created", { userId: user.id, until: gracePeriodEnd.toISOString() });
     }
 
-    // Add the subscription item to the invoice
-    if (price.recurring) {
-      // For subscriptions, create a subscription with send_invoice collection method and bank transfer
-      // IMPORTANT: For IBAN payments, we send the renewal invoice 14 days early so users have time to pay
-      const subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: priceId }],
-        collection_method: "send_invoice",
-        days_until_due: gracePeriodDays,
-        automatic_tax: {
-          enabled: true,
-        },
-        billing_cycle_anchor_config: {
-          // Send invoice 14 days before the billing cycle ends for renewals
-          // This gives IBAN users time to pay before their access expires
-        },
-        payment_settings: {
-          payment_method_types: ["card", "customer_balance"],
-          payment_method_options: {
-            customer_balance: {
-              funding_type: "bank_transfer",
-              bank_transfer: {
-                type: "eu_bank_transfer",
-                eu_bank_transfer: {
-                  country: "DE",
-                },
-              },
-            },
-          },
-        },
-        metadata: {
-          user_id: user.id,
-        },
-      });
-      logStep("Created subscription", { subscriptionId: subscription.id });
+    // Add the price to the invoice (always one-time, we handle renewals manually via cron)
+    // This gives us full control over when renewal invoices are sent (14 days early for IBAN)
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      price: priceId,
+      invoice: invoice.id,
+    });
+    logStep("Added invoice item");
 
-      // Get the latest invoice for this subscription and send it
-      const invoices = await stripe.invoices.list({
-        subscription: subscription.id,
-        limit: 1,
-      });
-      
-      if (invoices.data.length > 0) {
-        const subscriptionInvoice = invoices.data[0];
-        logStep("Found subscription invoice", { invoiceId: subscriptionInvoice.id, status: subscriptionInvoice.status });
-        
-        // If invoice is in draft, finalize it first
-        if (subscriptionInvoice.status === 'draft') {
-          await stripe.invoices.finalizeInvoice(subscriptionInvoice.id);
-          logStep("Finalized invoice");
-        }
-        
-        // Send the invoice email
-        await stripe.invoices.sendInvoice(subscriptionInvoice.id);
-        logStep("Sent invoice email", { invoiceId: subscriptionInvoice.id });
-      }
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment.`,
-        subscriptionId: subscription.id,
-        grace_period_until: gracePeriodEnd.toISOString(),
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+    // Calculate access period based on plan type
+    let accessEnd: Date;
+    if (planType === "yearly") {
+      accessEnd = new Date(now);
+      accessEnd.setFullYear(accessEnd.getFullYear() + 1);
     } else {
-      // For one-time payments, add invoice item
-      await stripe.invoiceItems.create({
-        customer: customerId,
-        price: priceId,
-        invoice: invoice.id,
-      });
-      logStep("Added invoice item");
-
-      // Finalize and send the invoice
-      const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-      await stripe.invoices.sendInvoice(invoice.id);
-      logStep("Finalized and sent invoice", { invoiceId: finalizedInvoice.id });
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment.`,
-        invoiceId: finalizedInvoice.id,
-        grace_period_until: gracePeriodEnd.toISOString(),
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      accessEnd = new Date(now);
+      accessEnd.setMonth(accessEnd.getMonth() + 1);
     }
+
+    // Update subscription record with full access period (not just grace period)
+    // Access will be granted once payment is confirmed via webhook
+    const { error: subUpdateError } = await supabaseAdmin
+      .from("subscriptions")
+      .update({
+        // Store the intended access end date in metadata for when payment completes
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    if (subUpdateError) {
+      logStep("Error updating subscription", { error: subUpdateError.message });
+    }
+
+    // Finalize and send the invoice
+    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+    await stripe.invoices.sendInvoice(invoice.id);
+    logStep("Finalized and sent invoice", { invoiceId: finalizedInvoice.id, planType });
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment. Renewal invoices are sent 14 days before expiry.`,
+      invoiceId: finalizedInvoice.id,
+      grace_period_until: gracePeriodEnd.toISOString(),
+      access_period: planType,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 

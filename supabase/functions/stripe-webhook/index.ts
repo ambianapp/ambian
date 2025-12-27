@@ -913,10 +913,20 @@ async function updateSubscriptionFromInvoice(
       planType = "yearly";
       break;
     }
+    // Also check for yearly one-time prices by looking at metadata or price ID
+    if (item.description?.toLowerCase().includes("year") || item.description?.toLowerCase().includes("yearly")) {
+      planType = "yearly";
+      break;
+    }
   }
 
-  // Calculate period based on plan type
+  // Check invoice metadata for plan type (set by our create-invoice function)
+  if (invoice.metadata?.plan_type) {
+    planType = invoice.metadata.plan_type;
+  }
+
   const now = new Date();
+  let startDate = now;
   let endDate: Date;
   
   // Check if this is a subscription invoice
@@ -927,15 +937,36 @@ async function updateSubscriptionFromInvoice(
     planType = (subscription as any).items?.data?.[0]?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
     logStep("Using subscription period", { endDate: endDate.toISOString() });
   } else {
-    // For one-time invoice payments, calculate based on plan type
+    // For one-time invoice payments (including renewals), check if we should extend existing access
+    const isRenewal = invoice.metadata?.renewal === "true";
+    
+    if (isRenewal) {
+      // Get existing subscription to extend from current_period_end
+      const { data: existingSub } = await supabase
+        .from("subscriptions")
+        .select("current_period_end")
+        .eq("user_id", userId)
+        .single();
+      
+      if (existingSub?.current_period_end) {
+        const existingEnd = new Date(existingSub.current_period_end);
+        // If existing period hasn't ended yet, extend from that date
+        if (existingEnd > now) {
+          startDate = existingEnd;
+          logStep("Extending from existing period end", { existingEnd: existingEnd.toISOString() });
+        }
+      }
+    }
+    
+    // Calculate end date based on plan type
     if (planType === "yearly") {
-      endDate = new Date(now);
+      endDate = new Date(startDate);
       endDate.setFullYear(endDate.getFullYear() + 1);
     } else {
-      endDate = new Date(now);
+      endDate = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 1);
     }
-    logStep("Using calculated period", { endDate: endDate.toISOString() });
+    logStep("Using calculated period", { startDate: startDate.toISOString(), endDate: endDate.toISOString(), isRenewal });
   }
 
   const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
@@ -950,7 +981,7 @@ async function updateSubscriptionFromInvoice(
       stripe_subscription_id: subscriptionId,
       status: "active",
       plan_type: planType,
-      current_period_start: now.toISOString(),
+      current_period_start: startDate.toISOString(),
       current_period_end: endDate.toISOString(),
       updated_at: now.toISOString(),
     }, { onConflict: "user_id" });
