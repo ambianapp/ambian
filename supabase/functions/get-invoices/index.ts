@@ -68,6 +68,12 @@ serve(async (req) => {
 
     const customerId = customers.data[0].id;
 
+    // Device slot price IDs
+    const DEVICE_SLOT_PRICE_IDS = [
+      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly
+      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly
+    ];
+
     // Fetch open invoices (pending payment)
     const openInvoices = await stripe.invoices.list({
       customer: customerId,
@@ -75,26 +81,67 @@ serve(async (req) => {
       limit: 10,
     });
 
-    // If an open invoice is for a device slot subscription that is already canceled/unpaid, void it and hide it.
-    const filteredOpenInvoices: any[] = [];
-    for (const inv of openInvoices.data) {
-      const isDeviceSlot =
-        inv.metadata?.type === "device_slot" ||
-        inv.lines?.data?.some((line: any) => line.metadata?.type === "device_slot");
+    // Fetch draft invoices too (they might also be orphaned)
+    const draftInvoices = await stripe.invoices.list({
+      customer: customerId,
+      status: "draft",
+      limit: 10,
+    });
 
-      if (isDeviceSlot && inv.subscription) {
+    // Process open and draft invoices - void/delete if subscription is canceled
+    const filteredOpenInvoices: any[] = [];
+    
+    for (const inv of [...openInvoices.data, ...draftInvoices.data]) {
+      // Check if this invoice is for a subscription
+      if (inv.subscription) {
         try {
           const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
+          const priceId = sub.items?.data?.[0]?.price?.id;
+          const isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "");
+          
+          // If the subscription is canceled (especially device slots), void/delete the invoice
           if (sub.status === "canceled") {
-            await stripe.invoices.voidInvoice(inv.id);
-            continue;
+            console.log(`[GET-INVOICES] Found invoice for canceled subscription, cleaning up`, { 
+              invoiceId: inv.id, 
+              status: inv.status,
+              subscriptionId: sub.id,
+              isDeviceSlot 
+            });
+            
+            if (inv.status === "open") {
+              await stripe.invoices.voidInvoice(inv.id);
+              console.log(`[GET-INVOICES] Voided invoice ${inv.id}`);
+            } else if (inv.status === "draft") {
+              await stripe.invoices.del(inv.id);
+              console.log(`[GET-INVOICES] Deleted draft invoice ${inv.id}`);
+            }
+            continue; // Don't include in results
           }
-        } catch (_e) {
-          // If we can't verify, still show it (safer than hiding money owed)
+          
+          // For device slot subscriptions with open/draft invoices but active subscription,
+          // still show them (user needs to pay)
+        } catch (e) {
+          console.log(`[GET-INVOICES] Error checking subscription for invoice ${inv.id}:`, e);
+          // If subscription doesn't exist anymore, void/delete the invoice
+          try {
+            if (inv.status === "open") {
+              await stripe.invoices.voidInvoice(inv.id);
+              console.log(`[GET-INVOICES] Voided orphaned invoice ${inv.id}`);
+            } else if (inv.status === "draft") {
+              await stripe.invoices.del(inv.id);
+              console.log(`[GET-INVOICES] Deleted orphaned draft invoice ${inv.id}`);
+            }
+          } catch (cleanupError) {
+            console.log(`[GET-INVOICES] Failed to cleanup invoice ${inv.id}:`, cleanupError);
+          }
+          continue; // Don't include in results
         }
       }
 
-      filteredOpenInvoices.push(inv);
+      // Only include open invoices in the UI (not draft)
+      if (inv.status === "open") {
+        filteredOpenInvoices.push(inv);
+      }
     }
 
     // Fetch paid invoices
