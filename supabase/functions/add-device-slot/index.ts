@@ -46,9 +46,10 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Parse request body to get period and quantity selection
+    // Parse request body to get period, quantity, and payment method selection
     let period: "monthly" | "yearly" = "monthly";
     let quantity = 1;
+    let payByInvoice = false;
     try {
       const body = await req.json();
       if (body.period === "yearly") {
@@ -57,10 +58,14 @@ serve(async (req) => {
       if (body.quantity && typeof body.quantity === "number" && body.quantity >= 1 && body.quantity <= 10) {
         quantity = Math.floor(body.quantity);
       }
+      // Pay by invoice only allowed for yearly
+      if (body.payByInvoice === true && period === "yearly") {
+        payByInvoice = true;
+      }
     } catch {
       // No body or invalid JSON, use defaults
     }
-    logStep("Options selected", { period, quantity });
+    logStep("Options selected", { period, quantity, payByInvoice });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -77,25 +82,78 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check if customer exists
+    // Check if customer exists, create if not
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+    } else {
+      // Create customer for invoice flow
+      const newCustomer = await stripe.customers.create({
+        email: user.email,
+        metadata: { user_id: user.id },
+      });
+      customerId = newCustomer.id;
     }
-    logStep("Customer lookup", { customerId });
+    logStep("Customer lookup/create", { customerId });
 
     const returnOrigin = origin || "https://ambian.lovable.app";
     const priceId = DEVICE_SLOT_PRICES[period];
 
-    // Create checkout session for additional device slot
+    // Pay by invoice flow - create subscription directly with send_invoice
+    if (payByInvoice) {
+      logStep("Creating invoice-based subscription");
+      
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId, quantity: quantity }],
+        collection_method: "send_invoice",
+        days_until_due: 14,
+        metadata: {
+          user_id: user.id,
+          type: "device_slot",
+          period: period,
+          quantity: String(quantity),
+        },
+      });
+
+      logStep("Invoice subscription created", { subscriptionId: subscription.id });
+
+      // Get the invoice to provide payment link
+      const invoices = await stripe.invoices.list({
+        subscription: subscription.id,
+        limit: 1,
+      });
+
+      if (invoices.data.length > 0 && invoices.data[0].hosted_invoice_url) {
+        logStep("Invoice URL retrieved", { invoiceId: invoices.data[0].id });
+        return new Response(JSON.stringify({ 
+          url: invoices.data[0].hosted_invoice_url,
+          type: "invoice",
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      // Fallback: return success without URL (invoice will be emailed)
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: "Invoice has been sent to your email",
+        type: "invoice",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Normal checkout flow
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      customer_update: customerId ? {
+      customer_update: {
         name: "auto",
         address: "auto",
-      } : undefined,
+      },
       line_items: [
         {
           price: priceId,
@@ -139,7 +197,7 @@ serve(async (req) => {
 
     logStep("Checkout session created", { sessionId: session.id, period, quantity, priceId });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: session.url, type: "checkout" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
