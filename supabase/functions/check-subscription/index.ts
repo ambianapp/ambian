@@ -110,16 +110,33 @@ serve(async (req) => {
       "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
       "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
     ];
+    
+    const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
-    // Check for active Stripe subscription (recurring) - excluding device slot subscriptions
-    const subscriptions = await stripe.subscriptions.list({
+    // Count device slots from active subscriptions
+    const allSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 10,
+      limit: 50,
     });
     
-    // Filter to only main subscriptions (not device slots)
-    const mainSubscriptions = subscriptions.data.filter((sub: any) => {
+    let deviceSlotCount = 1; // Base slot
+    for (const sub of allSubscriptions.data) {
+      for (const item of sub.items.data) {
+        const productId = typeof item.price.product === 'string' 
+          ? item.price.product 
+          : item.price.product.id;
+        
+        if (productId === DEVICE_SLOT_PRODUCT_ID) {
+          deviceSlotCount += item.quantity || 1;
+          logStep("Found device slot subscription", { subscriptionId: sub.id, quantity: item.quantity });
+        }
+      }
+    }
+    logStep("Total device slots calculated", { deviceSlotCount });
+
+    // Filter to only main subscriptions (not device slots) from already-fetched subscriptions
+    const mainSubscriptions = allSubscriptions.data.filter((sub: any) => {
       const priceId = sub.items.data[0]?.price?.id;
       return !deviceSlotPriceIds.includes(priceId);
     });
@@ -161,7 +178,7 @@ serve(async (req) => {
             
             logStep("Invoice open, granting access until due date", { gracePeriodEnd: gracePeriodEnd.toISOString() });
             
-            // Update local status to pending_payment with grace period
+            // Update local status to pending_payment with grace period and device slots
             await supabaseClient
               .from("subscriptions")
               .upsert({
@@ -171,15 +188,9 @@ serve(async (req) => {
                 status: "pending_payment",
                 plan_type: subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
                 current_period_end: gracePeriodEnd.toISOString(),
+                device_slots: deviceSlotCount,
                 updated_at: new Date().toISOString(),
               }, { onConflict: "user_id" });
-            
-            // Get device slots
-            const { data: subData } = await supabaseClient
-              .from("subscriptions")
-              .select("device_slots")
-              .eq("user_id", user.id)
-              .maybeSingle();
             
             return new Response(JSON.stringify({
               subscribed: true,
@@ -191,7 +202,7 @@ serve(async (req) => {
               is_recurring: true,
               is_pending_payment: true,
               collection_method: collectionMethod,
-              device_slots: subData?.device_slots ?? 1,
+              device_slots: deviceSlotCount,
             }), {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
               status: 200,
@@ -256,17 +267,9 @@ serve(async (req) => {
           plan_type: planType,
           current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
           current_period_end: subscriptionEnd,
+          device_slots: deviceSlotCount,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
-
-      // Get device slots from local subscription
-      const { data: subData } = await supabaseClient
-        .from("subscriptions")
-        .select("device_slots")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      const deviceSlots = subData?.device_slots ?? 1;
 
       return new Response(JSON.stringify({
         subscribed: true,
@@ -277,7 +280,7 @@ serve(async (req) => {
         subscription_end: subscriptionEnd,
         is_recurring: true,
         collection_method: collectionMethod,
-        device_slots: deviceSlots,
+        device_slots: deviceSlotCount,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -331,13 +334,12 @@ serve(async (req) => {
           status: isInTrial ? "trialing" : "inactive",
           current_period_start: isInTrial ? userCreatedAt.toISOString() : null,
           current_period_end: isInTrial ? trialEndDate.toISOString() : null,
+          device_slots: deviceSlotCount,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
     }
 
     const hasAccess = hasPrepaidAccess || isInTrial;
-
-    const deviceSlots = localSub?.device_slots ?? 1;
 
     return new Response(JSON.stringify({
       subscribed: hasAccess,
@@ -348,7 +350,7 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       is_recurring: false,
       is_pending_payment: isPendingPayment,
-      device_slots: deviceSlots,
+      device_slots: deviceSlotCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
