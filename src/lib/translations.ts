@@ -179,6 +179,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmInvoiceAmount": "Total",
     "devices.confirmInvoiceNote": "An invoice will be sent to your email with 14 days to pay.",
     "devices.confirmInvoiceBtn": "Send Invoice",
+    "devices.confirmCancelTitle": "Cancel Location?",
+    "devices.confirmCancelDesc": "You are about to cancel the following additional location:",
+    "devices.confirmCancelNote": "Access will continue until the end of the billing period. No refunds will be issued.",
+    "devices.confirmCancelBtn": "Cancel Location",
     
     // Invoices
     "invoices.title": "Invoices",
@@ -681,6 +685,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmInvoiceAmount": "Totalt",
     "devices.confirmInvoiceNote": "En faktura skickas till din e-post med 14 dagars betalningstid.",
     "devices.confirmInvoiceBtn": "Skicka faktura",
+    "devices.confirmCancelTitle": "Avbryt plats?",
+    "devices.confirmCancelDesc": "Du är på väg att avbryta följande extra plats:",
+    "devices.confirmCancelNote": "Åtkomst fortsätter till slutet av faktureringsperioden. Ingen återbetalning ges.",
+    "devices.confirmCancelBtn": "Avbryt plats",
     
     // Invoices
     "invoices.title": "Fakturor",
@@ -1182,6 +1190,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmInvoiceAmount": "Yhteensä",
     "devices.confirmInvoiceNote": "Lasku lähetetään sähköpostiisi 14 päivän maksuajalla.",
     "devices.confirmInvoiceBtn": "Lähetä lasku",
+    "devices.confirmCancelTitle": "Peruuta sijainti?",
+    "devices.confirmCancelDesc": "Olet peruuttamassa seuraavaa lisäsijaintia:",
+    "devices.confirmCancelNote": "Käyttöoikeus jatkuu laskutuskauden loppuun. Hyvitystä ei myönnetä.",
+    "devices.confirmCancelBtn": "Peruuta sijainti",
     
     // Invoices
     "invoices.title": "Laskut",
@@ -1683,6 +1695,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmInvoiceAmount": "Gesamt",
     "devices.confirmInvoiceNote": "Eine Rechnung wird an deine E-Mail mit 14 Tagen Zahlungsziel gesendet.",
     "devices.confirmInvoiceBtn": "Rechnung senden",
+    "devices.confirmCancelTitle": "Standort stornieren?",
+    "devices.confirmCancelDesc": "Du bist dabei, den folgenden zusätzlichen Standort zu stornieren:",
+    "devices.confirmCancelNote": "Der Zugang bleibt bis zum Ende des Abrechnungszeitraums bestehen. Es erfolgt keine Rückerstattung.",
+    "devices.confirmCancelBtn": "Standort stornieren",
     
     // Invoices
     "invoices.title": "Rechnungen",
@@ -2184,6 +2200,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmInvoiceAmount": "Total",
     "devices.confirmInvoiceNote": "Une facture sera envoyée à votre email avec 14 jours pour payer.",
     "devices.confirmInvoiceBtn": "Envoyer la facture",
+    "devices.confirmCancelTitle": "Annuler l'emplacement ?",
+    "devices.confirmCancelDesc": "Vous êtes sur le point d'annuler l'emplacement supplémentaire suivant :",
+    "devices.confirmCancelNote": "L'accès continuera jusqu'à la fin de la période de facturation. Aucun remboursement ne sera effectué.",
+    "devices.confirmCancelBtn": "Annuler l'emplacement",
     
     // Invoices
     "invoices.title": "Factures",
