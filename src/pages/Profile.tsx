@@ -31,6 +31,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
+  const [deviceSlotPeriod, setDeviceSlotPeriod] = useState<"monthly" | "yearly">("yearly");
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -170,7 +171,9 @@ const Profile = () => {
   const handleAddDeviceSlot = async () => {
     setIsLoadingDevice(true);
     try {
-      const { data, error } = await supabase.functions.invoke("add-device-slot");
+      const { data, error } = await supabase.functions.invoke("add-device-slot", {
+        body: { period: deviceSlotPeriod },
+      });
       if (error) throw error;
       
       if (data?.url) {
@@ -463,26 +466,53 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border border-border">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
-                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
-                </div>
-                <Button
-                  onClick={handleAddDeviceSlot}
-                  disabled={isLoadingDevice || !subscription.subscribed}
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
-                  {isLoadingDevice ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Plus className="w-4 h-4 mr-2" />
-                  )}
-                  {t("devices.addBtn")}
-                </Button>
+            <div className="p-4 rounded-lg border border-border space-y-4">
+              <div>
+                <p className="font-medium text-foreground">{t("devices.needMore")}</p>
+                <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
               </div>
+              
+              {/* Period selection */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeviceSlotPeriod("monthly")}
+                  className={`p-3 rounded-lg border text-left transition-all ${
+                    deviceSlotPeriod === "monthly"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="font-medium text-foreground text-sm">Monthly</div>
+                  <div className="text-sm text-muted-foreground">€5/month</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeviceSlotPeriod("yearly")}
+                  className={`p-3 rounded-lg border text-left transition-all ${
+                    deviceSlotPeriod === "yearly"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="font-medium text-foreground text-sm">Yearly</div>
+                  <div className="text-sm text-muted-foreground">€50/year</div>
+                  <div className="text-xs text-primary">Save €10</div>
+                </button>
+              </div>
+              
+              <Button
+                onClick={handleAddDeviceSlot}
+                disabled={isLoadingDevice || !subscription.subscribed}
+                className="w-full"
+              >
+                {isLoadingDevice ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
+                {t("devices.addBtn")}
+              </Button>
             </div>
 
             {!subscription.subscribed && (
