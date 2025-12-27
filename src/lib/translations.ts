@@ -223,6 +223,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.startTrial": "Start Free Trial",
     "pricing.saveYearly": "Save €17.80/year",
     "pricing.saveOneTime": "Save €17.80",
+    "pricing.invoiceYearlyOnly": "Invoice payment is only available for yearly plans",
     
     // Billing
     "billing.companyName": "Company Name",
@@ -705,6 +706,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.startTrial": "Starta gratis provperiod",
     "pricing.saveYearly": "Spara €17,80/år",
     "pricing.saveOneTime": "Spara €17,80",
+    "pricing.invoiceYearlyOnly": "Fakturabetalning är endast tillgänglig för årsplaner",
     
     // Billing
     "billing.companyName": "Företagsnamn",
@@ -1186,6 +1188,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.startTrial": "Aloita ilmainen kokeilu",
     "pricing.saveYearly": "Säästä 17,80€/vuosi",
     "pricing.saveOneTime": "Säästä 17,80€",
+    "pricing.invoiceYearlyOnly": "Laskulla maksu on saatavilla vain vuositilauksille",
     
     // Billing
     "billing.companyName": "Yrityksen nimi",
@@ -1667,6 +1670,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.startTrial": "Kostenlos testen",
     "pricing.saveYearly": "Spare €17,80/Jahr",
     "pricing.saveOneTime": "Spare €17,80",
+    "pricing.invoiceYearlyOnly": "Rechnungszahlung ist nur für Jahrespläne verfügbar",
     
     // Billing
     "billing.companyName": "Firmenname",
@@ -2148,6 +2152,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.startTrial": "Essai gratuit",
     "pricing.saveYearly": "Économisez 17,80€/an",
     "pricing.saveOneTime": "Économisez 17,80€",
+    "pricing.invoiceYearlyOnly": "Le paiement par facture n'est disponible que pour les plans annuels",
     
     // Billing
     "billing.companyName": "Nom de l'entreprise",

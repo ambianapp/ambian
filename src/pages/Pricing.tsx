@@ -479,7 +479,7 @@ const Pricing = () => {
                 <CardContent className="space-y-3">
                   {selectedPlan === "monthly" && (
                     <p className="text-sm text-amber-500 text-center">
-                      Invoice payment is only available for yearly plans
+                      {t("pricing.invoiceYearlyOnly")}
                     </p>
                   )}
                   <Button
