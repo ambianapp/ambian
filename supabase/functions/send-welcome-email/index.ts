@@ -35,148 +35,97 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="background-color: ${brandColors.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 40px 20px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background-color: ${brandColors.cardBackground}; border-radius: 16px; border: 1px solid ${brandColors.border}; max-width: 520px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+          <!-- Header -->
           <tr>
-            <td style="padding: 40px;">
-              <!-- Logo -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom: 32px;">
-                    <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="140" style="display: block;">
-                  </td>
-                </tr>
-              </table>
-              
-              <!-- Welcome Icon -->
-              <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-block; width: 64px; height: 64px; background-color: ${brandColors.primary}20; border-radius: 50%; line-height: 64px; font-size: 32px;">
-                  🎉
-                </div>
-              </div>
-              
-              <!-- Heading -->
-              <h1 style="color: ${brandColors.text}; font-size: 28px; font-weight: 700; text-align: center; margin: 0 0 8px 0;">
-                Welcome to Ambian!
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="140" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                🎉 Welcome to Ambian!
               </h1>
-              
-              <p style="color: ${brandColors.primary}; font-size: 16px; text-align: center; margin: 0 0 24px 0;">
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #a78bfa; font-size: 18px; line-height: 1.6; margin: 0 0 8px; text-align: center;">
                 Hi ${displayName}! 👋
               </p>
-              
-              <!-- Description -->
-              <p style="color: ${brandColors.textMuted}; font-size: 16px; line-height: 26px; text-align: center; margin: 0 0 32px 0;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 24px; text-align: center;">
                 Thank you for joining Ambian! You now have access to premium, license-free background music for your business. Your 3-day free trial has started.
               </p>
               
               <!-- Features Box -->
-              <div style="background-color: ${brandColors.background}; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 1px solid ${brandColors.border};">
-                <h3 style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 0 0 16px 0; text-align: center;">
+              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #ffffff; font-size: 16px; margin: 0 0 16px; text-align: center;">
                   Here's what you can do:
                 </h3>
-                
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding: 8px 0;">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 32px; vertical-align: top;">
-                            <span style="color: ${brandColors.success}; font-size: 16px;">✓</span>
-                          </td>
-                          <td style="color: ${brandColors.textMuted}; font-size: 14px; line-height: 22px;">
-                            Browse 50+ curated playlists across moods and genres
-                          </td>
-                        </tr>
-                      </table>
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Browse 50+ curated playlists across moods and genres</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 32px; vertical-align: top;">
-                            <span style="color: ${brandColors.success}; font-size: 16px;">✓</span>
-                          </td>
-                          <td style="color: ${brandColors.textMuted}; font-size: 14px; line-height: 22px;">
-                            Schedule music to play automatically throughout the day
-                          </td>
-                        </tr>
-                      </table>
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Schedule music to play automatically throughout the day</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 32px; vertical-align: top;">
-                            <span style="color: ${brandColors.success}; font-size: 16px;">✓</span>
-                          </td>
-                          <td style="color: ${brandColors.textMuted}; font-size: 14px; line-height: 22px;">
-                            Use on any device - web, mobile, or tablet
-                          </td>
-                        </tr>
-                      </table>
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Use on any device - web, mobile, or tablet</span>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 32px; vertical-align: top;">
-                            <span style="color: ${brandColors.success}; font-size: 16px;">✓</span>
-                          </td>
-                          <td style="color: ${brandColors.textMuted}; font-size: 14px; line-height: 22px;">
-                            All music is fully licensed for commercial use
-                          </td>
-                        </tr>
-                      </table>
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">All music is fully licensed for commercial use</span>
                     </td>
                   </tr>
                 </table>
               </div>
               
               <!-- CTA Button -->
-              <div style="text-align: center; margin: 0 0 32px 0;">
-                <a href="https://ambianmusic.com" style="display: inline-block; background-color: ${brandColors.primary}; color: ${brandColors.text}; font-size: 16px; font-weight: 600; text-decoration: none; padding: 16px 40px; border-radius: 8px;">
-                  Start Listening
-                </a>
-              </div>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Start Listening
+                    </a>
+                  </td>
+                </tr>
+              </table>
               
               <!-- Trial reminder -->
-              <div style="background-color: ${brandColors.primary}15; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid ${brandColors.primary}30;">
-                <p style="color: ${brandColors.text}; font-size: 14px; font-weight: 600; margin: 0 0 4px 0;">
+              <div style="background: rgba(139, 92, 246, 0.15); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid rgba(139, 92, 246, 0.3);">
+                <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0 0 4px;">
                   🎁 Your 3-day free trial is active
                 </p>
-                <p style="color: ${brandColors.textMuted}; font-size: 13px; margin: 0;">
+                <p style="color: #a1a1aa; font-size: 13px; margin: 0;">
                   No credit card required. Explore everything Ambian has to offer!
                 </p>
               </div>
-              
-              <!-- Divider -->
-              <hr style="border: none; border-top: 1px solid ${brandColors.border}; margin: 32px 0 24px 0;">
-              
-              <!-- Help -->
-              <p style="color: ${brandColors.textMuted}; font-size: 13px; text-align: center; margin: 0;">
-                Questions? Just reply to this email or visit our 
-                <a href="https://ambianmusic.com/help" style="color: ${brandColors.primary}; text-decoration: none;">Help Center</a>.
-              </p>
             </td>
           </tr>
-        </table>
-        
-        <!-- Footer branding -->
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+          
+          <!-- Footer -->
           <tr>
-            <td align="center" style="padding-top: 24px;">
-              <p style="color: ${brandColors.textMuted}; font-size: 12px; margin: 0 0 4px 0;">
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 13px; margin: 0 0 10px;">
+                Questions? Just reply to this email or visit our 
+                <a href="https://ambianmusic.com/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a>
+              </p>
+              <p style="color: #666666; font-size: 12px; margin: 0;">
                 © ${new Date().getFullYear()} Ambian. Premium background music for businesses.
               </p>
-              <a href="https://ambianmusic.com" style="color: ${brandColors.primary}; font-size: 12px; text-decoration: none;">
-                ambianmusic.com
-              </a>
             </td>
           </tr>
         </table>
@@ -203,81 +152,73 @@ const generateAdminNotificationHtml = (email: string, name?: string) => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="background-color: ${brandColors.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 40px 20px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background-color: ${brandColors.cardBackground}; border-radius: 16px; border: 1px solid ${brandColors.border}; max-width: 520px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+          <!-- Header -->
           <tr>
-            <td style="padding: 40px;">
-              <!-- Logo -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom: 24px;">
-                    <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="100" style="display: block;">
-                  </td>
-                </tr>
-              </table>
-              
-              <!-- New User Icon -->
-              <div style="text-align: center; margin-bottom: 20px;">
-                <div style="display: inline-block; width: 56px; height: 56px; background-color: ${brandColors.success}20; border-radius: 50%; line-height: 56px; font-size: 28px;">
-                  🎉
-                </div>
-              </div>
-              
-              <!-- Heading -->
-              <h1 style="color: ${brandColors.text}; font-size: 24px; font-weight: 700; text-align: center; margin: 0 0 24px 0;">
-                New User Signup!
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="100" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0;">
+                🎉 New User Signup!
               </h1>
-              
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
               <!-- User Info Box -->
-              <div style="background-color: ${brandColors.background}; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid ${brandColors.border};">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Name</span>
-                      <p style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">${displayName}</p>
+                      <span style="color: #888888; font-size: 13px;">Name</span>
+                      <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">${displayName}</p>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Email</span>
-                      <p style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">
-                        <a href="mailto:${email}" style="color: ${brandColors.primary}; text-decoration: none;">${email}</a>
+                      <span style="color: #888888; font-size: 13px;">Email</span>
+                      <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">
+                        <a href="mailto:${email}" style="color: #8b5cf6; text-decoration: none;">${email}</a>
                       </p>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Signed up</span>
-                      <p style="color: ${brandColors.text}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">${signupDate}</p>
+                      <span style="color: #888888; font-size: 13px;">Signed up</span>
+                      <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">${signupDate}</p>
                     </td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0;">
-                      <span style="color: ${brandColors.textMuted}; font-size: 13px;">Trial Status</span>
-                      <p style="color: ${brandColors.success}; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">3-day free trial started</p>
+                      <span style="color: #888888; font-size: 13px;">Trial Status</span>
+                      <p style="color: #10b981; font-size: 16px; font-weight: 600; margin: 4px 0 0 0;">3-day free trial started</p>
                     </td>
                   </tr>
                 </table>
               </div>
               
               <!-- CTA Button -->
-              <div style="text-align: center;">
-                <a href="https://ambianmusic.com/admin" style="display: inline-block; background-color: ${brandColors.primary}; color: ${brandColors.text}; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 32px; border-radius: 8px;">
-                  View in Admin Panel
-                </a>
-              </div>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 20px;">
+                    <a href="https://ambianmusic.com/admin" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 14px; font-weight: 600;">
+                      View in Admin Panel
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
-        </table>
-        
-        <!-- Footer -->
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+          
+          <!-- Footer -->
           <tr>
-            <td align="center" style="padding-top: 20px;">
-              <p style="color: ${brandColors.textMuted}; font-size: 12px; margin: 0;">
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 12px; margin: 0;">
                 This is an automated notification from Ambian.
               </p>
             </td>
