@@ -46,17 +46,21 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Parse request body to get period selection
+    // Parse request body to get period and quantity selection
     let period: "monthly" | "yearly" = "monthly";
+    let quantity = 1;
     try {
       const body = await req.json();
       if (body.period === "yearly") {
         period = "yearly";
       }
+      if (body.quantity && typeof body.quantity === "number" && body.quantity >= 1 && body.quantity <= 10) {
+        quantity = Math.floor(body.quantity);
+      }
     } catch {
-      // No body or invalid JSON, use default (monthly)
+      // No body or invalid JSON, use defaults
     }
-    logStep("Period selected", { period });
+    logStep("Options selected", { period, quantity });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -95,7 +99,7 @@ serve(async (req) => {
       line_items: [
         {
           price: priceId,
-          quantity: 1,
+          quantity: quantity,
         },
       ],
       mode: "subscription",
@@ -121,17 +125,19 @@ serve(async (req) => {
         user_id: user.id,
         type: "device_slot",
         period: period,
+        quantity: String(quantity),
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
           type: "device_slot",
           period: period,
+          quantity: String(quantity),
         },
       },
     });
 
-    logStep("Checkout session created", { sessionId: session.id, period, priceId });
+    logStep("Checkout session created", { sessionId: session.id, period, quantity, priceId });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

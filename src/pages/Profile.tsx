@@ -32,6 +32,7 @@ const Profile = () => {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
   const [deviceSlotPeriod, setDeviceSlotPeriod] = useState<"monthly" | "yearly">("yearly");
+  const [deviceSlotQuantity, setDeviceSlotQuantity] = useState(1);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -172,7 +173,7 @@ const Profile = () => {
     setIsLoadingDevice(true);
     try {
       const { data, error } = await supabase.functions.invoke("add-device-slot", {
-        body: { period: deviceSlotPeriod },
+        body: { period: deviceSlotPeriod, quantity: deviceSlotQuantity },
       });
       if (error) throw error;
       
@@ -472,6 +473,34 @@ const Profile = () => {
                 <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
               </div>
               
+              {/* Quantity selection */}
+              <div>
+                <Label className="text-sm font-medium text-foreground mb-2 block">
+                  {t("devices.quantity") || "Number of device slots"}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDeviceSlotQuantity(Math.max(1, deviceSlotQuantity - 1))}
+                    disabled={deviceSlotQuantity <= 1}
+                  >
+                    -
+                  </Button>
+                  <div className="w-16 text-center font-bold text-lg">{deviceSlotQuantity}</div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDeviceSlotQuantity(Math.min(10, deviceSlotQuantity + 1))}
+                    disabled={deviceSlotQuantity >= 10}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+
               {/* Period selection */}
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -484,7 +513,9 @@ const Profile = () => {
                   }`}
                 >
                   <div className="font-medium text-foreground text-sm">Monthly</div>
-                  <div className="text-sm text-muted-foreground">€5/month</div>
+                  <div className="text-sm text-muted-foreground">
+                    €{5 * deviceSlotQuantity}/month
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -496,8 +527,10 @@ const Profile = () => {
                   }`}
                 >
                   <div className="font-medium text-foreground text-sm">Yearly</div>
-                  <div className="text-sm text-muted-foreground">€50/year</div>
-                  <div className="text-xs text-primary">Save €10</div>
+                  <div className="text-sm text-muted-foreground">
+                    €{50 * deviceSlotQuantity}/year
+                  </div>
+                  <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
                 </button>
               </div>
               
