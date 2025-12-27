@@ -24,7 +24,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ADD-DEVICE-SLOT] ${step}${detailsStr}`);
 };
 
-const DEVICE_SLOT_PRICE_ID = "price_1SfhoMJrU52a7SNLpLI3yoEl";
+// Device slot prices
+const DEVICE_SLOT_PRICES = {
+  monthly: "price_1SfhoMJrU52a7SNLpLI3yoEl", // €5/month
+  yearly: "price_1Sj2PMJrU52a7SNLzhpFYfJd",  // €50/year (save €10)
+};
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -41,6 +45,18 @@ serve(async (req) => {
 
   try {
     logStep("Function started");
+
+    // Parse request body to get period selection
+    let period: "monthly" | "yearly" = "monthly";
+    try {
+      const body = await req.json();
+      if (body.period === "yearly") {
+        period = "yearly";
+      }
+    } catch {
+      // No body or invalid JSON, use default (monthly)
+    }
+    logStep("Period selected", { period });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -66,6 +82,7 @@ serve(async (req) => {
     logStep("Customer lookup", { customerId });
 
     const returnOrigin = origin || "https://ambian.lovable.app";
+    const priceId = DEVICE_SLOT_PRICES[period];
 
     // Create checkout session for additional device slot
     const session = await stripe.checkout.sessions.create({
@@ -77,7 +94,7 @@ serve(async (req) => {
       } : undefined,
       line_items: [
         {
-          price: DEVICE_SLOT_PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -103,16 +120,18 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         type: "device_slot",
+        period: period,
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
           type: "device_slot",
+          period: period,
         },
       },
     });
 
-    logStep("Checkout session created", { sessionId: session.id });
+    logStep("Checkout session created", { sessionId: session.id, period, priceId });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
