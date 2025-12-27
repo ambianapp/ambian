@@ -602,7 +602,7 @@ async function sendDeviceSlotUnpaidCancellationEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Ambian <noreply@ambian.fi>",
+      from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: "Location Subscription Canceled - Invoice Not Paid",
       html,
