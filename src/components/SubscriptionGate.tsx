@@ -1,24 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Check, User, Shield, Clock } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 
-const features = [
-  "3 days free trial",
-  "Unlimited access to all music",
-  "Create custom playlists",
-  "No music license required",
-  "100+ new songs every week",
-  "Perfect for business premises",
-];
-
 const SubscriptionGate = () => {
   const { user, isAdmin, signOut, subscription } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Show trial banner if user is in trial period
   const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
+
+  const features = [
+    t("features.trialDays"),
+    t("features.unlimited"),
+    t("features.playlists"),
+    t("features.noLicense"),
+    t("features.newSongs"),
+    t("features.business"),
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-[calc(200px+var(--safe-bottom-tight))]">
@@ -28,10 +30,10 @@ const SubscriptionGate = () => {
           <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-4">
             <div className="flex items-center justify-center gap-2 text-primary mb-1">
               <Clock className="w-5 h-5" />
-              <span className="font-semibold">Free Trial Active</span>
+              <span className="font-semibold">{t("gate.trialActive")}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {subscription.trialDaysRemaining} day{subscription.trialDaysRemaining !== 1 ? 's' : ''} remaining
+              {t("gate.daysRemaining").replace("{days}", String(subscription.trialDaysRemaining))}
             </p>
           </div>
         )}
@@ -44,12 +46,10 @@ const SubscriptionGate = () => {
         {/* Message */}
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            {showTrialBanner ? "Continue with Full Access" : "Subscribe to Listen"}
+            {showTrialBanner ? t("gate.titleTrial") : t("gate.title")}
           </h1>
           <p className="text-muted-foreground">
-            {showTrialBanner 
-              ? "Your free trial is active. Subscribe anytime to continue after your trial ends."
-              : "Get unlimited access to our entire music library for your business."}
+            {showTrialBanner ? t("gate.subtitleTrial") : t("gate.subtitle")}
           </p>
         </div>
 
@@ -69,20 +69,20 @@ const SubscriptionGate = () => {
         <div className="space-y-4">
           <div className="text-center">
             <p className="text-3xl font-bold text-foreground">
-              €7.40<span className="text-lg font-normal text-muted-foreground">/month</span>
+              {t("gate.priceMonthly")}<span className="text-lg font-normal text-muted-foreground">{t("gate.perMonth")}</span>
             </p>
-            <p className="text-sm text-muted-foreground">when billed yearly (€89/year)</p>
+            <p className="text-sm text-muted-foreground">{t("gate.billedYearly")}</p>
             <p className="text-xs text-muted-foreground/70 mt-1">
-              Prices exclude VAT
+              {t("gate.pricesExclVat")}
             </p>
           </div>
 
           <Button size="lg" className="w-full h-14 text-lg" onClick={() => navigate("/pricing")}>
-            {showTrialBanner ? "View Plans" : "Start Listening"}
+            {showTrialBanner ? t("gate.viewPlans") : t("gate.startListening")}
           </Button>
 
           <p className="text-xs text-muted-foreground">
-            No music license required. Cancel anytime.
+            {t("gate.noLicense")}
           </p>
         </div>
 
@@ -95,7 +95,7 @@ const SubscriptionGate = () => {
           
           <div className="flex items-center justify-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
-              Profile
+              {t("nav.profile")}
             </Button>
             {isAdmin && (
               <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
@@ -104,7 +104,7 @@ const SubscriptionGate = () => {
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={signOut}>
-              Sign Out
+              {t("common.signOut")}
             </Button>
           </div>
         </div>

@@ -228,6 +228,22 @@ export const translations: Record<Language, Record<string, string>> = {
     "features.noLicense": "No music license required",
     "features.newSongs": "100+ new songs every week",
     "features.business": "Perfect for business premises",
+    "features.trialDays": "3 days free trial",
+    
+    // Subscription Gate
+    "gate.title": "Subscribe to Listen",
+    "gate.titleTrial": "Continue with Full Access",
+    "gate.subtitle": "Get unlimited access to our entire music library for your business.",
+    "gate.subtitleTrial": "Your free trial is active. Subscribe anytime to continue after your trial ends.",
+    "gate.trialActive": "Free Trial Active",
+    "gate.daysRemaining": "{days} day(s) remaining",
+    "gate.priceMonthly": "€7.40",
+    "gate.perMonth": "/month",
+    "gate.billedYearly": "when billed yearly (€89/year)",
+    "gate.pricesExclVat": "Prices exclude VAT",
+    "gate.startListening": "Start Listening",
+    "gate.viewPlans": "View Plans",
+    "gate.noLicense": "No music license required. Cancel anytime.",
     
     // Search
     "search.title": "Search",
@@ -681,6 +697,22 @@ export const translations: Record<Language, Record<string, string>> = {
     "features.noLicense": "Ingen musiklicens krävs",
     "features.newSongs": "100+ nya låtar varje vecka",
     "features.business": "Perfekt för företagslokaler",
+    "features.trialDays": "3 dagars gratis provperiod",
+    
+    // Subscription Gate
+    "gate.title": "Prenumerera för att lyssna",
+    "gate.titleTrial": "Fortsätt med full tillgång",
+    "gate.subtitle": "Få obegränsad tillgång till hela vårt musikbibliotek för ditt företag.",
+    "gate.subtitleTrial": "Din gratis provperiod är aktiv. Prenumerera när som helst för att fortsätta efter provperioden.",
+    "gate.trialActive": "Gratis provperiod aktiv",
+    "gate.daysRemaining": "{days} dag(ar) kvar",
+    "gate.priceMonthly": "€7.40",
+    "gate.perMonth": "/månad",
+    "gate.billedYearly": "vid årsbetalning (€89/år)",
+    "gate.pricesExclVat": "Priser exklusive moms",
+    "gate.startListening": "Börja lyssna",
+    "gate.viewPlans": "Visa planer",
+    "gate.noLicense": "Ingen musiklicens krävs. Avsluta när som helst.",
     
     // Search
     "search.title": "Sök",
@@ -1133,6 +1165,22 @@ export const translations: Record<Language, Record<string, string>> = {
     "features.noLicense": "Ei musiikin käyttölupaa tarvita",
     "features.newSongs": "100+ uutta kappaletta viikossa",
     "features.business": "Täydellinen yritystiloihin",
+    "features.trialDays": "3 päivää ilmaista kokeilua",
+    
+    // Subscription Gate
+    "gate.title": "Tilaa kuunnellaksesi",
+    "gate.titleTrial": "Jatka täydellä pääsyllä",
+    "gate.subtitle": "Saat rajattoman pääsyn koko musiikkikirjastoomme yrityksellesi.",
+    "gate.subtitleTrial": "Ilmainen kokeilusi on aktiivinen. Tilaa milloin tahansa jatkaaksesi kokeilun jälkeen.",
+    "gate.trialActive": "Ilmainen kokeilu aktiivinen",
+    "gate.daysRemaining": "{days} päivää jäljellä",
+    "gate.priceMonthly": "€7.40",
+    "gate.perMonth": "/kk",
+    "gate.billedYearly": "vuosimaksulla (€89/vuosi)",
+    "gate.pricesExclVat": "Hinnat eivät sisällä ALV:tä",
+    "gate.startListening": "Aloita kuuntelu",
+    "gate.viewPlans": "Näytä paketit",
+    "gate.noLicense": "Ei musiikin käyttölupaa tarvita. Peruuta milloin tahansa.",
     
     // Search
     "search.title": "Haku",
@@ -1585,6 +1633,22 @@ export const translations: Record<Language, Record<string, string>> = {
     "features.noLicense": "Keine Musiklizenz erforderlich",
     "features.newSongs": "100+ neue Songs jede Woche",
     "features.business": "Perfekt für Geschäftsräume",
+    "features.trialDays": "3 Tage kostenlos testen",
+    
+    // Subscription Gate
+    "gate.title": "Abonnieren zum Hören",
+    "gate.titleTrial": "Weiter mit vollem Zugang",
+    "gate.subtitle": "Erhalte unbegrenzten Zugang zu unserer gesamten Musikbibliothek für dein Unternehmen.",
+    "gate.subtitleTrial": "Deine kostenlose Testversion ist aktiv. Abonniere jederzeit, um nach der Testversion fortzufahren.",
+    "gate.trialActive": "Kostenlose Testversion aktiv",
+    "gate.daysRemaining": "{days} Tag(e) verbleibend",
+    "gate.priceMonthly": "€7.40",
+    "gate.perMonth": "/Monat",
+    "gate.billedYearly": "bei jährlicher Zahlung (€89/Jahr)",
+    "gate.pricesExclVat": "Preise ohne MwSt.",
+    "gate.startListening": "Jetzt hören",
+    "gate.viewPlans": "Pläne anzeigen",
+    "gate.noLicense": "Keine Musiklizenz erforderlich. Jederzeit kündbar.",
     
     // Search
     "search.title": "Suche",
@@ -2037,6 +2101,22 @@ export const translations: Record<Language, Record<string, string>> = {
     "features.noLicense": "Aucune licence musicale requise",
     "features.newSongs": "100+ nouvelles chansons chaque semaine",
     "features.business": "Parfait pour les locaux commerciaux",
+    "features.trialDays": "3 jours d'essai gratuit",
+    
+    // Subscription Gate
+    "gate.title": "Abonnez-vous pour écouter",
+    "gate.titleTrial": "Continuez avec accès complet",
+    "gate.subtitle": "Accédez à toute notre bibliothèque musicale pour votre entreprise.",
+    "gate.subtitleTrial": "Votre essai gratuit est actif. Abonnez-vous à tout moment pour continuer après l'essai.",
+    "gate.trialActive": "Essai gratuit actif",
+    "gate.daysRemaining": "{days} jour(s) restant(s)",
+    "gate.priceMonthly": "€7.40",
+    "gate.perMonth": "/mois",
+    "gate.billedYearly": "en paiement annuel (€89/an)",
+    "gate.pricesExclVat": "Prix hors TVA",
+    "gate.startListening": "Commencer à écouter",
+    "gate.viewPlans": "Voir les plans",
+    "gate.noLicense": "Aucune licence musicale requise. Annulez à tout moment.",
     
     // Search
     "search.title": "Recherche",
