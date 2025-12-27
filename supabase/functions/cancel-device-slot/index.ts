@@ -116,7 +116,7 @@ async function sendCancellationEmail(
     `;
 
     const { error } = await resend.emails.send({
-      from: "Ambian <noreply@ambian.fi>",
+      from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: `Location Subscription Cancelled - Ambian`,
       html,
