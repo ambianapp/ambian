@@ -34,12 +34,20 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <style>
+    :root { color-scheme: dark; }
+    @media (prefers-color-scheme: dark) {
+      body, .body-bg { background-color: #1a1a2e !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+<body class="body-bg" style="margin: 0; padding: 0; background-color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;" bgcolor="#1a1a2e">
+  <table role="presentation" width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1a1a2e" style="background-color: #1a1a2e; min-height: 100vh;">
     <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+      <td align="center" valign="top" style="padding: 40px 20px; background-color: #1a1a2e;" bgcolor="#1a1a2e">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #16213e; border-radius: 16px;" bgcolor="#16213e">
           <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
@@ -126,6 +134,14 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
               <p style="color: #666666; font-size: 12px; margin: 0;">
                 © ${new Date().getFullYear()} Ambian. Premium background music for businesses.
               </p>
+            </td>
+          </tr>
+        </table>
+        <!-- Spacer to extend dark background -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          <tr>
+            <td style="padding: 20px; text-align: center;" bgcolor="#1a1a2e">
+              <a href="https://ambianmusic.com" style="color: #8b5cf6; font-size: 12px; text-decoration: none;">ambianmusic.com</a>
             </td>
           </tr>
         </table>
