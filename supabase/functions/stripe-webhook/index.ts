@@ -116,7 +116,7 @@ async function sendPaymentFailedEmail(
               <!-- Header -->
               <tr>
                 <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambian.app/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
                   <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
                     ⚠️ Payment Failed
                   </h1>
@@ -233,7 +233,7 @@ async function sendSubscriptionConfirmationEmail(
               <!-- Header -->
               <tr>
                 <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambian.app/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
                   <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
                     🎉 Welcome to Ambian!
                   </h1>

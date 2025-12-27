@@ -46,7 +46,7 @@ const generateWelcomeEmailHtml = (email: string, name?: string) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 32px;">
-                    <img src="https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1/object/public/playlist-covers/ambian-logo.png" alt="Ambian" width="140" style="display: block;">
+                    <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="140" style="display: block;">
                   </td>
                 </tr>
               </table>
@@ -214,7 +214,7 @@ const generateAdminNotificationHtml = (email: string, name?: string) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 24px;">
-                    <img src="https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1/object/public/playlist-covers/ambian-logo.png" alt="Ambian" width="100" style="display: block;">
+                    <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="100" style="display: block;">
                   </td>
                 </tr>
               </table>
