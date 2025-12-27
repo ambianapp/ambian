@@ -82,20 +82,36 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check if customer exists, create if not
+    // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId: string;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
-      // Create customer for invoice flow
-      const newCustomer = await stripe.customers.create({
-        email: user.email,
-        metadata: { user_id: user.id },
-      });
-      customerId = newCustomer.id;
+    if (customers.data.length === 0) {
+      throw new Error("No active subscription found. Please subscribe first.");
     }
-    logStep("Customer lookup/create", { customerId });
+    const customerId = customers.data[0].id;
+    logStep("Customer found", { customerId });
+
+    // Verify user has an active main subscription (not just device slots)
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 10,
+    });
+
+    // Device slot prices to exclude from main subscription check
+    const deviceSlotPriceIds = [
+      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly
+      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly
+    ];
+
+    const hasMainSubscription = subscriptions.data.some((sub: any) => {
+      const priceId = sub.items.data[0]?.price?.id;
+      return !deviceSlotPriceIds.includes(priceId);
+    });
+
+    if (!hasMainSubscription) {
+      throw new Error("No active subscription found. Please subscribe first before adding locations.");
+    }
+    logStep("Main subscription verified");
 
     const returnOrigin = origin || "https://ambian.lovable.app";
     const priceId = DEVICE_SLOT_PRICES[period];
