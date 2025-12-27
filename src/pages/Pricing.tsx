@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,16 +49,9 @@ const PREPAID_PLANS = {
   },
 };
 
-const features = [
-  "Unlimited access to all music",
-  "Create custom playlists",
-  "No music license required",
-  "100+ new songs every week",
-  "Perfect for business premises",
-];
-
 const Pricing = () => {
   const { user, subscription, checkSubscription } = useAuth();
+  const { t } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
   const [paymentType, setPaymentType] = useState<"subscription" | "prepaid">("subscription");
   const [isLoading, setIsLoading] = useState(false);
@@ -73,6 +67,14 @@ const Pricing = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  const features = [
+    t("features.unlimited"),
+    t("features.playlists"),
+    t("features.noLicense"),
+    t("features.newSongs"),
+    t("features.business"),
+  ];
 
   // Handle payment verification on return from Stripe
   useEffect(() => {
@@ -93,13 +95,13 @@ const Pricing = () => {
             if (error) throw error;
 
             toast({
-              title: "Payment Successful!",
+              title: t("common.success"),
               description: `Your access has been activated until ${new Date(data.access_until).toLocaleDateString()}.`,
             });
           } catch (error: any) {
             console.error("Payment verification error:", error);
             toast({
-              title: "Verification Issue",
+              title: t("common.success"),
               description: "Payment received. Your access will be activated shortly.",
             });
           } finally {
@@ -108,7 +110,7 @@ const Pricing = () => {
         } else {
           // For subscriptions, just show success message
           toast({
-            title: "Subscription Activated!",
+            title: t("common.success"),
             description: "Your subscription is now active. Enjoy unlimited music!",
           });
         }
@@ -122,7 +124,7 @@ const Pricing = () => {
     };
 
     verifyPayment();
-  }, [searchParams, user, checkSubscription, navigate, toast]);
+  }, [searchParams, user, checkSubscription, navigate, toast, t]);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -149,7 +151,7 @@ const Pricing = () => {
       }
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });
@@ -165,7 +167,7 @@ const Pricing = () => {
 
     if (!companyName.trim() || !addressLine.trim() || !city.trim() || !postalCode.trim()) {
       toast({
-        title: "Missing information",
+        title: t("common.error"),
         description: "Please fill in all company and address fields for the invoice.",
         variant: "destructive",
       });
@@ -192,7 +194,7 @@ const Pricing = () => {
       if (error) throw error;
 
       toast({
-        title: "Invoice Sent!",
+        title: t("common.success"),
         description: data.message || "Check your email for the invoice. You have 7 days to pay.",
       });
       setShowInvoiceDialog(false);
@@ -202,8 +204,6 @@ const Pricing = () => {
       setPostalCode("");
       setCountry("FI");
     } catch (error: any) {
-      // Supabase edge function errors sometimes come back as a generic message even when the
-      // function returns JSON like { error: "..." }. Try to extract the real message.
       let errorMessage = error?.message || "Failed to create invoice";
 
       const maybeBody = error?.context?.body;
@@ -218,27 +218,9 @@ const Pricing = () => {
         errorMessage = maybeBody.error;
       }
 
-      // Parse specific error cases for clearer UI
-      let title = "Invoice Error";
-      let description = errorMessage;
-
-      if (errorMessage.includes("pending invoice")) {
-        title = "Invoice Already Sent";
-        description = "You already have an open invoice. Please check your email and pay it (or wait until it expires) before requesting a new one.";
-      } else if (errorMessage.includes("location isn't recognized")) {
-        title = "Address Needed for VAT";
-        description = "Please enter your full address (street, postal code, city, country) so VAT can be calculated.";
-      } else if (errorMessage.includes("unpaid invoice")) {
-        title = "Unpaid Invoice Exists";
-        description = "You have an unpaid invoice. Please check your email and pay the existing invoice first, or contact support if you need help.";
-      } else if (errorMessage.includes("invoice history")) {
-        title = "Invoice Payment Required";
-        description = "Due to previous unpaid invoices, please use card payment instead.";
-      }
-
       toast({
-        title,
-        description,
+        title: t("common.error"),
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -262,7 +244,7 @@ const Pricing = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-          <p className="text-foreground text-lg">Activating your access...</p>
+          <p className="text-foreground text-lg">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -280,7 +262,7 @@ const Pricing = () => {
             className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            {t("common.back")}
           </Button>
           <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
           <div className="w-16" /> {/* Spacer for centering */}
@@ -288,9 +270,9 @@ const Pricing = () => {
 
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Subscribe to Listen</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("pricing.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Get unlimited access to our entire music library for your business.
+            {t("pricing.subtitle")}
           </p>
         </div>
 
@@ -299,11 +281,10 @@ const Pricing = () => {
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
             <div className="flex items-center justify-center gap-2 text-primary mb-2">
               <Clock className="w-5 h-5" />
-              <span className="font-semibold">Free Trial Active</span>
+              <span className="font-semibold">{t("pricing.trialActive")}</span>
             </div>
             <p className="text-muted-foreground">
-              {subscription.trialDaysRemaining} day{subscription.trialDaysRemaining !== 1 ? 's' : ''} remaining. 
-              Subscribe now to continue after your trial ends.
+              {t("pricing.daysRemaining").replace("{days}", String(subscription.trialDaysRemaining))}
             </p>
           </div>
         )}
@@ -313,16 +294,15 @@ const Pricing = () => {
           <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
             <div className="flex items-center justify-center gap-2 text-yellow-500 mb-2">
               <Mail className="w-5 h-5" />
-              <span className="font-semibold">Invoice Sent - Check Your Email</span>
+              <span className="font-semibold">{t("subscription.paymentDue")}</span>
             </div>
             <p className="text-muted-foreground">
-              We've sent an invoice to your email. You have access until{" "}
-              <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>{" "}
-              to complete the payment.
+              {t("pricing.validUntil")}{" "}
+              <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>
             </p>
             <p className="text-xs text-yellow-600 mt-2">
               <Clock className="w-3 h-3 inline mr-1" />
-              Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process.
+              {t("subscription.ibanNote")}
             </p>
           </div>
         )}
@@ -332,15 +312,15 @@ const Pricing = () => {
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
             <div className="flex items-center justify-center gap-2 text-primary mb-2">
               <Calendar className="w-5 h-5" />
-              <span className="font-semibold">Access Active</span>
+              <span className="font-semibold">{t("pricing.accessActive")}</span>
             </div>
             <p className="text-muted-foreground">
-              Your access is valid until <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>.
-              {subscription.isRecurring ? " Your subscription will auto-renew." : " Buy more time to extend."}
+              {t("pricing.validUntil")} <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>.
+              {subscription.isRecurring ? ` ${t("pricing.autoRenew")}` : ` ${t("pricing.buyMore")}`}
             </p>
             {subscription.isRecurring && (
               <Button variant="link" onClick={() => navigate("/profile")} className="mt-2">
-                Manage Subscription
+                {t("subscription.manageBtn")}
               </Button>
             )}
           </div>
@@ -351,23 +331,23 @@ const Pricing = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="subscription" className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4" />
-              Subscription
+              {t("pricing.subscription")}
             </TabsTrigger>
             <TabsTrigger value="prepaid" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              One-Time Payment
+              {t("pricing.oneTime")}
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="subscription" className="mt-4">
             <p className="text-sm text-muted-foreground mb-4">
-              Auto-renews each billing period. Cancel anytime.
+              {t("pricing.autoRenews")}
             </p>
           </TabsContent>
           
           <TabsContent value="prepaid" className="mt-4">
             <p className="text-sm text-muted-foreground mb-4">
-              Pay once for a set period. No auto-renewal. Buy more time when needed.
+              {t("pricing.payOnce")}
             </p>
           </TabsContent>
         </Tabs>
@@ -384,9 +364,9 @@ const Pricing = () => {
             onClick={() => setSelectedPlan("monthly")}
           >
             <CardHeader>
-              <CardTitle>{paymentType === "subscription" ? "Monthly" : "1 Month Access"}</CardTitle>
+              <CardTitle>{paymentType === "subscription" ? t("pricing.monthly") : t("pricing.monthAccess")}</CardTitle>
               <CardDescription>
-                {paymentType === "subscription" ? "Billed monthly" : "One-time payment"}
+                {paymentType === "subscription" ? t("pricing.billedMonthly") : t("pricing.billedYearly")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -394,10 +374,10 @@ const Pricing = () => {
                 <div className="text-4xl font-bold text-foreground mb-1">
                   {currentPlans.monthly.price}
                   {paymentType === "subscription" && (
-                    <span className="text-lg font-normal text-muted-foreground">/month</span>
+                    <span className="text-lg font-normal text-muted-foreground">/{t("subscription.month")}</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">excl. VAT</p>
+                <p className="text-xs text-muted-foreground">{t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "monthly" && user && (
                 <Button
@@ -411,7 +391,7 @@ const Pricing = () => {
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  {paymentType === "subscription" ? "Subscribe Monthly" : "Buy Monthly"}
+                  {t("pricing.payNow")}
                 </Button>
               )}
             </CardContent>
@@ -427,10 +407,10 @@ const Pricing = () => {
             onClick={() => setSelectedPlan("yearly")}
           >
             <div className="absolute -top-3 right-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
-              Best Value
+              {t("pricing.bestValue")}
             </div>
             <CardHeader>
-              <CardTitle>{paymentType === "subscription" ? "Yearly" : "1 Year Access"}</CardTitle>
+              <CardTitle>{paymentType === "subscription" ? t("pricing.yearly") : t("pricing.yearAccess")}</CardTitle>
               <CardDescription>{currentPlans.yearly.savings}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -438,11 +418,11 @@ const Pricing = () => {
                 <div className="text-4xl font-bold text-foreground mb-1">
                   {currentPlans.yearly.price}
                   {paymentType === "subscription" && (
-                    <span className="text-lg font-normal text-muted-foreground">/year</span>
+                    <span className="text-lg font-normal text-muted-foreground">/{t("subscription.year")}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">≈ €7.40/month</p>
-                <p className="text-xs text-muted-foreground">excl. VAT</p>
+                <p className="text-sm text-muted-foreground">≈ €7.40/{t("subscription.month")}</p>
+                <p className="text-xs text-muted-foreground">{t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "yearly" && user && (
                 <Button
@@ -456,7 +436,7 @@ const Pricing = () => {
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  {paymentType === "subscription" ? "Subscribe Yearly" : "Buy Yearly"}
+                  {t("pricing.payNow")}
                 </Button>
               )}
             </CardContent>
@@ -472,10 +452,10 @@ const Pricing = () => {
                 className="px-12 h-14 text-lg"
                 onClick={() => navigate("/auth")}
               >
-                Start Free Trial
+                {t("pricing.startTrial")}
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
-                3 days free • No credit card required
+                {t("auth.trialInfo")}
               </p>
             </div>
           ) : (
@@ -485,16 +465,16 @@ const Pricing = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <FileText className="w-5 h-5 text-primary" />
-                    Pay by Invoice
+                    {t("pricing.payByInvoice")}
                     <div className="relative group">
                       <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                        <p className="font-normal">Your access starts immediately. We'll send an invoice to your email with 7 days to complete the payment.</p>
+                        <p className="font-normal">{t("pricing.payByInvoiceDesc")}</p>
                       </div>
                     </div>
                   </CardTitle>
                   <CardDescription>
-                    Receive invoice with 7 days payment terms
+                    {t("pricing.payByInvoiceDesc")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -509,13 +489,13 @@ const Pricing = () => {
                     onClick={() => setShowInvoiceDialog(true)}
                     disabled={selectedPlan === "monthly"}
                   >
-                    Request Invoice
+                    {t("pricing.requestInvoice")}
                   </Button>
                 </CardContent>
               </Card>
 
               <p className="text-sm text-muted-foreground text-center">
-                Prices shown exclude VAT. VAT will be calculated based on your location.
+                {t("pricing.vatExcluded")}
               </p>
             </>
           )}
@@ -526,7 +506,7 @@ const Pricing = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Music2 className="w-5 h-5 text-primary" />
-              What's Included
+              {t("pricing.whatsIncluded")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -544,7 +524,7 @@ const Pricing = () => {
                   <Check className="w-3 h-3 text-primary" />
                 </div>
                 <span className="text-foreground">
-                  {paymentType === "subscription" ? "Cancel anytime" : "No auto-renewal"}
+                  {paymentType === "subscription" ? t("pricing.cancelAnytime") : t("pricing.noAutoRenewal")}
                 </span>
               </li>
             </ul>
@@ -555,16 +535,16 @@ const Pricing = () => {
         <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Request Invoice</DialogTitle>
+              <DialogTitle>{t("pricing.requestInvoice")}</DialogTitle>
               <DialogDescription>
-                Enter your company details for the invoice. You'll have 7 days to pay.
+                {t("pricing.payByInvoiceDesc")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               {/* Show selected yearly plan info */}
               <div className="p-3 rounded-lg border border-primary bg-primary/10">
-                <div className="font-medium text-foreground">Yearly Plan</div>
-                <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}/year</div>
+                <div className="font-medium text-foreground">{t("pricing.yearly")}</div>
+                <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")}</div>
                 <div className="text-xs text-primary mt-1">{currentPlans.yearly.savings}</div>
               </div>
 
@@ -634,7 +614,7 @@ const Pricing = () => {
               </div>
               <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
                 <Clock className="w-3 h-3 inline mr-1" />
-                Note: Bank transfers (IBAN) may take several days to process.
+                {t("subscription.ibanNote")}
               </p>
               <div className="pt-2">
                 <Button
@@ -645,7 +625,7 @@ const Pricing = () => {
                   {isInvoiceLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Send Invoice ({currentPlans[selectedPlan].price})
+                  {t("pricing.payNow")} ({currentPlans[selectedPlan].price})
                 </Button>
               </div>
             </div>
