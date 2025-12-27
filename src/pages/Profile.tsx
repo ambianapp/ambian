@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock, Trash2, X } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface Invoice {
@@ -22,6 +22,16 @@ interface Invoice {
   dueDate: number | null;
   pdfUrl: string | null;
   hostedUrl: string | null;
+}
+
+interface DeviceSlotSubscription {
+  id: string;
+  quantity: number;
+  period: "monthly" | "yearly";
+  amount: number;
+  currency: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
 }
 
 const Profile = () => {
@@ -37,6 +47,9 @@ const Profile = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [deviceSlotSubs, setDeviceSlotSubs] = useState<DeviceSlotSubscription[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -89,6 +102,26 @@ const Profile = () => {
     loadInvoices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only reload when user ID changes
+
+  const loadDeviceSlots = async () => {
+    if (!user) return;
+    setIsLoadingSlots(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("get-device-slots");
+      if (error) throw error;
+      setDeviceSlotSubs(data?.deviceSlots || []);
+    } catch (error: any) {
+      console.error("Failed to load device slots:", error);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDeviceSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -188,6 +221,32 @@ const Profile = () => {
       });
     } finally {
       setIsLoadingDevice(false);
+    }
+  };
+
+  const handleCancelDeviceSlot = async (subscriptionId: string) => {
+    setCancellingSlotId(subscriptionId);
+    try {
+      const { error } = await supabase.functions.invoke("cancel-device-slot", {
+        body: { subscriptionId, cancelImmediately: false },
+      });
+      if (error) throw error;
+      
+      toast({
+        title: t("devices.cancelSuccess") || "Location removed",
+        description: t("devices.cancelSuccessDesc") || "The location will be removed at the end of the billing period.",
+      });
+      
+      // Reload device slots
+      await loadDeviceSlots();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingSlotId(null);
     }
   };
 
@@ -547,6 +606,66 @@ const Profile = () => {
                 {t("devices.addBtn")}
               </Button>
             </div>
+
+            {/* Active Device Slot Subscriptions */}
+            {isLoadingSlots ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : deviceSlotSubs.length > 0 && (
+              <div className="space-y-3">
+                <p className="font-medium text-foreground">{t("devices.activeSlots") || "Your additional locations"}</p>
+                {deviceSlotSubs.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className={`p-3 rounded-lg border ${
+                      slot.cancelAtPeriodEnd 
+                        ? "border-destructive/30 bg-destructive/5" 
+                        : "border-border bg-secondary/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-foreground text-sm">
+                          {slot.quantity} {slot.quantity === 1 
+                            ? (t("devices.location") || "location") 
+                            : (t("devices.locations") || "locations")}
+                          {" • "}
+                          {slot.period === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          €{slot.amount * slot.quantity}/{slot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
+                          {" • "}
+                          {slot.cancelAtPeriodEnd 
+                            ? (t("devices.endsOn") || "Ends") 
+                            : (t("subscription.renewsOn") || "Renews")}: {new Date(slot.currentPeriodEnd).toLocaleDateString()}
+                        </div>
+                        {slot.cancelAtPeriodEnd && (
+                          <div className="text-xs text-destructive mt-1">
+                            {t("devices.willBeRemoved") || "Will be removed at end of billing period"}
+                          </div>
+                        )}
+                      </div>
+                      {!slot.cancelAtPeriodEnd && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCancelDeviceSlot(slot.id)}
+                          disabled={cancellingSlotId === slot.id}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {cancellingSlotId === slot.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <X className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {!subscription.subscribed && (
               <p className="text-sm text-muted-foreground">
