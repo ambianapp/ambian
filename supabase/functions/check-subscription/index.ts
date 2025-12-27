@@ -125,9 +125,35 @@ serve(async (req) => {
     const nowSec = Math.floor(Date.now() / 1000);
 
     let deviceSlotCount = 1; // Base slot
+
     for (const sub of allSubscriptions.data) {
       // Only count subscriptions whose current period hasn't ended yet
       if (typeof sub.current_period_end === "number" && sub.current_period_end <= nowSec) continue;
+
+      // For invoice-based device slot subscriptions: if latest invoice is unpaid, do NOT grant access.
+      // This prevents canceled/unpaid invoice purchases from giving extra device slots.
+      let deviceSlotEligible = true;
+      if (sub.collection_method === "send_invoice") {
+        try {
+          const invoices = await stripe.invoices.list({ subscription: sub.id, limit: 1 });
+          const latest = invoices.data[0];
+          if (latest && (latest.status === "open" || latest.status === "draft")) {
+            deviceSlotEligible = false;
+            logStep("Skipping device slot subscription due to unpaid invoice", {
+              subscriptionId: sub.id,
+              invoiceId: latest.id,
+              invoiceStatus: latest.status,
+              dueDate: latest.due_date ?? null,
+            });
+          }
+        } catch (e) {
+          // If we can't verify invoice status, be safe and don't grant extra device slots
+          deviceSlotEligible = false;
+          logStep("Error checking invoice status for device slot subscription", { subscriptionId: sub.id, error: String(e) });
+        }
+      }
+
+      if (!deviceSlotEligible) continue;
 
       for (const item of sub.items.data) {
         const productId = typeof item.price.product === "string"
@@ -146,7 +172,6 @@ serve(async (req) => {
         }
       }
     }
-    logStep("Total device slots calculated", { deviceSlotCount });
     logStep("Total device slots calculated", { deviceSlotCount });
 
     // Filter to only main subscriptions (not device slots) from already-fetched subscriptions

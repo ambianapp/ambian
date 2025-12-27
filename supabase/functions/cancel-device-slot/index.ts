@@ -203,29 +203,30 @@ serve(async (req) => {
     if (subscription.collection_method === "send_invoice") {
       logStep("Invoice-based subscription detected, checking for unpaid invoices");
       
-      // Get the latest invoice for this subscription
+      // Get recent invoices for this subscription
       const invoices = await stripe.invoices.list({
         subscription: subscriptionId,
-        limit: 5,
+        limit: 10,
       });
-      
-      // Check if any invoice is open/unpaid
-      const unpaidInvoice = invoices.data.find(
-        (inv: { status: string; id: string }) => inv.status === "open" || inv.status === "draft"
-      );
-      
-      if (unpaidInvoice) {
+
+      const unpaidInvoices = invoices.data.filter((inv: any) => inv.status === "open" || inv.status === "draft");
+
+      if (unpaidInvoices.length > 0) {
         hasUnpaidInvoice = true;
         shouldCancelImmediately = true;
-        logStep("Found unpaid invoice, will cancel immediately", { 
-          invoiceId: unpaidInvoice.id, 
-          status: unpaidInvoice.status 
+        logStep("Found unpaid invoices, will cancel immediately", {
+          invoices: unpaidInvoices.map((inv: any) => ({ id: inv.id, status: inv.status })),
         });
-        
-        // Void the unpaid invoice
-        if (unpaidInvoice.status === "open") {
-          await stripe.invoices.voidInvoice(unpaidInvoice.id);
-          logStep("Voided unpaid invoice", { invoiceId: unpaidInvoice.id });
+
+        for (const inv of unpaidInvoices) {
+          // Void open invoices; delete draft invoices
+          if (inv.status === "open") {
+            await stripe.invoices.voidInvoice(inv.id);
+            logStep("Voided unpaid invoice", { invoiceId: inv.id });
+          } else if (inv.status === "draft") {
+            await stripe.invoices.del(inv.id);
+            logStep("Deleted draft invoice", { invoiceId: inv.id });
+          }
         }
       }
     }
