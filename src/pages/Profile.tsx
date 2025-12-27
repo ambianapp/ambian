@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock, Trash2, X } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -51,6 +52,7 @@ const Profile = () => {
   const [deviceSlotSubs, setDeviceSlotSubs] = useState<DeviceSlotSubscription[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
+  const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -203,7 +205,17 @@ const Profile = () => {
     navigate("/auth");
   };
 
+  const handleAddDeviceSlotClick = () => {
+    // Show confirmation dialog for invoice payments
+    if (deviceSlotPayByInvoice && deviceSlotPeriod === "yearly") {
+      setShowInvoiceConfirm(true);
+    } else {
+      handleAddDeviceSlot();
+    }
+  };
+
   const handleAddDeviceSlot = async () => {
+    setShowInvoiceConfirm(false);
     setIsLoadingDevice(true);
     try {
       const { data, error } = await supabase.functions.invoke("add-device-slot", {
@@ -625,7 +637,7 @@ const Profile = () => {
               )}
               
               <Button
-                onClick={handleAddDeviceSlot}
+                onClick={handleAddDeviceSlotClick}
                 disabled={isLoadingDevice || !subscription.subscribed}
                 className="w-full"
               >
@@ -910,6 +922,30 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Invoice Confirmation Dialog */}
+      <AlertDialog open={showInvoiceConfirm} onOpenChange={setShowInvoiceConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("devices.confirmInvoiceTitle") || "Request Invoice?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("devices.confirmInvoiceDesc") || "You are about to request an invoice for"}{" "}
+              <strong>{deviceSlotQuantity} {deviceSlotQuantity === 1 ? t("devices.location") || "location" : t("devices.locations") || "locations"}</strong>{" "}
+              ({t("subscription.yearly")}).
+              <br /><br />
+              {t("devices.confirmInvoiceAmount") || "Total"}: <strong>€{50 * deviceSlotQuantity}/{t("subscription.year") || "year"}</strong>
+              <br /><br />
+              {t("devices.confirmInvoiceNote") || "An invoice will be sent to your email with 14 days to pay."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAddDeviceSlot}>
+              {t("devices.confirmInvoiceBtn") || "Send Invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

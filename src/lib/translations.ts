@@ -172,6 +172,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.payByInvoiceDesc": "Receive an invoice with 14 days to pay",
     "devices.requestInvoice": "Request Invoice",
     "devices.invoiceSent": "Invoice sent",
+    "devices.confirmInvoiceTitle": "Request Invoice?",
+    "devices.confirmInvoiceDesc": "You are about to request an invoice for",
+    "devices.confirmInvoiceAmount": "Total",
+    "devices.confirmInvoiceNote": "An invoice will be sent to your email with 14 days to pay.",
+    "devices.confirmInvoiceBtn": "Send Invoice",
     
     // Invoices
     "invoices.title": "Invoices",
@@ -619,6 +624,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.payByInvoiceDesc": "Få en faktura med 14 dagars betalningstid",
     "devices.requestInvoice": "Begär faktura",
     "devices.invoiceSent": "Faktura skickad",
+    "devices.confirmInvoiceTitle": "Begär faktura?",
+    "devices.confirmInvoiceDesc": "Du är på väg att begära en faktura för",
+    "devices.confirmInvoiceAmount": "Totalt",
+    "devices.confirmInvoiceNote": "En faktura skickas till din e-post med 14 dagars betalningstid.",
+    "devices.confirmInvoiceBtn": "Skicka faktura",
     
     // Invoices
     "invoices.title": "Fakturor",
@@ -1065,6 +1075,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.payByInvoiceDesc": "Saat laskun 14 päivän maksuajalla",
     "devices.requestInvoice": "Pyydä lasku",
     "devices.invoiceSent": "Lasku lähetetty",
+    "devices.confirmInvoiceTitle": "Pyydä lasku?",
+    "devices.confirmInvoiceDesc": "Olet pyytämässä laskua",
+    "devices.confirmInvoiceAmount": "Yhteensä",
+    "devices.confirmInvoiceNote": "Lasku lähetetään sähköpostiisi 14 päivän maksuajalla.",
+    "devices.confirmInvoiceBtn": "Lähetä lasku",
     
     // Invoices
     "invoices.title": "Laskut",
@@ -1511,6 +1526,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.payByInvoiceDesc": "Erhalte eine Rechnung mit 14 Tagen Zahlungsziel",
     "devices.requestInvoice": "Rechnung anfordern",
     "devices.invoiceSent": "Rechnung gesendet",
+    "devices.confirmInvoiceTitle": "Rechnung anfordern?",
+    "devices.confirmInvoiceDesc": "Du bist dabei, eine Rechnung anzufordern für",
+    "devices.confirmInvoiceAmount": "Gesamt",
+    "devices.confirmInvoiceNote": "Eine Rechnung wird an deine E-Mail mit 14 Tagen Zahlungsziel gesendet.",
+    "devices.confirmInvoiceBtn": "Rechnung senden",
     
     // Invoices
     "invoices.title": "Rechnungen",
@@ -1957,6 +1977,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.payByInvoiceDesc": "Recevez une facture avec 14 jours pour payer",
     "devices.requestInvoice": "Demander une facture",
     "devices.invoiceSent": "Facture envoyée",
+    "devices.confirmInvoiceTitle": "Demander une facture ?",
+    "devices.confirmInvoiceDesc": "Vous êtes sur le point de demander une facture pour",
+    "devices.confirmInvoiceAmount": "Total",
+    "devices.confirmInvoiceNote": "Une facture sera envoyée à votre email avec 14 jours pour payer.",
+    "devices.confirmInvoiceBtn": "Envoyer la facture",
     
     // Invoices
     "invoices.title": "Factures",
