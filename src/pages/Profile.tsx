@@ -548,111 +548,130 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border border-border space-y-4">
-              <div>
-                <p className="font-medium text-foreground">{t("devices.needMore")}</p>
-                <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
-              </div>
-              
-              {/* Quantity selection */}
-              <div>
-                <Label className="text-sm font-medium text-foreground mb-2 block">
-                  {t("devices.quantity") || "Number of device slots"}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setDeviceSlotQuantity(Math.max(1, deviceSlotQuantity - 1))}
-                    disabled={deviceSlotQuantity <= 1}
-                  >
-                    -
-                  </Button>
-                  <div className="w-16 text-center font-bold text-lg">{deviceSlotQuantity}</div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setDeviceSlotQuantity(Math.min(10, deviceSlotQuantity + 1))}
-                    disabled={deviceSlotQuantity >= 10}
-                  >
-                    +
-                  </Button>
+            {/* Show disabled state with message if no active subscription */}
+            {(!subscription.subscribed || subscription.isTrial) ? (
+              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Monitor className="w-5 h-5" />
+                  <p className="font-medium">{t("devices.needMore")}</p>
                 </div>
-              </div>
-
-              {/* Period selection */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDeviceSlotPeriod("monthly")}
-                  className={`p-3 rounded-lg border text-left transition-all ${
-                    deviceSlotPeriod === "monthly"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.subscriptionRequired") || "An active subscription is required before you can add additional locations."}
+                </p>
+                <Button
+                  onClick={() => navigate("/pricing")}
+                  variant="outline"
+                  className="w-full"
                 >
-                  <div className="font-medium text-foreground text-sm">Monthly</div>
-                  <div className="text-sm text-muted-foreground">
-                    €{5 * deviceSlotQuantity}/month
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeviceSlotPeriod("yearly")}
-                  className={`p-3 rounded-lg border text-left transition-all ${
-                    deviceSlotPeriod === "yearly"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <div className="font-medium text-foreground text-sm">Yearly</div>
-                  <div className="text-sm text-muted-foreground">
-                    €{50 * deviceSlotQuantity}/year
-                  </div>
-                  <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
-                </button>
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {t("subscription.subscribeNow")}
+                </Button>
               </div>
-
-              {/* Pay by invoice option - only for yearly */}
-              {deviceSlotPeriod === "yearly" && (
-                <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-                  <input
-                    type="checkbox"
-                    id="payByInvoice"
-                    checked={deviceSlotPayByInvoice}
-                    onChange={(e) => setDeviceSlotPayByInvoice(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                  />
-                  <label htmlFor="payByInvoice" className="flex-1 cursor-pointer">
-                    <div className="font-medium text-foreground text-sm">
-                      {t("devices.payByInvoice") || "Pay by invoice"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {t("devices.payByInvoiceDesc") || "Receive an invoice with 14 days to pay"}
-                    </div>
-                  </label>
+            ) : (
+              <div className="p-4 rounded-lg border border-border space-y-4">
+                <div>
+                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
+                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
                 </div>
-              )}
-              
-              <Button
-                onClick={handleAddDeviceSlotClick}
-                disabled={isLoadingDevice || !subscription.subscribed}
-                className="w-full"
-              >
-                {isLoadingDevice ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="w-4 h-4 mr-2" />
+                
+                {/* Quantity selection */}
+                <div>
+                  <Label className="text-sm font-medium text-foreground mb-2 block">
+                    {t("devices.quantity") || "Number of device slots"}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setDeviceSlotQuantity(Math.max(1, deviceSlotQuantity - 1))}
+                      disabled={deviceSlotQuantity <= 1}
+                    >
+                      -
+                    </Button>
+                    <div className="w-16 text-center font-bold text-lg">{deviceSlotQuantity}</div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setDeviceSlotQuantity(Math.min(10, deviceSlotQuantity + 1))}
+                      disabled={deviceSlotQuantity >= 10}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Period selection */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeviceSlotPeriod("monthly")}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      deviceSlotPeriod === "monthly"
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="font-medium text-foreground text-sm">Monthly</div>
+                    <div className="text-sm text-muted-foreground">
+                      €{5 * deviceSlotQuantity}/month
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeviceSlotPeriod("yearly")}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      deviceSlotPeriod === "yearly"
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="font-medium text-foreground text-sm">Yearly</div>
+                    <div className="text-sm text-muted-foreground">
+                      €{50 * deviceSlotQuantity}/year
+                    </div>
+                    <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
+                  </button>
+                </div>
+
+                {/* Pay by invoice option - only for yearly */}
+                {deviceSlotPeriod === "yearly" && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                    <input
+                      type="checkbox"
+                      id="payByInvoice"
+                      checked={deviceSlotPayByInvoice}
+                      onChange={(e) => setDeviceSlotPayByInvoice(e.target.checked)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="payByInvoice" className="flex-1 cursor-pointer">
+                      <div className="font-medium text-foreground text-sm">
+                        {t("devices.payByInvoice") || "Pay by invoice"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t("devices.payByInvoiceDesc") || "Receive an invoice with 14 days to pay"}
+                      </div>
+                    </label>
+                  </div>
                 )}
-                {deviceSlotPayByInvoice && deviceSlotPeriod === "yearly" 
-                  ? (t("devices.requestInvoice") || "Request Invoice")
-                  : t("devices.addBtn")}
-              </Button>
-            </div>
-
-            {/* Active Device Slot Subscriptions */}
+                
+                <Button
+                  onClick={handleAddDeviceSlotClick}
+                  disabled={isLoadingDevice}
+                  className="w-full"
+                >
+                  {isLoadingDevice ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
+                  {deviceSlotPayByInvoice && deviceSlotPeriod === "yearly" 
+                    ? (t("devices.requestInvoice") || "Request Invoice")
+                    : t("devices.addBtn")}
+                </Button>
+              </div>
+            )}
             {isLoadingSlots ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
