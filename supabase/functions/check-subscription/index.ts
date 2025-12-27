@@ -174,10 +174,24 @@ serve(async (req) => {
     }
     logStep("Total device slots calculated", { deviceSlotCount });
 
-    // Filter to only main subscriptions (not device slots) from already-fetched subscriptions
+    // Filter to only ACTIVE main subscriptions (not device slots, not canceled)
     const mainSubscriptions = allSubscriptions.data.filter((sub: any) => {
       const priceId = sub.items.data[0]?.price?.id;
-      return !deviceSlotPriceIds.includes(priceId);
+      const isDeviceSlot = deviceSlotPriceIds.includes(priceId);
+      // Only include active or trialing subscriptions that haven't ended
+      const isActiveStatus = sub.status === "active" || sub.status === "trialing";
+      const periodEnd = sub.current_period_end;
+      const hasValidPeriod = !periodEnd || periodEnd > nowSec;
+      
+      if (!isActiveStatus) {
+        logStep("Skipping non-active subscription", { 
+          subscriptionId: sub.id, 
+          status: sub.status,
+          isDeviceSlot 
+        });
+      }
+      
+      return !isDeviceSlot && isActiveStatus && hasValidPeriod;
     });
 
     const hasActiveStripeSub = mainSubscriptions.length > 0;
