@@ -386,6 +386,15 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           </section>
         )}
 
+        {/* Playlists by Genre */}
+        {renderPlaylistSection(
+          t("home.byGenre"),
+          genrePlaylists,
+          showAllGenres,
+          () => setShowAllGenres(!showAllGenres),
+          true
+        )}
+
         {/* Playlists by Mood */}
         {renderPlaylistSection(
           t("home.byMood"),
@@ -394,15 +403,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           () => setShowAllMoods(!showAllMoods),
           true,
           4 // Show only 4 on mobile
-        )}
-
-        {/* Playlists by Genre */}
-        {renderPlaylistSection(
-          t("home.byGenre"),
-          genrePlaylists,
-          showAllGenres,
-          () => setShowAllGenres(!showAllGenres),
-          true
         )}
 
         {/* Recently Updated & New Playlists - Side by Side */}
