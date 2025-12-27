@@ -617,6 +617,7 @@ const Profile = () => {
                     <div className="text-sm text-muted-foreground">
                       €{5 * deviceSlotQuantity}/month
                     </div>
+                    <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
                   </button>
                   <button
                     type="button"
@@ -632,6 +633,7 @@ const Profile = () => {
                       €{50 * deviceSlotQuantity}/year
                     </div>
                     <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
+                    <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
                   </button>
                 </div>
 
