@@ -195,6 +195,41 @@ serve(async (req) => {
 
     logStep("Subscription verified", { subscriptionId, priceId, quantity, period });
 
+    // Check if this subscription has unpaid invoices (invoice-based subscription not yet paid)
+    let hasUnpaidInvoice = false;
+    let shouldCancelImmediately = cancelImmediately;
+    
+    // Check if subscription is invoice-based and has unpaid invoices
+    if (subscription.collection_method === "send_invoice") {
+      logStep("Invoice-based subscription detected, checking for unpaid invoices");
+      
+      // Get the latest invoice for this subscription
+      const invoices = await stripe.invoices.list({
+        subscription: subscriptionId,
+        limit: 5,
+      });
+      
+      // Check if any invoice is open/unpaid
+      const unpaidInvoice = invoices.data.find(
+        (inv: { status: string; id: string }) => inv.status === "open" || inv.status === "draft"
+      );
+      
+      if (unpaidInvoice) {
+        hasUnpaidInvoice = true;
+        shouldCancelImmediately = true;
+        logStep("Found unpaid invoice, will cancel immediately", { 
+          invoiceId: unpaidInvoice.id, 
+          status: unpaidInvoice.status 
+        });
+        
+        // Void the unpaid invoice
+        if (unpaidInvoice.status === "open") {
+          await stripe.invoices.voidInvoice(unpaidInvoice.id);
+          logStep("Voided unpaid invoice", { invoiceId: unpaidInvoice.id });
+        }
+      }
+    }
+
     // Get user's full name from profile
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -206,10 +241,10 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .single();
 
-    if (cancelImmediately) {
-      // Cancel immediately
+    if (shouldCancelImmediately) {
+      // Cancel immediately (either requested or unpaid invoice)
       await stripe.subscriptions.cancel(subscriptionId);
-      logStep("Subscription cancelled immediately");
+      logStep("Subscription cancelled immediately", { hasUnpaidInvoice });
     } else {
       // Cancel at end of billing period
       await stripe.subscriptions.update(subscriptionId, {
