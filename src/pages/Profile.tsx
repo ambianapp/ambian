@@ -648,6 +648,9 @@ const Profile = () => {
                       +
                     </Button>
                   </div>
+                  <p className="text-sm text-primary mt-2 font-medium">
+                    {t("devices.totalAfterOrder") || "Total after order"}: {subscription.deviceSlots + deviceSlotQuantity} {t("devices.locations") || "locations"}
+                  </p>
                 </div>
 
                 {/* Period selection */}
