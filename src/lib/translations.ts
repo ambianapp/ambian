@@ -236,6 +236,24 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.country": "Country",
     "devices.fillBillingInfo": "Please fill in all company and address fields for the invoice.",
     
+    // Countries
+    "countries.finland": "Finland",
+    "countries.sweden": "Sweden",
+    "countries.germany": "Germany",
+    "countries.france": "France",
+    "countries.netherlands": "Netherlands",
+    "countries.belgium": "Belgium",
+    "countries.austria": "Austria",
+    "countries.spain": "Spain",
+    "countries.italy": "Italy",
+    "countries.portugal": "Portugal",
+    "countries.norway": "Norway",
+    "countries.denmark": "Denmark",
+    "countries.poland": "Poland",
+    "countries.ireland": "Ireland",
+    "countries.uk": "United Kingdom",
+    "countries.usa": "United States",
+    
     // Features
     "features.unlimited": "Unlimited access to all music",
     "features.playlists": "Create custom playlists",
@@ -719,6 +737,24 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.country": "Land",
     "devices.fillBillingInfo": "Fyll i alla företags- och adressfält för fakturan.",
     
+    // Countries
+    "countries.finland": "Finland",
+    "countries.sweden": "Sverige",
+    "countries.germany": "Tyskland",
+    "countries.france": "Frankrike",
+    "countries.netherlands": "Nederländerna",
+    "countries.belgium": "Belgien",
+    "countries.austria": "Österrike",
+    "countries.spain": "Spanien",
+    "countries.italy": "Italien",
+    "countries.portugal": "Portugal",
+    "countries.norway": "Norge",
+    "countries.denmark": "Danmark",
+    "countries.poland": "Polen",
+    "countries.ireland": "Irland",
+    "countries.uk": "Storbritannien",
+    "countries.usa": "USA",
+    
     // Features
     "features.unlimited": "Obegränsad tillgång till all musik",
     "features.playlists": "Skapa egna spellistor",
@@ -1200,6 +1236,24 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.cityPlaceholder": "Helsinki",
     "billing.country": "Maa",
     "devices.fillBillingInfo": "Täytä kaikki yritys- ja osoitetiedot laskua varten.",
+    
+    // Countries
+    "countries.finland": "Suomi",
+    "countries.sweden": "Ruotsi",
+    "countries.germany": "Saksa",
+    "countries.france": "Ranska",
+    "countries.netherlands": "Alankomaat",
+    "countries.belgium": "Belgia",
+    "countries.austria": "Itävalta",
+    "countries.spain": "Espanja",
+    "countries.italy": "Italia",
+    "countries.portugal": "Portugali",
+    "countries.norway": "Norja",
+    "countries.denmark": "Tanska",
+    "countries.poland": "Puola",
+    "countries.ireland": "Irlanti",
+    "countries.uk": "Yhdistynyt kuningaskunta",
+    "countries.usa": "Yhdysvallat",
     
     // Features
     "features.unlimited": "Rajaton pääsy kaikkeen musiikkiin",
@@ -1683,6 +1737,24 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.country": "Land",
     "devices.fillBillingInfo": "Bitte füllen Sie alle Firmen- und Adressfelder für die Rechnung aus.",
     
+    // Countries
+    "countries.finland": "Finnland",
+    "countries.sweden": "Schweden",
+    "countries.germany": "Deutschland",
+    "countries.france": "Frankreich",
+    "countries.netherlands": "Niederlande",
+    "countries.belgium": "Belgien",
+    "countries.austria": "Österreich",
+    "countries.spain": "Spanien",
+    "countries.italy": "Italien",
+    "countries.portugal": "Portugal",
+    "countries.norway": "Norwegen",
+    "countries.denmark": "Dänemark",
+    "countries.poland": "Polen",
+    "countries.ireland": "Irland",
+    "countries.uk": "Vereinigtes Königreich",
+    "countries.usa": "Vereinigte Staaten",
+    
     // Features
     "features.unlimited": "Unbegrenzter Zugang zu aller Musik",
     "features.playlists": "Erstelle eigene Playlists",
@@ -2164,6 +2236,24 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.cityPlaceholder": "Paris",
     "billing.country": "Pays",
     "devices.fillBillingInfo": "Veuillez remplir tous les champs d'entreprise et d'adresse pour la facture.",
+    
+    // Countries
+    "countries.finland": "Finlande",
+    "countries.sweden": "Suède",
+    "countries.germany": "Allemagne",
+    "countries.france": "France",
+    "countries.netherlands": "Pays-Bas",
+    "countries.belgium": "Belgique",
+    "countries.austria": "Autriche",
+    "countries.spain": "Espagne",
+    "countries.italy": "Italie",
+    "countries.portugal": "Portugal",
+    "countries.norway": "Norvège",
+    "countries.denmark": "Danemark",
+    "countries.poland": "Pologne",
+    "countries.ireland": "Irlande",
+    "countries.uk": "Royaume-Uni",
+    "countries.usa": "États-Unis",
     
     // Features
     "features.unlimited": "Accès illimité à toute la musique",
