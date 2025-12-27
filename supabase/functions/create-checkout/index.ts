@@ -128,11 +128,13 @@ serve(async (req) => {
           key: "company_name",
           label: { type: "custom", custom: "Company Name" },
           type: "text",
+          optional: false,
         },
         {
-          key: "company_address",
-          label: { type: "custom", custom: "Company Address" },
+          key: "city",
+          label: { type: "custom", custom: "City" },
           type: "text",
+          optional: false,
         },
       ],
       allow_promotion_codes: !promoCode, // Allow manual entry if no code provided
