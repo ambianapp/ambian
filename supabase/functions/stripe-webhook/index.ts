@@ -439,7 +439,8 @@ async function sendPaymentConfirmationEmail(
 async function sendPaymentConfirmationEmailForInvoice(
   stripe: Stripe,
   invoice: Stripe.Invoice,
-  customerEmail: string
+  customerEmail: string,
+  isFirstSubscription: boolean = false
 ) {
   // Get customer name
   const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
@@ -487,15 +488,26 @@ async function sendPaymentConfirmationEmailForInvoice(
     }
   }
 
-  await sendPaymentConfirmationEmail(
-    customerEmail,
-    customerName,
-    invoice.amount_paid || 0,
-    invoice.currency || 'eur',
-    planType,
-    periodEnd,
-    invoice.number
-  );
+  // For first subscription, send welcome email instead of just payment confirmation
+  if (isFirstSubscription) {
+    logStep("Sending welcome email for first subscription", { email: customerEmail, planType });
+    await sendSubscriptionConfirmationEmail(
+      customerEmail,
+      customerName,
+      planType,
+      periodEnd
+    );
+  } else {
+    await sendPaymentConfirmationEmail(
+      customerEmail,
+      customerName,
+      invoice.amount_paid || 0,
+      invoice.currency || 'eur',
+      planType,
+      periodEnd,
+      invoice.number
+    );
+  }
 }
 
 const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
@@ -668,6 +680,35 @@ serve(async (req) => {
       // Get user_id from invoice metadata
       const userId = invoice.metadata?.user_id;
       
+      // Helper function to check if this is a first subscription and send appropriate email
+      const handleSubscriptionEmail = async (targetUserId: string, customerEmail: string) => {
+        // Check if user already has an active subscription record (to determine if this is their first)
+        const { data: existingSub } = await supabaseAdmin
+          .from("subscriptions")
+          .select("id, status")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+        
+        // It's a first subscription if no record exists OR if the existing record is in trial/trialing status
+        const isFirstSubscription = !existingSub || existingSub.status === 'trialing';
+        const isRenewal = invoice.metadata?.renewal === "true";
+        
+        // Send welcome email for first subscription, payment confirmation for renewals
+        logStep("Determining email type", { 
+          isFirstSubscription, 
+          isRenewal, 
+          existingStatus: existingSub?.status 
+        });
+        
+        // Don't send welcome email for renewals
+        await sendPaymentConfirmationEmailForInvoice(
+          stripe, 
+          invoice, 
+          customerEmail, 
+          isFirstSubscription && !isRenewal
+        );
+      };
+      
       if (!userId) {
         // Try to find user by customer email
         const customerEmail = typeof invoice.customer_email === 'string' ? invoice.customer_email : null;
@@ -694,22 +735,25 @@ serve(async (req) => {
           });
         }
 
+        // Check for first subscription BEFORE updating
+        await handleSubscriptionEmail(profile.user_id, customerEmail);
         await updateSubscriptionFromInvoice(supabaseAdmin, profile.user_id, invoice, stripe);
-        
-        // Send confirmation email
-        await sendPaymentConfirmationEmailForInvoice(stripe, invoice, customerEmail);
       } else {
-        await updateSubscriptionFromInvoice(supabaseAdmin, userId, invoice, stripe);
-        
-        // Send confirmation email - get customer email
+        // Get customer email first for the email
         const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+        let customerEmail: string | null = null;
+        
         if (customerId) {
           const customer = await stripe.customers.retrieve(customerId);
-          const customerEmail = (customer as any).email;
-          if (customerEmail) {
-            await sendPaymentConfirmationEmailForInvoice(stripe, invoice, customerEmail);
-          }
+          customerEmail = (customer as any).email;
         }
+        
+        // Check for first subscription BEFORE updating
+        if (customerEmail) {
+          await handleSubscriptionEmail(userId, customerEmail);
+        }
+        
+        await updateSubscriptionFromInvoice(supabaseAdmin, userId, invoice, stripe);
       }
 
       logStep("Subscription updated from invoice payment");
