@@ -168,6 +168,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.willBeRemoved": "Will be removed at end of billing period",
     "devices.cancelSuccess": "Location removed",
     "devices.cancelSuccessDesc": "The location will be removed at the end of the billing period.",
+    "devices.payByInvoice": "Pay by invoice",
+    "devices.payByInvoiceDesc": "Receive an invoice with 14 days to pay",
+    "devices.requestInvoice": "Request Invoice",
+    "devices.invoiceSent": "Invoice sent",
     
     // Invoices
     "invoices.title": "Invoices",
@@ -611,6 +615,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.willBeRemoved": "Kommer att tas bort vid slutet av faktureringsperioden",
     "devices.cancelSuccess": "Plats borttagen",
     "devices.cancelSuccessDesc": "Platsen kommer att tas bort vid slutet av faktureringsperioden.",
+    "devices.payByInvoice": "Betala med faktura",
+    "devices.payByInvoiceDesc": "Få en faktura med 14 dagars betalningstid",
+    "devices.requestInvoice": "Begär faktura",
+    "devices.invoiceSent": "Faktura skickad",
     
     // Invoices
     "invoices.title": "Fakturor",
@@ -1053,6 +1061,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.willBeRemoved": "Poistetaan laskutuskauden lopussa",
     "devices.cancelSuccess": "Sijainti poistettu",
     "devices.cancelSuccessDesc": "Sijainti poistetaan laskutuskauden lopussa.",
+    "devices.payByInvoice": "Maksa laskulla",
+    "devices.payByInvoiceDesc": "Saat laskun 14 päivän maksuajalla",
+    "devices.requestInvoice": "Pyydä lasku",
+    "devices.invoiceSent": "Lasku lähetetty",
     
     // Invoices
     "invoices.title": "Laskut",
@@ -1495,6 +1507,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.willBeRemoved": "Wird am Ende des Abrechnungszeitraums entfernt",
     "devices.cancelSuccess": "Standort entfernt",
     "devices.cancelSuccessDesc": "Der Standort wird am Ende des Abrechnungszeitraums entfernt.",
+    "devices.payByInvoice": "Per Rechnung bezahlen",
+    "devices.payByInvoiceDesc": "Erhalte eine Rechnung mit 14 Tagen Zahlungsziel",
+    "devices.requestInvoice": "Rechnung anfordern",
+    "devices.invoiceSent": "Rechnung gesendet",
     
     // Invoices
     "invoices.title": "Rechnungen",
@@ -1937,6 +1953,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.willBeRemoved": "Sera supprimé à la fin de la période de facturation",
     "devices.cancelSuccess": "Emplacement supprimé",
     "devices.cancelSuccessDesc": "L'emplacement sera supprimé à la fin de la période de facturation.",
+    "devices.payByInvoice": "Payer par facture",
+    "devices.payByInvoiceDesc": "Recevez une facture avec 14 jours pour payer",
+    "devices.requestInvoice": "Demander une facture",
+    "devices.invoiceSent": "Facture envoyée",
     
     // Invoices
     "invoices.title": "Factures",

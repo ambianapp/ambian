@@ -43,6 +43,7 @@ const Profile = () => {
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
   const [deviceSlotPeriod, setDeviceSlotPeriod] = useState<"monthly" | "yearly">("yearly");
   const [deviceSlotQuantity, setDeviceSlotQuantity] = useState(1);
+  const [deviceSlotPayByInvoice, setDeviceSlotPayByInvoice] = useState(false);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -206,12 +207,21 @@ const Profile = () => {
     setIsLoadingDevice(true);
     try {
       const { data, error } = await supabase.functions.invoke("add-device-slot", {
-        body: { period: deviceSlotPeriod, quantity: deviceSlotQuantity },
+        body: { 
+          period: deviceSlotPeriod, 
+          quantity: deviceSlotQuantity,
+          payByInvoice: deviceSlotPayByInvoice && deviceSlotPeriod === "yearly",
+        },
       });
       if (error) throw error;
       
       if (data?.url) {
         window.open(data.url, "_blank");
+      } else if (data?.message) {
+        toast({
+          title: t("devices.invoiceSent") || "Invoice sent",
+          description: data.message,
+        });
       }
     } catch (error: any) {
       toast({
@@ -592,6 +602,27 @@ const Profile = () => {
                   <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
                 </button>
               </div>
+
+              {/* Pay by invoice option - only for yearly */}
+              {deviceSlotPeriod === "yearly" && (
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                  <input
+                    type="checkbox"
+                    id="payByInvoice"
+                    checked={deviceSlotPayByInvoice}
+                    onChange={(e) => setDeviceSlotPayByInvoice(e.target.checked)}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="payByInvoice" className="flex-1 cursor-pointer">
+                    <div className="font-medium text-foreground text-sm">
+                      {t("devices.payByInvoice") || "Pay by invoice"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("devices.payByInvoiceDesc") || "Receive an invoice with 14 days to pay"}
+                    </div>
+                  </label>
+                </div>
+              )}
               
               <Button
                 onClick={handleAddDeviceSlot}
@@ -603,7 +634,9 @@ const Profile = () => {
                 ) : (
                   <Plus className="w-4 h-4 mr-2" />
                 )}
-                {t("devices.addBtn")}
+                {deviceSlotPayByInvoice && deviceSlotPeriod === "yearly" 
+                  ? (t("devices.requestInvoice") || "Request Invoice")
+                  : t("devices.addBtn")}
               </Button>
             </div>
 
