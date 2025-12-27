@@ -109,8 +109,15 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
 
   // Handle cover image upload
   const handleCoverUpload = async (file: File) => {
+    const maxCoverSize = 5 * 1024 * 1024; // 5MB
+    
     if (!file.type.startsWith("image/")) {
       toast({ title: "Error", description: "Please select an image file (JPG, PNG)", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > maxCoverSize) {
+      toast({ title: "Error", description: "Cover image must be under 5MB", variant: "destructive" });
       return;
     }
 
@@ -159,6 +166,10 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
       .trim();
   };
 
+  // File size limits (in bytes)
+  const MAX_AUDIO_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
   // Handle MP3 file uploads
   const handleFileUpload = async (files: FileList | File[]) => {
     const mp3Files = Array.from(files).filter(
@@ -167,6 +178,17 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
 
     if (mp3Files.length === 0) {
       toast({ title: "Error", description: "Please select MP3 files", variant: "destructive" });
+      return;
+    }
+
+    // Validate file sizes
+    const oversizedFiles = mp3Files.filter(file => file.size > MAX_AUDIO_FILE_SIZE);
+    if (oversizedFiles.length > 0) {
+      toast({ 
+        title: "Error", 
+        description: `${oversizedFiles.length} file(s) exceed the 50MB limit`, 
+        variant: "destructive" 
+      });
       return;
     }
 
