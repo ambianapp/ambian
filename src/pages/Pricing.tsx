@@ -548,26 +548,26 @@ const Pricing = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name *</Label>
+                <Label htmlFor="companyName">{t("billing.companyName")} *</Label>
                 <Input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Your Company Ltd"
+                  placeholder={t("billing.companyNamePlaceholder")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addressLine">Street Address *</Label>
+                <Label htmlFor="addressLine">{t("billing.streetAddress")} *</Label>
                 <Input
                   id="addressLine"
                   value={addressLine}
                   onChange={(e) => setAddressLine(e.target.value)}
-                  placeholder="123 Business Street"
+                  placeholder={t("billing.streetAddressPlaceholder")}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="postalCode">Postal Code *</Label>
+                  <Label htmlFor="postalCode">{t("billing.postalCode")} *</Label>
                   <Input
                     id="postalCode"
                     value={postalCode}
@@ -576,39 +576,39 @@ const Pricing = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
+                  <Label htmlFor="city">{t("billing.city")} *</Label>
                   <Input
                     id="city"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="Helsinki"
+                    placeholder={t("billing.cityPlaceholder")}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="country">Country *</Label>
+                <Label htmlFor="country">{t("billing.country")} *</Label>
                 <select
                   id="country"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <option value="FI">Finland</option>
-                  <option value="SE">Sweden</option>
-                  <option value="DE">Germany</option>
-                  <option value="FR">France</option>
-                  <option value="NL">Netherlands</option>
-                  <option value="BE">Belgium</option>
-                  <option value="AT">Austria</option>
-                  <option value="ES">Spain</option>
-                  <option value="IT">Italy</option>
-                  <option value="PT">Portugal</option>
-                  <option value="NO">Norway</option>
-                  <option value="DK">Denmark</option>
-                  <option value="PL">Poland</option>
-                  <option value="IE">Ireland</option>
-                  <option value="GB">United Kingdom</option>
-                  <option value="US">United States</option>
+                  <option value="FI">{t("countries.finland")}</option>
+                  <option value="SE">{t("countries.sweden")}</option>
+                  <option value="DE">{t("countries.germany")}</option>
+                  <option value="FR">{t("countries.france")}</option>
+                  <option value="NL">{t("countries.netherlands")}</option>
+                  <option value="BE">{t("countries.belgium")}</option>
+                  <option value="AT">{t("countries.austria")}</option>
+                  <option value="ES">{t("countries.spain")}</option>
+                  <option value="IT">{t("countries.italy")}</option>
+                  <option value="PT">{t("countries.portugal")}</option>
+                  <option value="NO">{t("countries.norway")}</option>
+                  <option value="DK">{t("countries.denmark")}</option>
+                  <option value="PL">{t("countries.poland")}</option>
+                  <option value="IE">{t("countries.ireland")}</option>
+                  <option value="GB">{t("countries.uk")}</option>
+                  <option value="US">{t("countries.usa")}</option>
                 </select>
               </div>
               <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
