@@ -52,7 +52,7 @@ serve(async (req) => {
     // 3. Invoice-based (stripe_subscription_id is null - we handle these manually)
     const { data: expiringSubscriptions, error: queryError } = await supabaseAdmin
       .from("subscriptions")
-      .select("*, profiles!inner(email, full_name)")
+      .select("*")
       .eq("status", "active")
       .eq("plan_type", "yearly")
       .is("stripe_subscription_id", null) // Invoice-based (no Stripe subscription)
@@ -82,8 +82,15 @@ serve(async (req) => {
 
     for (const sub of expiringSubscriptions) {
       try {
-        const userEmail = sub.profiles?.email;
-        const userName = sub.profiles?.full_name;
+        // Fetch user email from profiles table
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, full_name")
+          .eq("user_id", sub.user_id)
+          .single();
+        
+        const userEmail = profile?.email;
+        const userName = profile?.full_name;
         
         if (!userEmail) {
           logStep("Skipping - no email found", { userId: sub.user_id });
