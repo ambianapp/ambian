@@ -75,6 +75,28 @@ serve(async (req) => {
       limit: 10,
     });
 
+    // If an open invoice is for a device slot subscription that is already canceled/unpaid, void it and hide it.
+    const filteredOpenInvoices: any[] = [];
+    for (const inv of openInvoices.data) {
+      const isDeviceSlot =
+        inv.metadata?.type === "device_slot" ||
+        inv.lines?.data?.some((line: any) => line.metadata?.type === "device_slot");
+
+      if (isDeviceSlot && inv.subscription) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
+          if (sub.status === "canceled") {
+            await stripe.invoices.voidInvoice(inv.id);
+            continue;
+          }
+        } catch (_e) {
+          // If we can't verify, still show it (safer than hiding money owed)
+        }
+      }
+
+      filteredOpenInvoices.push(inv);
+    }
+
     // Fetch paid invoices
     const paidInvoices = await stripe.invoices.list({
       customer: customerId,
@@ -83,7 +105,7 @@ serve(async (req) => {
     });
 
     // Combine and format - open invoices first
-    const allInvoices = [...openInvoices.data, ...paidInvoices.data];
+    const allInvoices = [...filteredOpenInvoices, ...paidInvoices.data];
 
     const formattedInvoices = allInvoices.map((invoice: any) => ({
       id: invoice.id,
