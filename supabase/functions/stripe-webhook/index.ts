@@ -510,6 +510,117 @@ async function sendPaymentConfirmationEmailForInvoice(
   }
 }
 
+async function sendDeviceSlotUnpaidCancellationEmail(
+  email: string,
+  customerName: string | null,
+  quantity: number,
+  period: string
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const locationText = quantity === 1 ? "location" : "locations";
+  const periodText = period === "yearly" ? "yearly" : "monthly";
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center;">
+                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <h1 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0;">
+                    Location Subscription Canceled
+                  </h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 20px 40px;">
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Hi${customerName ? ` ${customerName}` : ''},
+                  </p>
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Your additional ${locationText} subscription has been canceled because the invoice was not paid within the required timeframe.
+                  </p>
+                  
+                  <!-- Details Box -->
+                  <div style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <p style="color: #fca5a5; font-size: 14px; margin: 0 0 10px;">
+                      <strong>Canceled:</strong> ${quantity} additional ${locationText} (${periodText})
+                    </p>
+                    <p style="color: #fca5a5; font-size: 14px; margin: 0;">
+                      <strong>Reason:</strong> Invoice not paid
+                    </p>
+                  </div>
+                  
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    If you still need additional locations for your business, you can add them again from your profile.
+                  </p>
+                  
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding: 20px 0 30px;">
+                        <a href="https://ambianmusic.com/profile" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                          Add Locations
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 0;">
+                    If you believe this is an error or have questions, please contact us at <a href="mailto:support@ambian.fi" style="color: #8b5cf6;">support@ambian.fi</a>.
+                  </p>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <p style="color: #888888; font-size: 14px; margin: 0;">
+                    &copy; ${new Date().getFullYear()} Ambian. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambian.fi>",
+      to: [email],
+      subject: "Location Subscription Canceled - Invoice Not Paid",
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending unpaid cancellation email", { error });
+      return false;
+    }
+
+    logStep("Unpaid cancellation email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send unpaid cancellation email", { error: String(error) });
+    return false;
+  }
+}
+
 const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
 async function syncDeviceSlotsForUser(
@@ -611,9 +722,9 @@ serve(async (req) => {
         const userId = subscription.metadata?.user_id;
         
         if (userId) {
-          // Extend grace period by 14 days from now to cover IBAN payment time
+          // Extend grace period by 7 days from now to cover IBAN payment time
           const gracePeriodEnd = new Date();
-          gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 14);
+          gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
           
           await supabaseAdmin
             .from("subscriptions")
@@ -855,15 +966,42 @@ serve(async (req) => {
             await stripe.subscriptions.cancel(subscription.id);
             logStep("Canceled unpaid device slot subscription", { subscriptionId: subscription.id });
             
-            // Sync device slots for the user
-            const userId = subscription.metadata?.user_id;
+            // Get customer details for email
             const customerId = typeof subscription.customer === 'string' 
               ? subscription.customer 
               : (subscription.customer as any)?.id;
+            
+            let customerEmail: string | null = null;
+            let customerName: string | null = null;
+            
+            if (customerId) {
+              try {
+                const customer = await stripe.customers.retrieve(customerId);
+                customerEmail = (customer as any).email;
+                customerName = (customer as any).name;
+              } catch (e) {
+                logStep("Could not retrieve customer for email", { error: String(e) });
+              }
+            }
+            
+            // Sync device slots for the user
+            const userId = subscription.metadata?.user_id;
               
             if (userId && customerId) {
               await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, customerId);
               logStep("Device slots synced after unpaid invoice cancellation", { userId });
+            }
+            
+            // Send cancellation email
+            if (customerEmail) {
+              const quantity = subscription.items?.data?.[0]?.quantity || 1;
+              const period = priceId === "price_1Sj2PMJrU52a7SNLzhpFYfJd" ? "yearly" : "monthly";
+              await sendDeviceSlotUnpaidCancellationEmail(
+                customerEmail,
+                customerName,
+                quantity,
+                period
+              );
             }
             
             // Log activity
@@ -876,7 +1014,7 @@ serve(async (req) => {
 
               await supabaseAdmin.from('activity_logs').insert({
                 user_id: userId,
-                user_email: profile?.email || null,
+                user_email: profile?.email || customerEmail || null,
                 event_type: 'device_slot_canceled_unpaid',
                 event_message: 'Device slot subscription canceled due to unpaid invoice',
                 event_details: { subscriptionId: subscription.id, invoiceId: invoice.id },
