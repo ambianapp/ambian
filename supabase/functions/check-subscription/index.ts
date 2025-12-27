@@ -113,26 +113,38 @@ serve(async (req) => {
     
     const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
-    // Count device slots from active subscriptions
+    // Count device slots from subscriptions that are still in effect (even if canceled at period end)
     const allSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
+      status: "all",
       limit: 50,
     });
-    
+
+    const nowSec = Math.floor(Date.now() / 1000);
+
     let deviceSlotCount = 1; // Base slot
     for (const sub of allSubscriptions.data) {
+      // Only count subscriptions whose current period hasn't ended yet
+      if (typeof sub.current_period_end === "number" && sub.current_period_end <= nowSec) continue;
+
       for (const item of sub.items.data) {
-        const productId = typeof item.price.product === 'string' 
-          ? item.price.product 
+        const productId = typeof item.price.product === "string"
+          ? item.price.product
           : item.price.product.id;
-        
+
         if (productId === DEVICE_SLOT_PRODUCT_ID) {
           deviceSlotCount += item.quantity || 1;
-          logStep("Found device slot subscription", { subscriptionId: sub.id, quantity: item.quantity });
+          logStep("Found device slot subscription", {
+            subscriptionId: sub.id,
+            status: sub.status,
+            cancelAtPeriodEnd: sub.cancel_at_period_end,
+            quantity: item.quantity,
+            currentPeriodEnd: sub.current_period_end,
+          });
         }
       }
     }
+    logStep("Total device slots calculated", { deviceSlotCount });
     logStep("Total device slots calculated", { deviceSlotCount });
 
     // Filter to only main subscriptions (not device slots) from already-fetched subscriptions
