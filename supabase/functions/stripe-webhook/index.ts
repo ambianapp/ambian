@@ -832,6 +832,91 @@ serve(async (req) => {
       }
     }
 
+    // Handle invoice becoming uncollectible (unpaid after grace period for invoice-based payments)
+    // This happens when an invoice-based subscription's invoice isn't paid
+    if (event.type === "invoice.marked_uncollectible" || event.type === "invoice.voided") {
+      const invoice = event.data.object as Stripe.Invoice;
+      logStep(`Invoice ${event.type}`, { invoiceId: invoice.id, subscriptionId: invoice.subscription });
+      
+      // If this invoice is tied to a subscription, cancel the subscription
+      if (invoice.subscription) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+          
+          // Check if this is a device slot subscription (unpaid invoice = should be canceled)
+          const priceId = subscription.items?.data?.[0]?.price?.id;
+          const DEVICE_SLOT_PRICES = [
+            "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly €5
+            "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
+          ];
+          
+          if (DEVICE_SLOT_PRICES.includes(priceId || "")) {
+            // Cancel the device slot subscription immediately since invoice wasn't paid
+            await stripe.subscriptions.cancel(subscription.id);
+            logStep("Canceled unpaid device slot subscription", { subscriptionId: subscription.id });
+            
+            // Sync device slots for the user
+            const userId = subscription.metadata?.user_id;
+            const customerId = typeof subscription.customer === 'string' 
+              ? subscription.customer 
+              : (subscription.customer as any)?.id;
+              
+            if (userId && customerId) {
+              await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, customerId);
+              logStep("Device slots synced after unpaid invoice cancellation", { userId });
+            }
+            
+            // Log activity
+            if (userId) {
+              const { data: profile } = await supabaseAdmin
+                .from("profiles")
+                .select("email")
+                .eq("user_id", userId)
+                .maybeSingle();
+
+              await supabaseAdmin.from('activity_logs').insert({
+                user_id: userId,
+                user_email: profile?.email || null,
+                event_type: 'device_slot_canceled_unpaid',
+                event_message: 'Device slot subscription canceled due to unpaid invoice',
+                event_details: { subscriptionId: subscription.id, invoiceId: invoice.id },
+              });
+            }
+          } else {
+            // Main subscription - mark as canceled
+            const userId = subscription.metadata?.user_id;
+            if (userId) {
+              await supabaseAdmin
+                .from("subscriptions")
+                .update({ 
+                  status: "canceled",
+                  updated_at: new Date().toISOString()
+                })
+                .eq("user_id", userId);
+              
+              logStep("Main subscription marked as canceled due to unpaid invoice", { userId });
+              
+              // Log activity
+              const { data: profile } = await supabaseAdmin
+                .from("profiles")
+                .select("email")
+                .eq("user_id", userId)
+                .maybeSingle();
+
+              await supabaseAdmin.from('activity_logs').insert({
+                user_id: userId,
+                user_email: profile?.email || null,
+                event_type: 'subscription_canceled_unpaid',
+                event_message: 'Subscription canceled due to unpaid invoice',
+                event_details: { subscriptionId: subscription.id, invoiceId: invoice.id },
+              });
+            }
+          }
+        } catch (e) {
+          logStep("Error handling uncollectible invoice", { error: String(e) });
+        }
+      }
+    }
     // Handle subscription status changes (trial to active)
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
