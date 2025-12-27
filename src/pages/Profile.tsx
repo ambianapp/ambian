@@ -648,9 +648,14 @@ const Profile = () => {
                       +
                     </Button>
                   </div>
-                  <p className="text-sm text-primary mt-2 font-medium">
-                    {t("devices.totalAfterOrder") || "Total after order"}: {subscription.deviceSlots + deviceSlotQuantity} {t("devices.locations") || "locations"}
-                  </p>
+                  {(() => {
+                    const currentTotal = 1 + deviceSlotSubs.reduce((sum, slot) => sum + slot.quantity, 0);
+                    return (
+                      <p className="text-sm text-primary mt-2 font-medium">
+                        {t("devices.totalAfterOrder")}: {currentTotal + deviceSlotQuantity} {t("devices.locations")}
+                      </p>
+                    );
+                  })()}
                 </div>
 
                 {/* Period selection */}
