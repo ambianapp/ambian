@@ -105,20 +105,32 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
-    // Check for active Stripe subscription (recurring)
+    // Device slot price IDs - these are not main subscriptions
+    const deviceSlotPriceIds = [
+      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+    ];
+
+    // Check for active Stripe subscription (recurring) - excluding device slot subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 1,
+      limit: 10,
+    });
+    
+    // Filter to only main subscriptions (not device slots)
+    const mainSubscriptions = subscriptions.data.filter((sub: any) => {
+      const priceId = sub.items.data[0]?.price?.id;
+      return !deviceSlotPriceIds.includes(priceId);
     });
 
-    const hasActiveStripeSub = subscriptions.data.length > 0;
+    const hasActiveStripeSub = mainSubscriptions.length > 0;
     let subscriptionEnd = null;
     let planType = null;
     let isRecurring = false;
 
     if (hasActiveStripeSub) {
-      const subscription = subscriptions.data[0];
+      const subscription = mainSubscriptions[0];
       const subscriptionItem = subscription.items.data[0];
       const collectionMethod = subscription.collection_method;
       
