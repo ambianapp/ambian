@@ -161,21 +161,37 @@ serve(async (req) => {
 
       logStep("Invoice subscription created", { subscriptionId: subscription.id });
 
-      // Get the invoice to provide payment link
+      // Get the invoice and finalize it to send
       const invoices = await stripe.invoices.list({
         subscription: subscription.id,
         limit: 1,
       });
 
-      if (invoices.data.length > 0 && invoices.data[0].hosted_invoice_url) {
-        logStep("Invoice URL retrieved", { invoiceId: invoices.data[0].id });
-        return new Response(JSON.stringify({ 
-          url: invoices.data[0].hosted_invoice_url,
-          type: "invoice",
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
+      if (invoices.data.length > 0) {
+        const invoice = invoices.data[0];
+        logStep("Invoice found", { invoiceId: invoice.id, status: invoice.status });
+        
+        // Finalize the invoice if it's a draft
+        let finalizedInvoice = invoice;
+        if (invoice.status === "draft") {
+          finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+          logStep("Invoice finalized", { invoiceId: finalizedInvoice.id });
+          
+          // Send the invoice email
+          await stripe.invoices.sendInvoice(invoice.id);
+          logStep("Invoice sent", { invoiceId: invoice.id });
+        }
+        
+        if (finalizedInvoice.hosted_invoice_url) {
+          logStep("Invoice URL retrieved", { invoiceId: finalizedInvoice.id });
+          return new Response(JSON.stringify({ 
+            url: finalizedInvoice.hosted_invoice_url,
+            type: "invoice",
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
       }
 
       // Fallback: return success without URL (invoice will be emailed)
