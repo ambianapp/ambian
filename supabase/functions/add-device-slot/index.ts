@@ -46,10 +46,12 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Parse request body to get period, quantity, and payment method selection
+    // Parse request body to get period, quantity, payment method, and billing info
     let period: "monthly" | "yearly" = "monthly";
     let quantity = 1;
     let payByInvoice = false;
+    let billingInfo: { companyName?: string; address?: { line1: string; city: string; postal_code: string; country: string } } | null = null;
+    
     try {
       const body = await req.json();
       if (body.period === "yearly") {
@@ -62,10 +64,14 @@ serve(async (req) => {
       if (body.payByInvoice === true && period === "yearly") {
         payByInvoice = true;
       }
+      // Billing info for invoice payments
+      if (body.billingInfo) {
+        billingInfo = body.billingInfo;
+      }
     } catch {
       // No body or invalid JSON, use defaults
     }
-    logStep("Options selected", { period, quantity, payByInvoice });
+    logStep("Options selected", { period, quantity, payByInvoice, hasBillingInfo: !!billingInfo });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -124,6 +130,21 @@ serve(async (req) => {
     // Pay by invoice flow - create subscription directly with send_invoice
     if (payByInvoice) {
       logStep("Creating invoice-based subscription");
+      
+      // Update customer with billing info if provided
+      if (billingInfo) {
+        const updateData: any = {};
+        if (billingInfo.companyName) {
+          updateData.name = billingInfo.companyName;
+        }
+        if (billingInfo.address) {
+          updateData.address = billingInfo.address;
+        }
+        if (Object.keys(updateData).length > 0) {
+          await stripe.customers.update(customerId, updateData);
+          logStep("Customer billing info updated", { name: billingInfo.companyName });
+        }
+      }
       
       const subscription = await stripe.subscriptions.create({
         customer: customerId,

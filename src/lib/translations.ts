@@ -222,6 +222,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.exclVat": "excl. VAT",
     "pricing.startTrial": "Start Free Trial",
     
+    // Billing
+    "billing.companyName": "Company Name",
+    "billing.companyNamePlaceholder": "Your Company Ltd",
+    "billing.streetAddress": "Street Address",
+    "billing.streetAddressPlaceholder": "123 Business Street",
+    "billing.postalCode": "Postal Code",
+    "billing.city": "City",
+    "billing.cityPlaceholder": "Helsinki",
+    "billing.country": "Country",
+    "devices.fillBillingInfo": "Please fill in all company and address fields for the invoice.",
+    
     // Features
     "features.unlimited": "Unlimited access to all music",
     "features.playlists": "Create custom playlists",
@@ -691,6 +702,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.exclVat": "exkl. moms",
     "pricing.startTrial": "Starta gratis provperiod",
     
+    // Billing
+    "billing.companyName": "Företagsnamn",
+    "billing.companyNamePlaceholder": "Ditt Företag AB",
+    "billing.streetAddress": "Gatuadress",
+    "billing.streetAddressPlaceholder": "Företagsgatan 123",
+    "billing.postalCode": "Postnummer",
+    "billing.city": "Stad",
+    "billing.cityPlaceholder": "Stockholm",
+    "billing.country": "Land",
+    "devices.fillBillingInfo": "Fyll i alla företags- och adressfält för fakturan.",
+    
     // Features
     "features.unlimited": "Obegränsad tillgång till all musik",
     "features.playlists": "Skapa egna spellistor",
@@ -1158,6 +1180,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Hinnat eivät sisällä ALV:tä. ALV lasketaan sijaintisi perusteella.",
     "pricing.exclVat": "alv 0%",
     "pricing.startTrial": "Aloita ilmainen kokeilu",
+    
+    // Billing
+    "billing.companyName": "Yrityksen nimi",
+    "billing.companyNamePlaceholder": "Yrityksesi Oy",
+    "billing.streetAddress": "Katuosoite",
+    "billing.streetAddressPlaceholder": "Yrityskatu 123",
+    "billing.postalCode": "Postinumero",
+    "billing.city": "Kaupunki",
+    "billing.cityPlaceholder": "Helsinki",
+    "billing.country": "Maa",
+    "devices.fillBillingInfo": "Täytä kaikki yritys- ja osoitetiedot laskua varten.",
     
     // Features
     "features.unlimited": "Rajaton pääsy kaikkeen musiikkiin",
@@ -1627,6 +1660,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.exclVat": "zzgl. MwSt.",
     "pricing.startTrial": "Kostenlos testen",
     
+    // Billing
+    "billing.companyName": "Firmenname",
+    "billing.companyNamePlaceholder": "Ihre Firma GmbH",
+    "billing.streetAddress": "Straße",
+    "billing.streetAddressPlaceholder": "Firmenstraße 123",
+    "billing.postalCode": "PLZ",
+    "billing.city": "Stadt",
+    "billing.cityPlaceholder": "Berlin",
+    "billing.country": "Land",
+    "devices.fillBillingInfo": "Bitte füllen Sie alle Firmen- und Adressfelder für die Rechnung aus.",
+    
     // Features
     "features.unlimited": "Unbegrenzter Zugang zu aller Musik",
     "features.playlists": "Erstelle eigene Playlists",
@@ -2094,6 +2138,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.vatExcluded": "Prix hors TVA. La TVA sera calculée selon votre localisation.",
     "pricing.exclVat": "HT",
     "pricing.startTrial": "Essai gratuit",
+    
+    // Billing
+    "billing.companyName": "Nom de l'entreprise",
+    "billing.companyNamePlaceholder": "Votre Entreprise SARL",
+    "billing.streetAddress": "Adresse",
+    "billing.streetAddressPlaceholder": "123 Rue de l'Entreprise",
+    "billing.postalCode": "Code postal",
+    "billing.city": "Ville",
+    "billing.cityPlaceholder": "Paris",
+    "billing.country": "Pays",
+    "devices.fillBillingInfo": "Veuillez remplir tous les champs d'entreprise et d'adresse pour la facture.",
     
     // Features
     "features.unlimited": "Accès illimité à toute la musique",
