@@ -184,7 +184,7 @@ async function sendPaymentFailedEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Ambian <noreply@ambian.app>",
+      from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: "Action Required: Your Ambian payment failed",
       html,
@@ -334,7 +334,7 @@ async function sendSubscriptionConfirmationEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Ambian <noreply@ambian.app>",
+      from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: "Welcome to Ambian! Your subscription is now active 🎉",
       html,
@@ -417,7 +417,7 @@ async function sendPaymentConfirmationEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Ambian <noreply@ambian.app>",
+      from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
       subject: `Payment Confirmed - Your Ambian subscription is active`,
       html,

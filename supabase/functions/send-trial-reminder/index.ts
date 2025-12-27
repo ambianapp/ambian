@@ -111,7 +111,7 @@ serve(async (req) => {
 
       try {
         const { error: emailError } = await resend.emails.send({
-          from: "Ambian <noreply@ambian.app>",
+          from: "Ambian <noreply@ambianmusic.com>",
           to: [profile.email],
           subject: `Your Ambian trial expires in ${reminderDays} days`,
           html: `
