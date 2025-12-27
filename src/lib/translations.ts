@@ -157,6 +157,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.needMore": "Need music in more locations?",
     "devices.addFor": "Add another location for €5/month",
     "devices.addBtn": "Add Location",
+    "devices.quantity": "Number of locations",
     "devices.subscribeFirst": "Subscribe first to add extra locations.",
     
     // Invoices
@@ -590,6 +591,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.needMore": "Behöver du musik på fler platser?",
     "devices.addFor": "Lägg till en plats för €5/månad",
     "devices.addBtn": "Lägg till plats",
+    "devices.quantity": "Antal platser",
     "devices.subscribeFirst": "Prenumerera först för att lägga till extra platser.",
     
     // Invoices
@@ -1022,6 +1024,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.needMore": "Tarvitsetko musiikkia useammassa paikassa?",
     "devices.addFor": "Lisää sijainti hintaan €5/kk",
     "devices.addBtn": "Lisää sijainti",
+    "devices.quantity": "Sijaintien määrä",
     "devices.subscribeFirst": "Tilaa ensin lisätäksesi sijainteja.",
     
     // Invoices
@@ -1454,6 +1457,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.needMore": "Brauchst du Musik an mehr Standorten?",
     "devices.addFor": "Füge einen Standort für €5/Monat hinzu",
     "devices.addBtn": "Standort hinzufügen",
+    "devices.quantity": "Anzahl der Standorte",
     "devices.subscribeFirst": "Abonniere zuerst, um Standorte hinzuzufügen.",
     
     // Invoices
@@ -1886,6 +1890,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.needMore": "Besoin de musique dans plus d'endroits ?",
     "devices.addFor": "Ajoutez un emplacement pour €5/mois",
     "devices.addBtn": "Ajouter un emplacement",
+    "devices.quantity": "Nombre d'emplacements",
     "devices.subscribeFirst": "Abonnez-vous d'abord pour ajouter des emplacements.",
     
     // Invoices
