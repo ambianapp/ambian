@@ -53,6 +53,7 @@ const Profile = () => {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
   const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
+  const [slotToCancel, setSlotToCancel] = useState<DeviceSlotSubscription | null>(null);
   // Billing info for device slot invoice
   const [deviceCompanyName, setDeviceCompanyName] = useState("");
   const [deviceAddressLine, setDeviceAddressLine] = useState("");
@@ -285,7 +286,15 @@ const Profile = () => {
     }
   };
 
-  const handleCancelDeviceSlot = async (subscriptionId: string) => {
+  const handleCancelDeviceSlotConfirm = (slot: DeviceSlotSubscription) => {
+    setSlotToCancel(slot);
+  };
+
+  const handleCancelDeviceSlot = async () => {
+    if (!slotToCancel) return;
+    
+    const subscriptionId = slotToCancel.id;
+    setSlotToCancel(null);
     setCancellingSlotId(subscriptionId);
     try {
       const { error } = await supabase.functions.invoke("cancel-device-slot", {
@@ -755,7 +764,7 @@ const Profile = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleCancelDeviceSlot(slot.id)}
+                          onClick={() => handleCancelDeviceSlotConfirm(slot)}
                           disabled={cancellingSlotId === slot.id}
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
@@ -1075,6 +1084,48 @@ const Profile = () => {
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleAddDeviceSlot}>
               {t("devices.confirmInvoiceBtn") || "Send Invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Device Slot Confirmation Dialog */}
+      <AlertDialog open={!!slotToCancel} onOpenChange={(open) => !open && setSlotToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("devices.confirmCancelTitle") || "Cancel Location?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {slotToCancel && (
+                <>
+                  <p className="mb-3">
+                    {t("devices.confirmCancelDesc") || "Are you sure you want to cancel this location subscription?"}
+                  </p>
+                  <div className="p-3 rounded-lg border border-border bg-secondary/50 mb-3">
+                    <div className="font-medium text-foreground">
+                      {slotToCancel.quantity} {slotToCancel.quantity === 1 
+                        ? (t("devices.location") || "location") 
+                        : (t("devices.locations") || "locations")}
+                      {" • "}
+                      {slotToCancel.period === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {t("subscription.renewsOn")}: {new Date(slotToCancel.currentPeriodEnd).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("devices.confirmCancelNote") || "The location will remain active until the end of the current billing period."}
+                  </p>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelDeviceSlot}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("devices.confirmCancelBtn") || "Yes, Cancel Location"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
