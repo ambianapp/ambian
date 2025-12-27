@@ -91,21 +91,26 @@ serve(async (req) => {
     logStep("Customer found", { customerId });
 
     // Verify user has an active main subscription (not just device slots)
+    // Check for active, trialing, or past_due subscriptions (give grace period for invoice payments)
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 10,
+      limit: 20,
     });
 
     // Device slot prices to exclude from main subscription check
     const deviceSlotPriceIds = [
-      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly
-      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly
+      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
     ];
+
+    // Valid statuses for main subscription
+    const validStatuses = ["active", "trialing", "past_due"];
 
     const hasMainSubscription = subscriptions.data.some((sub: any) => {
       const priceId = sub.items.data[0]?.price?.id;
-      return !deviceSlotPriceIds.includes(priceId);
+      const isDeviceSlot = deviceSlotPriceIds.includes(priceId);
+      const hasValidStatus = validStatuses.includes(sub.status);
+      return !isDeviceSlot && hasValidStatus;
     });
 
     if (!hasMainSubscription) {
