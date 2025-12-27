@@ -584,17 +584,24 @@ const Profile = () => {
             <CardDescription>{t("devices.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
-              <div>
-                <p className="font-medium text-foreground">{t("devices.active")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.canPlay", { count: subscription.deviceSlots })}
-                </p>
-              </div>
-              <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
-                {subscription.deviceSlots}
-              </div>
-            </div>
+            {(() => {
+              const computedSlots = 1 + deviceSlotSubs.reduce((sum, slot) => sum + slot.quantity, 0);
+              const activeSlots = Math.max(subscription.deviceSlots || 1, computedSlots);
+
+              return (
+                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+                  <div>
+                    <p className="font-medium text-foreground">{t("devices.active")}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("devices.canPlay", { count: activeSlots })}
+                    </p>
+                  </div>
+                  <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
+                    {activeSlots}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Show disabled state with message if no active subscription */}
             {(!subscription.subscribed || subscription.isTrial) ? (
