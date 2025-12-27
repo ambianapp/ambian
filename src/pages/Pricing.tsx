@@ -174,10 +174,11 @@ const Pricing = () => {
 
     setIsInvoiceLoading(true);
     try {
-      const plans = paymentType === "subscription" ? SUBSCRIPTION_PLANS : PREPAID_PLANS;
+      // Invoice payment is yearly-only, always use yearly prepaid price
+      const yearlyPriceId = PREPAID_PLANS.yearly.priceId;
       const { data, error } = await supabase.functions.invoke("create-invoice", {
         body: { 
-          priceId: plans[selectedPlan].priceId,
+          priceId: yearlyPriceId,
           companyName: companyName.trim(),
           address: {
             line1: addressLine.trim(),
@@ -560,36 +561,11 @@ const Pricing = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              {/* Plan Selection in Dialog */}
-              <div className="space-y-2">
-                <Label>Select Plan</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      selectedPlan === "monthly"
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => setSelectedPlan("monthly")}
-                  >
-                    <div className="font-medium text-foreground">Monthly</div>
-                    <div className="text-sm text-muted-foreground">{currentPlans.monthly.price}</div>
-                  </button>
-                  <button
-                    type="button"
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      selectedPlan === "yearly"
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => setSelectedPlan("yearly")}
-                  >
-                    <div className="font-medium text-foreground">Yearly</div>
-                    <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}</div>
-                    <div className="text-xs text-primary mt-1">{currentPlans.yearly.savings}</div>
-                  </button>
-                </div>
+              {/* Show selected yearly plan info */}
+              <div className="p-3 rounded-lg border border-primary bg-primary/10">
+                <div className="font-medium text-foreground">Yearly Plan</div>
+                <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}/year</div>
+                <div className="text-xs text-primary mt-1">{currentPlans.yearly.savings}</div>
               </div>
 
               <div className="space-y-2">
