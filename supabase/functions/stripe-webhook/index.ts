@@ -436,6 +436,364 @@ async function sendPaymentConfirmationEmail(
   }
 }
 
+async function sendDeviceSlotConfirmationEmail(
+  email: string,
+  customerName: string | null,
+  quantity: number,
+  period: string,
+  amount: number,
+  currency: string
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+  
+  const locationText = quantity === 1 ? "1 new location" : `${quantity} new locations`;
+  const periodText = period === 'yearly' ? 'year' : 'month';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center;">
+                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                    🏪 Location Added!
+                  </h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 20px 40px;">
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Hi${customerName ? ` ${customerName}` : ''},
+                  </p>
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Great news! You've successfully added ${locationText} to your Ambian subscription.
+                  </p>
+                  
+                  <!-- Details Box -->
+                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Location Added</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">Locations added:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${quantity}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">Billing:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}/${periodText}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                  
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    You can now play Ambian on ${quantity} additional device${quantity > 1 ? 's' : ''} at your new location${quantity > 1 ? 's' : ''}.
+                  </p>
+                  
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding: 20px 0 30px;">
+                        <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                          Start Playing
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
+                    Manage your locations at <a href="https://ambianmusic.com/profile" style="color: #8b5cf6; text-decoration: none;">ambianmusic.com/profile</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: `Location Added - ${locationText} now active on Ambian`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending device slot confirmation email", { error });
+      return false;
+    }
+
+    logStep("Device slot confirmation email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send device slot confirmation email", { error: String(error) });
+    return false;
+  }
+}
+
+async function sendSubscriptionCanceledEmail(
+  email: string,
+  customerName: string | null,
+  planType: string
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center;">
+                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                    We're sorry to see you go
+                  </h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 20px 40px;">
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Hi${customerName ? ` ${customerName}` : ''},
+                  </p>
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription has been canceled. We hope you enjoyed our service!
+                  </p>
+                  
+                  <!-- Offer Box -->
+                  <div style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <h3 style="color: #8b5cf6; font-size: 16px; margin: 0 0 12px;">💡 Did you know?</h3>
+                    <p style="color: #e0e0e0; font-size: 14px; line-height: 1.6; margin: 0;">
+                      You can resubscribe anytime and get instant access to all your favorite playlists again. Your preferences and settings are saved!
+                    </p>
+                  </div>
+                  
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    If you have any feedback on how we can improve, we'd love to hear from you. Just reply to this email.
+                  </p>
+                  
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding: 20px 0 30px;">
+                        <a href="https://ambianmusic.com/pricing" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                          Resubscribe Now
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <p style="color: #888888; font-size: 14px; margin: 0;">
+                    Thank you for being a part of Ambian. We hope to see you again soon!
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: "Your Ambian subscription has been canceled",
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending subscription canceled email", { error });
+      return false;
+    }
+
+    logStep("Subscription canceled email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send subscription canceled email", { error: String(error) });
+    return false;
+  }
+}
+
+async function sendPlanChangeEmail(
+  email: string,
+  customerName: string | null,
+  oldPlan: string,
+  newPlan: string,
+  amount: number,
+  currency: string,
+  periodEnd: Date
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+  
+  const formattedPeriodEnd = periodEnd.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  
+  const isUpgrade = newPlan === 'yearly' && oldPlan === 'monthly';
+  const savingsText = isUpgrade ? "You're now saving €58/year compared to monthly billing!" : "";
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center;">
+                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                    ${isUpgrade ? '🎉 Plan Upgraded!' : '📋 Plan Changed'}
+                  </h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 20px 40px;">
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Hi${customerName ? ` ${customerName}` : ''},
+                  </p>
+                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                    Your Ambian subscription has been ${isUpgrade ? 'upgraded' : 'changed'} from ${oldPlan} to ${newPlan}.
+                    ${savingsText}
+                  </p>
+                  
+                  <!-- Details Box -->
+                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Plan Updated</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">New plan:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${newPlan === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">Amount:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}/${newPlan === 'yearly' ? 'year' : 'month'}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0;">
+                          <span style="color: #888888; font-size: 14px;">Next billing:</span>
+                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedPeriodEnd}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                  
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding: 20px 0 30px;">
+                        <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                          Continue Listening
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                  <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
+                    Manage your subscription at <a href="https://ambianmusic.com/profile" style="color: #8b5cf6; text-decoration: none;">ambianmusic.com/profile</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: `Plan ${isUpgrade ? 'Upgraded' : 'Changed'} - Now on ${newPlan === 'yearly' ? 'Yearly' : 'Monthly'} billing`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending plan change email", { error });
+      return false;
+    }
+
+    logStep("Plan change email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send plan change email", { error: String(error) });
+    return false;
+  }
+}
+
 async function sendPaymentConfirmationEmailForInvoice(
   stripe: Stripe,
   invoice: Stripe.Invoice,
@@ -781,6 +1139,35 @@ serve(async (req) => {
         if (userId) {
           await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, invoice.customer as string);
           logStep("Device slots synced after payment", { userId });
+          
+          // Send device slot confirmation email
+          const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+          if (customerId) {
+            try {
+              const customer = await stripe.customers.retrieve(customerId);
+              const customerEmail = (customer as any).email;
+              const customerName = (customer as any).name;
+              
+              if (customerEmail) {
+                // Get quantity and period from invoice metadata or line items
+                const quantity = parseInt(invoice.metadata?.quantity || '1', 10);
+                const period = invoice.metadata?.period || 'monthly';
+                const amount = invoice.amount_paid || 0;
+                const currency = invoice.currency || 'eur';
+                
+                await sendDeviceSlotConfirmationEmail(
+                  customerEmail,
+                  customerName,
+                  quantity,
+                  period,
+                  amount,
+                  currency
+                );
+              }
+            } catch (e) {
+              logStep("Could not send device slot confirmation email", { error: String(e) });
+            }
+          }
         }
         return new Response(JSON.stringify({ received: true }), {
           headers: { "Content-Type": "application/json" },
@@ -1055,7 +1442,7 @@ serve(async (req) => {
         }
       }
     }
-    // Handle subscription status changes (trial to active)
+    // Handle subscription status changes (trial to active) and plan changes
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
       const previousAttributes = (event.data as any).previous_attributes;
@@ -1066,14 +1453,82 @@ serve(async (req) => {
         previousStatus: previousAttributes?.status 
       });
 
+      const userId = subscription.metadata?.user_id;
+      const customerId = typeof subscription.customer === 'string' 
+        ? subscription.customer 
+        : (subscription.customer as any)?.id;
+
+      // Check if this is a plan change (price change)
+      if (previousAttributes?.items && subscription.status === "active") {
+        const previousPriceId = previousAttributes.items?.data?.[0]?.price?.id;
+        const newPriceId = subscription.items?.data?.[0]?.price?.id;
+        
+        // Skip if it's a device slot subscription
+        const DEVICE_SLOT_PRICES = [
+          "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+          "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+        ];
+        const isDeviceSlot = DEVICE_SLOT_PRICES.includes(newPriceId || '') || DEVICE_SLOT_PRICES.includes(previousPriceId || '');
+        
+        if (!isDeviceSlot && previousPriceId && newPriceId && previousPriceId !== newPriceId) {
+          logStep("Plan change detected", { previousPriceId, newPriceId });
+          
+          // Determine old and new plan types
+          const previousInterval = previousAttributes.items?.data?.[0]?.price?.recurring?.interval;
+          const newInterval = subscription.items?.data?.[0]?.price?.recurring?.interval;
+          const oldPlan = previousInterval === 'year' ? 'yearly' : 'monthly';
+          const newPlan = newInterval === 'year' ? 'yearly' : 'monthly';
+          
+          if (oldPlan !== newPlan && customerId) {
+            try {
+              const customer = await stripe.customers.retrieve(customerId);
+              const customerEmail = (customer as any).email;
+              const customerName = (customer as any).name;
+              
+              if (customerEmail) {
+                const amount = subscription.items?.data?.[0]?.price?.unit_amount || 0;
+                const currency = subscription.items?.data?.[0]?.price?.currency || 'eur';
+                const periodEnd = new Date(subscription.current_period_end * 1000);
+                
+                await sendPlanChangeEmail(
+                  customerEmail,
+                  customerName,
+                  oldPlan,
+                  newPlan,
+                  amount,
+                  currency,
+                  periodEnd
+                );
+                
+                logStep("Plan change email sent", { email: customerEmail, oldPlan, newPlan });
+              }
+            } catch (e) {
+              logStep("Error sending plan change email", { error: String(e) });
+            }
+            
+            // Log the plan change activity
+            if (userId) {
+              const { data: profile } = await supabaseAdmin
+                .from("profiles")
+                .select("email")
+                .eq("user_id", userId)
+                .maybeSingle();
+
+              await supabaseAdmin.from('activity_logs').insert({
+                user_id: userId,
+                user_email: profile?.email || null,
+                event_type: 'plan_changed',
+                event_message: `Plan changed from ${oldPlan} to ${newPlan}`,
+                event_details: { subscriptionId: subscription.id, oldPlan, newPlan },
+              });
+            }
+          }
+        }
+      }
+
       // Check if this is a trial-to-active conversion
       if (previousAttributes?.status === "trialing" && subscription.status === "active") {
         logStep("Trial converted to active subscription");
-        
-        const userId = subscription.metadata?.user_id;
-        const customerId = typeof subscription.customer === 'string' 
-          ? subscription.customer 
-          : (subscription.customer as any)?.id;
         
         if (customerId) {
           try {
@@ -1122,17 +1577,28 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription deleted", { subscriptionId: subscription.id });
 
+      // Check if this is a device slot subscription (don't send churn email for device slots)
+      const priceId = subscription.items?.data?.[0]?.price?.id;
+      const DEVICE_SLOT_PRICES = [
+        "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+        "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+      ];
+      const isDeviceSlot = DEVICE_SLOT_PRICES.includes(priceId || '');
+
       const userId = subscription.metadata?.user_id;
       if (userId) {
-        await supabaseAdmin
-          .from("subscriptions")
-          .update({ 
-            status: "canceled",
-            updated_at: new Date().toISOString()
-          })
-          .eq("user_id", userId);
+        // Only update main subscription status if it's not a device slot
+        if (!isDeviceSlot) {
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({ 
+              status: "canceled",
+              updated_at: new Date().toISOString()
+            })
+            .eq("user_id", userId);
 
-        logStep("Subscription marked as canceled", { userId });
+          logStep("Subscription marked as canceled", { userId });
+        }
 
         // Log subscription canceled activity
         const { data: profile } = await supabaseAdmin
@@ -1144,10 +1610,28 @@ serve(async (req) => {
         await supabaseAdmin.from('activity_logs').insert({
           user_id: userId,
           user_email: profile?.email || null,
-          event_type: 'subscription_canceled',
-          event_message: 'Subscription canceled',
+          event_type: isDeviceSlot ? 'device_slot_canceled' : 'subscription_canceled',
+          event_message: isDeviceSlot ? 'Device slot canceled' : 'Subscription canceled',
           event_details: { subscriptionId: subscription.id },
         });
+
+        // Send churn email for main subscription cancellations (not device slots)
+        if (!isDeviceSlot && profile?.email) {
+          const customerId = typeof subscription.customer === 'string' ? subscription.customer : (subscription.customer as any)?.id;
+          let customerName: string | null = null;
+          
+          if (customerId) {
+            try {
+              const customer = await stripe.customers.retrieve(customerId);
+              customerName = (customer as any).name;
+            } catch (e) {
+              logStep("Could not retrieve customer name", { error: String(e) });
+            }
+          }
+          
+          const planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+          await sendSubscriptionCanceledEmail(profile.email, customerName, planType);
+        }
       }
     }
 
