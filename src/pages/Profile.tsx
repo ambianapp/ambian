@@ -53,6 +53,12 @@ const Profile = () => {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
   const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
+  // Billing info for device slot invoice
+  const [deviceCompanyName, setDeviceCompanyName] = useState("");
+  const [deviceAddressLine, setDeviceAddressLine] = useState("");
+  const [deviceCity, setDeviceCity] = useState("");
+  const [devicePostalCode, setDevicePostalCode] = useState("");
+  const [deviceCountry, setDeviceCountry] = useState("FI");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -215,16 +221,43 @@ const Profile = () => {
   };
 
   const handleAddDeviceSlot = async () => {
+    const isInvoice = deviceSlotPayByInvoice && deviceSlotPeriod === "yearly";
+    
+    // Validate billing info for invoice payments
+    if (isInvoice) {
+      if (!deviceCompanyName.trim() || !deviceAddressLine.trim() || !deviceCity.trim() || !devicePostalCode.trim()) {
+        toast({
+          title: t("common.error"),
+          description: t("devices.fillBillingInfo") || "Please fill in all company and address fields for the invoice.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setShowInvoiceConfirm(false);
     setIsLoadingDevice(true);
     try {
-      const { data, error } = await supabase.functions.invoke("add-device-slot", {
-        body: { 
-          period: deviceSlotPeriod, 
-          quantity: deviceSlotQuantity,
-          payByInvoice: deviceSlotPayByInvoice && deviceSlotPeriod === "yearly",
-        },
-      });
+      const body: any = { 
+        period: deviceSlotPeriod, 
+        quantity: deviceSlotQuantity,
+        payByInvoice: isInvoice,
+      };
+      
+      // Add billing info for invoice payments
+      if (isInvoice) {
+        body.billingInfo = {
+          companyName: deviceCompanyName.trim(),
+          address: {
+            line1: deviceAddressLine.trim(),
+            city: deviceCity.trim(),
+            postal_code: devicePostalCode.trim(),
+            country: deviceCountry,
+          },
+        };
+      }
+      
+      const { data, error } = await supabase.functions.invoke("add-device-slot", { body });
       if (error) throw error;
       
       if (data?.url) {
@@ -234,6 +267,12 @@ const Profile = () => {
           title: t("devices.invoiceSent") || "Invoice sent",
           description: data.message,
         });
+        // Clear billing info after successful invoice request
+        setDeviceCompanyName("");
+        setDeviceAddressLine("");
+        setDeviceCity("");
+        setDevicePostalCode("");
+        setDeviceCountry("FI");
       }
     } catch (error: any) {
       toast({
@@ -944,19 +983,92 @@ const Profile = () => {
         </Card>
       </div>
 
-      {/* Invoice Confirmation Dialog */}
+      {/* Invoice Billing Info Dialog */}
       <AlertDialog open={showInvoiceConfirm} onOpenChange={setShowInvoiceConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("devices.confirmInvoiceTitle") || "Request Invoice?"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("devices.confirmInvoiceDesc") || "You are about to request an invoice for"}{" "}
-              <strong>{deviceSlotQuantity} {deviceSlotQuantity === 1 ? t("devices.location") || "location" : t("devices.locations") || "locations"}</strong>{" "}
-              ({t("subscription.yearly")}).
-              <br /><br />
-              {t("devices.confirmInvoiceAmount") || "Total"}: <strong>€{50 * deviceSlotQuantity}/{t("subscription.year") || "year"}</strong>
-              <br /><br />
-              {t("devices.confirmInvoiceNote") || "An invoice will be sent to your email with 14 days to pay."}
+            <AlertDialogTitle>{t("devices.confirmInvoiceTitle") || "Request Invoice"}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                {/* Order summary */}
+                <div className="p-3 rounded-lg border border-primary bg-primary/10">
+                  <div className="font-medium text-foreground">
+                    {deviceSlotQuantity} {deviceSlotQuantity === 1 ? t("devices.location") || "location" : t("devices.locations") || "locations"} ({t("subscription.yearly")})
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    €{50 * deviceSlotQuantity}/{t("subscription.year") || "year"} {t("pricing.exclVat")}
+                  </div>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.confirmInvoiceNote") || "An invoice will be sent to your email with 14 days to pay."}
+                </p>
+
+                {/* Billing info fields */}
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="deviceCompanyName" className="text-foreground">{t("billing.companyName") || "Company Name"} *</Label>
+                    <Input
+                      id="deviceCompanyName"
+                      value={deviceCompanyName}
+                      onChange={(e) => setDeviceCompanyName(e.target.value)}
+                      placeholder={t("billing.companyNamePlaceholder") || "Your Company Ltd"}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="deviceAddressLine" className="text-foreground">{t("billing.streetAddress") || "Street Address"} *</Label>
+                    <Input
+                      id="deviceAddressLine"
+                      value={deviceAddressLine}
+                      onChange={(e) => setDeviceAddressLine(e.target.value)}
+                      placeholder={t("billing.streetAddressPlaceholder") || "123 Business Street"}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="devicePostalCode" className="text-foreground">{t("billing.postalCode") || "Postal Code"} *</Label>
+                      <Input
+                        id="devicePostalCode"
+                        value={devicePostalCode}
+                        onChange={(e) => setDevicePostalCode(e.target.value)}
+                        placeholder="00100"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="deviceCity" className="text-foreground">{t("billing.city") || "City"} *</Label>
+                      <Input
+                        id="deviceCity"
+                        value={deviceCity}
+                        onChange={(e) => setDeviceCity(e.target.value)}
+                        placeholder={t("billing.cityPlaceholder") || "Helsinki"}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="deviceCountry" className="text-foreground">{t("billing.country") || "Country"} *</Label>
+                    <select
+                      id="deviceCountry"
+                      value={deviceCountry}
+                      onChange={(e) => setDeviceCountry(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="FI">Finland</option>
+                      <option value="SE">Sweden</option>
+                      <option value="DE">Germany</option>
+                      <option value="FR">France</option>
+                      <option value="NO">Norway</option>
+                      <option value="DK">Denmark</option>
+                      <option value="EE">Estonia</option>
+                      <option value="NL">Netherlands</option>
+                      <option value="BE">Belgium</option>
+                      <option value="AT">Austria</option>
+                      <option value="CH">Switzerland</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="US">United States</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
