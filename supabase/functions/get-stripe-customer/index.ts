@@ -89,11 +89,36 @@ serve(async (req) => {
     const customer = customers.data[0];
     logStep("Customer found", { customerId: customer.id });
 
+    // Device slot price IDs
+    const DEVICE_SLOT_PRICE_IDS = [
+      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly
+      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly
+    ];
+
     // Get subscriptions for this customer
     const subscriptions = await stripe.subscriptions.list({
       customer: customer.id,
-      limit: 10,
+      limit: 50,
     });
+
+    // Calculate device slots (additional slots beyond the main subscription)
+    let deviceSlotCount = 0;
+    let deviceSlotBillingInterval: string | null = null;
+    const mainSubscriptions: any[] = [];
+    const deviceSlotSubscriptions: any[] = [];
+
+    for (const sub of subscriptions.data) {
+      const priceId = sub.items?.data?.[0]?.price?.id;
+      if (DEVICE_SLOT_PRICE_IDS.includes(priceId || "")) {
+        if (sub.status === "active") {
+          deviceSlotCount += sub.items.data[0].quantity || 1;
+          deviceSlotBillingInterval = sub.items.data[0].price.recurring?.interval || null;
+        }
+        deviceSlotSubscriptions.push(sub);
+      } else {
+        mainSubscriptions.push(sub);
+      }
+    }
 
     // Get all invoices (increased limit for full payment history)
     const invoices = await stripe.invoices.list({
@@ -107,6 +132,15 @@ serve(async (req) => {
       type: "card",
     });
 
+    // Determine payment collection method from main subscription
+    let collectionMethod: string | null = null;
+    let billingInterval: string | null = null;
+    const activeMainSub = mainSubscriptions.find((s: any) => s.status === "active");
+    if (activeMainSub) {
+      collectionMethod = activeMainSub.collection_method; // "charge_automatically" or "send_invoice"
+      billingInterval = activeMainSub.items?.data?.[0]?.price?.recurring?.interval || null;
+    }
+
     const customerData = {
       id: customer.id,
       email: customer.email,
@@ -118,12 +152,19 @@ serve(async (req) => {
       currency: customer.currency,
       balance: customer.balance,
       delinquent: customer.delinquent,
-      subscriptions: subscriptions.data.map((sub: any) => ({
+      // New fields for admin view
+      deviceSlotCount,
+      deviceSlotBillingInterval,
+      collectionMethod,
+      billingInterval,
+      totalLocations: 1 + deviceSlotCount, // Base location + device slots
+      subscriptions: mainSubscriptions.map((sub: any) => ({
         id: sub.id,
         status: sub.status,
         current_period_start: sub.current_period_start,
         current_period_end: sub.current_period_end,
         cancel_at_period_end: sub.cancel_at_period_end,
+        collection_method: sub.collection_method,
         items: sub.items.data.map((item: any) => ({
           price_id: item.price.id,
           product_id: item.price.product,
@@ -131,6 +172,13 @@ serve(async (req) => {
           currency: item.price.currency,
           interval: item.price.recurring?.interval,
         })),
+      })),
+      deviceSlotSubscriptions: deviceSlotSubscriptions.map((sub: any) => ({
+        id: sub.id,
+        status: sub.status,
+        quantity: sub.items.data[0]?.quantity || 1,
+        interval: sub.items.data[0]?.price?.recurring?.interval,
+        cancel_at_period_end: sub.cancel_at_period_end,
       })),
       invoices: invoices.data.map((inv: any) => ({
         id: inv.id,

@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles } from "lucide-react";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles, MonitorSmartphone, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -54,12 +54,19 @@ interface StripeCustomer {
   currency: string | null;
   balance: number;
   delinquent: boolean;
+  // New fields
+  deviceSlotCount: number;
+  deviceSlotBillingInterval: string | null;
+  collectionMethod: string | null;
+  billingInterval: string | null;
+  totalLocations: number;
   subscriptions: Array<{
     id: string;
     status: string;
     current_period_start: number;
     current_period_end: number;
     cancel_at_period_end: boolean;
+    collection_method: string;
     items: Array<{
       price_id: string;
       product_id: string;
@@ -67,6 +74,13 @@ interface StripeCustomer {
       currency: string;
       interval: string;
     }>;
+  }>;
+  deviceSlotSubscriptions: Array<{
+    id: string;
+    status: string;
+    quantity: number;
+    interval: string;
+    cancel_at_period_end: boolean;
   }>;
   invoices: Array<{
     id: string;
@@ -563,9 +577,57 @@ export function UserManager() {
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <span>Customer since {formatTimestamp(customerData.created)}</span>
                   </div>
+                  </div>
                 </div>
-              </div>
 
+                {/* Locations & Devices Summary */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <MonitorSmartphone className="w-4 h-4" />
+                    Locations & Billing
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <p className="text-muted-foreground text-xs mb-1">Total Locations</p>
+                      <p className="text-lg font-semibold">{customerData.totalLocations}</p>
+                      {customerData.deviceSlotCount > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          (1 base + {customerData.deviceSlotCount} additional)
+                        </p>
+                      )}
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <p className="text-muted-foreground text-xs mb-1">Billing Method</p>
+                      <p className="text-lg font-semibold capitalize">
+                        {customerData.collectionMethod === "send_invoice" ? (
+                          <span className="flex items-center gap-1">
+                            <FileText className="w-4 h-4" /> Invoice
+                          </span>
+                        ) : customerData.collectionMethod === "charge_automatically" ? (
+                          <span className="flex items-center gap-1">
+                            <CreditCard className="w-4 h-4" /> Card
+                          </span>
+                        ) : (
+                          "N/A"
+                        )}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <p className="text-muted-foreground text-xs mb-1">Subscription Cycle</p>
+                      <p className="text-lg font-semibold capitalize">
+                        {customerData.billingInterval || "N/A"}
+                      </p>
+                    </div>
+                    {customerData.deviceSlotCount > 0 && (
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-muted-foreground text-xs mb-1">Device Slots Cycle</p>
+                        <p className="text-lg font-semibold capitalize">
+                          {customerData.deviceSlotBillingInterval || "N/A"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               {/* Address */}
               {customerData.address && (
                 <div className="space-y-3">
@@ -641,6 +703,32 @@ export function UserManager() {
                         <p className="text-muted-foreground">
                           Current period: {formatTimestamp(sub.current_period_start)} - {formatTimestamp(sub.current_period_end)}
                         </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Device Slot Subscriptions */}
+              {customerData.deviceSlotSubscriptions.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <MonitorSmartphone className="w-4 h-4" />
+                    Additional Device Slots ({customerData.deviceSlotCount} total)
+                  </h4>
+                  <div className="space-y-2">
+                    {customerData.deviceSlotSubscriptions.map((slot) => (
+                      <div key={slot.id} className="text-sm bg-muted/50 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className={slot.status === "active" ? "bg-green-500/20 text-green-400" : "bg-gray-500/20"}>
+                            {slot.status}
+                          </Badge>
+                          <span>{slot.quantity} slot(s)</span>
+                          <span className="text-muted-foreground capitalize">• {slot.interval}ly</span>
+                        </div>
+                        {slot.cancel_at_period_end && (
+                          <Badge variant="outline" className="text-orange-400">Canceling</Badge>
+                        )}
                       </div>
                     ))}
                   </div>
