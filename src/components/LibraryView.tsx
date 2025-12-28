@@ -1,4 +1,4 @@
-import { List, Grid3X3, Heart, Shuffle, Check, Play } from "lucide-react";
+import { List, Grid3X3, Heart, Shuffle, Check, Play, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -10,6 +10,7 @@ import { getSignedAudioUrl } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import QuickMixDialog from "./QuickMixDialog";
+import ambianLogo from "@/assets/ambian-logo.png";
 
 interface SelectedPlaylist {
   id: string;
@@ -237,6 +238,26 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     setSelectedIds(new Set());
   };
 
+  const handleDeletePlaylist = async (e: React.MouseEvent, playlistId: string) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase
+        .from('playlists')
+        .delete()
+        .eq('id', playlistId)
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      setOwnPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      toast.success("Playlist deleted");
+    } catch (error) {
+      console.error('Error deleting playlist:', error);
+      toast.error("Failed to delete playlist");
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-6 md:p-8 space-y-6">
@@ -368,11 +389,23 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                   )}
                   onClick={() => handlePlaylistClick(playlist)}
                 >
-                  <img
-                    src={playlist.cover_url || "/placeholder.svg"}
-                    alt={playlist.name}
-                    className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4"
-                  />
+                  <div className="relative">
+                    <img
+                      src={ambianLogo}
+                      alt={playlist.name}
+                      className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4 bg-card"
+                    />
+                    {!isSelectMode && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 bg-destructive/80 hover:bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleDeletePlaylist(e, playlist.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                   <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
                   <p className="text-sm text-muted-foreground">{t("library.yourPlaylist")}</p>
                 </button>
@@ -381,7 +414,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
               <div key={playlist.id} className="relative">
                 <button
                   className={cn(
-                    "flex items-center gap-4 p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors w-full text-left",
+                    "flex items-center gap-4 p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors w-full text-left group",
                     isSelectMode && selectedIds.has(playlist.id) && "ring-2 ring-primary"
                   )}
                   onClick={() => handlePlaylistClick(playlist)}
@@ -392,11 +425,23 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                       className="h-5 w-5"
                     />
                   )}
-                  <img
-                    src={playlist.cover_url || "/placeholder.svg"}
-                    alt={playlist.name}
-                    className="w-14 h-14 object-cover rounded-lg"
-                  />
+                  <div className="relative">
+                    <img
+                      src={ambianLogo}
+                      alt={playlist.name}
+                      className="w-14 h-14 object-cover rounded-lg bg-card"
+                    />
+                    {!isSelectMode && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -top-1 -right-1 w-6 h-6 bg-destructive/80 hover:bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleDeletePlaylist(e, playlist.id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground truncate">{playlist.name}</h3>
                     <p className="text-sm text-muted-foreground">{t("library.yourPlaylist")}</p>
