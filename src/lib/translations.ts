@@ -185,9 +185,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Access will continue until the end of the billing period. No refunds will be issued.",
     "devices.confirmCancelBtn": "Cancel Location",
     
-    // Invoices
-    "invoices.title": "Invoices",
-    "invoices.subtitle": "View and download your payment history",
+    // Payment History (formerly Invoices)
+    "invoices.title": "Payment History",
+    "invoices.subtitle": "View and download your past payments",
     "invoices.none": "No invoices found.",
     "invoices.paid": "Paid",
     "invoices.pending": "Pending",
@@ -693,9 +693,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Åtkomst fortsätter till slutet av faktureringsperioden. Ingen återbetalning ges.",
     "devices.confirmCancelBtn": "Avbryt plats",
     
-    // Invoices
-    "invoices.title": "Fakturor",
-    "invoices.subtitle": "Visa och ladda ner din betalningshistorik",
+    // Payment History
+    "invoices.title": "Betalningshistorik",
+    "invoices.subtitle": "Visa och ladda ner dina tidigare betalningar",
     "invoices.none": "Inga fakturor hittades.",
     "invoices.paid": "Betald",
     "invoices.pending": "Väntar",
@@ -1200,9 +1200,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Käyttöoikeus jatkuu laskutuskauden loppuun. Hyvitystä ei myönnetä.",
     "devices.confirmCancelBtn": "Peruuta sijainti",
     
-    // Invoices
-    "invoices.title": "Laskut",
-    "invoices.subtitle": "Näytä ja lataa maksuhistoriasi",
+    // Payment History
+    "invoices.title": "Maksuhistoria",
+    "invoices.subtitle": "Näytä ja lataa aiemmat maksusi",
     "invoices.none": "Laskuja ei löytynyt.",
     "invoices.paid": "Maksettu",
     "invoices.pending": "Odottaa",
@@ -1707,9 +1707,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Der Zugang bleibt bis zum Ende des Abrechnungszeitraums bestehen. Es erfolgt keine Rückerstattung.",
     "devices.confirmCancelBtn": "Standort stornieren",
     
-    // Invoices
-    "invoices.title": "Rechnungen",
-    "invoices.subtitle": "Zeige und lade deine Zahlungshistorie herunter",
+    // Payment History
+    "invoices.title": "Zahlungsverlauf",
+    "invoices.subtitle": "Zeige und lade deine vergangenen Zahlungen herunter",
     "invoices.none": "Keine Rechnungen gefunden.",
     "invoices.paid": "Bezahlt",
     "invoices.pending": "Ausstehend",
@@ -2214,9 +2214,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "L'accès continuera jusqu'à la fin de la période de facturation. Aucun remboursement ne sera effectué.",
     "devices.confirmCancelBtn": "Annuler l'emplacement",
     
-    // Invoices
-    "invoices.title": "Factures",
-    "invoices.subtitle": "Consultez et téléchargez votre historique de paiement",
+    // Payment History
+    "invoices.title": "Historique des paiements",
+    "invoices.subtitle": "Consultez et téléchargez vos paiements passés",
     "invoices.none": "Aucune facture trouvée.",
     "invoices.paid": "Payée",
     "invoices.pending": "En attente",
