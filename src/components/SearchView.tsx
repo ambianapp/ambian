@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Clock, X } from "lucide-react";
+import { Search, Clock, X, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,12 +33,13 @@ interface SearchViewProps {
   onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onPlaylistSelect?: (playlist: any) => void;
   onPlayPlaylist?: (playlistId: string) => void;
+  onBack?: () => void;
 }
 
 const RECENT_SEARCHES_KEY = "ambian_recent_searches";
 const MAX_RECENT_SEARCHES = 8;
 
-const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, onPlayPlaylist }: SearchViewProps) => {
+const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, onPlayPlaylist, onBack }: SearchViewProps) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [filteredTracks, setFilteredTracks] = useState<DbTrack[]>([]);
@@ -156,9 +157,21 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
 
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
-      <div className="p-6 md:p-8 space-y-8 pt-4 md:pt-6">
+      <div className="p-6 md:p-8 space-y-6 pt-4 md:pt-6">
+        {/* Header */}
+        <div className="flex items-center animate-fade-in">
+          <div className="flex items-center gap-2 shrink-0">
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            )}
+            <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">{t("search.title")}</h1>
+          </div>
+        </div>
+
         {/* Search Input */}
-        <div className="animate-fade-in pr-14 md:pr-0">
+        <div className="animate-fade-in">
           <div className="relative max-w-lg">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input

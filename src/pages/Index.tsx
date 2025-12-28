@@ -207,6 +207,7 @@ const Index = () => {
             isPlaying={isPlaying}
             onTrackSelect={handleTrackSelect}
             onPlaylistSelect={handlePlaylistSelect}
+            onBack={() => handleViewChange("home")}
           />
         );
       case "library":
