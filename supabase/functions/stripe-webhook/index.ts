@@ -1237,7 +1237,36 @@ serve(async (req) => {
       
       // Helper function to check if this is a first subscription and send appropriate email
       const handleSubscriptionEmail = async (targetUserId: string, customerEmail: string) => {
-        // Check if we've already sent a confirmation email for this invoice (webhooks can be retried)
+        // Webhooks can be retried; ensure we process each invoice only once.
+        const invoiceLockType = "email_invoice_processed";
+
+        const { data: alreadyProcessed } = await supabaseAdmin
+          .from("activity_logs")
+          .select("id")
+          .eq("event_type", invoiceLockType)
+          .contains("event_details", { invoiceId: invoice.id })
+          .maybeSingle();
+
+        if (alreadyProcessed) {
+          logStep("Skipping duplicate invoice processing", {
+            invoiceId: invoice.id,
+            userId: targetUserId,
+          });
+          return;
+        }
+
+        // Acquire a best-effort lock BEFORE sending any email (prevents duplicates even if email send/log insert fails)
+        await supabaseAdmin.from("activity_logs").insert({
+          user_id: targetUserId,
+          user_email: customerEmail,
+          event_type: invoiceLockType,
+          event_message: "Invoice processing locked",
+          event_details: {
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.number,
+          },
+        });
+
         const isRenewal = invoice.metadata?.renewal === "true";
 
         // Check if user already has an active subscription record (to determine if this is their first)
@@ -1248,28 +1277,11 @@ serve(async (req) => {
           .maybeSingle();
 
         // It's a first subscription if no record exists OR if the existing record is in trial/trialing status
-        const isFirstSubscription = !existingSub || existingSub.status === 'trialing';
+        const isFirstSubscription = !existingSub || existingSub.status === "trialing";
 
         const emailEventType = isFirstSubscription && !isRenewal
-          ? 'email_subscription_active'
-          : 'email_payment_confirmed';
-
-        const { data: alreadySent } = await supabaseAdmin
-          .from('activity_logs')
-          .select('id')
-          .eq('user_id', targetUserId)
-          .eq('event_type', emailEventType)
-          .contains('event_details', { invoiceId: invoice.id })
-          .maybeSingle();
-
-        if (alreadySent) {
-          logStep("Skipping duplicate confirmation email for invoice", {
-            invoiceId: invoice.id,
-            emailEventType,
-            userId: targetUserId,
-          });
-          return;
-        }
+          ? "email_subscription_active"
+          : "email_payment_confirmed";
 
         // Send welcome email for first subscription, payment confirmation for renewals
         logStep("Determining email type", {
@@ -1278,7 +1290,6 @@ serve(async (req) => {
           existingStatus: existingSub?.status,
         });
 
-        // Don't send welcome email for renewals
         const ok = await sendPaymentConfirmationEmailForInvoice(
           stripe,
           invoice,
@@ -1287,11 +1298,11 @@ serve(async (req) => {
         );
 
         if (ok) {
-          await supabaseAdmin.from('activity_logs').insert({
+          await supabaseAdmin.from("activity_logs").insert({
             user_id: targetUserId,
             user_email: customerEmail,
             event_type: emailEventType,
-            event_message: 'Subscription email sent',
+            event_message: "Subscription email sent",
             event_details: {
               invoiceId: invoice.id,
               invoiceNumber: invoice.number,
