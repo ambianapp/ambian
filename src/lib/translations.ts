@@ -353,6 +353,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.noTracksInPlaylists": "No tracks found in playlists",
     "library.playingMix": "Playing mix",
     "library.mixError": "Failed to create mix",
+    "library.editPlaylist": "Edit Playlist",
+    "library.playlistName": "Name",
+    "common.delete": "Delete",
     
     // Home extras
     "home.greeting.morning": "Good morning",
@@ -867,6 +870,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.noTracksInPlaylists": "Inga låtar hittades i spellistor",
     "library.playingMix": "Spelar mix",
     "library.mixError": "Kunde inte skapa mix",
+    "library.editPlaylist": "Redigera spellista",
+    "library.playlistName": "Namn",
+    "common.delete": "Ta bort",
     
     // Home extras
     "home.greeting.morning": "God morgon",
@@ -1380,6 +1386,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.noTracksInPlaylists": "Soittolistoista ei löytynyt kappaleita",
     "library.playingMix": "Toistetaan mix",
     "library.mixError": "Mixin luonti epäonnistui",
+    "library.editPlaylist": "Muokkaa soittolistaa",
+    "library.playlistName": "Nimi",
+    "common.delete": "Poista",
     
     // Home extras
     "home.greeting.morning": "Hyvää huomenta",
@@ -1893,6 +1902,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.noTracksInPlaylists": "Keine Songs in Playlists gefunden",
     "library.playingMix": "Mix wird abgespielt",
     "library.mixError": "Mix konnte nicht erstellt werden",
+    "library.editPlaylist": "Playlist bearbeiten",
+    "library.playlistName": "Name",
+    "common.delete": "Löschen",
     
     // Home extras
     "home.greeting.morning": "Guten Morgen",
@@ -2406,6 +2418,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.noTracksInPlaylists": "Aucun titre trouvé dans les playlists",
     "library.playingMix": "Lecture du mix",
     "library.mixError": "Échec de la création du mix",
+    "library.editPlaylist": "Modifier la playlist",
+    "library.playlistName": "Nom",
+    "common.delete": "Supprimer",
     
     // Home extras
     "home.greeting.morning": "Bonjour",
