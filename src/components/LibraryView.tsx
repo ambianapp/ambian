@@ -303,7 +303,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-6 md:p-8 space-y-6 pt-4 md:pt-6">
         {/* Header */}
-        <div className="flex items-center justify-between animate-fade-in">
+        <div className="flex items-center animate-fade-in">
           <div className="flex items-center gap-2 shrink-0">
             {onBack && (
               <Button variant="ghost" size="icon" onClick={onBack}>
@@ -311,27 +311,6 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
               </Button>
             )}
             <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">{t("library.title")}</h1>
-          </div>
-          <div className="flex items-center gap-2 pr-14 md:pr-0">
-            {/* Quick Mix Dialog - shows only liked playlists in Library */}
-            <QuickMixDialog
-              onTrackSelect={onTrackSelect}
-              likedOnly={true}
-              trigger={
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Shuffle className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("library.quickMix")}</span>
-                </Button>
-              }
-            />
-            <Button 
-              variant={isSelectMode ? "secondary" : "ghost"} 
-              size="icon" 
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => isSelectMode ? cancelSelectMode() : setIsSelectMode(true)}
-            >
-              <Check className="w-5 h-5" />
-            </Button>
           </div>
         </div>
 
@@ -357,10 +336,31 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
         )}
 
         {/* Filters */}
-        <div className="flex gap-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+        <div className="flex items-center justify-between gap-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <Button variant="secondary" size="sm" className="rounded-full">
             {t("library.playlists")}
           </Button>
+          <div className="flex items-center gap-2">
+            {/* Quick Mix Dialog - shows only liked playlists in Library */}
+            <QuickMixDialog
+              onTrackSelect={onTrackSelect}
+              likedOnly={true}
+              trigger={
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Shuffle className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("library.quickMix")}</span>
+                </Button>
+              }
+            />
+            <Button 
+              variant={isSelectMode ? "secondary" : "ghost"} 
+              size="icon" 
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => isSelectMode ? cancelSelectMode() : setIsSelectMode(true)}
+            >
+              <Check className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Content */}
