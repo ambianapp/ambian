@@ -324,24 +324,6 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
             >
               <Check className="w-5 h-5" />
             </Button>
-            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="iconSm"
-                className={cn(viewMode === "list" && "bg-muted")}
-                onClick={() => setViewMode("list")}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="iconSm"
-                className={cn(viewMode === "grid" && "bg-muted")}
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </div>
 
