@@ -304,7 +304,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
       <div className="p-6 md:p-8 space-y-6 pt-4 md:pt-6">
         {/* Header */}
         <div className="flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {onBack && (
               <Button variant="ghost" size="icon" onClick={onBack}>
                 <ArrowLeft className="w-5 h-5" />
