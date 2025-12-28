@@ -149,6 +149,7 @@ const Help = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              id="help-search"
               type="text"
               placeholder={t("help.searchPlaceholder") || "Search help topics..."}
               value={searchQuery}
@@ -170,12 +171,15 @@ const Help = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          // Blur input to dismiss mobile keyboard (can block scrolling)
+                          // iOS Safari can "lock" scrolling if the keyboard stays open after tapping.
+                          const input = document.getElementById("help-search") as HTMLInputElement | null;
+                          input?.blur();
                           (document.activeElement as HTMLElement | null)?.blur?.();
 
                           setSearchQuery("");
-                          // Wait one frame so the layout settles (dropdown unmounts) before scrolling.
-                          requestAnimationFrame(() => scrollToSection(item.section));
+
+                          // Give the keyboard a moment to dismiss before scrolling.
+                          window.setTimeout(() => scrollToSection(item.section), 50);
                         }}
                         className="w-full px-3 py-2 text-left hover:bg-accent focus-visible:outline-none focus-visible:bg-accent"
                       >
