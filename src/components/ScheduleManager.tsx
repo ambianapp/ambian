@@ -279,24 +279,22 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       <ScrollArea className="flex-1 h-full">
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 pb-80 sm:pb-48 pt-8 md:pt-0">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center animate-fade-in">
+            <div className="flex items-center gap-2 shrink-0">
               {onBack && (
                 <Button variant="ghost" size="icon" onClick={onBack}>
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
               )}
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                  {t("schedule.title")}
-                </h1>
-                <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                  {t("schedule.subtitle")}
-                </p>
-              </div>
+              <h1 className="text-2xl font-bold text-foreground whitespace-nowrap flex items-center gap-2">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                {t("schedule.title")}
+              </h1>
             </div>
           </div>
+
+          {/* Subtitle */}
+          <p className="text-sm text-muted-foreground">{t("schedule.subtitle")}</p>
 
           {/* Global On/Off Toggle */}
           {onToggleScheduler && (
