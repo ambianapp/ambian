@@ -218,16 +218,11 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
 
   return (
     <>
-      {/* Mobile Header with Hamburger */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-card/50 border-b border-border">
-        <img 
-          src="/ambian-logo.png" 
-          alt="Ambian" 
-          className="h-10 object-contain"
-        />
+      {/* Floating Hamburger Menu Button */}
+      <div className="md:hidden fixed top-4 right-4 z-50">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="bg-card/80 backdrop-blur-sm shadow-lg">
               <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
@@ -386,7 +381,7 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
             </div>
           </SheetContent>
         </Sheet>
-      </header>
+      </div>
 
       {/* Create Playlist Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import PlayerBar from "@/components/PlayerBar";
-import MobileNav from "@/components/MobileNav";
+import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -122,15 +122,15 @@ const AppContent = () => {
   const { user } = useAuth();
   const location = useLocation();
   
-  // Show MobileNav on non-index protected pages
-  const showGlobalMobileNav = user && location.pathname !== "/" && location.pathname !== "/auth" && location.pathname !== "/install";
+  // Show MobileSidebar on non-index protected pages (Index has its own)
+  const showGlobalMobileSidebar = user && location.pathname !== "/" && location.pathname !== "/auth" && location.pathname !== "/install";
   
   return (
     <>
       <div className={user ? "pb-[calc(160px+var(--safe-bottom-tight))] md:pb-0" : undefined}>
         <AppRoutes />
       </div>
-      {showGlobalMobileNav && <MobileNav />}
+      {showGlobalMobileSidebar && <MobileSidebar activeView="" onViewChange={() => {}} />}
       {user && <PlayerBar />}
     </>
   );
