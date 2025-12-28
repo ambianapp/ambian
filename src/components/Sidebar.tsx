@@ -327,7 +327,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         </DialogContent>
       </Dialog>
 
-        <div className="flex-1 overflow-y-auto space-y-1">
+        <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle">
           {/* Liked Songs - always shown */}
           <Button
             variant="ghost"
