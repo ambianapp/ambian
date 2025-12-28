@@ -287,7 +287,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                 </Button>
               )}
               <h1 className="text-2xl font-bold text-foreground whitespace-nowrap flex items-center gap-2">
-                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                <Clock className="hidden sm:block w-6 h-6 text-primary" />
                 {t("schedule.title")}
               </h1>
             </div>
