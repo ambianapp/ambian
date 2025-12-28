@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart } from "lucide-react";
+import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart, ListMusic, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
@@ -9,6 +9,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type DbTrack = Tables<"tracks">;
 
@@ -41,6 +49,7 @@ const PlaylistDetailView = ({
   const [isSystemPlaylist, setIsSystemPlaylist] = useState(false);
   const [resolvedPlaylistCover, setResolvedPlaylistCover] = useState<string | null>(playlistCover);
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadPlaylistTracks();
@@ -177,6 +186,38 @@ const PlaylistDetailView = ({
     }
   };
 
+  const handleShufflePlay = async () => {
+    if (tracks.length === 0) return;
+    
+    // Shuffle the tracks array
+    const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
+    const firstTrack = shuffledTracks[0];
+    
+    // Get signed URL for the first track
+    const signedAudioUrl = await getSignedAudioUrl(firstTrack.audio_url);
+    
+    // Convert all shuffled tracks to Track format
+    const playlistTracks = shuffledTracks.map((t) => 
+      convertToTrack(t, t.id === firstTrack.id ? signedAudioUrl : undefined)
+    );
+    
+    toast.success(t("common.shuffle") || "Shuffle enabled");
+    onTrackSelect(convertToTrack(firstTrack, signedAudioUrl), playlistTracks);
+  };
+
+  const handleAddToQueue = () => {
+    toast.info("Add to queue coming soon");
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       {/* Header with gradient background */}
@@ -249,12 +290,32 @@ const PlaylistDetailView = ({
         >
           <Heart className={cn("w-6 h-6", isLiked && "fill-current")} />
         </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-muted-foreground hover:text-foreground"
+          onClick={handleShufflePlay}
+          disabled={tracks.length === 0}
+        >
           <Shuffle className="w-5 h-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <MoreHorizontal className="w-5 h-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+              <MoreHorizontal className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem onClick={handleAddToQueue}>
+              <ListMusic className="w-4 h-4 mr-2" />
+              Add to queue
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleShare}>
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Track List */}
