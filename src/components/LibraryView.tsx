@@ -1,4 +1,4 @@
-import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil, Music } from "lucide-react";
+import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil, Music, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -32,6 +32,7 @@ interface LibraryViewProps {
   isPlaying: boolean;
   onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   onPlaylistSelect: (playlist: SelectedPlaylist) => void;
+  onBack?: () => void;
 }
 
 interface Playlist {
@@ -44,7 +45,7 @@ interface Playlist {
   trackCount?: number;
 }
 
-const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: LibraryViewProps) => {
+const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, onBack }: LibraryViewProps) => {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ownPlaylists, setOwnPlaylists] = useState<Playlist[]>([]);
@@ -303,7 +304,14 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
       <div className="p-6 md:p-8 space-y-6 pt-4 md:pt-6">
         {/* Header */}
         <div className="flex items-center justify-between animate-fade-in">
-          <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            )}
+            <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
+          </div>
           <div className="flex items-center gap-2 pr-14 md:pr-0">
             {/* Quick Mix Dialog - shows only liked playlists in Library */}
             <QuickMixDialog
