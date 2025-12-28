@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock, Trash2, X } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock, Trash2, X, Lock } from "lucide-react";
 
 
 interface Invoice {
@@ -60,6 +60,9 @@ const Profile = () => {
   const [deviceCity, setDeviceCity] = useState("");
   const [devicePostalCode, setDevicePostalCode] = useState("");
   const [deviceCountry, setDeviceCountry] = useState("FI");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -154,6 +157,48 @@ const Profile = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({
+        title: t("common.error"),
+        description: t("auth.passwordMin"),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: t("common.error"),
+        description: t("auth.passwordsNoMatch"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) throw error;
+      
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({
+        title: t("auth.passwordUpdated"),
+        description: t("auth.passwordUpdatedDesc"),
+      });
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -949,6 +994,47 @@ const Profile = () => {
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {t("common.save")}
             </Button>
+
+            {/* Change Password Section */}
+            <div className="pt-6 border-t border-border space-y-4">
+              <div className="flex items-center gap-2 text-foreground">
+                <Lock className="w-4 h-4" />
+                <span className="font-medium">{t("profile.changePassword") || "Change Password"}</span>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">{t("auth.newPassword")}</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-card"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-card"
+                />
+              </div>
+
+              <Button 
+                onClick={handleChangePassword} 
+                disabled={isChangingPassword || !newPassword || !confirmPassword}
+                variant="outline"
+              >
+                {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {t("auth.updatePassword")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
