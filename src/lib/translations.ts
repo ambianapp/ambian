@@ -124,6 +124,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.selectLanguage": "Select your preferred language",
     "profile.viewTerms": "View Terms & Conditions",
     "profile.changePassword": "Change Password",
+    "profile.setPassword": "Set Password",
+    "profile.setPasswordDesc": "Add a password to your account so you can also log in with email and password.",
+    "profile.setPasswordBtn": "Set Password",
+    "auth.passwordSet": "Password set",
+    "auth.passwordSetDesc": "You can now log in with your email and password.",
     
     // Subscription
     "subscription.title": "Subscription",
@@ -649,6 +654,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.selectLanguage": "Välj ditt föredragna språk",
     "profile.viewTerms": "Visa villkor",
     "profile.changePassword": "Byt lösenord",
+    "profile.setPassword": "Ange lösenord",
+    "profile.setPasswordDesc": "Lägg till ett lösenord till ditt konto så att du även kan logga in med e-post och lösenord.",
+    "profile.setPasswordBtn": "Ange lösenord",
+    "auth.passwordSet": "Lösenord angivet",
+    "auth.passwordSetDesc": "Du kan nu logga in med din e-post och lösenord.",
     
     // Subscription
     "subscription.title": "Prenumeration",
@@ -1169,6 +1179,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.selectLanguage": "Valitse haluamasi kieli",
     "profile.viewTerms": "Näytä käyttöehdot",
     "profile.changePassword": "Vaihda salasana",
+    "profile.setPassword": "Aseta salasana",
+    "profile.setPasswordDesc": "Lisää salasana tiliisi, jotta voit kirjautua myös sähköpostilla ja salasanalla.",
+    "profile.setPasswordBtn": "Aseta salasana",
+    "auth.passwordSet": "Salasana asetettu",
+    "auth.passwordSetDesc": "Voit nyt kirjautua sähköpostilla ja salasanalla.",
     
     // Subscription
     "subscription.title": "Tilaus",
@@ -1689,6 +1704,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.selectLanguage": "Wähle deine bevorzugte Sprache",
     "profile.viewTerms": "AGB anzeigen",
     "profile.changePassword": "Passwort ändern",
+    "profile.setPassword": "Passwort festlegen",
+    "profile.setPasswordDesc": "Füge ein Passwort zu deinem Konto hinzu, um dich auch mit E-Mail und Passwort anmelden zu können.",
+    "profile.setPasswordBtn": "Passwort festlegen",
+    "auth.passwordSet": "Passwort festgelegt",
+    "auth.passwordSetDesc": "Du kannst dich jetzt mit deiner E-Mail und Passwort anmelden.",
     
     // Subscription
     "subscription.title": "Abonnement",
@@ -2209,6 +2229,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.selectLanguage": "Sélectionnez votre langue préférée",
     "profile.viewTerms": "Voir les conditions",
     "profile.changePassword": "Changer le mot de passe",
+    "profile.setPassword": "Définir un mot de passe",
+    "profile.setPasswordDesc": "Ajoutez un mot de passe à votre compte pour pouvoir vous connecter aussi avec email et mot de passe.",
+    "profile.setPasswordBtn": "Définir le mot de passe",
+    "auth.passwordSet": "Mot de passe défini",
+    "auth.passwordSetDesc": "Vous pouvez maintenant vous connecter avec votre email et mot de passe.",
     
     // Subscription
     "subscription.title": "Abonnement",

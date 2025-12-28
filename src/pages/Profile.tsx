@@ -229,6 +229,48 @@ const Profile = () => {
     }
   };
 
+  const handleSetPassword = async () => {
+    if (newPassword.length < 6) {
+      toast({
+        title: t("common.error"),
+        description: t("auth.passwordMin"),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: t("common.error"),
+        description: t("auth.passwordsNoMatch"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) throw error;
+      
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({
+        title: t("auth.passwordSet"),
+        description: t("auth.passwordSetDesc"),
+      });
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleManageSubscription = async () => {
     setIsLoadingPortal(true);
     try {
@@ -1027,7 +1069,7 @@ const Profile = () => {
             <div className="pt-6 border-t border-border space-y-4">
               <div className="flex items-center gap-2 text-foreground">
                 <Lock className="w-4 h-4" />
-                <span className="font-medium">{t("profile.changePassword") || "Change Password"}</span>
+                <span className="font-medium">{t("profile.changePassword")}</span>
               </div>
               
               <div className="space-y-2">
@@ -1073,6 +1115,52 @@ const Profile = () => {
               >
                 {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {t("auth.updatePassword")}
+              </Button>
+            </div>
+            )}
+
+            {/* Set Password Section - Only show for OAuth users (Google, etc.) */}
+            {user?.app_metadata?.provider && user.app_metadata.provider !== 'email' && (
+            <div className="pt-6 border-t border-border space-y-4">
+              <div className="flex items-center gap-2 text-foreground">
+                <Lock className="w-4 h-4" />
+                <span className="font-medium">{t("profile.setPassword")}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t("profile.setPasswordDesc")}
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPasswordOAuth">{t("auth.newPassword")}</Label>
+                <Input
+                  id="newPasswordOAuth"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-card"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPasswordOAuth">{t("auth.confirmPassword")}</Label>
+                <Input
+                  id="confirmPasswordOAuth"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-card"
+                />
+              </div>
+
+              <Button 
+                onClick={handleSetPassword} 
+                disabled={isChangingPassword || !newPassword || !confirmPassword}
+                variant="outline"
+              >
+                {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {t("profile.setPasswordBtn")}
               </Button>
             </div>
             )}
