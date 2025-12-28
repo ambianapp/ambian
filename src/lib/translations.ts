@@ -120,6 +120,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.language": "Language",
     "profile.selectLanguage": "Select your preferred language",
     "profile.viewTerms": "View Terms & Conditions",
+    "profile.changePassword": "Change Password",
     
     // Subscription
     "subscription.title": "Subscription",
@@ -641,6 +642,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.language": "Språk",
     "profile.selectLanguage": "Välj ditt föredragna språk",
     "profile.viewTerms": "Visa villkor",
+    "profile.changePassword": "Byt lösenord",
     
     // Subscription
     "subscription.title": "Prenumeration",
@@ -1157,6 +1159,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.language": "Kieli",
     "profile.selectLanguage": "Valitse haluamasi kieli",
     "profile.viewTerms": "Näytä käyttöehdot",
+    "profile.changePassword": "Vaihda salasana",
     
     // Subscription
     "subscription.title": "Tilaus",
@@ -1673,6 +1676,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.language": "Sprache",
     "profile.selectLanguage": "Wähle deine bevorzugte Sprache",
     "profile.viewTerms": "AGB anzeigen",
+    "profile.changePassword": "Passwort ändern",
     
     // Subscription
     "subscription.title": "Abonnement",
@@ -2189,6 +2193,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.language": "Langue",
     "profile.selectLanguage": "Sélectionnez votre langue préférée",
     "profile.viewTerms": "Voir les conditions",
+    "profile.changePassword": "Changer le mot de passe",
     
     // Subscription
     "subscription.title": "Abonnement",
