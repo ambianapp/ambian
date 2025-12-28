@@ -383,6 +383,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Help page
     "help.title": "Help Center",
     "help.subtitle": "Everything you need to know about Ambian",
+    "help.searchPlaceholder": "Search help topics...",
     "help.gettingStarted": "Getting Started",
     "help.gettingStartedDesc": "Learn the basics of using Ambian for your business",
     "help.playMusic": "Playing Music",
@@ -909,6 +910,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Help page
     "help.title": "Hjälpcenter",
     "help.subtitle": "Allt du behöver veta om Ambian",
+    "help.searchPlaceholder": "Sök hjälpämnen...",
     "help.gettingStarted": "Kom igång",
     "help.gettingStartedDesc": "Lär dig grunderna för att använda Ambian",
     "help.playMusic": "Spela musik",
@@ -1434,6 +1436,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Help page
     "help.title": "Ohjekeskus",
     "help.subtitle": "Kaikki mitä sinun tarvitsee tietää Ambianista",
+    "help.searchPlaceholder": "Hae ohjeaiheita...",
     "help.gettingStarted": "Aloittaminen",
     "help.gettingStartedDesc": "Opi Ambianin käytön perusteet",
     "help.playMusic": "Musiikin toisto",
@@ -1959,6 +1962,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Help page
     "help.title": "Hilfecenter",
     "help.subtitle": "Alles über Ambian",
+    "help.searchPlaceholder": "Hilfethemen suchen...",
     "help.gettingStarted": "Erste Schritte",
     "help.gettingStartedDesc": "Lerne die Grundlagen",
     "help.playMusic": "Musik abspielen",
@@ -2484,6 +2488,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Help page
     "help.title": "Centre d'aide",
     "help.subtitle": "Tout sur Ambian",
+    "help.searchPlaceholder": "Rechercher des sujets d'aide...",
     "help.gettingStarted": "Premiers pas",
     "help.gettingStartedDesc": "Apprenez les bases",
     "help.playMusic": "Écouter de la musique",
