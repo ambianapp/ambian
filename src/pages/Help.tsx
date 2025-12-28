@@ -123,7 +123,12 @@ const Help = () => {
 
   const scrollToSection = (section: HelpSectionKey) => {
     const el = document.getElementById(SECTION_ANCHORS[section]);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!el) return;
+
+    // Account for the sticky header so the section title isn't hidden underneath it.
+    const headerOffset = 120;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   };
 
   return (
@@ -165,8 +170,12 @@ const Help = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          scrollToSection(item.section);
+                          // Blur input to dismiss mobile keyboard (can block scrolling)
+                          (document.activeElement as HTMLElement | null)?.blur?.();
+
                           setSearchQuery("");
+                          // Wait one frame so the layout settles (dropdown unmounts) before scrolling.
+                          requestAnimationFrame(() => scrollToSection(item.section));
                         }}
                         className="w-full px-3 py-2 text-left hover:bg-accent focus-visible:outline-none focus-visible:bg-accent"
                       >
