@@ -1,84 +1,130 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, Pause, SkipForward, Disc3, Repeat, Speaker, Search } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+
+type HelpSectionKey = "gettingStarted" | "playerControls" | "airplay" | "troubleshooting" | "faq" | "contact";
+
+type HelpTopic = {
+  id: string;
+  section: HelpSectionKey;
+  title: string;
+  body?: string;
+};
+
+const SECTION_ANCHORS: Record<HelpSectionKey, string> = {
+  gettingStarted: "help-getting-started",
+  playerControls: "help-player-controls",
+  airplay: "help-airplay",
+  troubleshooting: "help-troubleshooting",
+  faq: "help-faq",
+  contact: "help-contact",
+};
 
 const Help = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Helper function to check if text matches search query
-  const matchesSearch = (text: string) => {
-    if (!searchQuery.trim()) return true;
-    return text.toLowerCase().includes(searchQuery.toLowerCase());
-  };
+  const helpTopics = useMemo<HelpTopic[]>(() => {
+    return [
+      // Getting started
+      { id: "getting-started", section: "gettingStarted", title: t("help.gettingStarted"), body: t("help.gettingStartedDesc") },
+      { id: "play-music", section: "gettingStarted", title: t("help.playMusic"), body: t("help.playMusicDesc") },
+      { id: "playlists", section: "gettingStarted", title: t("help.playlists"), body: t("help.playlistsDesc") },
+      { id: "favorites", section: "gettingStarted", title: t("help.favorites"), body: t("help.favoritesDesc") },
+      { id: "scheduling", section: "gettingStarted", title: t("help.scheduling"), body: t("help.schedulingDesc") },
+      { id: "quick-mix", section: "gettingStarted", title: t("help.quickMix"), body: t("help.quickMixDesc") },
+      { id: "industry-collections", section: "gettingStarted", title: t("help.industryCollections"), body: t("help.industryCollectionsDesc") },
 
-  // Check if a section should be visible based on search
+      // Player controls
+      { id: "player-controls", section: "playerControls", title: t("help.playerControls"), body: t("help.playerControlsDesc") },
+      { id: "play-pause", section: "playerControls", title: t("help.playPause"), body: t("help.playPauseDesc") },
+      { id: "skip-track", section: "playerControls", title: t("help.skipTrack"), body: t("help.skipTrackDesc") },
+      { id: "shuffle", section: "playerControls", title: t("help.shuffle"), body: t("help.shuffleDesc") },
+      { id: "repeat", section: "playerControls", title: t("help.repeat"), body: t("help.repeatDesc") },
+      { id: "crossfade", section: "playerControls", title: t("help.crossfade"), body: t("help.crossfadeDesc") },
+
+      // AirPlay
+      { id: "airplay", section: "airplay", title: t("help.airplay"), body: t("help.airplayDesc") },
+      { id: "airplay-steps", section: "airplay", title: t("help.airplaySteps"), body: [t("help.airplayStep1"), t("help.airplayStep2"), t("help.airplayStep3"), t("help.airplayStep4")].join(" ") },
+
+      // Troubleshooting
+      { id: "troubleshooting", section: "troubleshooting", title: t("help.troubleshooting"), body: t("help.troubleshootingDesc") },
+      { id: "no-sound", section: "troubleshooting", title: t("help.noSound"), body: t("help.noSoundDesc") },
+      { id: "buffering", section: "troubleshooting", title: t("help.buffering"), body: t("help.bufferingDesc") },
+      { id: "not-playing", section: "troubleshooting", title: t("help.notPlaying"), body: t("help.notPlayingDesc") },
+      { id: "skipping", section: "troubleshooting", title: t("help.skipping"), body: t("help.skippingDesc") },
+
+      // FAQ
+      { id: "faq", section: "faq", title: t("help.faq"), body: t("help.faqDesc") },
+      { id: "faq-subscription", section: "faq", title: t("help.faqSubscription"), body: t("help.faqSubscriptionAnswer") },
+      { id: "faq-devices", section: "faq", title: t("help.faqDevices"), body: t("help.faqDevicesAnswer") },
+      { id: "faq-license", section: "faq", title: t("help.faqLicense"), body: t("help.faqLicenseAnswer") },
+      { id: "faq-cancel", section: "faq", title: t("help.faqCancel"), body: t("help.faqCancelAnswer") },
+
+      // Contact
+      { id: "contact", section: "contact", title: t("help.contact"), body: t("help.contactDesc") },
+      { id: "email-support", section: "contact", title: t("help.emailSupport"), body: "info@ambian.fi" },
+      { id: "whatsapp", section: "contact", title: "WhatsApp", body: "+358 40 466 6176" },
+    ];
+  }, [t]);
+
+  const suggestionItems = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [] as HelpTopic[];
+
+    return helpTopics
+      .filter((topic) => {
+        const haystack = `${topic.title} ${topic.body ?? ""}`.toLowerCase();
+        return haystack.includes(q);
+      })
+      .slice(0, 8);
+  }, [helpTopics, searchQuery]);
+
   const sectionVisibility = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return { gettingStarted: true, playerControls: true, airplay: true, troubleshooting: true, faq: true, contact: true };
+    if (!query) {
+      return {
+        gettingStarted: true,
+        playerControls: true,
+        airplay: true,
+        troubleshooting: true,
+        faq: true,
+        contact: true,
+      };
+    }
 
-    const gettingStarted = [
-      t("help.gettingStarted"), t("help.gettingStartedDesc"),
-      t("help.playMusic"), t("help.playMusicDesc"),
-      t("help.playlists"), t("help.playlistsDesc"),
-      t("help.favorites"), t("help.favoritesDesc"),
-      t("help.scheduling"), t("help.schedulingDesc"),
-      t("help.quickMix"), t("help.quickMixDesc"),
-      t("help.industryCollections"), t("help.industryCollectionsDesc")
-    ].some(text => text.toLowerCase().includes(query));
+    const visibility: Record<HelpSectionKey, boolean> = {
+      gettingStarted: false,
+      playerControls: false,
+      airplay: false,
+      troubleshooting: false,
+      faq: false,
+      contact: false,
+    };
 
-    const playerControls = [
-      t("help.playerControls"), t("help.playerControlsDesc"),
-      t("help.playPause"), t("help.playPauseDesc"),
-      t("help.skipTrack"), t("help.skipTrackDesc"),
-      t("help.shuffle"), t("help.shuffleDesc"),
-      t("help.repeat"), t("help.repeatDesc"),
-      t("help.crossfade"), t("help.crossfadeDesc")
-    ].some(text => text.toLowerCase().includes(query));
+    for (const topic of helpTopics) {
+      const haystack = `${topic.title} ${topic.body ?? ""}`.toLowerCase();
+      if (haystack.includes(query)) visibility[topic.section] = true;
+    }
 
-    const airplay = [
-      t("help.airplay"), t("help.airplayDesc"),
-      t("help.airplaySteps"), t("help.airplayStep1"),
-      t("help.airplayStep2"), t("help.airplayStep3"),
-      t("help.airplayStep4"), t("help.airplayTip"),
-      t("help.airplayTipDesc"), "sonos", "airplay"
-    ].some(text => text.toLowerCase().includes(query));
+    return visibility;
+  }, [helpTopics, searchQuery]);
 
-    const troubleshooting = [
-      t("help.troubleshooting"), t("help.troubleshootingDesc"),
-      t("help.noSound"), t("help.noSoundDesc"),
-      t("help.buffering"), t("help.bufferingDesc"),
-      t("help.notPlaying"), t("help.notPlayingDesc"),
-      t("help.skipping"), t("help.skippingDesc")
-    ].some(text => text.toLowerCase().includes(query));
+  const showSection = (section: HelpSectionKey) => sectionVisibility[section];
 
-    const faq = [
-      t("help.faq"), t("help.faqDesc"),
-      t("help.faqSubscription"), t("help.faqSubscriptionAnswer"),
-      t("help.faqDevices"), t("help.faqDevicesAnswer"),
-      t("help.faqLicense"), t("help.faqLicenseAnswer"),
-      t("help.faqCancel"), t("help.faqCancelAnswer")
-    ].some(text => text.toLowerCase().includes(query));
+  const hasResults =
+    !searchQuery.trim() || Object.values(sectionVisibility).some((v) => v === true);
 
-    const contact = [
-      t("help.contact"), t("help.contactDesc"),
-      t("help.emailSupport"), "email", "whatsapp", "support"
-    ].some(text => text.toLowerCase().includes(query));
-
-    return { gettingStarted, playerControls, airplay, troubleshooting, faq, contact };
-  }, [searchQuery, t]);
-
-  const showSection = (section: keyof typeof sectionVisibility) => {
-    return sectionVisibility[section];
+  const scrollToSection = (section: HelpSectionKey) => {
+    const el = document.getElementById(SECTION_ANCHORS[section]);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-
-  const hasResults = !searchQuery.trim() || Object.values(sectionVisibility).some(v => v === true);
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,8 +148,35 @@ const Help = () => {
               placeholder={t("help.searchPlaceholder") || "Search help topics..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && suggestionItems.length > 0) {
+                  e.preventDefault();
+                  scrollToSection(suggestionItems[0].section);
+                }
+              }}
               className="pl-9 h-10 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-full text-sm"
             />
+
+            {searchQuery.trim().length > 0 && suggestionItems.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <ul className="max-h-72 overflow-auto py-1">
+                  {suggestionItems.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => scrollToSection(item.section)}
+                        className="w-full px-3 py-2 text-left hover:bg-accent focus-visible:outline-none focus-visible:bg-accent"
+                      >
+                        <div className="text-sm font-medium text-foreground">{item.title}</div>
+                        {item.body && (
+                          <div className="text-xs text-muted-foreground line-clamp-1">{item.body}</div>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -120,7 +193,8 @@ const Help = () => {
 
         {/* Getting Started */}
         {showSection('gettingStarted') && (
-        <Card>
+        <section id={SECTION_ANCHORS.gettingStarted} className="scroll-mt-24">
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Music className="w-5 h-5 text-primary" />
@@ -174,12 +248,14 @@ const Help = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </section>
         )}
 
         {/* Player Controls */}
         {showSection('playerControls') && (
-        <Card>
+        <section id={SECTION_ANCHORS.playerControls} className="scroll-mt-24">
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Volume2 className="w-5 h-5 text-primary" />
@@ -228,12 +304,14 @@ const Help = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </section>
         )}
 
         {/* AirPlay & Sonos */}
         {showSection('airplay') && (
-        <Card>
+        <section id={SECTION_ANCHORS.airplay} className="scroll-mt-24">
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Speaker className="w-5 h-5 text-primary" />
@@ -261,12 +339,14 @@ const Help = () => {
               </p>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </section>
         )}
 
         {/* Playback Troubleshooting */}
         {showSection('troubleshooting') && (
-        <Card>
+        <section id={SECTION_ANCHORS.troubleshooting} className="scroll-mt-24">
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
@@ -346,12 +426,14 @@ const Help = () => {
               </AccordionItem>
             </Accordion>
           </CardContent>
-        </Card>
+          </Card>
+        </section>
         )}
 
         {/* Subscription & Account FAQ */}
         {showSection('faq') && (
-        <Card>
+        <section id={SECTION_ANCHORS.faq} className="scroll-mt-24">
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-primary" />
@@ -410,12 +492,14 @@ const Help = () => {
               </AccordionItem>
             </Accordion>
           </CardContent>
-        </Card>
+          </Card>
+        </section>
         )}
 
         {/* Contact Support */}
         {showSection('contact') && (
-        <Card>
+        <section id={SECTION_ANCHORS.contact} className="scroll-mt-24">
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="w-5 h-5 text-primary" />
@@ -460,6 +544,7 @@ const Help = () => {
             </div>
           </CardContent>
         </Card>
+        </section>
         )}
       </main>
     </div>
