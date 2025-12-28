@@ -279,7 +279,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       <ScrollArea className="flex-1 h-full">
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 pb-80 sm:pb-48 pt-0">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pr-14 md:pr-0">
             <div className="flex items-center gap-3">
               {onBack && (
                 <Button variant="ghost" size="icon" onClick={onBack}>
