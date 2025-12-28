@@ -487,7 +487,7 @@ const Profile = () => {
                     : subscription.subscribed
                       ? subscription.isTrial 
                         ? "bg-yellow-500/20 text-yellow-500"
-                        : "bg-primary/20 text-primary"
+                        : "bg-green-500/20 text-green-500"
                       : "bg-destructive/20 text-destructive"
                 }`}
               >
@@ -978,26 +978,6 @@ const Profile = () => {
         </Card>
 
 
-        {/* Install App Section */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5" />
-              Install App
-            </CardTitle>
-            <CardDescription>Install Ambian as an app for quick access</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/install")}
-              className="w-full sm:w-auto"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              View Install Instructions
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Terms & Conditions */}
         <Card className="bg-card border-border">
