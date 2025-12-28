@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock, Trash2, X } from "lucide-react";
-import { usePWAInstall } from "@/hooks/usePWAInstall";
+
 
 interface Invoice {
   id: string;
@@ -63,7 +63,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const { canInstall, isInstalled, isIOS, isMacOS, promptInstall } = usePWAInstall();
+  
 
   useEffect(() => {
     // Check if returning from plan change
@@ -944,43 +944,26 @@ const Profile = () => {
         </Card>
 
 
-        {/* Install App Card */}
-        {!isInstalled && (
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5" />
-                Install App
-              </CardTitle>
-              <CardDescription>Install Ambian as an app for quick access</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {canInstall ? (
-                <Button onClick={promptInstall} className="w-full sm:w-auto">
-                  <Download className="w-4 h-4 mr-2" />
-                  Install Ambian
-                </Button>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">
-                    {isIOS
-                      ? "Tap Share → 'Add to Home Screen' in Safari."
-                      : isMacOS
-                      ? "In Chrome/Edge: click the install icon in the address bar, or Menu → 'Install Ambian'. This only works on the published site, not in preview."
-                      : "Use your browser's menu to install this app."}
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/install")}
-                    className="w-full sm:w-auto"
-                  >
-                    View Install Instructions
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
+        {/* Install App Section */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              Install App
+            </CardTitle>
+            <CardDescription>Install Ambian as an app for quick access</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/install")}
+              className="w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              View Install Instructions
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Terms & Conditions */}
         <Card className="bg-card border-border">
