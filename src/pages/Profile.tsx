@@ -274,6 +274,15 @@ const Profile = () => {
         setDeviceCity("");
         setDevicePostalCode("");
         setDeviceCountry("FI");
+        
+        // Sync device slots from Stripe and refresh the UI
+        try {
+          await supabase.functions.invoke("sync-device-slots");
+          await loadDeviceSlots();
+          await checkSubscription();
+        } catch (syncError) {
+          console.error("Failed to sync device slots:", syncError);
+        }
       }
     } catch (error: any) {
       toast({
