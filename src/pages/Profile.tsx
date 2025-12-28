@@ -93,22 +93,22 @@ const Profile = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only reload when user ID changes
 
+  const loadInvoices = async () => {
+    if (!user) return;
+    setIsLoadingInvoices(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("get-invoices");
+      if (error) throw error;
+      setInvoices(data?.invoices || []);
+    } catch (error: any) {
+      console.error("Failed to load invoices:", error);
+    } finally {
+      setIsLoadingInvoices(false);
+    }
+  };
+
   useEffect(() => {
-    const loadInvoices = async () => {
-      if (!user) return;
-      setIsLoadingInvoices(true);
-
-      try {
-        const { data, error } = await supabase.functions.invoke("get-invoices");
-        if (error) throw error;
-        setInvoices(data?.invoices || []);
-      } catch (error: any) {
-        console.error("Failed to load invoices:", error);
-      } finally {
-        setIsLoadingInvoices(false);
-      }
-    };
-
     loadInvoices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only reload when user ID changes
@@ -269,7 +269,7 @@ const Profile = () => {
         // Invoice payment - show success and refresh
         toast({
           title: t("devices.invoiceSent") || "Invoice sent",
-          description: data.message || t("devices.invoiceSentDesc") || "Invoice has been sent to your email. Your new location is now active.",
+          description: t("devices.invoiceSentDesc") || "Invoice has been sent to your email. Your new location is now active.",
         });
         
         // Clear billing info after successful invoice request
@@ -282,8 +282,11 @@ const Profile = () => {
         // Sync device slots from Stripe and refresh the UI
         try {
           await supabase.functions.invoke("sync-device-slots");
-          await loadDeviceSlots();
-          await checkSubscription();
+          await Promise.all([
+            loadDeviceSlots(),
+            loadInvoices(),
+            checkSubscription(),
+          ]);
         } catch (syncError) {
           console.error("Failed to sync device slots:", syncError);
         }
