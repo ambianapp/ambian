@@ -348,7 +348,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
               trigger={
                 <Button variant="outline" size="sm" className="gap-2">
                   <Shuffle className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("library.quickMix")}</span>
+                  <span>{t("library.quickMix")}</span>
                 </Button>
               }
             />
