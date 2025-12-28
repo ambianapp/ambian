@@ -310,7 +310,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             )}
-            <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
+            <h1 className="text-2xl font-bold text-foreground whitespace-nowrap">{t("library.title")}</h1>
           </div>
           <div className="flex items-center gap-2 pr-14 md:pr-0">
             {/* Quick Mix Dialog - shows only liked playlists in Library */}
