@@ -1022,7 +1022,8 @@ const Profile = () => {
               {t("common.save")}
             </Button>
 
-            {/* Change Password Section */}
+            {/* Change Password Section - Only show for email/password users */}
+            {user?.app_metadata?.provider === 'email' && (
             <div className="pt-6 border-t border-border space-y-4">
               <div className="flex items-center gap-2 text-foreground">
                 <Lock className="w-4 h-4" />
@@ -1074,6 +1075,7 @@ const Profile = () => {
                 {t("auth.updatePassword")}
               </Button>
             </div>
+            )}
           </CardContent>
         </Card>
 
