@@ -858,20 +858,25 @@ async function sendPaymentConfirmationEmailForInvoice(
   // Determine plan type and period end
   let planType = "monthly";
   let periodEnd = new Date();
+  let periodEndIsValid = false;
   
   if (invoice.subscription) {
     try {
       const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
       planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
-      periodEnd = new Date((subscription as any).current_period_end * 1000);
+      
+      // Check if current_period_end exists and is a valid number
+      const currentPeriodEnd = (subscription as any).current_period_end;
+      if (currentPeriodEnd && typeof currentPeriodEnd === 'number' && currentPeriodEnd > 0) {
+        periodEnd = new Date(currentPeriodEnd * 1000);
+        // Validate the date is actually valid
+        if (!isNaN(periodEnd.getTime())) {
+          periodEndIsValid = true;
+          logStep("Got period end from subscription", { periodEnd: periodEnd.toISOString() });
+        }
+      }
     } catch (e) {
       logStep("Could not retrieve subscription details", { error: String(e) });
-      // Fallback: calculate from invoice
-      if (planType === 'yearly') {
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-      } else {
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
-      }
     }
   } else {
     // For one-time invoices, check line items for interval
@@ -879,11 +884,18 @@ async function sendPaymentConfirmationEmailForInvoice(
     for (const item of lineItems) {
       if (item.price?.recurring?.interval === 'year') {
         planType = 'yearly';
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
         break;
       }
     }
-    if (planType === 'monthly') {
+  }
+  
+  // Fallback: calculate period end from now if we couldn't get it from subscription
+  if (!periodEndIsValid) {
+    logStep("Using fallback period end calculation", { planType });
+    periodEnd = new Date();
+    if (planType === 'yearly') {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    } else {
       periodEnd.setMonth(periodEnd.getMonth() + 1);
     }
   }
