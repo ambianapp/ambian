@@ -316,22 +316,26 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
 
         {/* Selection Mode Actions */}
         {isSelectMode && (
-          <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20 animate-fade-in">
-            <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-              {selectedIds.size === allPlaylists.length && allPlaylists.length > 0 ? "Deselect All" : "Select All"}
-            </Button>
-            <span className="text-sm text-muted-foreground flex-1">
-              {selectedIds.size} selected
-            </span>
-            {selectedIds.size > 0 && (
-              <Button size="sm" onClick={handlePlaySelected} disabled={isPlayingMix} className="gap-2">
-                <Play className="w-4 h-4" />
-                {isPlayingMix ? "Loading..." : "Play Mix"}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs sm:text-sm px-2 sm:px-3">
+                {selectedIds.size === allPlaylists.length && allPlaylists.length > 0 ? "Deselect" : "Select All"}
               </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={cancelSelectMode}>
-              Cancel
-            </Button>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                {selectedIds.size} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              {selectedIds.size > 0 && (
+                <Button size="sm" onClick={handlePlaySelected} disabled={isPlayingMix} className="gap-1 text-xs sm:text-sm px-2 sm:px-3">
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {isPlayingMix ? "..." : "Play"}
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={cancelSelectMode} className="text-xs sm:text-sm px-2 sm:px-3">
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
 
