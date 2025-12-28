@@ -13,7 +13,7 @@ const Terms = () => {
       <div className="max-w-3xl mx-auto p-6 pb-32 md:p-8 md:pb-40">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <img src={ambianLogo} alt="Ambian" className="h-8" />
