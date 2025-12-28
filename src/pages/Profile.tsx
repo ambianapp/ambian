@@ -372,7 +372,7 @@ const Profile = () => {
             <CardDescription>{t("subscription.manage")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Open Invoice Alert - show if there's an unpaid invoice */}
+            {/* Open Invoice Alert - show if there are unpaid invoices */}
             {invoices.some(inv => inv.status === "open") && (
               <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
                 <div className="flex items-center justify-between">
@@ -382,31 +382,49 @@ const Profile = () => {
                       <span className="font-semibold">{t("subscription.paymentDue") || "Payment Due"}</span>
                     </div>
                     {(() => {
-                      const openInvoice = invoices.find(inv => inv.status === "open");
-                      if (!openInvoice) return null;
-                      const dueDate = openInvoice.dueDate ? new Date(openInvoice.dueDate * 1000) : null;
+                      const openInvoices = invoices.filter(inv => inv.status === "open");
+                      if (openInvoices.length === 0) return null;
+                      
+                      // Calculate total amount across all open invoices
+                      const totalAmount = openInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+                      const currency = openInvoices[0].currency;
+                      
+                      // Get earliest due date
+                      const dueDates = openInvoices
+                        .filter(inv => inv.dueDate)
+                        .map(inv => inv.dueDate!);
+                      const earliestDueDate = dueDates.length > 0 
+                        ? new Date(Math.min(...dueDates) * 1000) 
+                        : null;
+                      
                       return (
                         <p className="text-sm text-muted-foreground">
-                          {formatCurrency(openInvoice.amount, openInvoice.currency)}
-                          {dueDate && ` • ${t("invoices.dueBy")}: ${dueDate.toLocaleDateString()}`}
+                          {openInvoices.length > 1 
+                            ? `${openInvoices.length} ${t("invoices.openInvoices") || "open invoices"}: `
+                            : ""}
+                          {formatCurrency(totalAmount, currency)}
+                          {earliestDueDate && ` • ${t("invoices.dueBy")}: ${earliestDueDate.toLocaleDateString()}`}
                         </p>
                       );
                     })()}
                   </div>
-                  {(() => {
-                    const openInvoice = invoices.find(inv => inv.status === "open");
-                    if (!openInvoice?.hostedUrl) return null;
-                    return (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => window.open(openInvoice.hostedUrl!, "_blank")}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-black"
-                      >
-                        {t("invoices.payNow")}
-                      </Button>
-                    );
-                  })()}
+                  <div className="flex gap-2">
+                    {invoices.filter(inv => inv.status === "open").map((openInvoice, idx) => (
+                      openInvoice.hostedUrl && (
+                        <Button
+                          key={openInvoice.id}
+                          variant="default"
+                          size="sm"
+                          onClick={() => window.open(openInvoice.hostedUrl!, "_blank")}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                        >
+                          {invoices.filter(inv => inv.status === "open").length > 1 
+                            ? `${t("invoices.payNow")} #${idx + 1}`
+                            : t("invoices.payNow")}
+                        </Button>
+                      )
+                    ))}
+                  </div>
                 </div>
                 <p className="text-xs text-yellow-600 mt-3 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
