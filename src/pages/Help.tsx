@@ -121,6 +121,16 @@ const Help = () => {
   const hasResults =
     !searchQuery.trim() || Object.values(sectionVisibility).some((v) => v === true);
 
+  const unlockDocumentScroll = () => {
+    // Some mobile browsers (notably iOS Safari) can get "stuck" after input focus/blur + programmatic scroll.
+    // Clearing any accidental scroll locks restores normal touch scrolling.
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+  };
+
   const scrollToSection = (section: HelpSectionKey) => {
     const el = document.getElementById(SECTION_ANCHORS[section]);
     if (!el) return;
@@ -128,7 +138,10 @@ const Help = () => {
     // Account for the sticky header so the section title isn't hidden underneath it.
     const headerOffset = 120;
     const top = el.getBoundingClientRect().top + window.scrollY - headerOffset;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+
+    // On some mobile browsers, smooth scrolling after keyboard dismissal can freeze touch scrolling.
+    const isCoarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
+    window.scrollTo({ top: Math.max(0, top), behavior: isCoarsePointer ? "auto" : "smooth" });
   };
 
   return (
@@ -178,8 +191,14 @@ const Help = () => {
 
                           setSearchQuery("");
 
+                          // Ensure the document isn't left in a scroll-locked state.
+                          unlockDocumentScroll();
+
                           // Give the keyboard a moment to dismiss before scrolling.
-                          window.setTimeout(() => scrollToSection(item.section), 50);
+                          window.setTimeout(() => {
+                            unlockDocumentScroll();
+                            scrollToSection(item.section);
+                          }, 50);
                         }}
                         className="w-full px-3 py-2 text-left hover:bg-accent focus-visible:outline-none focus-visible:bg-accent"
                       >
