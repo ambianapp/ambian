@@ -1,4 +1,4 @@
-import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil } from "lucide-react";
+import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -10,7 +10,6 @@ import { getSignedAudioUrl } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import QuickMixDialog from "./QuickMixDialog";
-import ambianLogo from "@/assets/ambian-logo.png";
 import {
   Dialog,
   DialogContent,
@@ -430,12 +429,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                   )}
                   onClick={() => handlePlaylistClick(playlist)}
                 >
-                  <div className="relative">
-                    <img
-                      src={ambianLogo}
-                      alt={playlist.name}
-                      className="w-full aspect-square object-cover rounded-lg shadow-lg mb-4 bg-card"
-                    />
+                  <div className="relative w-full aspect-square rounded-lg shadow-lg mb-4 bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center">
+                    <Music className="w-16 h-16 text-secondary-foreground" />
                     {!isSelectMode && (
                       <Button
                         variant="ghost"
@@ -466,12 +461,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                       className="h-5 w-5"
                     />
                   )}
-                  <div className="relative">
-                    <img
-                      src={ambianLogo}
-                      alt={playlist.name}
-                      className="w-14 h-14 object-cover rounded-lg bg-card"
-                    />
+                  <div className="relative w-14 h-14 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center">
+                    <Music className="w-6 h-6 text-secondary-foreground" />
                     {!isSelectMode && (
                       <Button
                         variant="ghost"
@@ -564,11 +555,9 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex justify-center">
-                <img
-                  src={ambianLogo}
-                  alt="Playlist cover"
-                  className="w-32 h-32 object-cover rounded-lg bg-card"
-                />
+                <div className="w-32 h-32 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center">
+                  <Music className="w-16 h-16 text-secondary-foreground" />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="playlist-name">{t("library.playlistName") || "Name"}</Label>
