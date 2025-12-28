@@ -158,13 +158,16 @@ const Help = () => {
             />
 
             {searchQuery.trim().length > 0 && suggestionItems.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-popover shadow-lg">
                 <ul className="max-h-72 overflow-auto py-1">
                   {suggestionItems.map((item) => (
                     <li key={item.id}>
                       <button
                         type="button"
-                        onClick={() => scrollToSection(item.section)}
+                        onClick={() => {
+                          scrollToSection(item.section);
+                          setSearchQuery("");
+                        }}
                         className="w-full px-3 py-2 text-left hover:bg-accent focus-visible:outline-none focus-visible:bg-accent"
                       >
                         <div className="text-sm font-medium text-foreground">{item.title}</div>
