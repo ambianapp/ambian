@@ -60,6 +60,7 @@ const Profile = () => {
   const [deviceCity, setDeviceCity] = useState("");
   const [devicePostalCode, setDevicePostalCode] = useState("");
   const [deviceCountry, setDeviceCountry] = useState("FI");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -161,6 +162,15 @@ const Profile = () => {
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast({
+        title: t("common.error"),
+        description: t("auth.currentPasswordRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (newPassword.length < 6) {
       toast({
         title: t("common.error"),
@@ -181,10 +191,27 @@ const Profile = () => {
 
     setIsChangingPassword(true);
     try {
+      // First verify current password by re-authenticating
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+      
+      if (signInError) {
+        toast({
+          title: t("common.error"),
+          description: t("auth.currentPasswordIncorrect"),
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Now update to new password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       
       if (error) throw error;
       
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       toast({
@@ -1003,6 +1030,18 @@ const Profile = () => {
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="currentPassword">{t("auth.currentPassword")}</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-card"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="newPassword">{t("auth.newPassword")}</Label>
                 <Input
                   id="newPassword"
@@ -1028,7 +1067,7 @@ const Profile = () => {
 
               <Button 
                 onClick={handleChangePassword} 
-                disabled={isChangingPassword || !newPassword || !confirmPassword}
+                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
                 variant="outline"
               >
                 {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
