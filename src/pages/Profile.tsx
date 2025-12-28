@@ -466,13 +466,13 @@ const Profile = () => {
     <div className="min-h-screen bg-background p-4 pb-32 md:p-8 md:pb-48 pt-4 md:pt-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 pr-14 md:pr-0">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{t("profile.title")}</h1>
-            <p className="text-muted-foreground">{t("profile.subtitle")}</p>
+            <p className="text-muted-foreground text-sm sm:text-base">{t("profile.subtitle")}</p>
           </div>
         </div>
 
