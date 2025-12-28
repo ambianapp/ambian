@@ -261,13 +261,17 @@ const Profile = () => {
       const { data, error } = await supabase.functions.invoke("add-device-slot", { body });
       if (error) throw error;
       
-      if (data?.url) {
+      // Handle checkout vs invoice responses
+      if (data?.type === "checkout" && data?.url) {
+        // Card payment - open Stripe Checkout
         window.open(data.url, "_blank");
-      } else if (data?.message) {
+      } else if (data?.type === "invoice") {
+        // Invoice payment - show success and refresh
         toast({
           title: t("devices.invoiceSent") || "Invoice sent",
-          description: data.message,
+          description: data.message || t("devices.invoiceSentDesc") || "Invoice has been sent to your email. Your new location is now active.",
         });
+        
         // Clear billing info after successful invoice request
         setDeviceCompanyName("");
         setDeviceAddressLine("");
