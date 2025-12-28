@@ -300,9 +300,9 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
 
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
-      <div className="p-6 md:p-8 space-y-6">
+      <div className="p-6 md:p-8 space-y-6 pt-14 md:pt-6">
         {/* Header */}
-        <div className="flex items-center justify-between animate-fade-in pr-14 md:pr-0">
+        <div className="flex items-center justify-between animate-fade-in">
           <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
           <div className="flex items-center gap-2">
             {/* Quick Mix Dialog - shows only liked playlists in Library */}

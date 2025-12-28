@@ -463,10 +463,10 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-32 md:p-8 md:pb-48">
+    <div className="min-h-screen bg-background p-4 pb-32 md:p-8 md:pb-48 pt-16 md:pt-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 pr-14 md:pr-0">
+        <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
