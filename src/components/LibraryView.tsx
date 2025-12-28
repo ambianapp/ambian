@@ -1,4 +1,4 @@
-import { Plus, List, Grid3X3, Heart, Shuffle, Check, Play } from "lucide-react";
+import { Plus, List, Grid3X3, Heart, Shuffle, Check, Play, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
 import QuickMixDialog from "./QuickMixDialog";
+import { toast } from "sonner";
 
 interface SelectedPlaylist {
   id: string;
@@ -44,6 +45,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPlayingMix, setIsPlayingMix] = useState(false);
+  const [isQuickMixLoading, setIsQuickMixLoading] = useState(false);
   const { user } = useAuth();
 
   // All playlists combined for selection
@@ -236,6 +238,89 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     setSelectedIds(new Set());
   };
 
+  // Quick Mix: shuffle all liked playlists
+  const handleQuickMixLiked = async () => {
+    if (likedPlaylists.length === 0) {
+      toast.error(t("library.noLikedPlaylists") || "No liked playlists to mix");
+      return;
+    }
+    
+    setIsQuickMixLoading(true);
+
+    try {
+      const likedPlaylistIds = likedPlaylists.map(p => p.id);
+      
+      const { data: allTracksData } = await supabase
+        .from("playlist_tracks")
+        .select("tracks(*), playlist_id")
+        .in("playlist_id", likedPlaylistIds);
+
+      if (!allTracksData || allTracksData.length === 0) {
+        toast.error(t("library.noTracksInPlaylists") || "No tracks found in liked playlists");
+        setIsQuickMixLoading(false);
+        return;
+      }
+
+      const allTracks: Track[] = allTracksData
+        .map((item: any) => item.tracks)
+        .filter(Boolean)
+        .map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          artist: t.artist,
+          album: t.album || "",
+          duration: t.duration || "",
+          cover: t.cover_url || "/placeholder.svg",
+          genre: t.genre || "",
+        }));
+
+      const uniqueTracks = allTracks.filter((track, index, self) => 
+        index === self.findIndex(t => t.id === track.id)
+      );
+
+      if (uniqueTracks.length === 0) {
+        toast.error(t("library.noTracksInPlaylists") || "No tracks found");
+        setIsQuickMixLoading(false);
+        return;
+      }
+
+      const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
+
+      const firstTrack = shuffledTracks[0];
+      const { data: trackData } = await supabase
+        .from("tracks")
+        .select("audio_url")
+        .eq("id", firstTrack.id)
+        .single();
+
+      const signedAudioUrl = trackData?.audio_url 
+        ? await getSignedAudioUrl(trackData.audio_url)
+        : undefined;
+
+      // Log play history for liked playlists
+      if (user) {
+        for (const playlistId of likedPlaylistIds) {
+          await supabase.from("play_history").insert({
+            user_id: user.id,
+            playlist_id: playlistId,
+          });
+        }
+      }
+
+      toast.success(`${t("library.playingMix") || "Playing mix"}: ${shuffledTracks.length} ${t("library.songs") || "songs"}`);
+      
+      onTrackSelect({
+        ...firstTrack,
+        audioUrl: signedAudioUrl,
+      }, shuffledTracks);
+    } catch (error) {
+      console.error("Quick mix error:", error);
+      toast.error(t("library.mixError") || "Failed to create mix");
+    } finally {
+      setIsQuickMixLoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-6 md:p-8 space-y-6">
@@ -243,6 +328,21 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
         <div className="flex items-center justify-between animate-fade-in">
           <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
           <div className="flex items-center gap-2">
+            {/* Quick Mix Liked Playlists Button */}
+            {likedPlaylists.length > 0 && (
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="gap-2"
+                onClick={handleQuickMixLiked}
+                disabled={isQuickMixLoading}
+              >
+                <Zap className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {isQuickMixLoading ? t("library.loading") || "Loading..." : t("library.quickMixLiked") || "Quick Mix"}
+                </span>
+              </Button>
+            )}
             <QuickMixDialog
               onTrackSelect={onTrackSelect}
               trigger={
