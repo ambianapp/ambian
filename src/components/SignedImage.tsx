@@ -9,7 +9,9 @@ type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
 };
 
 function isAudioBucketPublicUrl(url: string) {
-  return url.includes("/storage/v1/object/public/audio/");
+  // Check for both audio files and covers in the private audio bucket
+  return url.includes("/storage/v1/object/public/audio/") || 
+         url.includes("/storage/v1/object/audio/");
 }
 
 /**
@@ -18,10 +20,13 @@ function isAudioBucketPublicUrl(url: string) {
  */
 const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
   ({ src, alt, className, fallbackSrc = "/placeholder.svg", loading = "lazy", ...props }, ref) => {
-    const [resolvedSrc, setResolvedSrc] = useState<string>(src || fallbackSrc);
+    // Start with fallback to prevent white flash, then resolve the actual src
+    const [resolvedSrc, setResolvedSrc] = useState<string>(fallbackSrc);
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
       let cancelled = false;
+      setHasError(false);
 
       async function resolve() {
         const next = src || "";
@@ -32,13 +37,22 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
 
         // Public assets or relative paths (e.g. /playlists/...) should be used as-is.
         if (!isAudioBucketPublicUrl(next)) {
-          setResolvedSrc(next);
+          if (!cancelled) setResolvedSrc(next);
           return;
         }
 
-        const signed = await getSignedAudioUrl(next);
-        if (cancelled) return;
-        setResolvedSrc(signed || next);
+        try {
+          const signed = await getSignedAudioUrl(next);
+          if (cancelled) return;
+          if (signed) {
+            setResolvedSrc(signed);
+          } else {
+            // Failed to get signed URL, use fallback
+            setResolvedSrc(fallbackSrc);
+          }
+        } catch (err) {
+          if (!cancelled) setResolvedSrc(fallbackSrc);
+        }
       }
 
       resolve();
@@ -48,6 +62,13 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
       };
     }, [src, fallbackSrc]);
 
+    const handleError = () => {
+      if (!hasError) {
+        setHasError(true);
+        setResolvedSrc(fallbackSrc);
+      }
+    };
+
     return (
       <img
         ref={ref}
@@ -55,7 +76,7 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
         alt={alt}
         loading={loading}
         className={cn(className)}
-        onError={() => setResolvedSrc(fallbackSrc)}
+        onError={handleError}
         {...props}
       />
     );
