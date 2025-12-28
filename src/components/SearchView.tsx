@@ -156,9 +156,9 @@ const SearchView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, 
 
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
-      <div className="p-6 md:p-8 space-y-8 pt-14 md:pt-6">
+      <div className="p-6 md:p-8 space-y-8 pt-2 md:pt-6">
         {/* Search Input */}
-        <div className="animate-fade-in">
+        <div className="animate-fade-in pr-14 md:pr-0">
           <div className="relative max-w-lg">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
