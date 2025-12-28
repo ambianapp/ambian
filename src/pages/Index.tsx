@@ -7,7 +7,7 @@ import LibraryView from "@/components/LibraryView";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
 import LikedSongsView from "@/components/LikedSongsView";
 import ScheduleManager from "@/components/ScheduleManager";
-import MobileNav from "@/components/MobileNav";
+import MobileSidebar from "@/components/MobileSidebar";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import TrialBanner from "@/components/TrialBanner";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
@@ -241,6 +241,13 @@ const Index = () => {
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <TrialBanner />
+      <MobileSidebar 
+        activeView={activeView} 
+        onViewChange={handleViewChange} 
+        onPlaylistSelect={handlePlaylistSelect}
+        schedulerEnabled={schedulerEnabled}
+        onToggleScheduler={toggleScheduler}
+      />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeView={activeView} onViewChange={handleViewChange} onPlaylistSelect={handlePlaylistSelect} schedulerEnabled={schedulerEnabled} onToggleScheduler={toggleScheduler} />
         
@@ -249,7 +256,6 @@ const Index = () => {
         </main>
       </div>
 
-      <MobileNav activeView={activeView} onViewChange={handleViewChange} />
       {/* <AIChatbot /> */}
 
       {/* Welcome dialog for new users - at root level to survive re-renders */}
