@@ -1,4 +1,4 @@
-import { Plus, List, Grid3X3, Heart, Shuffle, Check, Play, Zap } from "lucide-react";
+import { List, Grid3X3, Heart, Shuffle, Check, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
-import QuickMixDialog from "./QuickMixDialog";
 import { toast } from "sonner";
 
 interface SelectedPlaylist {
@@ -328,30 +327,21 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
         <div className="flex items-center justify-between animate-fade-in">
           <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
           <div className="flex items-center gap-2">
-            {/* Quick Mix Liked Playlists Button */}
+            {/* Quick Mix Button - shuffles all liked playlists */}
             {likedPlaylists.length > 0 && (
               <Button 
-                variant="default" 
+                variant="outline" 
                 size="sm" 
                 className="gap-2"
                 onClick={handleQuickMixLiked}
                 disabled={isQuickMixLoading}
               >
-                <Zap className="w-4 h-4" />
+                <Shuffle className="w-4 h-4" />
                 <span className="hidden sm:inline">
-                  {isQuickMixLoading ? t("library.loading") || "Loading..." : t("library.quickMixLiked") || "Quick Mix"}
+                  {isQuickMixLoading ? t("library.loading") : t("library.quickMix")}
                 </span>
               </Button>
             )}
-            <QuickMixDialog
-              onTrackSelect={onTrackSelect}
-              trigger={
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Shuffle className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("quickMix.button")}</span>
-                </Button>
-              }
-            />
             <Button 
               variant={isSelectMode ? "secondary" : "ghost"} 
               size="icon" 
