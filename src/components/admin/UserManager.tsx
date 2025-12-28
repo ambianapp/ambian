@@ -378,7 +378,7 @@ export function UserManager() {
         )}
       </div>
 
-      <div className="border border-border rounded-lg overflow-auto max-h-[60vh]">
+      <div className="border border-border rounded-lg overflow-auto max-h-[50vh]">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">

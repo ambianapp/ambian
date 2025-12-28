@@ -29,7 +29,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-36 md:p-8 md:pb-8">
+    <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
