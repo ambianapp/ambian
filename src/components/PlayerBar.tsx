@@ -1177,7 +1177,7 @@ const PlayerBar = () => {
       />
 
       {/* Mobile Player Bar */}
-      <div className="fixed bottom-[calc(56px+var(--safe-bottom-tight))] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
+      <div className="fixed bottom-0 pb-[var(--safe-bottom-tight)] md:hidden left-0 right-0 glass border-t border-border z-50 flex flex-col">
         {/* Track Info Row */}
         <div className="flex items-center gap-3 px-3 pt-2">
           <SignedImage
