@@ -9,6 +9,9 @@ verify_jwt = true
 [functions.sync-device-slots]
 verify_jwt = true
 
+[functions.log-activity]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false
 
