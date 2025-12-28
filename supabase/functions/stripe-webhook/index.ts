@@ -903,23 +903,26 @@ async function sendPaymentConfirmationEmailForInvoice(
   // For first subscription, send welcome email instead of just payment confirmation
   if (isFirstSubscription) {
     logStep("Sending welcome email for first subscription", { email: customerEmail, planType });
-    await sendSubscriptionConfirmationEmail(
+    const ok = await sendSubscriptionConfirmationEmail(
       customerEmail,
       customerName,
       planType,
       periodEnd
     );
-  } else {
-    await sendPaymentConfirmationEmail(
-      customerEmail,
-      customerName,
-      invoice.amount_paid || 0,
-      invoice.currency || 'eur',
-      planType,
-      periodEnd,
-      invoice.number
-    );
+    return ok;
   }
+
+  const ok = await sendPaymentConfirmationEmail(
+    customerEmail,
+    customerName,
+    invoice.amount_paid || 0,
+    invoice.currency || 'eur',
+    planType,
+    periodEnd,
+    invoice.number
+  );
+
+  return ok;
 }
 
 async function sendDeviceSlotUnpaidCancellationEmail(
@@ -1234,31 +1237,69 @@ serve(async (req) => {
       
       // Helper function to check if this is a first subscription and send appropriate email
       const handleSubscriptionEmail = async (targetUserId: string, customerEmail: string) => {
+        // Check if we've already sent a confirmation email for this invoice (webhooks can be retried)
+        const isRenewal = invoice.metadata?.renewal === "true";
+
         // Check if user already has an active subscription record (to determine if this is their first)
         const { data: existingSub } = await supabaseAdmin
           .from("subscriptions")
           .select("id, status")
           .eq("user_id", targetUserId)
           .maybeSingle();
-        
+
         // It's a first subscription if no record exists OR if the existing record is in trial/trialing status
         const isFirstSubscription = !existingSub || existingSub.status === 'trialing';
-        const isRenewal = invoice.metadata?.renewal === "true";
-        
+
+        const emailEventType = isFirstSubscription && !isRenewal
+          ? 'email_subscription_active'
+          : 'email_payment_confirmed';
+
+        const { data: alreadySent } = await supabaseAdmin
+          .from('activity_logs')
+          .select('id')
+          .eq('user_id', targetUserId)
+          .eq('event_type', emailEventType)
+          .contains('event_details', { invoiceId: invoice.id })
+          .maybeSingle();
+
+        if (alreadySent) {
+          logStep("Skipping duplicate confirmation email for invoice", {
+            invoiceId: invoice.id,
+            emailEventType,
+            userId: targetUserId,
+          });
+          return;
+        }
+
         // Send welcome email for first subscription, payment confirmation for renewals
-        logStep("Determining email type", { 
-          isFirstSubscription, 
-          isRenewal, 
-          existingStatus: existingSub?.status 
+        logStep("Determining email type", {
+          isFirstSubscription,
+          isRenewal,
+          existingStatus: existingSub?.status,
         });
-        
+
         // Don't send welcome email for renewals
-        await sendPaymentConfirmationEmailForInvoice(
-          stripe, 
-          invoice, 
-          customerEmail, 
+        const ok = await sendPaymentConfirmationEmailForInvoice(
+          stripe,
+          invoice,
+          customerEmail,
           isFirstSubscription && !isRenewal
         );
+
+        if (ok) {
+          await supabaseAdmin.from('activity_logs').insert({
+            user_id: targetUserId,
+            user_email: customerEmail,
+            event_type: emailEventType,
+            event_message: 'Subscription email sent',
+            event_details: {
+              invoiceId: invoice.id,
+              invoiceNumber: invoice.number,
+              renewal: isRenewal,
+              firstSubscription: isFirstSubscription,
+            },
+          });
+        }
       };
       
       if (!userId) {
