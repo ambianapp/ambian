@@ -8,6 +8,40 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Email wrapper with proper dark mode support for all email clients
+const emailWrapper = (content: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <style>
+    :root { color-scheme: dark; }
+    @media (prefers-color-scheme: dark) {
+      body, .body-bg { background-color: #1a1a2e !important; }
+    }
+  </style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;" bgcolor="#1a1a2e">
+  <table role="presentation" width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1a1a2e" style="background-color: #1a1a2e; min-height: 100vh;">
+    <tr>
+      <td align="center" valign="top" style="padding: 40px 20px; background-color: #1a1a2e;" bgcolor="#1a1a2e">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #16213e; border-radius: 16px;" bgcolor="#16213e">
+          ${content}
+        </table>
+      </td>
+    </tr>
+    <!-- Spacer for dark background -->
+    <tr>
+      <td style="background-color: #1a1a2e; height: 40px;" bgcolor="#1a1a2e">&nbsp;</td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
 async function sendUpcomingPaymentEmail(
   email: string,
   customerName: string | null,
@@ -30,94 +64,77 @@ async function sendUpcomingPaymentEmail(
     day: 'numeric',
   });
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
-                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                    ⏰ Payment Reminder
-                  </h1>
-                </td>
-              </tr>
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                ⏰ Payment Reminder
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                This is a friendly reminder that your Ambian subscription renewal is coming up.
+              </p>
               
-              <!-- Content -->
-              <tr>
-                <td style="padding: 20px 40px;">
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hi${customerName ? ` ${customerName}` : ''},
-                  </p>
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    This is a friendly reminder that your Ambian subscription renewal is coming up.
-                  </p>
-                  
-                  <!-- Details Box -->
-                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Plan:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Amount:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Due by:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedDueDate}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                  
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    If you're paying by bank transfer (IBAN), please ensure payment is made before the due date to avoid any interruption to your service.
-                  </p>
-                  
-                  <!-- CTA Button -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding: 20px 0 30px;">
-                        <a href="https://ambianmusic.com/profile" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                          View Invoice
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+              <!-- Details Box -->
+              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Plan:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Amount:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Due by:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedDueDate}</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                  <p style="color: #888888; font-size: 14px; margin: 0;">
-                    Questions? Contact us at <a href="mailto:support@ambianmusic.com" style="color: #8b5cf6; text-decoration: none;">support@ambianmusic.com</a>
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                If you're paying by bank transfer (IBAN), please ensure payment is made before the due date to avoid any interruption to your service.
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com/profile" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      View Invoice
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Questions? Contact us at <a href="mailto:support@ambianmusic.com" style="color: #8b5cf6; text-decoration: none;">support@ambianmusic.com</a>
+              </p>
+            </td>
+          </tr>
+  `);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -154,86 +171,69 @@ async function sendPaymentFailedEmail(
     currency: currency.toUpperCase(),
   }).format(amount / 100);
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
-                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                    ⚠️ Payment Failed
-                  </h1>
-                </td>
-              </tr>
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                ⚠️ Payment Failed
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                We were unable to process your payment of <strong style="color: #ffffff;">${formattedAmount}</strong> for your ${planType === 'yearly' ? 'yearly' : 'monthly'} Ambian subscription.
+              </p>
               
-              <!-- Content -->
-              <tr>
-                <td style="padding: 20px 40px;">
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hi${customerName ? ` ${customerName}` : ''},
-                  </p>
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    We were unable to process your payment of <strong style="color: #ffffff;">${formattedAmount}</strong> for your ${planType === 'yearly' ? 'yearly' : 'monthly'} Ambian subscription.
-                  </p>
-                  
-                  <!-- Warning Box -->
-                  <div style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(239, 68, 68, 0.3);">
-                    <p style="color: #fca5a5; font-size: 14px; margin: 0;">
-                      <strong>Action required:</strong> Please update your payment method to avoid interruption to your service.
-                    </p>
-                  </div>
-                  
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    This could be due to:
-                  </p>
-                  <ul style="color: #e0e0e0; font-size: 14px; line-height: 1.8; margin: 0 0 20px; padding-left: 20px;">
-                    <li>Insufficient funds</li>
-                    <li>Expired card</li>
-                    <li>Card declined by your bank</li>
-                  </ul>
-                  
-                  <!-- CTA Button -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding: 20px 0 30px;">
-                        <a href="https://ambian.app/profile" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                          Update Payment Method
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  
-                  <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 0;">
-                    If you believe this is an error, please contact your bank or reach out to us for assistance.
-                  </p>
-                </td>
-              </tr>
+              <!-- Warning Box -->
+              <div style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <p style="color: #fca5a5; font-size: 14px; margin: 0;">
+                  <strong>Action required:</strong> Please update your payment method to avoid interruption to your service.
+                </p>
+              </div>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                  <p style="color: #888888; font-size: 14px; margin: 0;">
-                    Questions? Visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a> or reply to this email.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                This could be due to:
+              </p>
+              <ul style="color: #e0e0e0; font-size: 14px; line-height: 1.8; margin: 0 0 20px; padding-left: 20px;">
+                <li>Insufficient funds</li>
+                <li>Expired card</li>
+                <li>Card declined by your bank</li>
+              </ul>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambian.app/profile" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Update Payment Method
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 0;">
+                If you believe this is an error, please contact your bank or reach out to us for assistance.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Questions? Visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a> or reply to this email.
+              </p>
+            </td>
+          </tr>
+  `);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -271,119 +271,102 @@ async function sendSubscriptionConfirmationEmail(
     day: 'numeric',
   });
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
-                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                    🎉 Welcome to Ambian!
-                  </h1>
-                </td>
-              </tr>
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                🎉 Welcome to Ambian!
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Thank you for subscribing to Ambian! Your subscription is now active and you have full access to our entire music library.
+              </p>
               
-              <!-- Content -->
-              <tr>
-                <td style="padding: 20px 40px;">
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hi${customerName ? ` ${customerName}` : ''},
-                  </p>
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Thank you for subscribing to Ambian! Your subscription is now active and you have full access to our entire music library.
-                  </p>
-                  
-                  <!-- Subscription Details -->
-                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Subscription Active</h3>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Plan:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Access until:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedPeriodEnd}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                  
-                  <!-- CTA Button -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding: 20px 0 30px;">
-                        <a href="https://ambian.app" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                          Start Listening
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  
-                  <!-- What's included -->
-                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin-bottom: 20px;">
-                    <h3 style="color: #ffffff; font-size: 16px; margin: 0 0 16px;">What's included:</h3>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 16px;">✓</span>
-                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Unlimited access to all playlists</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 16px;">✓</span>
-                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Commercial licensing for your business</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 16px;">✓</span>
-                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Schedule playlists for different times</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #10b981; font-size: 16px;">✓</span>
-                          <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Priority support</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                </td>
-              </tr>
+              <!-- Subscription Details -->
+              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Subscription Active</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Plan:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Access until:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedPeriodEnd}</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                  <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
-                    Manage your subscription anytime at <a href="https://ambian.app/profile" style="color: #8b5cf6; text-decoration: none;">ambian.app/profile</a>
-                  </p>
-                  <p style="color: #888888; font-size: 14px; margin: 0;">
-                    Questions? Visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a>
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambian.app" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Start Listening
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- What's included -->
+              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                <h3 style="color: #ffffff; font-size: 16px; margin: 0 0 16px;">What's included:</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Unlimited access to all playlists</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Commercial licensing for your business</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Schedule playlists for different times</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #10b981; font-size: 16px;">✓</span>
+                      <span style="color: #e0e0e0; font-size: 14px; margin-left: 12px;">Priority support</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
+                Manage your subscription anytime at <a href="https://ambian.app/profile" style="color: #8b5cf6; text-decoration: none;">ambian.app/profile</a>
+              </p>
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Questions? Visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a>
+              </p>
+            </td>
+          </tr>
+  `);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -429,101 +412,84 @@ async function sendPaymentConfirmationEmail(
     day: 'numeric',
   });
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
-                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                    ✓ Payment Confirmed
-                  </h1>
-                </td>
-              </tr>
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                ✓ Payment Confirmed
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Thank you for your payment! Your Ambian subscription is now active.
+              </p>
               
-              <!-- Content -->
-              <tr>
-                <td style="padding: 20px 40px;">
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hi${customerName ? ` ${customerName}` : ''},
-                  </p>
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Thank you for your payment! Your Ambian subscription is now active.
-                  </p>
-                  
-                  <!-- Details Box -->
-                  <div style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3);">
-                    <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">Payment Details</h3>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      ${invoiceNumber ? `<tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Invoice:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${invoiceNumber}</span>
-                        </td>
-                      </tr>` : ''}
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Plan:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Amount paid:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Access until:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedPeriodEnd}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                  
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    You can start enjoying unlimited background music for your business right away!
-                  </p>
-                  
-                  <!-- CTA Button -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding: 20px 0 30px;">
-                        <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                          Open Ambian
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+              <!-- Details Box -->
+              <div style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">Payment Details</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  ${invoiceNumber ? `<tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Invoice:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${invoiceNumber}</span>
+                    </td>
+                  </tr>` : ''}
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Plan:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Amount paid:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Access until:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedPeriodEnd}</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                  <p style="color: #888888; font-size: 14px; margin: 0;">
-                    Manage your subscription at <a href="https://ambianmusic.com/profile" style="color: #8b5cf6; text-decoration: none;">ambianmusic.com/profile</a>
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                You can start enjoying unlimited background music for your business right away!
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Open Ambian
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Manage your subscription at <a href="https://ambianmusic.com/profile" style="color: #8b5cf6; text-decoration: none;">ambianmusic.com/profile</a>
+              </p>
+            </td>
+          </tr>
+  `);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -564,89 +530,72 @@ async function sendDeviceSlotConfirmationEmail(
   const locationText = quantity === 1 ? "1 new location" : `${quantity} new locations`;
   const periodText = period === 'yearly' ? 'year' : 'month';
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
-                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                    🏪 Location Added!
-                  </h1>
-                </td>
-              </tr>
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                🏪 Location Added!
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Great news! You've successfully added ${locationText} to your Ambian subscription.
+              </p>
               
-              <!-- Content -->
-              <tr>
-                <td style="padding: 20px 40px;">
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hi${customerName ? ` ${customerName}` : ''},
-                  </p>
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Great news! You've successfully added ${locationText} to your Ambian subscription.
-                  </p>
-                  
-                  <!-- Details Box -->
-                  <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Location Added</h3>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Locations added:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${quantity}</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <span style="color: #888888; font-size: 14px;">Billing:</span>
-                          <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}/${periodText}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                  
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    You can now play Ambian on ${quantity} additional device${quantity > 1 ? 's' : ''} at your new location${quantity > 1 ? 's' : ''}.
-                  </p>
-                  
-                  <!-- CTA Button -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding: 20px 0 30px;">
-                        <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                          Start Playing
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+              <!-- Details Box -->
+              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ Location Added</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Locations added:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${quantity}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Billing:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedAmount}/${periodText}</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                  <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
-                    Manage your locations at <a href="https://ambianmusic.com/profile" style="color: #8b5cf6; text-decoration: none;">ambianmusic.com/profile</a>
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                You can now play Ambian on ${quantity} additional device${quantity > 1 ? 's' : ''} at your new location${quantity > 1 ? 's' : ''}.
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Start Playing
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0 0 10px;">
+                Manage your locations at <a href="https://ambianmusic.com/profile" style="color: #8b5cf6; text-decoration: none;">ambianmusic.com/profile</a>
+              </p>
+            </td>
+          </tr>
+  `);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -676,78 +625,61 @@ async function sendSubscriptionCanceledEmail(
 ) {
   const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-        <tr>
-          <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
-              <!-- Header -->
-              <tr>
-                <td style="padding: 40px 40px 20px; text-align: center;">
-                  <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
-                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                    We're sorry to see you go
-                  </h1>
-                </td>
-              </tr>
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                We're sorry to see you go
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription has been canceled. We hope you enjoyed our service!
+              </p>
               
-              <!-- Content -->
-              <tr>
-                <td style="padding: 20px 40px;">
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Hi${customerName ? ` ${customerName}` : ''},
-                  </p>
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    Your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription has been canceled. We hope you enjoyed our service!
-                  </p>
-                  
-                  <!-- Offer Box -->
-                  <div style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(139, 92, 246, 0.3);">
-                    <h3 style="color: #8b5cf6; font-size: 16px; margin: 0 0 12px;">💡 Did you know?</h3>
-                    <p style="color: #e0e0e0; font-size: 14px; line-height: 1.6; margin: 0;">
-                      You can resubscribe anytime and get instant access to all your favorite playlists again. Your preferences and settings are saved!
-                    </p>
-                  </div>
-                  
-                  <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                    If you have any feedback on how we can improve, we'd love to hear from you. Just reply to this email.
-                  </p>
-                  
-                  <!-- CTA Button -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding: 20px 0 30px;">
-                        <a href="https://ambianmusic.com/pricing" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                          Resubscribe Now
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+              <!-- Offer Box -->
+              <div style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(139, 92, 246, 0.3);">
+                <h3 style="color: #8b5cf6; font-size: 16px; margin: 0 0 12px;">💡 Did you know?</h3>
+                <p style="color: #e0e0e0; font-size: 14px; line-height: 1.6; margin: 0;">
+                  You can resubscribe anytime and get instant access to all your favorite playlists again. Your preferences and settings are saved!
+                </p>
+              </div>
               
-              <!-- Footer -->
-              <tr>
-                <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-                  <p style="color: #888888; font-size: 14px; margin: 0;">
-                    Thank you for being a part of Ambian. We hope to see you again soon!
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                If you have any feedback on how we can improve, we'd love to hear from you. Just reply to this email.
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com/pricing" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Resubscribe Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Thank you for being a part of Ambian. We hope to see you again soon!
+              </p>
+            </td>
+          </tr>
+  `);
 
   try {
     const { data, error } = await resend.emails.send({
