@@ -296,10 +296,6 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                 </p>
               </div>
             </div>
-            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
-              {t("schedule.addSchedule")}
-            </Button>
           </div>
 
           {/* Global On/Off Toggle */}
@@ -326,6 +322,12 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
               </CardContent>
             </Card>
           )}
+
+          {/* Add Schedule Button */}
+          <Button onClick={openCreateDialog} className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            {t("schedule.addSchedule")}
+          </Button>
 
 
           {/* Schedule List */}
