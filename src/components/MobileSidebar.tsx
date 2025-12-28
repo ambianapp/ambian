@@ -222,8 +222,8 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
       <div className="md:hidden fixed top-4 right-4 z-50">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="bg-card/80 backdrop-blur-sm shadow-lg">
-              <Menu className="w-6 h-6 text-primary" />
+            <Button size="icon" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+              <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-72 p-0 flex flex-col">
