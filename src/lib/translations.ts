@@ -193,6 +193,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.pending": "Pending",
     "invoices.dueBy": "Due by",
     "invoices.payNow": "Pay Now",
+    "invoices.openInvoices": "open invoices",
     "invoices.preview": "Preview",
     "invoices.download": "Download",
     
@@ -700,6 +701,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.pending": "Väntar",
     "invoices.dueBy": "Förfaller",
     "invoices.payNow": "Betala nu",
+    "invoices.openInvoices": "öppna fakturor",
     "invoices.preview": "Förhandsgranska",
     "invoices.download": "Ladda ner",
     
@@ -1206,6 +1208,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.pending": "Odottaa",
     "invoices.dueBy": "Eräpäivä",
     "invoices.payNow": "Maksa nyt",
+    "invoices.openInvoices": "avointa laskua",
     "invoices.preview": "Esikatselu",
     "invoices.download": "Lataa",
     
@@ -1712,6 +1715,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.pending": "Ausstehend",
     "invoices.dueBy": "Fällig am",
     "invoices.payNow": "Jetzt bezahlen",
+    "invoices.openInvoices": "offene Rechnungen",
     "invoices.preview": "Vorschau",
     "invoices.download": "Herunterladen",
     
@@ -2218,6 +2222,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.pending": "En attente",
     "invoices.dueBy": "Échéance",
     "invoices.payNow": "Payer maintenant",
+    "invoices.openInvoices": "factures en attente",
     "invoices.preview": "Aperçu",
     "invoices.download": "Télécharger",
     
