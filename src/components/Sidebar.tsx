@@ -205,7 +205,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   );
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 gap-6 h-full overflow-hidden">
+    <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 pb-28 gap-6 h-full overflow-hidden">
       {/* Logo */}
       <div className="flex items-center gap-3 px-2 py-4">
         <img 
