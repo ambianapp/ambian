@@ -21,9 +21,10 @@ interface DbPlaylist {
 interface QuickMixDialogProps {
   onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
   trigger?: React.ReactNode;
+  likedOnly?: boolean; // When true, only show user's liked playlists
 }
 
-const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
+const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixDialogProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -56,14 +57,33 @@ const QuickMixDialog = ({ onTrackSelect, trigger }: QuickMixDialogProps) => {
 
   const loadPlaylists = async () => {
     setIsLoading(true);
-    const { data } = await supabase
-      .from("playlists")
-      .select("id, name, description, cover_url, category")
-      .or("is_system.eq.true,is_public.eq.true")
-      .order("name", { ascending: true });
+    
+    if (likedOnly && user) {
+      // Fetch only the user's liked playlists
+      const { data: likedData } = await supabase
+        .from("liked_playlists")
+        .select("playlist_id, playlists(id, name, description, cover_url, category)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-    setAllPlaylists(data || []);
-    setFilteredPlaylists(data || []);
+      const playlists = likedData
+        ?.map((item: any) => item.playlists)
+        .filter(Boolean) || [];
+      
+      setAllPlaylists(playlists);
+      setFilteredPlaylists(playlists);
+    } else {
+      // Fetch all system/public playlists
+      const { data } = await supabase
+        .from("playlists")
+        .select("id, name, description, cover_url, category")
+        .or("is_system.eq.true,is_public.eq.true")
+        .order("name", { ascending: true });
+
+      setAllPlaylists(data || []);
+      setFilteredPlaylists(data || []);
+    }
+    
     setIsLoading(false);
   };
 

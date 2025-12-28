@@ -244,9 +244,10 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
         <div className="flex items-center justify-between animate-fade-in">
           <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
           <div className="flex items-center gap-2">
-            {/* Quick Mix Dialog - opens playlist selection like on home page */}
+            {/* Quick Mix Dialog - shows only liked playlists in Library */}
             <QuickMixDialog
               onTrackSelect={onTrackSelect}
+              likedOnly={true}
               trigger={
                 <Button variant="outline" size="sm" className="gap-2">
                   <Shuffle className="w-4 h-4" />
