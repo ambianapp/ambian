@@ -205,7 +205,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   );
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 gap-6">
+    <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 gap-6 h-full overflow-hidden">
       {/* Logo */}
       <div className="flex items-center gap-3 px-2 py-4">
         <img 
@@ -273,7 +273,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         )}
       </nav>
 
-      <div className="flex-1 flex flex-col gap-4 mt-4">
+      <div className="flex-1 flex flex-col gap-4 mt-4 min-h-0">
         <div className="flex items-center justify-between px-2">
           <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
           <Button 
