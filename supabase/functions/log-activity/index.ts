@@ -131,9 +131,15 @@ serve(async (req) => {
     // Use service role to insert the log (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Ensure user_id matches the authenticated user (prevent spoofing)
-    const validatedUserId = user_id || user.id;
-    const validatedUserEmail = user_email || user.email;
+    // SECURITY: Always use authenticated user's ID/email to prevent spoofing
+    // Do NOT allow client to specify arbitrary user_id
+    const validatedUserId = user.id;
+    const validatedUserEmail = user.email;
+
+    // Sanitize event_message to prevent XSS if rendered in admin panel
+    const sanitizedMessage = event_message 
+      ? String(event_message).replace(/[<>]/g, '').slice(0, 1000)
+      : null;
 
     const { error } = await supabaseAdmin
       .from('activity_logs')
@@ -141,7 +147,7 @@ serve(async (req) => {
         user_id: validatedUserId,
         user_email: validatedUserEmail,
         event_type,
-        event_message: event_message || null,
+        event_message: sanitizedMessage,
         event_details: event_details || {},
       });
 
