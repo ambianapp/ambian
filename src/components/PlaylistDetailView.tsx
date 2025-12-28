@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart, ListMusic, Share2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart, ListMusic, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
@@ -47,6 +47,7 @@ const PlaylistDetailView = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isSystemPlaylist, setIsSystemPlaylist] = useState(false);
+  const [playlistOwnerId, setPlaylistOwnerId] = useState<string | null>(null);
   const [resolvedPlaylistCover, setResolvedPlaylistCover] = useState<string | null>(playlistCover);
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -119,15 +120,16 @@ const PlaylistDetailView = ({
   const loadPlaylistTracks = async () => {
     setIsLoading(true);
     
-    // Check if this is a system playlist
+    // Check if this is a system playlist and get owner
     const { data: playlistData } = await supabase
       .from("playlists")
-      .select("is_system")
+      .select("is_system, user_id")
       .eq("id", playlistId)
       .maybeSingle();
     
     const isSystem = playlistData?.is_system ?? false;
     setIsSystemPlaylist(isSystem);
+    setPlaylistOwnerId(playlistData?.user_id ?? null);
     
     const { data, error } = await supabase
       .from("playlist_tracks")
@@ -209,14 +211,27 @@ const PlaylistDetailView = ({
     toast.info("Add to queue coming soon");
   };
 
-  const handleShare = async () => {
+  const handleDeletePlaylist = async () => {
+    if (!playlistId || isSystemPlaylist) return;
+    
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard");
-    } catch {
-      toast.error("Failed to copy link");
+      const { error } = await supabase
+        .from('playlists')
+        .delete()
+        .eq('id', playlistId)
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      toast.success("Playlist deleted");
+      onBack();
+    } catch (error) {
+      console.error('Error deleting playlist:', error);
+      toast.error("Failed to delete playlist");
     }
   };
+
+  const isUserPlaylist = !isSystemPlaylist && playlistOwnerId === user?.id;
 
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
@@ -310,10 +325,12 @@ const PlaylistDetailView = ({
               <ListMusic className="w-4 h-4 mr-2" />
               Add to queue
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleShare}>
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </DropdownMenuItem>
+            {isUserPlaylist && (
+              <DropdownMenuItem onClick={handleDeletePlaylist} className="text-destructive focus:text-destructive">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete playlist
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
