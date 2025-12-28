@@ -347,6 +347,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.yourPlaylist": "Your playlist",
     "library.likedPlaylist": "Liked playlist",
     "library.likedSongsDesc": "Your favorite tracks",
+    "library.quickMix": "Quick Mix",
+    "library.loading": "Loading...",
+    "library.noLikedPlaylists": "No liked playlists to mix",
+    "library.noTracksInPlaylists": "No tracks found in playlists",
+    "library.playingMix": "Playing mix",
+    "library.mixError": "Failed to create mix",
     
     // Home extras
     "home.greeting.morning": "Good morning",
@@ -855,6 +861,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.yourPlaylist": "Din spellista",
     "library.likedPlaylist": "Gillad spellista",
     "library.likedSongsDesc": "Dina favoritlåtar",
+    "library.quickMix": "Snabbmix",
+    "library.loading": "Laddar...",
+    "library.noLikedPlaylists": "Inga gillade spellistor att mixa",
+    "library.noTracksInPlaylists": "Inga låtar hittades i spellistor",
+    "library.playingMix": "Spelar mix",
+    "library.mixError": "Kunde inte skapa mix",
     
     // Home extras
     "home.greeting.morning": "God morgon",
@@ -1362,6 +1374,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.yourPlaylist": "Oma soittolista",
     "library.likedPlaylist": "Tykätty soittolista",
     "library.likedSongsDesc": "Suosikkikappaleesi",
+    "library.quickMix": "Pikamix",
+    "library.loading": "Ladataan...",
+    "library.noLikedPlaylists": "Ei tykättyjä soittolistoja sekoitettavaksi",
+    "library.noTracksInPlaylists": "Soittolistoista ei löytynyt kappaleita",
+    "library.playingMix": "Toistetaan mix",
+    "library.mixError": "Mixin luonti epäonnistui",
     
     // Home extras
     "home.greeting.morning": "Hyvää huomenta",
@@ -1869,6 +1887,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.yourPlaylist": "Deine Playlist",
     "library.likedPlaylist": "Gelikte Playlist",
     "library.likedSongsDesc": "Deine Lieblingssongs",
+    "library.quickMix": "Schnellmix",
+    "library.loading": "Laden...",
+    "library.noLikedPlaylists": "Keine gelikten Playlists zum Mixen",
+    "library.noTracksInPlaylists": "Keine Songs in Playlists gefunden",
+    "library.playingMix": "Mix wird abgespielt",
+    "library.mixError": "Mix konnte nicht erstellt werden",
     
     // Home extras
     "home.greeting.morning": "Guten Morgen",
@@ -2376,6 +2400,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.yourPlaylist": "Votre playlist",
     "library.likedPlaylist": "Playlist likée",
     "library.likedSongsDesc": "Vos titres préférés",
+    "library.quickMix": "Mix rapide",
+    "library.loading": "Chargement...",
+    "library.noLikedPlaylists": "Aucune playlist likée à mixer",
+    "library.noTracksInPlaylists": "Aucun titre trouvé dans les playlists",
+    "library.playingMix": "Lecture du mix",
+    "library.mixError": "Échec de la création du mix",
     
     // Home extras
     "home.greeting.morning": "Bonjour",
