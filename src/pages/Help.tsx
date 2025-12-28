@@ -21,7 +21,7 @@ const Help = () => {
   // Check if a section should be visible based on search
   const sectionVisibility = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return { all: true };
+    if (!query) return { gettingStarted: true, playerControls: true, airplay: true, troubleshooting: true, faq: true, contact: true };
 
     const gettingStarted = [
       t("help.gettingStarted"), t("help.gettingStartedDesc"),
@@ -75,8 +75,7 @@ const Help = () => {
   }, [searchQuery, t]);
 
   const showSection = (section: keyof typeof sectionVisibility) => {
-    if ('all' in sectionVisibility) return true;
-    return sectionVisibility[section as keyof Omit<typeof sectionVisibility, 'all'>];
+    return sectionVisibility[section];
   };
 
   const hasResults = !searchQuery.trim() || Object.values(sectionVisibility).some(v => v === true);
