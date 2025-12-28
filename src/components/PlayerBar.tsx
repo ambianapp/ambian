@@ -1125,47 +1125,45 @@ const PlayerBar = () => {
 
   return (
     <>
-      {/* Hidden Audio Elements */}
-      {currentTrack.audioUrl && (
-        <audio
-          ref={audioRef}
-          preload="auto"
-          onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-          onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
-          onError={(e) => handleAudioError(e.currentTarget)}
-          onStalled={(e) => handleStalled(e.currentTarget)}
-          onWaiting={(e) => handleStalled(e.currentTarget)}
-          onEnded={() => {
-            if (repeat === "one" && audioRef.current) {
-              audioRef.current.currentTime = 0;
-              audioRef.current.play();
-              return;
-            }
+      {/* Hidden Audio Elements - always render both so refs are stable */}
+      <audio
+        ref={audioRef}
+        preload="auto"
+        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+        onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
+        onError={(e) => handleAudioError(e.currentTarget)}
+        onStalled={(e) => handleStalled(e.currentTarget)}
+        onWaiting={(e) => handleStalled(e.currentTarget)}
+        onEnded={() => {
+          if (repeat === "one" && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play();
+            return;
+          }
 
-            // Crossfade path: the next track is already playing on the crossfade audio.
-            // Never advance again from the main audio ended event.
-            if (crossfade && (isCrossfadingRef.current || isCrossfadeActive || crossfadeTrackSwitchedRef.current)) {
-              return;
-            }
+          // Crossfade path: the next track is already playing on the crossfade audio.
+          // Never advance again from the main audio ended event.
+          if (crossfade && (isCrossfadingRef.current || isCrossfadeActive || crossfadeTrackSwitchedRef.current)) {
+            return;
+          }
 
-            // Normal case - no crossfade, go to next track
-            if (crossfadeIntervalRef.current) {
-              clearInterval(crossfadeIntervalRef.current);
-              crossfadeIntervalRef.current = null;
-            }
-            isCrossfadingRef.current = false;
-            crossfadeCompleteRef.current = false;
-            crossfadeTrackSwitchedRef.current = false;
-            preloadedNextTrackRef.current = null;
-            isPreloadingRef.current = false;
-            if (crossfadeAudioRef.current) {
-              crossfadeAudioRef.current.pause();
-              crossfadeAudioRef.current.src = "";
-            }
-            handleNext();
-          }}
-        />
-      )}
+          // Normal case - no crossfade, go to next track
+          if (crossfadeIntervalRef.current) {
+            clearInterval(crossfadeIntervalRef.current);
+            crossfadeIntervalRef.current = null;
+          }
+          isCrossfadingRef.current = false;
+          crossfadeCompleteRef.current = false;
+          crossfadeTrackSwitchedRef.current = false;
+          preloadedNextTrackRef.current = null;
+          isPreloadingRef.current = false;
+          if (crossfadeAudioRef.current) {
+            crossfadeAudioRef.current.pause();
+            crossfadeAudioRef.current.src = "";
+          }
+          handleNext();
+        }}
+      />
       {/* Hidden crossfade audio element - preloaded ahead of time */}
       <audio 
         ref={crossfadeAudioRef}
