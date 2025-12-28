@@ -1,4 +1,4 @@
-import { List, Grid3X3, Heart, Shuffle, Check, Play, Trash2 } from "lucide-react";
+import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -11,6 +11,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import QuickMixDialog from "./QuickMixDialog";
 import ambianLogo from "@/assets/ambian-logo.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface SelectedPlaylist {
   id: string;
@@ -46,6 +55,8 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPlayingMix, setIsPlayingMix] = useState(false);
+  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
+  const [editName, setEditName] = useState("");
   const { user } = useAuth();
 
   // All playlists combined for selection
@@ -238,19 +249,49 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
     setSelectedIds(new Set());
   };
 
-  const handleDeletePlaylist = async (e: React.MouseEvent, playlistId: string) => {
+  const openEditDialog = (e: React.MouseEvent, playlist: Playlist) => {
     e.stopPropagation();
+    setEditingPlaylist(playlist);
+    setEditName(playlist.name);
+  };
+
+  const handleSavePlaylist = async () => {
+    if (!editingPlaylist || !editName.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('playlists')
+        .update({ name: editName.trim() })
+        .eq('id', editingPlaylist.id)
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      setOwnPlaylists(prev => prev.map(p => 
+        p.id === editingPlaylist.id ? { ...p, name: editName.trim() } : p
+      ));
+      setEditingPlaylist(null);
+      toast.success("Playlist updated");
+    } catch (error) {
+      console.error('Error updating playlist:', error);
+      toast.error("Failed to update playlist");
+    }
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (!editingPlaylist) return;
     
     try {
       const { error } = await supabase
         .from('playlists')
         .delete()
-        .eq('id', playlistId)
+        .eq('id', editingPlaylist.id)
         .eq('user_id', user?.id);
       
       if (error) throw error;
       
-      setOwnPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      setOwnPlaylists(prev => prev.filter(p => p.id !== editingPlaylist.id));
+      setEditingPlaylist(null);
       toast.success("Playlist deleted");
     } catch (error) {
       console.error('Error deleting playlist:', error);
@@ -399,10 +440,10 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2 bg-destructive/80 hover:bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleDeletePlaylist(e, playlist.id)}
+                        className="absolute top-2 right-2 bg-background/80 hover:bg-background text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => openEditDialog(e, playlist)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
@@ -435,10 +476,10 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute -top-1 -right-1 w-6 h-6 bg-destructive/80 hover:bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleDeletePlaylist(e, playlist.id)}
+                        className="absolute -top-1 -right-1 w-6 h-6 bg-background/80 hover:bg-background text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => openEditDialog(e, playlist)}
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Pencil className="w-3 h-3" />
                       </Button>
                     )}
                   </div>
@@ -514,6 +555,49 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect 
             )
           )}
         </div>
+
+        {/* Edit Playlist Dialog */}
+        <Dialog open={!!editingPlaylist} onOpenChange={(open) => !open && setEditingPlaylist(null)}>
+          <DialogContent className="bg-card">
+            <DialogHeader>
+              <DialogTitle>{t("library.editPlaylist") || "Edit Playlist"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <img
+                  src={ambianLogo}
+                  alt="Playlist cover"
+                  className="w-32 h-32 object-cover rounded-lg bg-card"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="playlist-name">{t("library.playlistName") || "Name"}</Label>
+                <Input
+                  id="playlist-name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="bg-background"
+                  maxLength={100}
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button 
+                variant="destructive" 
+                onClick={handleDeletePlaylist}
+                className="sm:mr-auto"
+              >
+                {t("common.delete") || "Delete"}
+              </Button>
+              <Button variant="outline" onClick={() => setEditingPlaylist(null)}>
+                {t("common.cancel") || "Cancel"}
+              </Button>
+              <Button onClick={handleSavePlaylist} disabled={!editName.trim()}>
+                {t("common.save") || "Save"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
