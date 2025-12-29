@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search, Receipt, FileText, Banknote, CalendarDays, MapPin } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search, Receipt, FileText, Banknote, CalendarDays, MapPin, Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -689,6 +689,26 @@ const Help = () => {
         </Card>
         </section>
         )}
+
+        {/* Legal / Terms & Privacy */}
+        <section className="scroll-mt-24">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Scale className="w-5 h-5 text-primary" />
+                {t("terms.title")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex gap-3 flex-wrap">
+              <Button variant="outline" onClick={() => navigate("/terms")}>
+                {t("profile.viewTerms")}
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/privacy")}>
+                {t("profile.viewPrivacy")}
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   );
