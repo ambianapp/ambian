@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Scale, Clock, Trash2, X, Lock } from "lucide-react";
+import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Clock, Trash2, X, Lock } from "lucide-react";
 
 
 interface Invoice {
@@ -1193,24 +1193,6 @@ const Profile = () => {
         </Card>
 
 
-
-        {/* Terms & Conditions */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Scale className="w-5 h-5" />
-              {t("terms.title")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex gap-3 flex-wrap">
-            <Button variant="outline" onClick={() => navigate("/terms")}>
-              {t("profile.viewTerms")}
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/privacy")}>
-              {t("profile.viewPrivacy")}
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Sign Out */}
         <Card className="bg-card border-border">
