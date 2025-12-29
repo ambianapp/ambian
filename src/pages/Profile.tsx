@@ -1202,9 +1202,12 @@ const Profile = () => {
               {t("terms.title")}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex gap-3 flex-wrap">
             <Button variant="outline" onClick={() => navigate("/terms")}>
               {t("profile.viewTerms")}
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/privacy")}>
+              {t("profile.viewPrivacy")}
             </Button>
           </CardContent>
         </Card>
