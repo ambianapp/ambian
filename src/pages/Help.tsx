@@ -321,8 +321,8 @@ const Help = () => {
                 <AccordionContent className="text-muted-foreground space-y-2">
                   <p>{t("help.billingPlansDesc")}</p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>{t("help.billingPlanMonthly")}</li>
-                    <li>{t("help.billingPlanYearly")}</li>
+                    <li>{t("help.billingPlanRecurring")}</li>
+                    <li>{t("help.billingPlanOneTime")}</li>
                   </ul>
                 </AccordionContent>
               </AccordionItem>
