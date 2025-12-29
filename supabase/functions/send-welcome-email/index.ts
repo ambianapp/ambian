@@ -290,6 +290,9 @@ serve(async (req) => {
 
     console.log("Welcome email sent successfully:", emailData);
 
+    // Add a small delay to avoid Resend rate limit (2 requests/second)
+    await new Promise(resolve => setTimeout(resolve, 600));
+
     // Send admin notification email
     try {
       const adminHtml = generateAdminNotificationHtml(email, name);
