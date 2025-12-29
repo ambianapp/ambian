@@ -13,7 +13,7 @@ import TrialBanner from "@/components/TrialBanner";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import { DeviceLimitDialog } from "@/components/DeviceLimitDialog";
 import WelcomeDialog from "@/components/WelcomeDialog";
-// import AIChatbot from "@/components/AIChatbot"; // Disabled for now
+
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
@@ -258,7 +258,7 @@ const Index = () => {
         </main>
       </div>
 
-      {/* <AIChatbot /> */}
+
 
       {/* Welcome dialog for new users - at root level to survive re-renders */}
       {user && <WelcomeDialog userId={user.id} userCreatedAt={user.created_at} />}
