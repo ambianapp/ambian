@@ -74,6 +74,15 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
+
+  /* Fix iOS touch state persistence - blur focus after touch */
+  @media (hover: none) and (pointer: coarse) {
+    button:focus,
+    [role="button"]:focus {
+      outline: none;
+      box-shadow: none;
+    }
+  }
 }
 
 @layer utilities {
