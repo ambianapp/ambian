@@ -17,7 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
-type TimePeriod = "week" | "month" | "quarter" | "year" | "custom";
+type TimePeriod = "week" | "month" | "quarter" | "ytd" | "year" | "custom";
 
 interface PeriodData {
   period: string;
@@ -108,6 +108,19 @@ export function GrowthChurnChart() {
           startDate: null,
           endDate: null,
         };
+      case "ytd": {
+        // Year to Date: from January 1st of current year to today
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const days = differenceInDays(now, startOfYear) + 1;
+        return {
+          label: `Year to Date (${now.getFullYear()})`,
+          days,
+          groupBy: days <= 90 ? "week" : "month",
+          startDate: startOfYear,
+          endDate: now,
+        };
+      }
       case "year":
         return {
           label: "Last 12 Months",
@@ -141,6 +154,11 @@ export function GrowthChurnChart() {
         startDate = new Date(customRange.from);
         startDate.setHours(0, 0, 0, 0);
         endDate = new Date(customRange.to);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (period === "ytd" && periodConfig.startDate && periodConfig.endDate) {
+        startDate = new Date(periodConfig.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(periodConfig.endDate);
         endDate.setHours(23, 59, 59, 999);
       } else {
         endDate = new Date();
@@ -269,7 +287,7 @@ export function GrowthChurnChart() {
       {/* Period Selector */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-2">
-          {(["week", "month", "quarter", "year"] as TimePeriod[]).map((p) => (
+          {(["week", "month", "quarter", "ytd", "year"] as TimePeriod[]).map((p) => (
             <Button
               key={p}
               variant={period === p ? "default" : "outline"}
@@ -279,6 +297,7 @@ export function GrowthChurnChart() {
               {p === "week" && "Week"}
               {p === "month" && "Month"}
               {p === "quarter" && "Quarter"}
+              {p === "ytd" && "YTD"}
               {p === "year" && "Year"}
             </Button>
           ))}
