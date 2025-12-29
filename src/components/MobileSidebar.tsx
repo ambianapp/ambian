@@ -310,8 +310,8 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
               </nav>
 
               {/* Playlists Section */}
-              <div className="flex-1 flex flex-col gap-4 px-4 min-h-0 pb-28">
-                <div className="flex items-center justify-between">
+              <div className="flex-1 flex flex-col gap-2 px-4 min-h-0 overflow-hidden">
+                <div className="flex items-center justify-between flex-shrink-0">
                   <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
                   <Button 
                     variant="ghost" 
@@ -323,7 +323,7 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
                   </Button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle">
+                <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle pb-4">
                   {/* Liked Songs */}
                   <Button
                     variant="ghost"
