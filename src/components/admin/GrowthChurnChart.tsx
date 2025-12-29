@@ -509,10 +509,13 @@ function groupDataByPeriodWithDates(
     const date = new Date(profile.created_at);
     if (date >= startDate && date <= endDate) {
       const key = getPeriodKey(date, groupBy);
-      const period = periods.get(key);
-      if (period) {
-        period.newUsers++;
+      let period = periods.get(key);
+      // If the period doesn't exist (edge case with week boundaries), create it
+      if (!period) {
+        period = { newUsers: 0, churnedUsers: 0 };
+        periods.set(key, period);
       }
+      period.newUsers++;
     }
   });
 
@@ -523,10 +526,13 @@ function groupDataByPeriodWithDates(
       const date = new Date(sub.updated_at);
       if (date >= startDate && date <= endDate) {
         const key = getPeriodKey(date, groupBy);
-        const period = periods.get(key);
-        if (period) {
-          period.churnedUsers++;
+        let period = periods.get(key);
+        // If the period doesn't exist (edge case with week boundaries), create it
+        if (!period) {
+          period = { newUsers: 0, churnedUsers: 0 };
+          periods.set(key, period);
         }
+        period.churnedUsers++;
       }
     }
   });
