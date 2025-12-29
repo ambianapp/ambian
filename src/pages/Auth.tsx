@@ -487,6 +487,10 @@ const Auth = () => {
                     <Link to="/terms" className="text-primary hover:underline" target="_blank">
                       {t("auth.termsAndConditions")}
                     </Link>
+                    {" "}{t("auth.and")}{" "}
+                    <Link to="/privacy" className="text-primary hover:underline" target="_blank">
+                      {t("auth.privacyPolicy")}
+                    </Link>
                   </Label>
                 </div>
                 {errors.terms && (
