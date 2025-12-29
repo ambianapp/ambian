@@ -64,6 +64,7 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -135,6 +136,32 @@ const Profile = () => {
   useEffect(() => {
     loadDeviceSlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Determine if user has a password set (for OAuth users who may have added one)
+  useEffect(() => {
+    const checkHasPassword = async () => {
+      if (!user) return;
+      
+      // For email provider users, they always have a password
+      if (user.app_metadata?.provider === 'email') {
+        setHasPassword(true);
+        return;
+      }
+      
+      // For OAuth users, check identities - if there's an email identity, they have a password
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser?.identities) {
+        const hasEmailIdentity = currentUser.identities.some(
+          (identity) => identity.provider === 'email'
+        );
+        setHasPassword(hasEmailIdentity);
+      } else {
+        setHasPassword(false);
+      }
+    };
+    
+    checkHasPassword();
   }, [user?.id]);
 
   const handleUpdateProfile = async () => {
@@ -253,6 +280,9 @@ const Profile = () => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       
       if (error) throw error;
+      
+      // Mark that user now has a password
+      setHasPassword(true);
       
       setNewPassword("");
       setConfirmPassword("");
@@ -1064,8 +1094,8 @@ const Profile = () => {
               {t("common.save")}
             </Button>
 
-            {/* Change Password Section - Only show for email/password users */}
-            {user?.app_metadata?.provider === 'email' && (
+            {/* Change Password Section - Show for users who have a password */}
+            {hasPassword === true && (
             <div className="pt-6 border-t border-border space-y-4">
               <div className="flex items-center gap-2 text-foreground">
                 <Lock className="w-4 h-4" />
@@ -1119,8 +1149,8 @@ const Profile = () => {
             </div>
             )}
 
-            {/* Set Password Section - Only show for OAuth users (Google, etc.) */}
-            {user?.app_metadata?.provider && user.app_metadata.provider !== 'email' && (
+            {/* Set Password Section - Only show for OAuth users who haven't set a password yet */}
+            {hasPassword === false && (
             <div className="pt-6 border-t border-border space-y-4">
               <div className="flex items-center gap-2 text-foreground">
                 <Lock className="w-4 h-4" />
