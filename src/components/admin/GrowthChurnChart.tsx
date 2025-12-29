@@ -194,14 +194,28 @@ export function GrowthChurnChart() {
       const totalNew = groupedData.reduce((sum, d) => sum + d.newUsers, 0);
       const totalChurned = groupedData.reduce((sum, d) => sum + d.churnedUsers, 0);
       const netGrowth = totalNew - totalChurned;
-      const startingUsers = totalCurrentUsers - netGrowth;
+      
+      // Calculate starting users (users at the beginning of the period)
+      // This is current total minus net growth during the period
+      const startingUsers = Math.max(0, totalCurrentUsers - netGrowth);
+      
+      // Growth rate: percentage increase relative to starting users
+      // If no starting users, show growth as percentage of new users or 0
+      const growthRate = startingUsers > 0 
+        ? (netGrowth / startingUsers) * 100 
+        : (totalNew > 0 ? 100 : 0); // 100% if all users are new, 0 if no users at all
+      
+      // Churn rate: percentage of starting users who churned
+      const churnRate = startingUsers > 0 
+        ? (totalChurned / startingUsers) * 100 
+        : 0;
 
       setStats({
         totalNewUsers: totalNew,
         totalChurned: totalChurned,
         netGrowth: netGrowth,
-        growthRate: startingUsers > 0 ? (netGrowth / startingUsers) * 100 : 0,
-        churnRate: startingUsers > 0 ? (totalChurned / startingUsers) * 100 : 0,
+        growthRate: growthRate,
+        churnRate: churnRate,
       });
     } catch (error) {
       console.error("Error loading growth data:", error);
