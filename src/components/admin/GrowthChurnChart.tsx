@@ -287,7 +287,7 @@ export function GrowthChurnChart() {
       {/* Period Selector */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-2">
-          {(["week", "month", "quarter", "ytd", "year"] as TimePeriod[]).map((p) => (
+          {(["week", "month", "quarter", "year", "ytd"] as TimePeriod[]).map((p) => (
             <Button
               key={p}
               variant={period === p ? "default" : "outline"}
