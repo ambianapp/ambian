@@ -36,6 +36,12 @@
 
     --radius: 0.75rem;
 
+    /* Chart colors - bright and visible */
+    --chart-1: 142 76% 50%;
+    --chart-2: 0 84% 60%;
+    --chart-3: 199 89% 55%;
+    --chart-4: 328 85% 60%;
+
     /* Safe-area helpers */
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-bottom-tight: max(calc(var(--safe-bottom) - 12px), 0px);
