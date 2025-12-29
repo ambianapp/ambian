@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import PlayerBar from "@/components/PlayerBar";
 import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
+import OfflineBanner from "@/components/OfflineBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -151,6 +152,7 @@ const App = () => (
         <AuthProvider>
           <LanguageProvider>
             <PlayerProvider>
+              <OfflineBanner />
               <AppContent />
             </PlayerProvider>
           </LanguageProvider>

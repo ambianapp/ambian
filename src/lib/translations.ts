@@ -25,6 +25,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Loading...",
     "common.error": "Error",
     "common.success": "Success",
+    
+    // Offline
+    "offline.noConnection": "No internet connection",
+    
     "common.back": "Back",
     "common.signOut": "Sign Out",
     "common.subscribe": "Subscribe",
@@ -625,6 +629,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Laddar...",
     "common.error": "Fel",
     "common.success": "Lyckades",
+    
+    // Offline
+    "offline.noConnection": "Ingen internetanslutning",
+    
     "common.back": "Tillbaka",
     "common.signOut": "Logga ut",
     "common.subscribe": "Prenumerera",
@@ -1222,6 +1230,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Ladataan...",
     "common.error": "Virhe",
     "common.success": "Onnistui",
+    
+    // Offline
+    "offline.noConnection": "Ei internet-yhteyttä",
+    
     "common.back": "Takaisin",
     "common.signOut": "Kirjaudu ulos",
     "common.subscribe": "Tilaa",
@@ -1819,6 +1831,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Laden...",
     "common.error": "Fehler",
     "common.success": "Erfolg",
+    
+    // Offline
+    "offline.noConnection": "Keine Internetverbindung",
+    
     "common.back": "Zurück",
     "common.signOut": "Abmelden",
     "common.subscribe": "Abonnieren",
@@ -2415,6 +2431,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Chargement...",
     "common.error": "Erreur",
     "common.success": "Succès",
+    
+    // Offline
+    "offline.noConnection": "Pas de connexion internet",
+    
     "common.back": "Retour",
     "common.signOut": "Déconnexion",
     "common.subscribe": "S'abonner",
