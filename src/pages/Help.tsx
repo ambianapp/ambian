@@ -339,7 +339,6 @@ const Help = () => {
                   <ul className="list-disc list-inside space-y-1 ml-2">
                     <li>{t("help.billingPaymentCard")}</li>
                     <li>{t("help.billingPaymentInvoice")}</li>
-                    <li>{t("help.billingPaymentIBAN")}</li>
                   </ul>
                 </AccordionContent>
               </AccordionItem>
