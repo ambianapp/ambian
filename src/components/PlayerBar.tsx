@@ -36,7 +36,7 @@ const PlayerBar = () => {
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const crossfadeAudioRef = useRef<HTMLAudioElement>(null);
-  const [volume, setVolume] = useState([75]);
+  const [volume, setVolume] = useState([100]);
   const [progress, setProgress] = useState([0]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
