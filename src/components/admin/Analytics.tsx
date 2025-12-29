@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, Users, Music, Smartphone, Monitor, Play, TrendingUp, Calendar } from "lucide-react";
 import { toast } from "sonner";
-
+import { GrowthChurnChart } from "./GrowthChurnChart";
 interface PlaylistStats {
   playlist_id: string;
   playlist_name: string;
@@ -299,6 +299,9 @@ export function Analytics() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Growth/Churn Chart */}
+      <GrowthChurnChart />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
