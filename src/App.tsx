@@ -20,6 +20,7 @@ import AllPlaylists from "./pages/AllPlaylists";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,17 +53,20 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const HomeRoute = () => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <AmbianLoadingScreen label="Loading Ambian…" />;
+  }
+
+  return user ? <Index /> : <Landing />;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Index />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<HomeRoute />} />
       <Route
         path="/auth"
         element={
