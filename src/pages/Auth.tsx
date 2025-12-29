@@ -597,6 +597,17 @@ const Auth = () => {
               </div>
             </div>
           </div>
+          
+          {/* Footer Links */}
+          <div className="text-center text-xs text-muted-foreground space-x-3">
+            <Link to="/terms" className="hover:text-primary hover:underline">
+              {t("auth.termsAndConditions")}
+            </Link>
+            <span>•</span>
+            <Link to="/privacy" className="hover:text-primary hover:underline">
+              {t("auth.privacyPolicy")}
+            </Link>
+          </div>
         </div>
       </div>
     </div>
