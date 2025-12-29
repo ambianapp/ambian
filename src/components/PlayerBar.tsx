@@ -310,10 +310,25 @@ const PlayerBar = () => {
   // Handle audio errors with auto-recovery
   const handleAudioError = (audioEl?: HTMLAudioElement) => {
     const audio = audioEl ?? (isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current);
+    
+    // Ignore errors from audio elements with no src (happens when we clear src during transitions)
+    if (!audio?.src || audio.src === "" || audio.src === window.location.href) {
+      dbg("handleAudioError: ignoring (no src)", { src: audio?.src });
+      return;
+    }
+    
     console.error("Audio error:", audio?.error?.code, audio?.error?.message);
 
-    // Don't fight the crossfade swap (can look like an error/stall on the inactive element)
-    if (crossfade && (isCrossfadingRef.current || isCrossfadeActive)) {
+    // Ignore errors from inactive audio elements during crossfade
+    if (crossfade && isCrossfadingRef.current) {
+      dbg("handleAudioError: ignoring (crossfade in progress)");
+      return;
+    }
+    
+    // Ignore errors from the non-active element
+    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    if (audioEl && audioEl !== activeAudio) {
+      dbg("handleAudioError: ignoring (error from inactive element)");
       return;
     }
 
@@ -898,18 +913,36 @@ const PlayerBar = () => {
   // Handle crossfade audio ending
   // Normally crossfadeAudio is stopped once we swap back to mainAudio; this is a safety net.
   const handleCrossfadeEnded = useCallback(() => {
-    if (!isCrossfadeActive) return;
+    // If main audio is the active player, crossfade audio ending is just cleanup - don't advance
+    if (!isCrossfadeActive) {
+      dbg("crossfadeAudio onEnded: skip (main audio is active)", { trackId: currentTrack?.id });
+      return;
+    }
 
-    // If crossfadeAudio was the active player for some reason, fall back to next.
+    // If we're in the middle of a crossfade transition, don't advance (crossfade handles it)
+    if (isCrossfadingRef.current || crossfadeTrackSwitchedRef.current) {
+      dbg("crossfadeAudio onEnded: skip (crossfade in progress)", {
+        isCrossfading: isCrossfadingRef.current,
+        trackSwitched: crossfadeTrackSwitchedRef.current,
+      });
+      return;
+    }
+
+    // Crossfade audio is active and ended - advance to next track
+    dbg("crossfadeAudio onEnded: advancing to next track", { trackId: currentTrack?.id });
     isCrossfadingRef.current = false;
     crossfadeCompleteRef.current = false;
     crossfadeTrackSwitchedRef.current = false;
     nextTrackPreloadedRef.current = null;
     preloadedNextTrackRef.current = null;
     isPreloadingRef.current = false;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
     setIsCrossfadeActive(false);
     handleNext();
-  }, [handleNext, isCrossfadeActive]);
+  }, [handleNext, isCrossfadeActive, currentTrack?.id, dbg]);
 
   // Handle scheduled playlist crossfade transition
   useEffect(() => {
@@ -1141,13 +1174,23 @@ const PlayerBar = () => {
             return;
           }
 
-          // Crossfade path: the next track is already playing on the crossfade audio.
-          // Never advance again from the main audio ended event.
-          if (crossfade && (isCrossfadingRef.current || isCrossfadeActive || crossfadeTrackSwitchedRef.current)) {
+          // If crossfade audio is the active player, main audio ending is just cleanup - don't advance
+          if (isCrossfadeActive) {
+            dbg("mainAudio onEnded: skip (crossfade audio is active)", { trackId: currentTrack?.id });
             return;
           }
 
-          // Normal case - no crossfade, go to next track
+          // If we're in the middle of a crossfade transition, don't advance (crossfade handles it)
+          if (isCrossfadingRef.current || crossfadeTrackSwitchedRef.current) {
+            dbg("mainAudio onEnded: skip (crossfade in progress)", { 
+              isCrossfading: isCrossfadingRef.current, 
+              trackSwitched: crossfadeTrackSwitchedRef.current 
+            });
+            return;
+          }
+
+          // Normal case - main audio is active and ended, go to next track
+          dbg("mainAudio onEnded: advancing to next track", { trackId: currentTrack?.id });
           if (crossfadeIntervalRef.current) {
             clearInterval(crossfadeIntervalRef.current);
             crossfadeIntervalRef.current = null;
