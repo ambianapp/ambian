@@ -1570,7 +1570,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.billingPaymentMethodsDesc": "Hyväksymme useita maksutapoja:",
     "help.billingPaymentCard": "Luotto-/maksukortti – Automaattiset toistuvat maksut Stripen kautta",
     "help.billingPaymentKlarna": "Klarna – Maksa nyt, maksa myöhemmin tai osamaksulla",
-    "help.billingPaymentMobilePay": "MobilePay – Maksa suoraan MobilePay-sovelluksella",
+    "help.billingPaymentMobilePay": "MobilePay – Maksa suoraan MobilePay-sovelluksella (vain kertamaksuille)",
     "help.billingPaymentInvoice": "Lasku – Saat laskun 7 päivän maksuajalla. Pankkisiirto (IBAN) mahdollinen.",
     "help.billingInvoices": "Laskut & Maksuhistoria",
     "help.billingInvoicesDesc": "Kaikki laskut löytyvät Profiilistasi:",
