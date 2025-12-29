@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 const SIGNED_URL_EXPIRY = 14400;
 
 // CDN configuration for faster global audio delivery
-const CDN_ENABLED = true; // Set to false to disable CDN
+const CDN_ENABLED = false; // Temporarily disabled until BunnyCDN origin settings are correct
 const CDN_BASE_URL = "https://ambian-audio.b-cdn.net";
 const SUPABASE_STORAGE_URL = "https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1";
 
