@@ -20,7 +20,6 @@ import AllPlaylists from "./pages/AllPlaylists";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,7 +59,8 @@ const HomeRoute = () => {
     return <AmbianLoadingScreen label="Loading Ambian…" />;
   }
 
-  return user ? <Index /> : <Landing />;
+  // Show Auth page at root URL for non-logged-in users (Google OAuth needs privacy link on homepage)
+  return user ? <Index /> : <Auth />;
 };
 
 const AppRoutes = () => {
