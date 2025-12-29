@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search, Receipt, FileText, Banknote, CalendarDays, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState } from "react";
 
-type HelpSectionKey = "gettingStarted" | "playerControls" | "airplay" | "troubleshooting" | "faq" | "contact";
+type HelpSectionKey = "gettingStarted" | "billing" | "playerControls" | "airplay" | "troubleshooting" | "faq" | "contact";
 
 type HelpTopic = {
   id: string;
@@ -18,6 +18,7 @@ type HelpTopic = {
 
 const SECTION_ANCHORS: Record<HelpSectionKey, string> = {
   gettingStarted: "help-getting-started",
+  billing: "help-billing",
   playerControls: "help-player-controls",
   airplay: "help-airplay",
   troubleshooting: "help-troubleshooting",
@@ -40,6 +41,14 @@ const Help = () => {
       { id: "scheduling", section: "gettingStarted", title: t("help.scheduling"), body: t("help.schedulingDesc") },
       { id: "quick-mix", section: "gettingStarted", title: t("help.quickMix"), body: t("help.quickMixDesc") },
       { id: "industry-collections", section: "gettingStarted", title: t("help.industryCollections"), body: t("help.industryCollectionsDesc") },
+
+      // Subscription & Billing
+      { id: "billing", section: "billing", title: t("help.billing"), body: t("help.billingDesc") },
+      { id: "billing-plans", section: "billing", title: t("help.billingPlans"), body: t("help.billingPlansDesc") },
+      { id: "billing-payment-methods", section: "billing", title: t("help.billingPaymentMethods"), body: t("help.billingPaymentMethodsDesc") },
+      { id: "billing-invoices", section: "billing", title: t("help.billingInvoices"), body: t("help.billingInvoicesDesc") },
+      { id: "billing-locations", section: "billing", title: t("help.billingLocations"), body: t("help.billingLocationsDesc") },
+      { id: "billing-cancel", section: "billing", title: t("help.billingCancel"), body: t("help.billingCancelDesc") },
 
       // Player controls
       { id: "player-controls", section: "playerControls", title: t("help.playerControls"), body: t("help.playerControlsDesc") },
@@ -91,6 +100,7 @@ const Help = () => {
     if (!query) {
       return {
         gettingStarted: true,
+        billing: true,
         playerControls: true,
         airplay: true,
         troubleshooting: true,
@@ -101,6 +111,7 @@ const Help = () => {
 
     const visibility: Record<HelpSectionKey, boolean> = {
       gettingStarted: false,
+      billing: false,
       playerControls: false,
       airplay: false,
       troubleshooting: false,
@@ -282,6 +293,102 @@ const Help = () => {
                 <p className="text-sm text-muted-foreground">{t("help.industryCollectionsDesc")}</p>
               </div>
             </div>
+          </CardContent>
+          </Card>
+        </section>
+        )}
+
+        {/* Subscription & Billing */}
+        {showSection('billing') && (
+        <section id={SECTION_ANCHORS.billing} className="scroll-mt-24">
+          <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              {t("help.billing")}
+            </CardTitle>
+            <CardDescription>{t("help.billingDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="plans">
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    {t("help.billingPlans")}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>{t("help.billingPlansDesc")}</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>{t("help.billingPlanMonthly")}</li>
+                    <li>{t("help.billingPlanYearly")}</li>
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="payment-methods">
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center gap-2">
+                    <Banknote className="w-4 h-4" />
+                    {t("help.billingPaymentMethods")}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>{t("help.billingPaymentMethodsDesc")}</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>{t("help.billingPaymentCard")}</li>
+                    <li>{t("help.billingPaymentInvoice")}</li>
+                    <li>{t("help.billingPaymentIBAN")}</li>
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="invoices">
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    {t("help.billingInvoices")}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>{t("help.billingInvoicesDesc")}</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>{t("help.billingInvoiceTip1")}</li>
+                    <li>{t("help.billingInvoiceTip2")}</li>
+                    <li>{t("help.billingInvoiceTip3")}</li>
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="locations">
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {t("help.billingLocations")}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>{t("help.billingLocationsDesc")}</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>{t("help.billingLocationTip1")}</li>
+                    <li>{t("help.billingLocationTip2")}</li>
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="cancel">
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4" />
+                    {t("help.billingCancel")}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>{t("help.billingCancelDesc")}</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
           </Card>
         </section>
