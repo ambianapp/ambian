@@ -564,9 +564,11 @@ function getPeriodKey(date: Date, groupBy: "day" | "week" | "month"): string {
 function formatPeriodLabel(key: string, groupBy: "day" | "week" | "month"): string {
   if (groupBy === "day") {
     const date = new Date(key);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
   } else if (groupBy === "week") {
-    return key.replace("-W", " W");
+    // Extract year from key like "2024-W52"
+    const year = key.split("-W")[0].slice(-2);
+    return key.replace("-W", " W") + " '" + year;
   } else {
     const [year, month] = key.split("-");
     const date = new Date(parseInt(year), parseInt(month) - 1);
