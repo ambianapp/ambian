@@ -601,11 +601,11 @@ const Auth = () => {
           {/* Footer Links */}
           <div className="text-center text-xs text-muted-foreground space-x-3">
             <Link to="/terms" className="hover:text-primary hover:underline">
-              {t("auth.termsAndConditions")}
+              {t("footer.termsAndConditions")}
             </Link>
             <span>•</span>
             <Link to="/privacy" className="hover:text-primary hover:underline">
-              {t("auth.privacyPolicy")}
+              {t("footer.privacyPolicy")}
             </Link>
           </div>
         </div>
