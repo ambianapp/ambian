@@ -3,8 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 // 4 hours in seconds - longer expiry for 24/7 playback
 const SIGNED_URL_EXPIRY = 14400;
 
+// CDN configuration for faster global audio delivery
+const CDN_HOSTNAME = "ambian-audio.b-cdn.net";
+const SUPABASE_HOSTNAME = "hjecjqyonxvrrvprbvgr.supabase.co";
+
 /**
  * Generate a signed URL for audio file or cover image access
+ * Routes through BunnyCDN for faster global delivery and caching
  * Since the audio bucket is private, we need signed URLs for authenticated access
  */
 export async function getSignedAudioUrl(audioUrl: string | null): Promise<string | undefined> {
@@ -55,5 +60,9 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
     return undefined;
   }
   
-  return data.signedUrl;
+  // Route through CDN for faster global delivery
+  // The signed URL token is preserved, so authentication still works
+  const cdnUrl = data.signedUrl.replace(SUPABASE_HOSTNAME, CDN_HOSTNAME);
+  
+  return cdnUrl;
 }
