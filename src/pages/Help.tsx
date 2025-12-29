@@ -28,7 +28,7 @@ const SECTION_ANCHORS: Record<HelpSectionKey, string> = {
 
 const Help = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
 
   const helpTopics = useMemo<HelpTopic[]>(() => {
@@ -338,6 +338,8 @@ const Help = () => {
                   <p>{t("help.billingPaymentMethodsDesc")}</p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
                     <li>{t("help.billingPaymentCard")}</li>
+                    <li>{t("help.billingPaymentKlarna")}</li>
+                    {language === 'fi' && <li>{t("help.billingPaymentMobilePay")}</li>}
                     <li>{t("help.billingPaymentInvoice")}</li>
                   </ul>
                 </AccordionContent>
