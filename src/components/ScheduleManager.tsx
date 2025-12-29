@@ -379,6 +379,10 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
+                            <Music className="w-3 h-3" />
+                            {getPlaylistName(schedule.playlist_id)}
+                          </span>
+                          <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                           </span>
