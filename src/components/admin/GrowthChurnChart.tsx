@@ -537,16 +537,16 @@ function groupDataByPeriodWithDates(
     }
   });
 
-  // Convert to array and calculate net growth
+  // Convert to array, sort by original key (chronological), then format labels
   return Array.from(periods.entries())
-    .map(([period, data]) => ({
-      period: formatPeriodLabel(period, groupBy),
+    .sort((a, b) => a[0].localeCompare(b[0])) // Sort by original key first (YYYY-MM-DD, YYYY-Wxx, YYYY-MM)
+    .map(([periodKey, data]) => ({
+      period: formatPeriodLabel(periodKey, groupBy),
       newUsers: data.newUsers,
       churnedUsers: data.churnedUsers,
       netGrowth: data.newUsers - data.churnedUsers,
       totalUsers: 0, // Will be calculated later
-    }))
-    .sort((a, b) => a.period.localeCompare(b.period));
+    }));
 }
 
 function getPeriodKey(date: Date, groupBy: "day" | "week" | "month"): string {
