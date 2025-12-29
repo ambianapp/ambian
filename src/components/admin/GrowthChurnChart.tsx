@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, Users, UserPlus, UserMinus, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, UserPlus, UserMinus, RefreshCw, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   ChartConfig,
@@ -11,9 +11,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, differenceInDays } from "date-fns";
+import { cn } from "@/lib/utils";
 
-type TimePeriod = "week" | "month" | "quarter" | "year";
+type TimePeriod = "week" | "month" | "quarter" | "year" | "custom";
 
 interface PeriodData {
   period: string;
@@ -29,6 +33,11 @@ interface GrowthStats {
   netGrowth: number;
   growthRate: number;
   churnRate: number;
+}
+
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
 }
 
 const chartConfig = {
@@ -55,46 +64,89 @@ export function GrowthChurnChart() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<PeriodData[]>([]);
   const [stats, setStats] = useState<GrowthStats | null>(null);
+  const [customRange, setCustomRange] = useState<DateRange>({
+    from: undefined,
+    to: undefined,
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const periodConfig = useMemo(() => {
-    const now = new Date();
+    if (period === "custom" && customRange.from && customRange.to) {
+      const days = differenceInDays(customRange.to, customRange.from) + 1;
+      const groupBy = days <= 31 ? "day" : days <= 90 ? "week" : "month";
+      return {
+        label: `${format(customRange.from, "MMM d, yyyy")} - ${format(customRange.to, "MMM d, yyyy")}`,
+        days,
+        groupBy,
+        startDate: customRange.from,
+        endDate: customRange.to,
+      };
+    }
+
     switch (period) {
       case "week":
         return {
           label: "Last 7 Days",
           days: 7,
-          format: (date: Date) => date.toLocaleDateString("en-US", { weekday: "short" }),
           groupBy: "day",
+          startDate: null,
+          endDate: null,
         };
       case "month":
         return {
           label: "Last 30 Days",
           days: 30,
-          format: (date: Date) => date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           groupBy: "day",
+          startDate: null,
+          endDate: null,
         };
       case "quarter":
         return {
           label: "Last 90 Days",
           days: 90,
-          format: (date: Date) => `Week ${getWeekNumber(date)}`,
           groupBy: "week",
+          startDate: null,
+          endDate: null,
         };
       case "year":
         return {
           label: "Last 12 Months",
           days: 365,
-          format: (date: Date) => date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
           groupBy: "month",
+          startDate: null,
+          endDate: null,
+        };
+      default:
+        return {
+          label: "Select date range",
+          days: 0,
+          groupBy: "day",
+          startDate: null,
+          endDate: null,
         };
     }
-  }, [period]);
+  }, [period, customRange]);
 
   const loadData = async () => {
+    if (period === "custom" && (!customRange.from || !customRange.to)) {
+      return;
+    }
+
     setLoading(true);
     try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - periodConfig.days);
+      let startDate: Date;
+      let endDate: Date;
+
+      if (period === "custom" && customRange.from && customRange.to) {
+        startDate = new Date(customRange.from);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(customRange.to);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - periodConfig.days);
+      }
 
       // Fetch profiles (new users) and subscriptions (for churn)
       const [profilesResult, subscriptionsResult, allProfilesResult] = await Promise.all([
@@ -102,6 +154,7 @@ export function GrowthChurnChart() {
           .from("profiles")
           .select("created_at")
           .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString())
           .order("created_at", { ascending: true }),
         supabase
           .from("subscriptions")
@@ -115,10 +168,11 @@ export function GrowthChurnChart() {
       const totalCurrentUsers = allProfilesResult.count || 0;
 
       // Group data by period
-      const groupedData = groupDataByPeriod(
+      const groupedData = groupDataByPeriodWithDates(
         profiles,
         subscriptions,
-        periodConfig.days,
+        startDate,
+        endDate,
         periodConfig.groupBy as "day" | "week" | "month"
       );
 
@@ -153,10 +207,31 @@ export function GrowthChurnChart() {
   };
 
   useEffect(() => {
-    loadData();
-  }, [period]);
+    if (period !== "custom" || (customRange.from && customRange.to)) {
+      loadData();
+    }
+  }, [period, customRange]);
 
-  if (loading) {
+  const handlePeriodChange = (newPeriod: TimePeriod) => {
+    if (newPeriod === "custom") {
+      setPeriod(newPeriod);
+      setIsCalendarOpen(true);
+    } else {
+      setPeriod(newPeriod);
+      setCustomRange({ from: undefined, to: undefined });
+    }
+  };
+
+  const handleDateSelect = (range: DateRange | undefined) => {
+    if (range) {
+      setCustomRange(range);
+      if (range.from && range.to) {
+        setIsCalendarOpen(false);
+      }
+    }
+  };
+
+  if (loading && period !== "custom") {
     return (
       <Card>
         <CardHeader>
@@ -174,13 +249,13 @@ export function GrowthChurnChart() {
     <div className="space-y-4">
       {/* Period Selector */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(["week", "month", "quarter", "year"] as TimePeriod[]).map((p) => (
             <Button
               key={p}
               variant={period === p ? "default" : "outline"}
               size="sm"
-              onClick={() => setPeriod(p)}
+              onClick={() => handlePeriodChange(p)}
             >
               {p === "week" && "Week"}
               {p === "month" && "Month"}
@@ -188,13 +263,39 @@ export function GrowthChurnChart() {
               {p === "year" && "Year"}
             </Button>
           ))}
+          
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={period === "custom" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handlePeriodChange("custom")}
+                className={cn("min-w-[120px]", period === "custom" && customRange.from && "min-w-[200px]")}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {period === "custom" && customRange.from && customRange.to
+                  ? `${format(customRange.from, "MMM d")} - ${format(customRange.to, "MMM d")}`
+                  : "Custom"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-popover" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={customRange.from}
+                selected={customRange}
+                onSelect={handleDateSelect}
+                numberOfMonths={2}
+                disabled={(date) => date > new Date()}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
-        <Button variant="outline" size="sm" onClick={loadData}>
+        <Button variant="outline" size="sm" onClick={loadData} disabled={period === "custom" && (!customRange.from || !customRange.to)}>
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
       </div>
-
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -358,21 +459,18 @@ function getWeekNumber(date: Date): number {
   return Math.ceil((diff + start.getDay() * 86400000) / oneWeek);
 }
 
-function groupDataByPeriod(
+function groupDataByPeriodWithDates(
   profiles: { created_at: string }[],
   subscriptions: { status: string; updated_at: string; created_at: string }[],
-  days: number,
+  startDate: Date,
+  endDate: Date,
   groupBy: "day" | "week" | "month"
 ): PeriodData[] {
-  const now = new Date();
-  const startDate = new Date();
-  startDate.setDate(now.getDate() - days);
-
   const periods: Map<string, { newUsers: number; churnedUsers: number }> = new Map();
 
   // Initialize periods
   const current = new Date(startDate);
-  while (current <= now) {
+  while (current <= endDate) {
     const key = getPeriodKey(current, groupBy);
     if (!periods.has(key)) {
       periods.set(key, { newUsers: 0, churnedUsers: 0 });
@@ -389,7 +487,7 @@ function groupDataByPeriod(
   // Count new users
   profiles.forEach((profile) => {
     const date = new Date(profile.created_at);
-    if (date >= startDate && date <= now) {
+    if (date >= startDate && date <= endDate) {
       const key = getPeriodKey(date, groupBy);
       const period = periods.get(key);
       if (period) {
@@ -402,7 +500,7 @@ function groupDataByPeriod(
   subscriptions.forEach((sub) => {
     if (sub.status === "canceled" || sub.status === "expired") {
       const date = new Date(sub.updated_at);
-      if (date >= startDate && date <= now) {
+      if (date >= startDate && date <= endDate) {
         const key = getPeriodKey(date, groupBy);
         const period = periods.get(key);
         if (period) {
