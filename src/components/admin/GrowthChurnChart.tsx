@@ -148,8 +148,8 @@ export function GrowthChurnChart() {
         startDate.setDate(startDate.getDate() - periodConfig.days);
       }
 
-      // Fetch profiles (new users) and subscriptions (for churn)
-      const [profilesResult, subscriptionsResult, allProfilesResult] = await Promise.all([
+      // Fetch profiles (new users), subscriptions with user_id (for churn), and existing user ids
+      const [profilesResult, subscriptionsResult, allProfilesResult, existingUsersResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("created_at")
@@ -158,14 +158,18 @@ export function GrowthChurnChart() {
           .order("created_at", { ascending: true }),
         supabase
           .from("subscriptions")
-          .select("status, updated_at, created_at")
+          .select("user_id, status, updated_at, created_at")
           .or(`updated_at.gte.${startDate.toISOString()},created_at.gte.${startDate.toISOString()}`),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("profiles").select("user_id"),
       ]);
 
       const profiles = profilesResult.data || [];
       const subscriptions = subscriptionsResult.data || [];
       const totalCurrentUsers = allProfilesResult.count || 0;
+      
+      // Get set of existing user IDs to filter out deleted accounts
+      const existingUserIds = new Set((existingUsersResult.data || []).map(p => p.user_id));
 
       // Group data by period
       const groupedData = groupDataByPeriodWithDates(
@@ -173,7 +177,8 @@ export function GrowthChurnChart() {
         subscriptions,
         startDate,
         endDate,
-        periodConfig.groupBy as "day" | "week" | "month"
+        periodConfig.groupBy as "day" | "week" | "month",
+        existingUserIds
       );
 
       // Calculate cumulative total users
@@ -461,10 +466,11 @@ function getWeekNumber(date: Date): number {
 
 function groupDataByPeriodWithDates(
   profiles: { created_at: string }[],
-  subscriptions: { status: string; updated_at: string; created_at: string }[],
+  subscriptions: { user_id: string; status: string; updated_at: string; created_at: string }[],
   startDate: Date,
   endDate: Date,
-  groupBy: "day" | "week" | "month"
+  groupBy: "day" | "week" | "month",
+  existingUserIds: Set<string>
 ): PeriodData[] {
   const periods: Map<string, { newUsers: number; churnedUsers: number }> = new Map();
 
@@ -496,9 +502,10 @@ function groupDataByPeriodWithDates(
     }
   });
 
-  // Count churned users (canceled subscriptions)
+  // Count churned users (canceled/expired subscriptions where user still exists)
+  // Only counts as churn if the user hasn't deleted their account
   subscriptions.forEach((sub) => {
-    if (sub.status === "canceled" || sub.status === "expired") {
+    if ((sub.status === "canceled" || sub.status === "expired") && existingUserIds.has(sub.user_id)) {
       const date = new Date(sub.updated_at);
       if (date >= startDate && date <= endDate) {
         const key = getPeriodKey(date, groupBy);
