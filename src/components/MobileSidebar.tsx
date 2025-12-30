@@ -226,17 +226,18 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
               <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-72 p-0 flex flex-col">
-            <div className="flex flex-col h-full overflow-hidden">
-              {/* Logo in sidebar */}
-              <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
-                <img 
-                  src="/ambian-logo.png" 
-                  alt="Ambian" 
-                  className="h-12 object-contain"
-                />
-              </div>
+          <SheetContent side="right" className="w-72 p-0 flex flex-col h-full">
+            {/* Logo in sidebar - fixed at top */}
+            <div className="flex items-center gap-3 px-4 py-4 border-b border-border flex-shrink-0">
+              <img 
+                src="/ambian-logo.png" 
+                alt="Ambian" 
+                className="h-12 object-contain"
+              />
+            </div>
 
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto scrollbar-subtle">
               {/* Main Navigation */}
               <nav className="flex flex-col gap-1 p-4">
                 {navItems.map((item) => (
@@ -310,8 +311,8 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
               </nav>
 
               {/* Playlists Section */}
-              <div className="flex-1 flex flex-col gap-2 px-4 min-h-0 overflow-hidden">
-                <div className="flex items-center justify-between flex-shrink-0">
+              <div className="flex flex-col gap-2 px-4 pb-4">
+                <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
                   <Button 
                     variant="ghost" 
@@ -323,7 +324,7 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
                   </Button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle pb-4">
+                <div className="space-y-1">
                   {/* Liked Songs */}
                   <Button
                     variant="ghost"
@@ -367,8 +368,8 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
                 </div>
               </div>
 
-              {/* Sign Out at bottom */}
-              <div className="p-4 border-t border-border mt-auto">
+              {/* Sign Out - inside scrollable area */}
+              <div className="p-4 border-t border-border">
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-4 h-12 text-base font-medium text-destructive hover:text-destructive"
