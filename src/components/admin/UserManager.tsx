@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles, MonitorSmartphone, FileText } from "lucide-react";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles, MonitorSmartphone, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -113,6 +113,7 @@ export function UserManager() {
   const [loading, setLoading] = useState(true);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [cancelingUserId, setCancelingUserId] = useState<string | null>(null);
+  const [expiringUserId, setExpiringUserId] = useState<string | null>(null);
   
   // Customer detail modal
   const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
@@ -259,6 +260,32 @@ export function UserManager() {
       toast.error(error.message || "Failed to cancel subscription");
     } finally {
       setCancelingUserId(null);
+    }
+  };
+
+  const handleExpireSubscription = async (userId: string) => {
+    setExpiringUserId(userId);
+    try {
+      // Set current_period_end to 1 minute ago to trigger expiration
+      const expiredDate = new Date(Date.now() - 60000).toISOString();
+      
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({ 
+          current_period_end: expiredDate,
+          status: 'inactive'
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast.success("Subscription expired for testing");
+      loadUsers();
+    } catch (error: any) {
+      console.error("Error expiring subscription:", error);
+      toast.error(error.message || "Failed to expire subscription");
+    } finally {
+      setExpiringUserId(null);
     }
   };
 
@@ -471,6 +498,46 @@ export function UserManager() {
                               className="bg-orange-500 text-white hover:bg-orange-600"
                             >
                               Cancel Subscription
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+
+                    {/* Expire Subscription Button (for testing) */}
+                    {user.subscription && (user.subscription.status === "active" || user.subscription.status === "trialing") && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-yellow-500 hover:text-yellow-500 hover:bg-yellow-500/10"
+                            disabled={expiringUserId === user.user_id}
+                            title="Expire subscription (for testing)"
+                          >
+                            {expiringUserId === user.user_id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Clock className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Expire Subscription (Testing)</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will immediately expire the subscription for{" "}
+                              <span className="font-semibold">{user.email || user.full_name}</span>.
+                              Use this for testing the lockout flow. The user will need to resubscribe to regain access.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleExpireSubscription(user.user_id)}
+                              className="bg-yellow-500 text-black hover:bg-yellow-600"
+                            >
+                              Expire Now
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
