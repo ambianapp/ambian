@@ -683,7 +683,26 @@ const Profile = () => {
                     )}
                   </p>
                 )}
+                {/* Show valid until for cancelled subscriptions */}
+                {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
+                  <p className="text-sm text-muted-foreground">
+                    {t("subscription.validUntil")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
+                  </p>
+                )}
               </div>
+              
+              {/* Reactivate button - between valid until and cancelled badge */}
+              {subscription.cancelAtPeriodEnd && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate("/pricing")}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("subscription.reactivate")}
+                </Button>
+              )}
+              
               <div
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   subscription.cancelAtPeriodEnd
@@ -715,26 +734,6 @@ const Profile = () => {
                 <span>
                   {t("subscription.renewsOn")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
                 </span>
-              </div>
-            )}
-
-            {/* Cancelled status with valid until and reactivate button */}
-            {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {t("subscription.validUntil")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
-                  </span>
-                </div>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate("/pricing")}
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  {t("subscription.reactivate")}
-                </Button>
               </div>
             )}
 
