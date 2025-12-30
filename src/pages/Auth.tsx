@@ -223,7 +223,7 @@ const Auth = () => {
                   {t("auth.forgotPassword")}
                 </h1>
                 <p className="text-muted-foreground">
-                  {t("auth.forgotPasswordDescLink") || "Enter your email and we'll send you a link to reset your password."}
+                  {t("auth.forgotPasswordDesc")}
                 </p>
               </>
             )}
