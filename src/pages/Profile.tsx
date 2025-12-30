@@ -726,15 +726,10 @@ const Profile = () => {
                 </p>
                 <Button
                   variant="default"
-                  onClick={handleManageSubscription}
-                  disabled={isLoadingPortal}
+                  onClick={() => navigate("/pricing")}
                   className="w-full sm:w-auto"
                 >
-                  {isLoadingPortal ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                  )}
+                  <RefreshCw className="w-4 h-4 mr-2" />
                   {t("subscription.reactivate")}
                 </Button>
               </div>
