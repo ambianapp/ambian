@@ -718,16 +718,19 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Reactivate Subscription - show when cancelled */}
+            {/* Cancelled status with valid until and reactivate button */}
             {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
-              <div className="p-4 rounded-lg border border-orange-500/30 bg-orange-500/5">
-                <p className="text-sm text-muted-foreground mb-3">
-                  {t("subscription.validUntil")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
-                </p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>
+                    {t("subscription.validUntil")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
+                  </span>
+                </div>
                 <Button
                   variant="default"
+                  size="sm"
                   onClick={() => navigate("/pricing")}
-                  className="w-full sm:w-auto"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {t("subscription.reactivate")}
