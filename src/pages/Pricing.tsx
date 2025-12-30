@@ -358,20 +358,20 @@ const Pricing = () => {
 
         {/* Active subscription/access message */}
         {subscription.subscribed && !subscription.isTrial && !subscription.isPendingPayment && subscription.subscriptionEnd && (
-          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary mb-2">
+          <div className={`p-4 rounded-lg text-center ${subscription.cancelAtPeriodEnd ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-primary/10 border border-primary/20'}`}>
+            <div className={`flex items-center justify-center gap-2 mb-2 ${subscription.cancelAtPeriodEnd ? 'text-orange-500' : 'text-primary'}`}>
               <Calendar className="w-5 h-5" />
-              <span className="font-semibold">{t("pricing.accessActive")}</span>
+              <span className="font-semibold">
+                {subscription.cancelAtPeriodEnd ? t("pricing.subscriptionCancelled") : t("pricing.accessActive")}
+              </span>
             </div>
             <p className="text-muted-foreground">
-              {t("pricing.validUntil")} <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>.
               {subscription.cancelAtPeriodEnd 
-                ? ` ${t("pricing.cancelled")}`
-                : subscription.isRecurring 
-                  ? ` ${t("pricing.autoRenew")}` 
-                  : ` ${t("pricing.buyMore")}`}
+                ? <>{t("pricing.validUntil")} <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>. {t("pricing.cancelled")}</>
+                : <>{t("pricing.validUntil")} <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>. {subscription.isRecurring ? t("pricing.autoRenew") : t("pricing.buyMore")}</>
+              }
             </p>
-            {subscription.isRecurring && (
+            {subscription.isRecurring && !subscription.cancelAtPeriodEnd && (
               <Button variant="link" onClick={() => navigate("/profile")} className="mt-2">
                 {t("subscription.manageBtn")}
               </Button>
