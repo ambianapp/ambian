@@ -718,6 +718,28 @@ const Profile = () => {
               </div>
             )}
 
+            {/* Reactivate Subscription - show when cancelled */}
+            {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
+              <div className="p-4 rounded-lg border border-orange-500/30 bg-orange-500/5">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {t("subscription.validUntil")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
+                </p>
+                <Button
+                  variant="default"
+                  onClick={handleManageSubscription}
+                  disabled={isLoadingPortal}
+                  className="w-full sm:w-auto"
+                >
+                  {isLoadingPortal ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  {t("subscription.reactivate")}
+                </Button>
+              </div>
+            )}
+
             {/* Plan Change Options - hide if cancelled */}
             {subscription.subscribed && !subscription.isTrial && !subscription.cancelAtPeriodEnd && (
               <div className="p-4 rounded-lg border border-border">

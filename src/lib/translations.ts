@@ -167,6 +167,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.ibanNote": "Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process.",
     "subscription.cancelled": "Cancelled",
     "subscription.validUntil": "Valid until",
+    "subscription.reactivate": "Reactivate Subscription",
 
     // Device slots
     "devices.title": "Multiple Locations",
@@ -771,6 +772,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.ibanNote": "Obs: Vid betalning via banköverföring (IBAN), vänligen betala några dagar tidigare då överföringar kan ta tid.",
     "subscription.cancelled": "Avslutad",
     "subscription.validUntil": "Giltig till",
+    "subscription.reactivate": "Återaktivera prenumeration",
     
     // Device slots
     "devices.title": "Flera platser",
@@ -1374,6 +1376,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.ibanNote": "Huom: Jos maksat pankkisiirrolla (IBAN), maksa muutama päivä aikaisemmin, sillä siirrot voivat kestää.",
     "subscription.cancelled": "Peruutettu",
     "subscription.validUntil": "Voimassa asti",
+    "subscription.reactivate": "Aktivoi tilaus uudelleen",
     
     // Device slots
     "devices.title": "Useita sijainteja",
@@ -1978,6 +1981,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.ibanNote": "Hinweis: Bei Zahlung per Banküberweisung (IBAN) bitte einige Tage früher zahlen, da Überweisungen Zeit benötigen können.",
     "subscription.cancelled": "Gekündigt",
     "subscription.validUntil": "Gültig bis",
+    "subscription.reactivate": "Abonnement reaktivieren",
     
     // Device slots
     "devices.title": "Mehrere Standorte",
@@ -2581,6 +2585,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.ibanNote": "Remarque : Si vous payez par virement bancaire (IBAN), veuillez payer quelques jours plus tôt car les virements peuvent prendre du temps.",
     "subscription.cancelled": "Annulé",
     "subscription.validUntil": "Valide jusqu'au",
+    "subscription.reactivate": "Réactiver l'abonnement",
     
     // Device slots
     "devices.title": "Emplacements multiples",
