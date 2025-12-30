@@ -22,7 +22,21 @@ const Privacy = () => {
         <div className="prose prose-invert max-w-none">
           <h1 className="text-3xl font-bold text-foreground mb-6">{t("privacy.title")}</h1>
           
-          <p className="text-muted-foreground mb-6">{t("privacy.lastUpdated")}: 29.12.2025</p>
+          <p className="text-muted-foreground mb-6">{t("privacy.lastUpdated")}: 30.12.2025</p>
+
+          {/* Data Controller */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.controllerTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-2">
+              {t("privacy.controllerContent")}
+            </p>
+            <div className="text-muted-foreground space-y-1">
+              <p><strong>{t("privacy.controllerCompany")}</strong></p>
+              <p>{t("privacy.controllerBusinessId")}</p>
+              <p>{t("privacy.controllerAddress")}</p>
+              <p>{t("privacy.controllerCountry")}</p>
+            </div>
+          </section>
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.introTitle")}</h2>
@@ -45,6 +59,20 @@ const Privacy = () => {
             </ul>
           </section>
 
+          {/* Legal Basis for Processing */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.legalBasisTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {t("privacy.legalBasisIntro")}
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2">
+              <li>{t("privacy.legalBasisContract")}</li>
+              <li>{t("privacy.legalBasisLegal")}</li>
+              <li>{t("privacy.legalBasisLegitimate")}</li>
+              <li>{t("privacy.legalBasisConsent")}</li>
+            </ul>
+          </section>
+
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.dataUseTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
@@ -56,6 +84,20 @@ const Privacy = () => {
               <li>{t("privacy.useImprove")}</li>
               <li>{t("privacy.useCommunicate")}</li>
               <li>{t("privacy.useLegal")}</li>
+            </ul>
+          </section>
+
+          {/* Data Retention */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.retentionTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {t("privacy.retentionIntro")}
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2">
+              <li>{t("privacy.retentionAccount")}</li>
+              <li>{t("privacy.retentionBilling")}</li>
+              <li>{t("privacy.retentionUsage")}</li>
+              <li>{t("privacy.retentionSupport")}</li>
             </ul>
           </section>
 
@@ -71,6 +113,14 @@ const Privacy = () => {
             </ul>
           </section>
 
+          {/* International Data Transfers */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.transfersTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              {t("privacy.transfersContent")}
+            </p>
+          </section>
+
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.gdprTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
@@ -84,6 +134,30 @@ const Privacy = () => {
               <li>{t("privacy.gdprPortability")}</li>
               <li>{t("privacy.gdprObject")}</li>
             </ul>
+          </section>
+
+          {/* Right to Lodge a Complaint */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.complaintTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-2">
+              {t("privacy.complaintContent")}
+            </p>
+            <div className="text-muted-foreground space-y-1">
+              <p><strong>{t("privacy.complaintAuthority")}</strong></p>
+              <p>
+                <a href="https://tietosuoja.fi" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  {t("privacy.complaintWebsite")}
+                </a>
+              </p>
+            </div>
+          </section>
+
+          {/* Automated Decision-Making */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("privacy.automatedTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              {t("privacy.automatedContent")}
+            </p>
           </section>
 
           <section className="mb-8">
