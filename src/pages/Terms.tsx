@@ -22,50 +22,100 @@ const Terms = () => {
         <div className="prose prose-invert max-w-none">
           <h1 className="text-3xl font-bold text-foreground mb-6">{t("terms.title")}</h1>
           
-          <p className="text-muted-foreground mb-6">{t("terms.lastUpdated")}: 23.12.2025</p>
+          <p className="text-muted-foreground mb-6">{t("terms.lastUpdated")}: 30.12.2025</p>
 
+          {/* 1. Parties and Scope */}
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section1Title")}</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.partiesTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("terms.section1Content")}
+              {t("terms.partiesContent")}
             </p>
           </section>
 
+          {/* 2. Service Description */}
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section2Title")}</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.serviceTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("terms.section2Content")}
+              {t("terms.serviceContent")}
             </p>
           </section>
 
+          {/* 3. Subscription and Termination */}
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section3Title")}</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.subscriptionTitle")}</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>{t("terms.subscriptionStart")}</p>
+              <p>{t("terms.subscriptionCancel")}</p>
+              <p>{t("terms.subscriptionSuspend")}</p>
+              <p>{t("terms.subscriptionLicenseEnd")}</p>
+            </div>
+          </section>
+
+          {/* 4. Payments and Invoicing */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.paymentTitle")}</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>{t("terms.paymentPrices")}</p>
+              <p>{t("terms.paymentMethods")}</p>
+              <p>{t("terms.paymentLate")}</p>
+              <p>{t("terms.paymentRefunds")}</p>
+            </div>
+          </section>
+
+          {/* 5. License and Permitted Use */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.licenseTitle")}</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>{t("terms.licenseGrant")}</p>
+              <p>{t("terms.licenseRestrictions")}</p>
+              <p>{t("terms.licenseMisuse")}</p>
+            </div>
+          </section>
+
+          {/* 6. Intellectual Property */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.ipTitle")}</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>{t("terms.ipOwnership")}</p>
+              <p>{t("terms.ipModification")}</p>
+            </div>
+          </section>
+
+          {/* 7. Service Availability */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.availabilityTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("terms.section3Content")}
+              {t("terms.availabilityContent")}
             </p>
           </section>
 
+          {/* 8. Limitation of Liability */}
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section4Title")}</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.liabilityTitle")}</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>{t("terms.liabilityMax")}</p>
+              <p>{t("terms.liabilityExclude")}</p>
+              <p>{t("terms.liabilityPreserve")}</p>
+            </div>
+          </section>
+
+          {/* 9. Governing Law and Disputes */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.governingTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("terms.section4Content")}
+              {t("terms.governingContent")}
             </p>
           </section>
 
+          {/* 10. Changes to Terms */}
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section5Title")}</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.changesTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("terms.section5Content")}
+              {t("terms.changesContent")}
             </p>
           </section>
 
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.section6Title")}</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              {t("terms.section6Content")}
-            </p>
-          </section>
-
+          {/* Contact */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-4">{t("terms.contactTitle")}</h2>
             <p className="text-muted-foreground leading-relaxed">
