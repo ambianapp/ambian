@@ -129,16 +129,22 @@ const AppContent = () => {
   const { user } = useAuth();
   const location = useLocation();
   
+  // Hide navigation and player on auth-related pages
+  const isAuthPage = location.pathname === "/auth" || location.pathname === "/reset-password";
+  
   // Show MobileSidebar on non-index protected pages (Index has its own)
-  const showGlobalMobileSidebar = user && location.pathname !== "/" && location.pathname !== "/auth" && location.pathname !== "/install";
+  const showGlobalMobileSidebar = user && location.pathname !== "/" && !isAuthPage && location.pathname !== "/install";
+  
+  // Show PlayerBar only when user is logged in and not on auth pages
+  const showPlayerBar = user && !isAuthPage;
   
   return (
     <>
-      <div className={user ? "pb-[calc(160px+var(--safe-bottom-tight))] md:pb-0" : undefined}>
+      <div className={showPlayerBar ? "pb-[calc(160px+var(--safe-bottom-tight))] md:pb-0" : undefined}>
         <AppRoutes />
       </div>
       {showGlobalMobileSidebar && <MobileSidebar activeView="" onViewChange={() => {}} />}
-      {user && <PlayerBar />}
+      {showPlayerBar && <PlayerBar />}
     </>
   );
 };
