@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail, FlaskConical } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 import {
   Dialog,
@@ -49,12 +49,27 @@ const PREPAID_PLANS = {
   },
 };
 
+// TEST PLANS - 1 day duration for testing subscription expiration
+const TEST_PLANS = {
+  subscription: {
+    priceId: "price_1SjxomJrU52a7SNL3ImdC1N0",
+    price: "€1",
+    interval: "day",
+  },
+  prepaid: {
+    priceId: "price_1SjxozJrU52a7SNLnoFrDtvf",
+    price: "€1",
+    duration: "1 day",
+  },
+};
+
 const Pricing = () => {
   const { user, subscription, checkSubscription } = useAuth();
   const { t } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
   const [paymentType, setPaymentType] = useState<"subscription" | "prepaid">("subscription");
   const [isLoading, setIsLoading] = useState(false);
+  const [isTestLoading, setIsTestLoading] = useState<"subscription" | "prepaid" | null>(null);
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [companyName, setCompanyName] = useState("");
@@ -156,6 +171,41 @@ const Pricing = () => {
         variant: "destructive",
       });
       setIsLoading(false);
+    }
+  };
+
+  // TEST: Handle 1-day test checkout
+  const handleTestCheckout = async (type: "subscription" | "prepaid") => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    setIsTestLoading(type);
+    try {
+      const testPlan = TEST_PLANS[type];
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { 
+          priceId: testPlan.priceId,
+          paymentMode: type === "subscription" ? "subscription" : "payment",
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Checkout could not be started. Please try again.");
+      }
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestLoading(null);
     }
   };
 
@@ -529,6 +579,70 @@ const Pricing = () => {
             </ul>
           </CardContent>
         </Card>
+
+        {/* TEST SECTION - 1 Day Plans for Testing */}
+        {user && (
+          <Card className="bg-yellow-500/10 border-yellow-500/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-yellow-600">
+                <FlaskConical className="w-5 h-5" />
+                TEST: 1-Day Plans (For Testing Only)
+              </CardTitle>
+              <CardDescription className="text-yellow-600/80">
+                These plans expire after 24 hours - use them to test the subscription expiration flow.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {/* Test Recurring */}
+                <div className="p-4 rounded-lg bg-background/50 border border-yellow-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <RefreshCw className="w-4 h-4 text-yellow-600" />
+                    <span className="font-medium">1-Day Recurring</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Daily subscription that auto-renews every 24h
+                  </p>
+                  <div className="text-2xl font-bold mb-3">{TEST_PLANS.subscription.price}/day</div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-yellow-500/50 hover:bg-yellow-500/20"
+                    onClick={() => handleTestCheckout("subscription")}
+                    disabled={isTestLoading !== null}
+                  >
+                    {isTestLoading === "subscription" ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Buy Test Subscription
+                  </Button>
+                </div>
+
+                {/* Test Prepaid */}
+                <div className="p-4 rounded-lg bg-background/50 border border-yellow-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCard className="w-4 h-4 text-yellow-600" />
+                    <span className="font-medium">1-Day Prepaid</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    One-time payment, expires after 24 hours
+                  </p>
+                  <div className="text-2xl font-bold mb-3">{TEST_PLANS.prepaid.price}</div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-yellow-500/50 hover:bg-yellow-500/20"
+                    onClick={() => handleTestCheckout("prepaid")}
+                    disabled={isTestLoading !== null}
+                  >
+                    {isTestLoading === "prepaid" ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Buy Test Access
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Invoice Request Dialog */}
         <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>

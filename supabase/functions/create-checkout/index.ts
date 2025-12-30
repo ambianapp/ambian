@@ -28,12 +28,14 @@ const logStep = (step: string, details?: any) => {
 const SUBSCRIPTION_PRICES = {
   monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
   yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
+  daily_test: "price_1SjxomJrU52a7SNL3ImdC1N0", // TEST - 1 day recurring
 };
 
 // Price IDs for prepaid access (one-time)
 const PREPAID_PRICES = {
   monthly: "price_1SfhOOJrU52a7SNLPPopAVyb",
   yearly: "price_1SfhOZJrU52a7SNLIejHHUh4",
+  daily_test: "price_1SjxozJrU52a7SNLnoFrDtvf", // TEST - 1 day prepaid
 };
 
 serve(async (req) => {
@@ -70,6 +72,8 @@ serve(async (req) => {
     let planType = "monthly";
     if (priceId === SUBSCRIPTION_PRICES.yearly || priceId === PREPAID_PRICES.yearly) {
       planType = "yearly";
+    } else if (priceId === SUBSCRIPTION_PRICES.daily_test || priceId === PREPAID_PRICES.daily_test) {
+      planType = "daily_test";
     }
     logStep("Plan type determined", { planType });
 
