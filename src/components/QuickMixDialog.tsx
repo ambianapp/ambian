@@ -19,7 +19,7 @@ interface DbPlaylist {
 }
 
 interface QuickMixDialogProps {
-  onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
+  onTrackSelect: (track: Track, playlistTracks?: Track[], isQuickMix?: boolean) => void;
   trigger?: React.ReactNode;
   likedOnly?: boolean; // When true, only show user's liked playlists
 }
@@ -179,7 +179,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
       onTrackSelect({
         ...firstTrack,
         audioUrl: signedAudioUrl,
-      }, shuffledTracks);
+      }, shuffledTracks, true);
     } finally {
       setIsPlaying(false);
     }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3, ListMusic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ const PlayerBar = () => {
     shuffle,
     repeat,
     crossfade,
+    isQuickMix,
     handlePlayPause,
     handleNext,
     handlePrevious,
@@ -1229,7 +1230,15 @@ const PlayerBar = () => {
             className="w-10 h-10 rounded-md object-cover shadow-lg flex-shrink-0"
           />
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-foreground truncate text-sm">{currentTrack.title}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-medium text-foreground truncate text-sm">{currentTrack.title}</p>
+              {isQuickMix && (
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-medium rounded-full flex-shrink-0">
+                  <ListMusic className="w-2.5 h-2.5" />
+                  Mix
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground truncate">Ambian</p>
           </div>
           <Button
@@ -1318,7 +1327,15 @@ const PlayerBar = () => {
             className="w-14 h-14 rounded-lg object-cover shadow-lg flex-shrink-0"
           />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
+              {isQuickMix && (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded-full flex-shrink-0">
+                  <ListMusic className="w-3 h-3" />
+                  Quick Mix
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground truncate">Ambian</p>
           </div>
           <Button
