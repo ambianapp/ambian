@@ -86,73 +86,81 @@ const generateEmailHtml = (
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @media only screen and (max-width: 480px) {
+      .email-container {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .email-content {
+        padding: 24px 16px !important;
+      }
+    }
+  </style>
 </head>
-<body style="background-color: ${brandColors.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 40px 20px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<body style="background-color: ${brandColors.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 20px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 100%;">
     <tr>
       <td align="center">
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background-color: ${brandColors.cardBackground}; border-radius: 16px; border: 1px solid ${brandColors.border}; max-width: 520px;">
+        <table role="presentation" class="email-container" cellpadding="0" cellspacing="0" style="background-color: ${brandColors.cardBackground}; border-radius: 16px; border: 1px solid ${brandColors.border}; width: 100%; max-width: 480px;">
           <tr>
-            <td style="padding: 40px;">
+            <td class="email-content" style="padding: 32px 24px;">
               <!-- Logo -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="padding-bottom: 32px;">
-                    <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="140" style="display: block;">
+                  <td align="center" style="padding-bottom: 24px;">
+                    <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; max-width: 120px; height: auto;">
                   </td>
                 </tr>
               </table>
               
               <!-- Heading -->
-              <h1 style="color: ${brandColors.text}; font-size: 24px; font-weight: 600; text-align: center; margin: 0 0 16px 0;">
+              <h1 style="color: ${brandColors.text}; font-size: 22px; font-weight: 600; text-align: center; margin: 0 0 12px 0;">
                 ${content.heading}
               </h1>
               
               <!-- Description -->
-              <p style="color: ${brandColors.textMuted}; font-size: 16px; line-height: 24px; text-align: center; margin: 0 0 32px 0;">
+              <p style="color: ${brandColors.textMuted}; font-size: 15px; line-height: 22px; text-align: center; margin: 0 0 24px 0;">
                 ${content.description}
               </p>
               
               <!-- CTA Button -->
-              <div style="text-align: center; margin: 0 0 32px 0;">
-                <a href="${resetLink}" style="display: inline-block; background-color: ${brandColors.primary}; color: ${brandColors.text}; font-size: 16px; font-weight: 600; text-decoration: none; padding: 16px 32px; border-radius: 8px;">
+              <div style="text-align: center; margin: 0 0 24px 0;">
+                <a href="${resetLink}" style="display: inline-block; background-color: ${brandColors.primary}; color: ${brandColors.text}; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 28px; border-radius: 8px;">
                   ${content.buttonText}
                 </a>
               </div>
               
-              <p style="color: ${brandColors.textMuted}; font-size: 13px; text-align: center; margin: 0 0 24px 0;">
+              <p style="color: ${brandColors.textMuted}; font-size: 12px; text-align: center; margin: 0 0 16px 0;">
                 If the button doesn't work, copy and paste this link into your browser:
               </p>
-              <p style="color: ${brandColors.primary}; font-size: 12px; text-align: center; word-break: break-all; margin: 0 0 24px 0;">
-                ${resetLink}
+              <p style="color: ${brandColors.primary}; font-size: 11px; text-align: center; word-break: break-all; overflow-wrap: break-word; margin: 0 0 20px 0; max-width: 100%;">
+                <a href="${resetLink}" style="color: ${brandColors.primary}; text-decoration: underline; word-break: break-all;">${resetLink}</a>
               </p>
               
               <!-- Divider -->
-              <hr style="border: none; border-top: 1px solid ${brandColors.border}; margin: 24px 0;">
+              <hr style="border: none; border-top: 1px solid ${brandColors.border}; margin: 20px 0;">
               
               <!-- Footer note -->
-              <p style="color: ${brandColors.textMuted}; font-size: 13px; text-align: center; margin: 0 0 8px 0;">
+              <p style="color: ${brandColors.textMuted}; font-size: 12px; text-align: center; margin: 0 0 8px 0;">
                 ${content.footerNote}
               </p>
               
               <!-- Email sent to -->
-              <p style="color: ${brandColors.textMuted}; font-size: 12px; text-align: center; margin: 16px 0 0 0;">
-                This email was sent to ${userEmail}
+              <p style="color: ${brandColors.textMuted}; font-size: 11px; text-align: center; margin: 12px 0 0 0;">
+                This email was sent to <a href="mailto:${userEmail}" style="color: ${brandColors.primary}; text-decoration: none;">${userEmail}</a>
               </p>
             </td>
           </tr>
         </table>
         
         <!-- Footer branding -->
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 480px;">
           <tr>
-            <td align="center" style="padding-top: 24px;">
-              <p style="color: ${brandColors.textMuted}; font-size: 12px; margin: 0 0 4px 0;">
+            <td align="center" style="padding-top: 20px;">
+              <p style="color: ${brandColors.textMuted}; font-size: 11px; margin: 0 0 4px 0;">
                 © ${new Date().getFullYear()} Ambian. Premium background music for businesses.
               </p>
-              <a href="https://ambianmusic.com" style="color: ${brandColors.primary}; font-size: 12px; text-decoration: none;">
-                ambianmusic.com
-              </a>
             </td>
           </tr>
         </table>
