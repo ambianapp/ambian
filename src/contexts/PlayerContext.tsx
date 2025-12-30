@@ -24,8 +24,9 @@ interface PlayerContextType {
   shuffle: boolean;
   repeat: "off" | "all" | "one";
   crossfade: boolean;
+  isQuickMix: boolean;
   playlistTracksRef: React.MutableRefObject<Track[]>;
-  handleTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
+  handleTrackSelect: (track: Track, playlistTracks?: Track[], isQuickMix?: boolean) => void;
   handlePlayPause: () => void;
   handleNext: () => Promise<void>;
   handlePrevious: () => Promise<void>;
@@ -67,6 +68,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const saved = localStorage.getItem("ambian_crossfade");
     return saved === "true";
   });
+  const [isQuickMix, setIsQuickMix] = useState(false);
   const [originalDbUrl, setOriginalDbUrl] = useState<string | null>(null);
   const [seekPosition, setSeekPosition] = useState<number | null>(null);
   const [pendingScheduledTransition, setPendingScheduledTransition] = useState<ScheduledTransition | null>(null);
@@ -240,7 +242,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(restorePlayback, 500);
   }, []);
 
-  const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[]) => {
+  const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[], quickMix?: boolean) => {
     // Block playback if device limit reached - show dialog instead of toast
     if (!canPlayMusic) {
       openDeviceLimitDialog();
@@ -251,6 +253,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       playlistTracksRef.current = playlistTracks;
     }
     setSeekPosition(null);
+    setIsQuickMix(quickMix ?? false);
     
     // If track already has a valid signed URL (not a raw DB URL), use it
     if (track.audioUrl && track.audioUrl.includes('token=')) {
@@ -454,6 +457,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         shuffle,
         repeat,
         crossfade,
+        isQuickMix,
         playlistTracksRef,
         handleTrackSelect,
         handlePlayPause,
