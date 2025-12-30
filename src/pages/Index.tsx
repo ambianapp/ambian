@@ -85,12 +85,18 @@ const Index = () => {
     }
   }, [activeView, selectedPlaylist]);
 
-  // Handle navigation state from other pages (e.g., Profile -> Search)
+  // Handle navigation state from other pages (e.g., Profile -> Search, Help -> Playlist)
   useEffect(() => {
-    const state = location.state as { view?: string } | null;
+    const state = location.state as { view?: string; selectedPlaylist?: SelectedPlaylist } | null;
     if (state?.view) {
       setActiveView(state.view);
-      // Clear the state to prevent re-triggering on refresh
+    }
+    if (state?.selectedPlaylist) {
+      setSelectedPlaylist(state.selectedPlaylist);
+      setActiveView("home"); // Ensure we're on home view when selecting a playlist
+    }
+    // Clear the state to prevent re-triggering on refresh
+    if (state?.view || state?.selectedPlaylist) {
       navigate("/", { replace: true, state: {} });
     }
   }, [location.state, navigate]);
