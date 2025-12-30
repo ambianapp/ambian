@@ -108,6 +108,10 @@ serve(async (req) => {
     if (planType === "yearly") {
       endDate = new Date(startDate);
       endDate.setFullYear(endDate.getFullYear() + 1);
+    } else if (planType === "daily_test") {
+      // TEST: 1 day access for testing
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
     } else {
       endDate = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 1);
