@@ -26,6 +26,7 @@ const PlayerBar = () => {
     handleShuffleToggle,
     handleRepeatToggle,
     handleCrossfadeToggle,
+    clearQuickMix,
     seekPosition,
     setSeekPosition,
     getNextTrack,
@@ -1233,10 +1234,16 @@ const PlayerBar = () => {
             <div className="flex items-center gap-1.5">
               <p className="font-medium text-foreground truncate text-sm">{currentTrack.title}</p>
               {isQuickMix && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-medium rounded-full flex-shrink-0">
+                <button
+                  onClick={() => {
+                    clearQuickMix();
+                    toast({ title: "Exited Quick Mix" });
+                  }}
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-medium rounded-full flex-shrink-0 hover:bg-primary/30 transition-colors active:scale-95"
+                >
                   <ListMusic className="w-2.5 h-2.5" />
-                  Mix
-                </span>
+                  Mix ✕
+                </button>
               )}
             </div>
             <p className="text-xs text-muted-foreground truncate">Ambian</p>
@@ -1330,10 +1337,16 @@ const PlayerBar = () => {
             <div className="flex items-center gap-2">
               <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
               {isQuickMix && (
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded-full flex-shrink-0">
+                <button
+                  onClick={() => {
+                    clearQuickMix();
+                    toast({ title: "Exited Quick Mix" });
+                  }}
+                  className="flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded-full flex-shrink-0 hover:bg-primary/30 transition-colors cursor-pointer"
+                >
                   <ListMusic className="w-3 h-3" />
-                  Quick Mix
-                </span>
+                  Quick Mix ✕
+                </button>
               )}
             </div>
             <p className="text-sm text-muted-foreground truncate">Ambian</p>
