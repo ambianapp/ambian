@@ -338,10 +338,9 @@ const PlaylistDetailView = ({
       {/* Track List */}
       <div className="px-6">
         {/* Header */}
-        <div className="hidden md:grid grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wider border-b border-border mb-2">
+        <div className="hidden md:grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wider border-b border-border mb-2">
           <span className="w-8">#</span>
           <span>Title</span>
-          <span>Album</span>
           <span className="w-12 flex justify-end">
             <Clock className="w-4 h-4" />
           </span>
