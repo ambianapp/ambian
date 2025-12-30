@@ -35,6 +35,13 @@ interface DeviceSlotSubscription {
   cancelAtPeriodEnd: boolean;
 }
 
+interface TimeRemaining {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 const Profile = () => {
   const { user, subscription, checkSubscription, signOut } = useAuth();
   const { language, setLanguage, t, languageNames, availableLanguages } = useLanguage();
@@ -65,6 +72,7 @@ const Profile = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [trialTimeRemaining, setTrialTimeRemaining] = useState<TimeRemaining | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -163,6 +171,39 @@ const Profile = () => {
     
     checkHasPassword();
   }, [user?.id]);
+
+  // Trial countdown timer
+  useEffect(() => {
+    if (!subscription.isTrial || !subscription.trialEnd) {
+      setTrialTimeRemaining(null);
+      return;
+    }
+
+    const calculateTimeRemaining = () => {
+      const now = new Date().getTime();
+      const end = new Date(subscription.trialEnd!).getTime();
+      const diff = end - now;
+
+      if (diff <= 0) {
+        setTrialTimeRemaining(null);
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTrialTimeRemaining({ days, hours, minutes, seconds });
+    };
+
+    calculateTimeRemaining();
+    const interval = setInterval(calculateTimeRemaining, 1000);
+
+    return () => clearInterval(interval);
+  }, [subscription.isTrial, subscription.trialEnd]);
+
+  const formatNumber = (n: number) => n.toString().padStart(2, '0');
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -606,7 +647,19 @@ const Profile = () => {
                         ? t("subscription.active") 
                         : t("subscription.inactive")}
                 </p>
-                {subscription.isTrial && (
+                {subscription.isTrial && trialTimeRemaining && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      {t("subscription.timeRemaining") || "Time remaining"}:{" "}
+                      <span className="font-mono">
+                        {trialTimeRemaining.days > 0 && `${trialTimeRemaining.days}d `}
+                        {formatNumber(trialTimeRemaining.hours)}:{formatNumber(trialTimeRemaining.minutes)}:{formatNumber(trialTimeRemaining.seconds)}
+                      </span>
+                    </span>
+                  </p>
+                )}
+                {subscription.isTrial && !trialTimeRemaining && (
                   <p className="text-sm text-muted-foreground">
                     {t("subscription.trialDaysRemaining", { days: subscription.trialDaysRemaining })}
                   </p>
