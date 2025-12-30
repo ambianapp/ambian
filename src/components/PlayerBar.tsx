@@ -1334,21 +1334,7 @@ const PlayerBar = () => {
             className="w-14 h-14 rounded-lg object-cover shadow-lg flex-shrink-0"
           />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
-              {isQuickMix && (
-                <button
-                  onClick={() => {
-                    clearQuickMix();
-                    toast({ title: "Exited Quick Mix" });
-                  }}
-                  className="flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded-full flex-shrink-0 hover:bg-primary/30 transition-colors cursor-pointer"
-                >
-                  <ListMusic className="w-3 h-3" />
-                  Quick Mix ✕
-                </button>
-              )}
-            </div>
+            <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
             <p className="text-sm text-muted-foreground truncate">Ambian</p>
           </div>
           <Button
@@ -1360,6 +1346,20 @@ const PlayerBar = () => {
             <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
           </Button>
         </div>
+
+        {/* Quick Mix Indicator - between track info and controls */}
+        {isQuickMix && (
+          <button
+            onClick={() => {
+              clearQuickMix();
+              toast({ title: "Exited Quick Mix" });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary text-sm font-medium rounded-full flex-shrink-0 hover:bg-primary/30 transition-colors cursor-pointer mx-4"
+          >
+            <ListMusic className="w-4 h-4" />
+            Quick Mix ✕
+          </button>
+        )}
 
         {/* Player Controls */}
         <div className="flex-1 flex flex-col items-center gap-2 max-w-2xl mx-auto">
