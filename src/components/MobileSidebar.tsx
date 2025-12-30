@@ -145,25 +145,33 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
   };
 
   const handlePlaylistClick = (playlist: SidebarPlaylist) => {
-    if (onPlaylistSelect) {
-      onPlaylistSelect({
-        id: playlist.id,
-        name: playlist.name,
-        cover: playlist.cover_url,
-        description: playlist.description,
-      });
+    if (isOnIndexPage) {
+      if (onPlaylistSelect) {
+        onPlaylistSelect({
+          id: playlist.id,
+          name: playlist.name,
+          cover: playlist.cover_url,
+          description: playlist.description,
+        });
+      }
+    } else {
+      navigate("/", { state: { selectedPlaylist: { id: playlist.id, name: playlist.name, cover: playlist.cover_url, description: playlist.description } } });
     }
     setOpen(false);
   };
 
   const handleLikedSongsClick = () => {
-    if (onPlaylistSelect) {
-      onPlaylistSelect({
-        id: "liked-songs",
-        name: t("sidebar.likedSongs"),
-        cover: null,
-        description: null,
-      });
+    if (isOnIndexPage) {
+      if (onPlaylistSelect) {
+        onPlaylistSelect({
+          id: "liked-songs",
+          name: t("sidebar.likedSongs"),
+          cover: null,
+          description: null,
+        });
+      }
+    } else {
+      navigate("/", { state: { selectedPlaylist: { id: "liked-songs", name: t("sidebar.likedSongs"), cover: null, description: null } } });
     }
     setOpen(false);
   };
