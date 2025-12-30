@@ -33,6 +33,7 @@ interface PlayerContextType {
   handleShuffleToggle: () => void;
   handleRepeatToggle: () => void;
   handleCrossfadeToggle: () => void;
+  clearQuickMix: () => void;
   updateAudioUrl: (newUrl: string) => void;
   originalDbUrl: string | null;
   setSeekPosition: (position: number) => void;
@@ -314,7 +315,23 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (tracks.length === 0) return;
     
     const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
-    if (currentIndex === -1) return;
+    
+    // Debug logging for Quick Mix
+    console.log("[handleNext]", {
+      isQuickMix,
+      currentTrackId: currentTrack.id,
+      playlistLength: tracks.length,
+      currentIndex,
+      firstTrackId: tracks[0]?.id,
+      lastTrackId: tracks[tracks.length - 1]?.id,
+    });
+    
+    if (currentIndex === -1) {
+      console.warn("[handleNext] Current track not found in playlist, skipping to first track");
+      // If current track not found, start from beginning of playlist
+      await fetchAndPlayTrack(tracks[0]);
+      return;
+    }
     
     let nextIndex: number;
     if (shuffle) {
@@ -326,8 +343,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       nextIndex = (currentIndex + 1) % tracks.length;
     }
     
+    console.log("[handleNext] Playing next track:", { nextIndex, nextTrackId: tracks[nextIndex]?.id });
     await fetchAndPlayTrack(tracks[nextIndex]);
-  }, [currentTrack, shuffle, fetchAndPlayTrack]);
+  }, [currentTrack, shuffle, fetchAndPlayTrack, isQuickMix]);
 
   const handlePrevious = useCallback(async () => {
     if (!currentTrack) return;
@@ -359,6 +377,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("ambian_crossfade", String(newValue));
       return newValue;
     });
+  }, []);
+
+  const clearQuickMix = useCallback(() => {
+    setIsQuickMix(false);
   }, []);
 
   // Get next track with audio URL for crossfade preloading
@@ -466,6 +488,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         handleShuffleToggle,
         handleRepeatToggle,
         handleCrossfadeToggle,
+        clearQuickMix,
         updateAudioUrl,
         originalDbUrl,
         setSeekPosition,
