@@ -398,18 +398,6 @@ const Profile = () => {
   };
 
   const handleAddDeviceSlotClick = () => {
-    // Block location purchases if subscription isn't active or is set to cancel
-    if (!subscription.subscribed || subscription.isTrial || subscription.cancelAtPeriodEnd) {
-      toast({
-        title: t("common.error"),
-        description:
-          t("devices.subscriptionRequired") ||
-          "An active subscription is required before you can add additional locations.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Show confirmation dialog for invoice payments
     if (deviceSlotPayByInvoice && deviceSlotPeriod === "yearly") {
       setShowInvoiceConfirm(true);
@@ -419,11 +407,6 @@ const Profile = () => {
   };
 
   const handleAddDeviceSlot = async () => {
-    // Safety guard: don't allow purchases if subscription isn't active or is set to cancel
-    if (!subscription.subscribed || subscription.isTrial || subscription.cancelAtPeriodEnd) {
-      return;
-    }
-
     const isInvoice = deviceSlotPayByInvoice && deviceSlotPeriod === "yearly";
     
     // Validate billing info for invoice payments
