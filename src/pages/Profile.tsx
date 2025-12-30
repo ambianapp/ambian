@@ -718,8 +718,8 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Plan Change Options */}
-            {subscription.subscribed && !subscription.isTrial && (
+            {/* Plan Change Options - hide if cancelled */}
+            {subscription.subscribed && !subscription.isTrial && !subscription.cancelAtPeriodEnd && (
               <div className="p-4 rounded-lg border border-border">
                 <p className="font-medium text-foreground mb-3">{t("subscription.changePlan")}</p>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -845,8 +845,8 @@ const Profile = () => {
               );
             })()}
 
-            {/* Show disabled state with message if no active subscription */}
-            {(!subscription.subscribed || subscription.isTrial) ? (
+            {/* Show disabled state with message if no active subscription or cancelled */}
+            {(!subscription.subscribed || subscription.isTrial || subscription.cancelAtPeriodEnd) ? (
               <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Monitor className="w-5 h-5" />
