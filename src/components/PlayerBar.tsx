@@ -1310,11 +1310,12 @@ const PlayerBar = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
+              onClick={(e) => {
                 handleCrossfadeToggle();
                 toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
+                (e.currentTarget as HTMLButtonElement).blur();
               }}
-              className={cn("h-10 w-10 relative", crossfade ? "text-primary" : "text-muted-foreground")}
+              className={cn("h-10 w-10 relative touch-manipulation", crossfade ? "text-primary" : "text-muted-foreground")}
               title="Crossfade"
             >
               <Disc3 className="w-5 h-5" />
@@ -1393,11 +1394,12 @@ const PlayerBar = () => {
             <Button 
               variant="ghost" 
               size="iconSm" 
-              onClick={() => {
+              onClick={(e) => {
                 handleCrossfadeToggle();
                 toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
+                (e.currentTarget as HTMLButtonElement).blur();
               }}
-              className={cn("relative", crossfade ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+              className={cn("relative touch-manipulation", crossfade ? "text-primary" : "text-muted-foreground hover:text-foreground")}
               title="Crossfade"
             >
               <Disc3 className="w-4 h-4" />
