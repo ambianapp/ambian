@@ -365,7 +365,11 @@ const Pricing = () => {
             </div>
             <p className="text-muted-foreground">
               {t("pricing.validUntil")} <span className="font-medium text-foreground">{formatAccessEnd(subscription.subscriptionEnd)}</span>.
-              {subscription.isRecurring ? ` ${t("pricing.autoRenew")}` : ` ${t("pricing.buyMore")}`}
+              {subscription.cancelAtPeriodEnd 
+                ? ` ${t("pricing.cancelled")}`
+                : subscription.isRecurring 
+                  ? ` ${t("pricing.autoRenew")}` 
+                  : ` ${t("pricing.buyMore")}`}
             </p>
             {subscription.isRecurring && (
               <Button variant="link" onClick={() => navigate("/profile")} className="mt-2">
