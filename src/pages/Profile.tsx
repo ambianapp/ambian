@@ -649,11 +649,6 @@ const Profile = () => {
                           ? t("subscription.active") 
                           : t("subscription.inactive")}
                 </p>
-                {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("subscription.validUntil")}: {new Date(subscription.subscriptionEnd).toLocaleDateString()}
-                  </p>
-                )}
                 {subscription.isTrial && trialTimeRemaining && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3" />
