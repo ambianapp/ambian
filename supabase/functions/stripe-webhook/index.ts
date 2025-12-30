@@ -702,6 +702,127 @@ async function sendSubscriptionCanceledEmail(
   }
 }
 
+// Owner notification email when a purchase is made
+async function sendOwnerPurchaseNotificationEmail(
+  customerEmail: string,
+  customerName: string | null,
+  planType: string,
+  amount: number,
+  currency: string,
+  isFirstSubscription: boolean,
+  isDeviceSlot: boolean = false,
+  deviceSlotQuantity: number = 0
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  const ownerEmail = "info@ambian.fi";
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+  
+  const purchaseType = isDeviceSlot 
+    ? `${deviceSlotQuantity} Additional Location(s)` 
+    : (isFirstSubscription ? 'New Subscription' : 'Subscription Renewal');
+  
+  const planDisplay = isDeviceSlot 
+    ? `${planType === 'yearly' ? 'Yearly' : 'Monthly'} Device Slot` 
+    : `${planType === 'yearly' ? 'Yearly' : 'Monthly'} Subscription`;
+
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                💰 New Purchase!
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                A customer just made a purchase on Ambian!
+              </p>
+              
+              <!-- Purchase Details Box -->
+              <div style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <h3 style="color: #10b981; font-size: 16px; margin: 0 0 16px;">✓ ${purchaseType}</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Customer:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${customerName || 'N/A'}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Email:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${customerEmail}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Plan:</span>
+                      <span style="color: #ffffff; font-size: 14px; margin-left: 12px; font-weight: 500;">${planDisplay}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;">
+                      <span style="color: #888888; font-size: 14px;">Amount:</span>
+                      <span style="color: #10b981; font-size: 14px; margin-left: 12px; font-weight: 600;">${formattedAmount}</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
+              <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 20px 0 0;">
+                Time: ${new Date().toLocaleString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: 'Europe/Helsinki'
+                })} (Helsinki)
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                <a href="https://ambian.app/admin" style="color: #8b5cf6; text-decoration: none;">View Admin Dashboard</a>
+              </p>
+            </td>
+          </tr>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [ownerEmail],
+      subject: `💰 ${purchaseType}: ${customerEmail} - ${formattedAmount}`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending owner purchase notification email", { error });
+      return false;
+    }
+
+    logStep("Owner purchase notification email sent", { emailId: data?.id, to: ownerEmail, customerEmail });
+    return true;
+  } catch (error) {
+    logStep("Failed to send owner purchase notification email", { error: String(error) });
+    return false;
+  }
+}
+
 async function sendPlanChangeEmail(
   email: string,
   customerName: string | null,
@@ -1220,6 +1341,18 @@ serve(async (req) => {
                   amount,
                   currency
                 );
+                
+                // Send owner notification for device slot purchase
+                await sendOwnerPurchaseNotificationEmail(
+                  customerEmail,
+                  customerName,
+                  period,
+                  amount,
+                  currency,
+                  false,
+                  true,
+                  quantity
+                );
               }
             } catch (e) {
               logStep("Could not send device slot confirmation email", { error: String(e) });
@@ -1311,6 +1444,40 @@ serve(async (req) => {
             },
           });
         }
+        
+        // Send owner notification email
+        let planType = "monthly";
+        if (invoice.subscription) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+            planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+          } catch (e) {
+            logStep("Could not retrieve subscription for plan type", { error: String(e) });
+          }
+        }
+        
+        // Get customer name
+        const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+        let customerName: string | null = null;
+        if (customerId) {
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            customerName = (customer as any).name;
+          } catch (e) {
+            logStep("Could not retrieve customer name for owner notification", { error: String(e) });
+          }
+        }
+        
+        await sendOwnerPurchaseNotificationEmail(
+          customerEmail,
+          customerName,
+          planType,
+          invoice.amount_paid || 0,
+          invoice.currency || 'eur',
+          isFirstSubscription && !isRenewal,
+          false,
+          0
+        );
       };
       
       if (!userId) {
