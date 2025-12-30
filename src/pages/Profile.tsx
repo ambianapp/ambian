@@ -639,14 +639,21 @@ const Profile = () => {
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
               <div>
                 <p className="font-medium text-foreground">
-                  {subscription.isPendingPayment
-                    ? t("subscription.awaitingPayment") || "Awaiting Payment"
-                    : subscription.isTrial 
-                      ? t("subscription.trial") 
-                      : subscription.subscribed 
-                        ? t("subscription.active") 
-                        : t("subscription.inactive")}
+                  {subscription.cancelAtPeriodEnd
+                    ? t("subscription.cancelled")
+                    : subscription.isPendingPayment
+                      ? t("subscription.awaitingPayment") || "Awaiting Payment"
+                      : subscription.isTrial 
+                        ? t("subscription.trial") 
+                        : subscription.subscribed 
+                          ? t("subscription.active") 
+                          : t("subscription.inactive")}
                 </p>
+                {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
+                  <p className="text-sm text-muted-foreground">
+                    {t("subscription.validUntil")}: {new Date(subscription.subscriptionEnd).toLocaleDateString()}
+                  </p>
+                )}
                 {subscription.isTrial && trialTimeRemaining && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -664,7 +671,7 @@ const Profile = () => {
                     {t("subscription.trialDaysRemaining", { days: subscription.trialDaysRemaining })}
                   </p>
                 )}
-                {subscription.subscribed && !subscription.isTrial && !subscription.isPendingPayment && subscription.planType && (
+                {subscription.subscribed && !subscription.isTrial && !subscription.isPendingPayment && !subscription.cancelAtPeriodEnd && subscription.planType && (
                   <p className="text-sm text-muted-foreground">
                     {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
                     {subscription.collectionMethod && (
@@ -679,22 +686,26 @@ const Profile = () => {
               </div>
               <div
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  subscription.isPendingPayment
-                    ? "bg-yellow-500/20 text-yellow-500"
-                    : subscription.subscribed
-                      ? subscription.isTrial 
-                        ? "bg-yellow-500/20 text-yellow-500"
-                        : "bg-green-500/20 text-green-500"
-                      : "bg-destructive/20 text-destructive"
+                  subscription.cancelAtPeriodEnd
+                    ? "bg-orange-500/20 text-orange-500"
+                    : subscription.isPendingPayment
+                      ? "bg-yellow-500/20 text-yellow-500"
+                      : subscription.subscribed
+                        ? subscription.isTrial 
+                          ? "bg-yellow-500/20 text-yellow-500"
+                          : "bg-green-500/20 text-green-500"
+                        : "bg-destructive/20 text-destructive"
                 }`}
               >
-                {subscription.isPendingPayment 
-                  ? t("subscription.pending") || "Pending" 
-                  : subscription.isTrial 
-                    ? t("subscription.trial") 
-                    : subscription.subscribed 
-                      ? "Active" 
-                      : "Inactive"}
+                {subscription.cancelAtPeriodEnd
+                  ? t("subscription.cancelled")
+                  : subscription.isPendingPayment 
+                    ? t("subscription.pending") || "Pending" 
+                    : subscription.isTrial 
+                      ? t("subscription.trial") 
+                      : subscription.subscribed 
+                        ? "Active" 
+                        : "Inactive"}
               </div>
             </div>
 

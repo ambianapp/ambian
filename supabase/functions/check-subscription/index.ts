@@ -198,6 +198,7 @@ serve(async (req) => {
     let subscriptionEnd = null;
     let planType = null;
     let isRecurring = false;
+    let cancelAtPeriodEnd = false;
 
     if (hasActiveStripeSub) {
       const subscription = mainSubscriptions[0];
@@ -307,8 +308,9 @@ serve(async (req) => {
       const interval = subscriptionItem.price.recurring?.interval;
       planType = interval === "year" ? "yearly" : "monthly";
       isRecurring = true;
+      cancelAtPeriodEnd = subscription.cancel_at_period_end || false;
       
-      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType, periodEnd, periodStart, collectionMethod });
+      logStep("Active Stripe subscription found", { subscriptionId: subscription.id, planType, periodEnd, periodStart, collectionMethod, cancelAtPeriodEnd });
 
       await supabaseClient
         .from("subscriptions")
@@ -334,6 +336,7 @@ serve(async (req) => {
         is_recurring: true,
         collection_method: collectionMethod,
         device_slots: deviceSlotCount,
+        cancel_at_period_end: cancelAtPeriodEnd,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
