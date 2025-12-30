@@ -165,6 +165,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.payByInvoice": "Pay by Invoice",
     "subscription.payByCard": "Automatic Card Payment",
     "subscription.ibanNote": "Note: If paying by bank transfer (IBAN), please pay a few days earlier as transfers may take time to process.",
+    "subscription.cancelled": "Cancelled",
+    "subscription.validUntil": "Valid until",
 
     // Device slots
     "devices.title": "Multiple Locations",
@@ -767,6 +769,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.payByInvoice": "Betala via faktura",
     "subscription.payByCard": "Automatisk kortbetalning",
     "subscription.ibanNote": "Obs: Vid betalning via banköverföring (IBAN), vänligen betala några dagar tidigare då överföringar kan ta tid.",
+    "subscription.cancelled": "Avslutad",
+    "subscription.validUntil": "Giltig till",
     
     // Device slots
     "devices.title": "Flera platser",
@@ -1368,6 +1372,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.payByInvoice": "Maksa laskulla",
     "subscription.payByCard": "Automaattinen korttimaksu",
     "subscription.ibanNote": "Huom: Jos maksat pankkisiirrolla (IBAN), maksa muutama päivä aikaisemmin, sillä siirrot voivat kestää.",
+    "subscription.cancelled": "Peruutettu",
+    "subscription.validUntil": "Voimassa asti",
     
     // Device slots
     "devices.title": "Useita sijainteja",
@@ -1970,6 +1976,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.payByInvoice": "Zahlung per Rechnung",
     "subscription.payByCard": "Automatische Kartenzahlung",
     "subscription.ibanNote": "Hinweis: Bei Zahlung per Banküberweisung (IBAN) bitte einige Tage früher zahlen, da Überweisungen Zeit benötigen können.",
+    "subscription.cancelled": "Gekündigt",
+    "subscription.validUntil": "Gültig bis",
     
     // Device slots
     "devices.title": "Mehrere Standorte",
@@ -2571,6 +2579,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.payByInvoice": "Paiement par facture",
     "subscription.payByCard": "Paiement automatique par carte",
     "subscription.ibanNote": "Remarque : Si vous payez par virement bancaire (IBAN), veuillez payer quelques jours plus tôt car les virements peuvent prendre du temps.",
+    "subscription.cancelled": "Annulé",
+    "subscription.validUntil": "Valide jusqu'au",
     
     // Device slots
     "devices.title": "Emplacements multiples",

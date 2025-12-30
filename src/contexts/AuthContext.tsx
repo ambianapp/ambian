@@ -15,6 +15,7 @@ interface SubscriptionInfo {
   isPendingPayment: boolean;
   deviceSlots: number;
   collectionMethod: 'charge_automatically' | 'send_invoice' | null;
+  cancelAtPeriodEnd: boolean;
 }
 
 interface ActiveDevice {
@@ -109,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isPendingPayment: false,
       deviceSlots: 1,
       collectionMethod: null,
+      cancelAtPeriodEnd: false,
     }
   );
   
@@ -146,6 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isPendingPayment: data.is_pending_payment || false,
         deviceSlots: data.device_slots || 1,
         collectionMethod: data.collection_method || null,
+        cancelAtPeriodEnd: data.cancel_at_period_end || false,
       };
 
       setSubscription(next);
@@ -184,6 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             isPendingPayment: subRow?.status === "pending_payment",
             deviceSlots: subRow?.device_slots ?? 1,
             collectionMethod: null,
+            cancelAtPeriodEnd: false,
           };
 
           setSubscription(fallback);
@@ -398,7 +402,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAdmin(false);
       setIsSubscriptionLoading(false);
-      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null });
+      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
       setIsDeviceLimitReached(false);
       setActiveDevices([]);
       setIsSessionRegistered(false);
@@ -513,7 +517,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(false);
           setIsSubscriptionLoading(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
           setIsDeviceLimitReached(false);
           setActiveDevices([]);
           setIsSessionRegistered(false);
