@@ -96,6 +96,7 @@ const Terms = () => {
               <p>{t("terms.liabilityMax")}</p>
               <p>{t("terms.liabilityExclude")}</p>
               <p>{t("terms.liabilityPreserve")}</p>
+              <p>{t("terms.liabilityForceMajeure")}</p>
             </div>
           </section>
 
