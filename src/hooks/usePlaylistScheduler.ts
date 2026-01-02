@@ -35,6 +35,8 @@ export const usePlaylistScheduler = () => {
   const { toast } = useToast();
   const lastScheduleIdRef = useRef<string | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const cachedSchedulesRef = useRef<{ schedules: Schedule[]; fetchedAt: number } | null>(null);
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
   const [isEnabled, setIsEnabled] = useState(() => {
     const saved = localStorage.getItem(SCHEDULER_ENABLED_KEY);
     return saved === null ? true : saved === "true";
@@ -45,6 +47,7 @@ export const usePlaylistScheduler = () => {
     localStorage.setItem(SCHEDULER_ENABLED_KEY, String(enabled));
     if (!enabled) {
       lastScheduleIdRef.current = null;
+      cachedSchedulesRef.current = null; // Clear cache when disabled
     }
   }, []);
 
@@ -126,14 +129,25 @@ export const usePlaylistScheduler = () => {
   const checkSchedule = useCallback(async () => {
     if (!user || !isEnabled) return;
 
-    // Fetch user's schedules
-    const { data: schedules, error } = await supabase
-      .from("playlist_schedules")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_active", true);
+    // Use cached schedules if still valid
+    const now = Date.now();
+    let schedules: Schedule[] | null = null;
+    
+    if (cachedSchedulesRef.current && now - cachedSchedulesRef.current.fetchedAt < CACHE_TTL) {
+      schedules = cachedSchedulesRef.current.schedules;
+    } else {
+      // Fetch user's schedules from DB
+      const { data, error } = await supabase
+        .from("playlist_schedules")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
 
-    if (error || !schedules) return;
+      if (error || !data) return;
+      
+      schedules = data;
+      cachedSchedulesRef.current = { schedules: data, fetchedAt: now };
+    }
 
     const currentSchedule = getCurrentSchedule(schedules);
 
