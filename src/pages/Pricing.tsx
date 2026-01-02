@@ -304,17 +304,19 @@ const Pricing = () => {
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Back button and Logo */}
-        <div className="relative flex items-center justify-center pt-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="absolute left-0 z-10 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t("common.back")}
-          </Button>
-          <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20 relative z-0" />
+        <div className="flex flex-col items-center pt-4 space-y-4">
+          <div className="w-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {t("common.back")}
+            </Button>
+          </div>
+          <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
         </div>
 
         {/* Header */}
