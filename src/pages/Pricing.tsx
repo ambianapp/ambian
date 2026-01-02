@@ -309,12 +309,12 @@ const Pricing = () => {
             variant="ghost"
             size="sm"
             onClick={() => navigate(-1)}
-            className="absolute left-0 text-muted-foreground hover:text-foreground"
+            className="absolute left-0 z-10 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t("common.back")}
           </Button>
-          <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
+          <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20 relative z-0" />
         </div>
 
         {/* Header */}
