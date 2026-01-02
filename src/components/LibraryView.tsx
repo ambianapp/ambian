@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { toast } from "sonner";
 import QuickMixDialog from "./QuickMixDialog";
 import {
@@ -47,11 +48,11 @@ interface Playlist {
 
 const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect, onBack }: LibraryViewProps) => {
   const { t } = useLanguage();
+  const { likedCount } = useLikedSongs();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ownPlaylists, setOwnPlaylists] = useState<Playlist[]>([]);
   const [likedPlaylists, setLikedPlaylists] = useState<Playlist[]>([]);
   const [likedSongs, setLikedSongs] = useState<Track[]>([]);
-  const [likedCount, setLikedCount] = useState(0);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPlayingMix, setIsPlayingMix] = useState(false);
@@ -92,15 +93,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
         setLikedPlaylists(playlists);
       }
 
-      // Fetch liked songs count
-      const { count } = await supabase
-        .from("liked_songs")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
-      setLikedCount(count || 0);
-
-      // Fetch first liked song for playing
+      // Fetch first liked songs for playing (use context for count)
       const { data: likedData } = await supabase
         .from("liked_songs")
         .select("track_id, tracks(*)")
