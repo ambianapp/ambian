@@ -126,17 +126,20 @@ const AppRoutes = () => {
 };
 
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, subscription, isAdmin } = useAuth();
   const location = useLocation();
   
   // Hide navigation and player on auth-related pages
   const isAuthPage = location.pathname === "/auth" || location.pathname === "/reset-password";
   
+  // Check if user has active subscription (or is admin)
+  const hasActiveSubscription = subscription.subscribed || isAdmin;
+  
   // Show MobileSidebar on non-index protected pages (Index has its own)
   const showGlobalMobileSidebar = user && location.pathname !== "/" && !isAuthPage && location.pathname !== "/install";
   
-  // Show PlayerBar only when user is logged in and not on auth pages
-  const showPlayerBar = user && !isAuthPage;
+  // Show PlayerBar only when user is logged in, not on auth pages, and has active subscription
+  const showPlayerBar = user && !isAuthPage && hasActiveSubscription;
   
   return (
     <>
