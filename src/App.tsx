@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { LikedSongsProvider } from "@/contexts/LikedSongsContext";
 import PlayerBar from "@/components/PlayerBar";
 import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
@@ -160,10 +161,12 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <LanguageProvider>
-            <PlayerProvider>
-              <OfflineBanner />
-              <AppContent />
-            </PlayerProvider>
+            <LikedSongsProvider>
+              <PlayerProvider>
+                <OfflineBanner />
+                <AppContent />
+              </PlayerProvider>
+            </LikedSongsProvider>
           </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>

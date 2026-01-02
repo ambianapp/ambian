@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Play, Pause, MoreHorizontal, Heart, ListPlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useLikedSongs } from "@/contexts/LikedSongsContext";
 
 interface TrackRowProps {
   track: Track;
@@ -34,28 +35,13 @@ interface UserPlaylist {
 const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
-  const [isLiked, setIsLiked] = useState(false);
+
+  const isLiked = checkIsLiked(track.id);
 
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-
-  useEffect(() => {
-    const checkIfLiked = async () => {
-      if (!user || !isUuid(track.id)) return;
-      
-      const { data } = await supabase
-        .from("liked_songs")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("track_id", track.id)
-        .maybeSingle();
-      
-      setIsLiked(!!data);
-    };
-    
-    checkIfLiked();
-  }, [user, track.id]);
 
   const fetchUserPlaylists = async () => {
     if (!user) return;
@@ -71,31 +57,7 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
   };
 
   const handleLikeToggle = async () => {
-    if (!user) {
-      toast({ title: "Sign in required", variant: "destructive" });
-      return;
-    }
-    
-    if (!isUuid(track.id)) {
-      toast({ title: "Cannot like this track", variant: "destructive" });
-      return;
-    }
-
-    if (isLiked) {
-      await supabase
-        .from("liked_songs")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("track_id", track.id);
-      setIsLiked(false);
-      toast({ title: "Removed from Liked Songs" });
-    } else {
-      await supabase
-        .from("liked_songs")
-        .insert({ user_id: user.id, track_id: track.id });
-      setIsLiked(true);
-      toast({ title: "Added to Liked Songs" });
-    }
+    await toggleLike(track.id);
   };
 
   const handleAddToPlaylist = async (playlistId: string, playlistName: string) => {

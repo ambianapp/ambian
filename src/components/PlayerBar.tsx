@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { useToast } from "@/hooks/use-toast";
 import SignedImage from "@/components/SignedImage";
 import { Track } from "@/data/musicData";
@@ -51,9 +52,11 @@ const PlayerBar = () => {
     }
   }, []);
   const [isMuted, setIsMuted] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const { user, getDeviceId } = useAuth();
+  const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
+  
+  const isLiked = currentTrack ? checkIsLiked(currentTrack.id) : false;
 
   // Crossfade debug buffer (stored in localStorage so you can inspect after the issue happens)
   const CROSSFADE_DEBUG_KEY = "ambian_crossfade_debug";
@@ -532,76 +535,9 @@ const PlayerBar = () => {
     navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
   }, [isPlaying]);
 
-  const isUuid = (value: string) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-
-  // Check if current track is liked
-  useEffect(() => {
-    const checkIfLiked = async () => {
-      if (!user || !currentTrack) {
-        setIsLiked(false);
-        return;
-      }
-
-      // Demo/mock tracks use non-UUID ids; skip DB check for those.
-      if (!isUuid(currentTrack.id)) {
-        setIsLiked(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("liked_songs")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("track_id", currentTrack.id)
-        .maybeSingle();
-
-      setIsLiked(!!data);
-    };
-
-    checkIfLiked();
-  }, [user, currentTrack]);
-
-  const handleLikeToggle = async () => {
-    if (!user || !currentTrack) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to like songs",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isUuid(currentTrack.id)) {
-      toast({
-        title: "Can't like this track",
-        description: "Please play a library track first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isLiked) {
-      const { error } = await supabase
-        .from("liked_songs")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("track_id", currentTrack.id);
-
-      if (!error) {
-        setIsLiked(false);
-        toast({ title: "Removed from Liked Songs" });
-      }
-    } else {
-      const { error } = await supabase
-        .from("liked_songs")
-        .insert({ user_id: user.id, track_id: currentTrack.id });
-
-      if (!error) {
-        setIsLiked(true);
-        toast({ title: "Added to Liked Songs" });
-      }
-    }
+  const handleLikeToggle = () => {
+    if (!currentTrack) return;
+    toggleLike(currentTrack.id);
   };
 
   // Keep audio element src stable - only update src on the INACTIVE element or when not crossfading

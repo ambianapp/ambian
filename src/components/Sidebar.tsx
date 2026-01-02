@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import SignedImage from "@/components/SignedImage";
@@ -46,11 +47,11 @@ interface SidebarProps {
 const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled = true, onToggleScheduler }: SidebarProps) => {
   const { user, isAdmin } = useAuth();
   const { t } = useLanguage();
+  const { likedCount } = useLikedSongs();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [ownPlaylists, setOwnPlaylists] = useState<SidebarPlaylist[]>([]);
   const [likedPlaylists, setLikedPlaylists] = useState<SidebarPlaylist[]>([]);
-  const [likedSongsCount, setLikedSongsCount] = useState(0);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
@@ -86,14 +87,6 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         .filter(Boolean);
       setLikedPlaylists(playlists);
     }
-
-    // Fetch liked songs count
-    const { count } = await supabase
-      .from("liked_songs")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id);
-
-    setLikedSongsCount(count || 0);
   };
 
   useEffect(() => {
@@ -336,8 +329,8 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           >
             <Heart className="w-4 h-4 text-primary fill-current" />
             <span className="truncate">{t("sidebar.likedSongs")}</span>
-            {likedSongsCount > 0 && (
-              <span className="text-xs text-muted-foreground ml-auto">{likedSongsCount}</span>
+            {likedCount > 0 && (
+              <span className="text-xs text-muted-foreground ml-auto">{likedCount}</span>
             )}
           </Button>
 
