@@ -13,8 +13,10 @@ const SubscriptionGate = () => {
   // Show trial banner if user is in trial period
   const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
 
+  // Only show trial feature if trial hasn't been used yet
   const features = [
-    t("features.trialDays"),
+    // Don't show "3 days free trial" if user already had a trial (trial ended or is expired)
+    ...(showTrialBanner ? [t("features.trialDays")] : []),
     t("features.unlimited"),
     t("features.playlists"),
     t("features.noLicense"),
