@@ -13,7 +13,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const Auth = () => {
   const { t } = useLanguage();
-  const [isLogin, setIsLogin] = useState(false); // Default to register for new customers
+  // Check if user has logged in before - default to login for returning users
+  const [isLogin, setIsLogin] = useState(() => {
+    return localStorage.getItem('ambian_has_account') === 'true';
+  });
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,6 +80,8 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
+        // Mark that this browser has an account for future visits
+        localStorage.setItem('ambian_has_account', 'true');
         navigate("/");
       } else {
         const redirectUrl = `${window.location.origin}/`;
@@ -110,6 +115,8 @@ const Auth = () => {
           console.error('Failed to send welcome email:', welcomeError);
         }
         
+        // Mark that this browser has an account for future visits
+        localStorage.setItem('ambian_has_account', 'true');
         toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
         navigate("/");
       }
