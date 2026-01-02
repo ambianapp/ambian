@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { Check, User, Shield, Clock } from "lucide-react";
+import { Check, User, Shield, Clock, AlertCircle } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 
 const SubscriptionGate = () => {
@@ -12,6 +12,9 @@ const SubscriptionGate = () => {
 
   // Show trial banner if user is in trial period
   const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
+  
+  // Detect if trial has expired (user had a trial but it ended)
+  const trialExpired = subscription.isTrial && subscription.trialDaysRemaining <= 0;
 
   // Only show trial feature if trial hasn't been used yet
   const features = [
@@ -36,6 +39,19 @@ const SubscriptionGate = () => {
             </div>
             <p className="text-sm text-muted-foreground">
               {t("gate.daysRemaining").replace("{days}", String(subscription.trialDaysRemaining))}
+            </p>
+          </div>
+        )}
+
+        {/* Trial Expired Banner */}
+        {trialExpired && (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-center gap-2 text-destructive mb-1">
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-semibold">{t("gate.trialExpired")}</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("gate.trialExpiredMessage")}
             </p>
           </div>
         )}
