@@ -4,6 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
 
+// Deduplication helper - prevents multiple calls within a time window
+const createDedupedCall = <T,>(fn: () => Promise<T>, minInterval: number) => {
+  let lastCall = 0;
+  let pending: Promise<T> | null = null;
+  
+  return (): Promise<T> | null => {
+    const now = Date.now();
+    if (pending) return pending; // Return existing promise if still pending
+    if (now - lastCall < minInterval) return null; // Skip if called too recently
+    
+    lastCall = now;
+    pending = fn().finally(() => { pending = null; });
+    return pending;
+  };
+};
+
 interface SubscriptionInfo {
   subscribed: boolean;
   planType: string | null;
@@ -61,6 +77,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [activeDevices, setActiveDevices] = useState<ActiveDevice[]>([]);
   const [showDeviceLimitDialog, setShowDeviceLimitDialog] = useState(false);
   const [isSessionRegistered, setIsSessionRegistered] = useState(false);
+  
+  // Deduplication refs to prevent rapid duplicate API calls
+  const lastRegisterCallRef = useRef<number>(0);
+  const pendingRegisterRef = useRef<Promise<boolean> | null>(null);
+  const lastValidationCallRef = useRef<number>(0);
+  const lastValidationResultRef = useRef<{ result: 'valid' | 'kicked' | 'error'; timestamp: number } | null>(null);
 
   const loadSubscriptionCache = (userId?: string): SubscriptionInfo | null => {
     try {
@@ -245,55 +267,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Register session via edge function - now handles device limit gracefully
+  // Deduped to prevent multiple calls within 5 seconds
   const registerSession = useCallback(async (userId: string, forceRegister = false): Promise<boolean> => {
-    try {
-      const sessionId = getDeviceId();
-      const deviceInfo = navigator.userAgent;
-
-      const { data, error } = await supabase.functions.invoke("register-session", {
-        body: { sessionId, deviceInfo, forceRegister },
-      });
-
-      if (error) {
-        console.warn("Session registration failed (non-critical):", error);
-        return false;
-      }
-
-      // Check if device limit was reached
-      if (data?.limitReached) {
-        console.log("Device limit reached:", data.currentDevices, "/", data.deviceSlots);
-        setIsDeviceLimitReached(true);
-        setActiveDevices(data.activeDevices || []);
-        setIsSessionRegistered(false);
-        setShowDeviceLimitDialog(true);
-        
-        // Log device limit event
-        const currentUser = (await supabase.auth.getUser()).data.user;
-        logActivity({
-          userId: currentUser?.id,
-          userEmail: currentUser?.email || undefined,
-          eventType: "device_limit_reached",
-          eventMessage: `Device limit reached: ${data.currentDevices}/${data.deviceSlots} devices`,
-          eventDetails: { currentDevices: data.currentDevices, deviceSlots: data.deviceSlots },
-        });
-        
-        return false;
-      }
-
-      // Session registered successfully
-      if (data?.success || data?.isRegistered) {
-        console.log("Session registered:", data?.message);
-        setIsDeviceLimitReached(false);
-        setActiveDevices([]);
-        setIsSessionRegistered(true);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.warn("Session registration error (non-critical):", error);
-      return false;
+    const now = Date.now();
+    const MIN_INTERVAL = 5000; // 5 seconds between calls
+    
+    // If we have a pending call, return that promise
+    if (pendingRegisterRef.current) {
+      console.log("Session registration already in progress, reusing...");
+      return pendingRegisterRef.current;
     }
+    
+    // Skip if called too recently (unless forcing)
+    if (!forceRegister && now - lastRegisterCallRef.current < MIN_INTERVAL) {
+      console.log("Session registration skipped (called too recently)");
+      return isSessionRegistered;
+    }
+    
+    lastRegisterCallRef.current = now;
+    
+    const doRegister = async (): Promise<boolean> => {
+      try {
+        const sessionId = getDeviceId();
+        const deviceInfo = navigator.userAgent;
+
+        const { data, error } = await supabase.functions.invoke("register-session", {
+          body: { sessionId, deviceInfo, forceRegister },
+        });
+
+        if (error) {
+          console.warn("Session registration failed (non-critical):", error);
+          return false;
+        }
+
+        // Check if device limit was reached
+        if (data?.limitReached) {
+          console.log("Device limit reached:", data.currentDevices, "/", data.deviceSlots);
+          setIsDeviceLimitReached(true);
+          setActiveDevices(data.activeDevices || []);
+          setIsSessionRegistered(false);
+          setShowDeviceLimitDialog(true);
+          
+          // Log device limit event
+          const currentUser = (await supabase.auth.getUser()).data.user;
+          logActivity({
+            userId: currentUser?.id,
+            userEmail: currentUser?.email || undefined,
+            eventType: "device_limit_reached",
+            eventMessage: `Device limit reached: ${data.currentDevices}/${data.deviceSlots} devices`,
+            eventDetails: { currentDevices: data.currentDevices, deviceSlots: data.deviceSlots },
+          });
+          
+          return false;
+        }
+
+        // Session registered successfully
+        if (data?.success || data?.isRegistered) {
+          console.log("Session registered:", data?.message);
+          setIsDeviceLimitReached(false);
+          setActiveDevices([]);
+          setIsSessionRegistered(true);
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.warn("Session registration error (non-critical):", error);
+        return false;
+      }
+    };
+    
+    pendingRegisterRef.current = doRegister().finally(() => {
+      pendingRegisterRef.current = null;
+    });
+    
+    return pendingRegisterRef.current;
   }, [getDeviceId]);
 
   // Disconnect a specific device
@@ -337,8 +385,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Validate current session against active_sessions table
   // Returns: 'valid' | 'kicked' | 'error'
+  // Cached for 10 seconds to prevent duplicate queries
   const validateSession = useCallback(async (currentSession: Session): Promise<'valid' | 'kicked' | 'error'> => {
     if (isSigningOut.current) return 'valid';
+    
+    const now = Date.now();
+    const CACHE_TTL = 10000; // 10 seconds
+    
+    // Return cached result if recent
+    if (lastValidationResultRef.current && now - lastValidationResultRef.current.timestamp < CACHE_TTL) {
+      return lastValidationResultRef.current.result;
+    }
+    
+    // Prevent duplicate calls within 3 seconds
+    if (now - lastValidationCallRef.current < 3000) {
+      return lastValidationResultRef.current?.result ?? 'valid';
+    }
+    lastValidationCallRef.current = now;
     
     try {
       const sessionId = getDeviceId();
@@ -356,17 +419,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return 'error';
       }
 
+      let result: 'valid' | 'kicked' | 'error';
+      
       // If session not found, could mean device limit or was disconnected
       if (!data) {
         // Check if we're in device limit mode
         if (isDeviceLimitReached) {
-          return 'valid'; // Don't kick out - user knows they're in read-only mode
+          result = 'valid'; // Don't kick out - user knows they're in read-only mode
+        } else {
+          console.log("Session not found in active_sessions - may have been disconnected");
+          result = 'kicked';
         }
-        console.log("Session not found in active_sessions - may have been disconnected");
-        return 'kicked';
+      } else {
+        result = 'valid';
       }
-
-      return 'valid';
+      
+      // Cache the result
+      lastValidationResultRef.current = { result, timestamp: now };
+      return result;
     } catch (error) {
       console.warn("Error validating session (will retry):", error);
       return 'error';
@@ -612,8 +682,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Initial validation after short delay
     const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
 
-    // Check every 15 seconds
-    const interval = setInterval(validateAndKickIfNeeded, 15 * 1000);
+    // Check every 30 seconds (reduced from 15s to decrease traffic)
+    const interval = setInterval(validateAndKickIfNeeded, 30 * 1000);
 
     // Re-validate when page becomes visible
     let visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
