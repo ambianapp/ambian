@@ -197,9 +197,9 @@ serve(async (req) => {
       logStep("Created new customer", { customerId });
     }
 
-    // Get the price to determine if it's recurring
+    // Get the price to determine if it's recurring or one-time
     const price = await stripe.prices.retrieve(priceId);
-    logStep("Retrieved price", { priceId, recurring: !!price.recurring });
+    logStep("Retrieved price", { priceId, recurring: !!price.recurring, amount: price.unit_amount });
 
     // Grant 7-day grace period immediately
     const gracePeriodDays = 7;
@@ -208,7 +208,16 @@ serve(async (req) => {
     gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
     
     // Determine plan duration for after payment
-    const planType = price.recurring?.interval === "year" ? "yearly" : "monthly";
+    // For recurring prices, check the interval; for one-time (prepaid) prices, check the amount
+    let planType: "yearly" | "monthly";
+    if (price.recurring?.interval === "year") {
+      planType = "yearly";
+    } else if (price.recurring?.interval === "month") {
+      planType = "monthly";
+    } else {
+      // One-time prepaid: yearly is €89 (8900 cents), monthly is €8.90 (890 cents)
+      planType = (price.unit_amount || 0) >= 5000 ? "yearly" : "monthly";
+    }
     
     logStep("Granting grace period", { gracePeriodEnd: gracePeriodEnd.toISOString(), planType });
 
