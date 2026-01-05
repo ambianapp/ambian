@@ -143,7 +143,7 @@ async function sendInvoiceReminderEmail(
           <tr>
             <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
               <p style="color: #888888; font-size: 14px; margin: 0;">
-                Questions? Contact us at <a href="mailto:support@ambianmusic.com" style="color: #8b5cf6; text-decoration: none;">support@ambianmusic.com</a>
+                Questions? Contact us at <a href="mailto:info@ambian.fi" style="color: #8b5cf6; text-decoration: none;">info@ambian.fi</a>
               </p>
             </td>
           </tr>
