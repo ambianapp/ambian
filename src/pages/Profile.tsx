@@ -932,7 +932,7 @@ const Profile = () => {
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <div className="font-medium text-foreground text-sm">Monthly</div>
+                    <div className="font-medium text-foreground text-sm">{t("subscription.monthly")}</div>
                     <div className="text-sm text-muted-foreground">
                       €{5 * deviceSlotQuantity}/month
                     </div>
@@ -947,7 +947,7 @@ const Profile = () => {
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <div className="font-medium text-foreground text-sm">Yearly</div>
+                    <div className="font-medium text-foreground text-sm">{t("subscription.yearly")}</div>
                     <div className="text-sm text-muted-foreground">
                       €{50 * deviceSlotQuantity}/year
                     </div>
