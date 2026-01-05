@@ -268,7 +268,7 @@ serve(async (req) => {
     // This gives us full control over when renewal invoices are sent (14 days early for IBAN)
     await stripe.invoiceItems.create({
       customer: customerId,
-      price: priceId,
+      pricing: { price: priceId },
       invoice: invoice.id,
     });
     logStep("Added invoice item");
