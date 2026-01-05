@@ -240,13 +240,13 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
           onClick={() => navigate("/profile")}
         >
-          <div className="relative">
-            <User className="w-5 h-5" />
+          <User className="w-5 h-5" />
+          <span className="flex items-center gap-2">
+            {t("nav.profile")}
             {subscription.isPendingPayment && (
-              <AlertCircle className="w-3 h-3 text-yellow-500 absolute -top-1 -right-1" />
+              <AlertCircle className="w-4 h-4 text-yellow-500" />
             )}
-          </div>
-          {t("nav.profile")}
+          </span>
         </Button>
         <Button
           variant="ghost"
