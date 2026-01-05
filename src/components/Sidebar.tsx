@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled = true, onToggleScheduler }: SidebarProps) => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, subscription } = useAuth();
   const { t } = useLanguage();
   const { likedCount } = useLikedSongs();
   const navigate = useNavigate();
@@ -240,7 +240,12 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
           className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
           onClick={() => navigate("/profile")}
         >
-          <User className="w-5 h-5" />
+          <div className="relative">
+            <User className="w-5 h-5" />
+            {subscription.isPendingPayment && (
+              <AlertCircle className="w-3 h-3 text-yellow-500 absolute -top-1 -right-1" />
+            )}
+          </div>
           {t("nav.profile")}
         </Button>
         <Button

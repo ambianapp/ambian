@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Search, Library, Plus, Heart, User, Shield, Clock, HelpCircle, Menu, LogOut } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, User, Shield, Clock, HelpCircle, Menu, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ interface MobileSidebarProps {
 }
 
 const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled = true, onToggleScheduler }: MobileSidebarProps) => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut, subscription } = useAuth();
   const { t } = useLanguage();
   const { likedCount } = useLikedSongs();
   const navigate = useNavigate();
@@ -276,7 +276,12 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
                   )}
                   onClick={() => { navigate("/profile"); setOpen(false); }}
                 >
-                  <User className="w-5 h-5" />
+                  <div className="relative">
+                    <User className="w-5 h-5" />
+                    {subscription.isPendingPayment && (
+                      <AlertCircle className="w-3 h-3 text-yellow-500 absolute -top-1 -right-1" />
+                    )}
+                  </div>
                   {t("nav.profile")}
                 </Button>
                 <Button
