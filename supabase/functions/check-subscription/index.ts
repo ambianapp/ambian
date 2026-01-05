@@ -109,8 +109,7 @@ serve(async (req) => {
 
     // Device slot price IDs - these are not main subscriptions
     const deviceSlotPriceIds = [
-      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
-      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot €5/month
     ];
     
     const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
