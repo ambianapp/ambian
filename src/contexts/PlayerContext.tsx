@@ -67,7 +67,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [repeat, setRepeat] = useState<"off" | "all" | "one">("all");
   const [crossfade, setCrossfade] = useState(() => {
     const saved = localStorage.getItem("ambian_crossfade");
-    return saved === "true";
+    // Default to true if no preference saved
+    return saved === null ? true : saved === "true";
   });
   const [isQuickMix, setIsQuickMix] = useState(false);
   const [originalDbUrl, setOriginalDbUrl] = useState<string | null>(null);
