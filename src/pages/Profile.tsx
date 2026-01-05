@@ -732,8 +732,8 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Plan Change Options - hide if cancelled */}
-            {subscription.subscribed && !subscription.isTrial && !subscription.cancelAtPeriodEnd && (
+            {/* Plan Change Options - only show for recurring subscriptions */}
+            {subscription.subscribed && !subscription.isTrial && !subscription.cancelAtPeriodEnd && subscription.isRecurring && (
               <div className="p-4 rounded-lg border border-border">
                 <p className="font-medium text-foreground mb-3">{t("subscription.changePlan")}</p>
                 <div className="flex flex-col sm:flex-row gap-3">
