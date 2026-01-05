@@ -119,10 +119,38 @@ serve(async (req) => {
       return !isDeviceSlot && hasValidStatus;
     });
 
+    // Also check for invoice-based (prepaid) subscriptions in local database
+    // These don't exist as Stripe recurring subscriptions but still grant access
+    let hasLocalSubscription = false;
     if (!hasMainSubscription) {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
+      
+      const { data: localSub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("status, current_period_end")
+        .eq("user_id", user.id)
+        .in("status", ["active", "pending_payment"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (localSub) {
+        // Check if still within access period
+        const periodEnd = localSub.current_period_end ? new Date(localSub.current_period_end) : null;
+        if (!periodEnd || periodEnd > new Date()) {
+          hasLocalSubscription = true;
+          logStep("Local subscription found", { status: localSub.status, periodEnd: localSub.current_period_end });
+        }
+      }
+    }
+
+    if (!hasMainSubscription && !hasLocalSubscription) {
       throw new Error("No active subscription found. Please subscribe first before adding locations.");
     }
-    logStep("Main subscription verified");
+    logStep("Main subscription verified", { stripe: hasMainSubscription, local: hasLocalSubscription });
 
     const returnOrigin = origin || "https://ambian.lovable.app";
     const priceId = DEVICE_SLOT_PRICES[period];
