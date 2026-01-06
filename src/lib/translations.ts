@@ -203,6 +203,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelDesc": "You are about to cancel the following additional location:",
     "devices.confirmCancelNote": "Access will continue until the end of the billing period. No refunds will be issued.",
     "devices.confirmCancelBtn": "Cancel Location",
+    "devices.matchesSubscription": "Billing matches your main subscription",
+    "devices.prepaidNotSupported": "Device slots for prepaid plans require contacting support. Please email support@ambianmusic.com for assistance.",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -859,6 +861,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelDesc": "Du är på väg att avbryta följande extra plats:",
     "devices.confirmCancelNote": "Åtkomst fortsätter till slutet av faktureringsperioden. Ingen återbetalning ges.",
     "devices.confirmCancelBtn": "Avbryt plats",
+    "devices.matchesSubscription": "Fakturering matchar din huvudprenumeration",
+    "devices.prepaidNotSupported": "Extra platser för förbetalda planer kräver kontakt med support. Vänligen mejla support@ambianmusic.com för hjälp.",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1514,6 +1518,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelDesc": "Olet peruuttamassa seuraavaa lisäsijaintia:",
     "devices.confirmCancelNote": "Käyttöoikeus jatkuu laskutuskauden loppuun. Hyvitystä ei myönnetä.",
     "devices.confirmCancelBtn": "Peruuta sijainti",
+    "devices.matchesSubscription": "Laskutus vastaa päätilausasi",
+    "devices.prepaidNotSupported": "Lisäsijaintien lisääminen ennakkoon maksetuille tilauksille vaatii tukea. Lähetä sähköpostia support@ambianmusic.com.",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -2170,6 +2176,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelDesc": "Du bist dabei, den folgenden zusätzlichen Standort zu stornieren:",
     "devices.confirmCancelNote": "Der Zugang bleibt bis zum Ende des Abrechnungszeitraums bestehen. Es erfolgt keine Rückerstattung.",
     "devices.confirmCancelBtn": "Standort stornieren",
+    "devices.matchesSubscription": "Abrechnung entspricht Ihrem Hauptabonnement",
+    "devices.prepaidNotSupported": "Für vorausbezahlte Pläne wenden Sie sich bitte an den Support. E-Mail: support@ambianmusic.com",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2825,6 +2833,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelDesc": "Vous êtes sur le point d'annuler l'emplacement supplémentaire suivant :",
     "devices.confirmCancelNote": "L'accès continuera jusqu'à la fin de la période de facturation. Aucun remboursement ne sera effectué.",
     "devices.confirmCancelBtn": "Annuler l'emplacement",
+    "devices.matchesSubscription": "La facturation correspond à votre abonnement principal",
+    "devices.prepaidNotSupported": "Pour les forfaits prépayés, veuillez contacter le support. Email : support@ambianmusic.com",
     
     // Payment History
     "invoices.title": "Historique des paiements",

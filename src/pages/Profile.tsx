@@ -825,6 +825,25 @@ const Profile = () => {
                   {t("subscription.subscribeNow")}
                 </Button>
               </div>
+            ) : subscription.isPendingPayment && !subscription.isRecurring ? (
+              /* Prepaid/invoice users can't add device slots with aligned billing */
+              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Monitor className="w-5 h-5" />
+                  <p className="font-medium">{t("devices.needMore")}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.prepaidNotSupported") || "Device slots for prepaid plans require contacting support. Please email support@ambianmusic.com for assistance."}
+                </p>
+                <Button
+                  onClick={() => window.open("mailto:support@ambianmusic.com?subject=Add%20Device%20Slots%20Request", "_blank")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  {t("help.contactSupport") || "Contact Support"}
+                </Button>
+              </div>
             ) : (
               <div className="p-4 rounded-lg border border-border space-y-4">
                 <div>
