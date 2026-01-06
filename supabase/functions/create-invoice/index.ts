@@ -61,7 +61,7 @@ serve(async (req) => {
   );
 
   let rollbackUserId: string | null = null;
-  let didUpsertPendingPayment = false;
+  let createdSubscriptionId: string | null = null;
 
   try {
     logStep("Function started");
@@ -83,7 +83,7 @@ serve(async (req) => {
     // Check if user already has a pending payment (and verify Stripe state)
     const { data: existingSub } = await supabaseAdmin
       .from("subscriptions")
-      .select("status, current_period_end")
+      .select("status, current_period_end, stripe_subscription_id")
       .eq("user_id", user.id)
       .single();
 
@@ -147,8 +147,6 @@ serve(async (req) => {
       }
 
       // Check for past genuinely unpaid invoices (uncollectible) - prevent abuse
-      // NOTE: "void" invoices can happen for legitimate reasons (test invoices, corrections),
-      // so we do NOT treat them as unpaid-abuse signals.
       const uncollectibleInvoices = await stripe.invoices.list({
         customer: customerId,
         status: "uncollectible",
@@ -201,118 +199,224 @@ serve(async (req) => {
     const price = await stripe.prices.retrieve(priceId);
     logStep("Retrieved price", { priceId, recurring: !!price.recurring, amount: price.unit_amount });
 
-    // Grant 7-day grace period immediately
+    // Grace period for initial invoice payment
     const gracePeriodDays = 7;
     const now = new Date();
     const gracePeriodEnd = new Date(now);
     gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
     
-    // Determine plan duration for after payment
-    // For recurring prices, check the interval; for one-time (prepaid) prices, check the amount
+    // Determine plan type
     let planType: "yearly" | "monthly";
     if (price.recurring?.interval === "year") {
       planType = "yearly";
     } else if (price.recurring?.interval === "month") {
       planType = "monthly";
     } else {
-      // One-time prepaid: yearly is €89 (8900 cents), monthly is €8.90 (890 cents)
+      // One-time prepaid: yearly is €89+ (8900+ cents)
       planType = (price.unit_amount || 0) >= 5000 ? "yearly" : "monthly";
     }
     
-    logStep("Granting grace period", { gracePeriodEnd: gracePeriodEnd.toISOString(), planType });
+    logStep("Determined plan type", { planType, isRecurring: !!price.recurring });
 
-    // Create the invoice with bank transfer enabled and automatic tax
-    const invoice = await stripe.invoices.create({
-      customer: customerId,
-      collection_method: "send_invoice",
-      days_until_due: gracePeriodDays, // Match grace period
-      auto_advance: true,
-      automatic_tax: {
-        enabled: true,
-      },
-      payment_settings: {
-        payment_method_types: ["card", "customer_balance"],
-        payment_method_options: {
-          customer_balance: {
-            funding_type: "bank_transfer",
-            bank_transfer: {
-              type: "eu_bank_transfer",
-              eu_bank_transfer: {
-                country: "DE", // Germany for SEPA (supported: BE, DE, FR, IE, NL)
+    // For RECURRING prices, create a subscription with collection_method: send_invoice
+    // For ONE-TIME prices, create a standalone invoice (prepaid)
+    if (price.recurring) {
+      logStep("Creating recurring subscription with invoice billing");
+      
+      // Create subscription with send_invoice collection method
+      // This creates a recurring subscription that sends invoices instead of charging automatically
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        collection_method: "send_invoice",
+        days_until_due: gracePeriodDays,
+        payment_settings: {
+          payment_method_types: ["card", "customer_balance"],
+          payment_method_options: {
+            customer_balance: {
+              funding_type: "bank_transfer",
+              bank_transfer: {
+                type: "eu_bank_transfer",
+                eu_bank_transfer: {
+                  country: "DE", // Germany for SEPA
+                },
               },
             },
           },
         },
-      },
-      metadata: {
-        user_id: user.id,
-        plan_type: planType,
-      },
-    });
-    logStep("Created invoice", { invoiceId: invoice.id });
-
-    // CRITICAL: Add the invoice item IMMEDIATELY after creating invoice
-    // This prevents €0.00 invoices if later steps fail
-    try {
-      await stripe.invoiceItems.create({
-        customer: customerId,
-        pricing: { price: priceId },
-        invoice: invoice.id,
+        metadata: {
+          user_id: user.id,
+          plan_type: planType,
+          billing_type: "invoice",
+        },
       });
-      logStep("Added invoice item", { priceId, invoiceId: invoice.id });
-    } catch (itemError) {
-      // If adding item fails, delete the empty invoice to prevent €0.00 invoices
-      logStep("Failed to add invoice item, deleting empty invoice", { error: String(itemError) });
-      await stripe.invoices.del(invoice.id);
-      throw new Error("Failed to create invoice item. Please try again.");
-    }
 
-    // Update subscription with grace period access
+      createdSubscriptionId = subscription.id;
+      logStep("Created subscription", { 
+        subscriptionId: subscription.id, 
+        status: subscription.status,
+        collectionMethod: subscription.collection_method,
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString()
+      });
 
-    // Calculate access period based on plan type
-    let accessEnd: Date;
-    if (planType === "yearly") {
-      accessEnd = new Date(now);
-      accessEnd.setFullYear(accessEnd.getFullYear() + 1);
+      // Get the invoice that was automatically created for this subscription
+      const invoices = await stripe.invoices.list({
+        subscription: subscription.id,
+        limit: 1,
+      });
+
+      if (invoices.data.length === 0) {
+        throw new Error("Failed to create invoice for subscription");
+      }
+
+      const invoice = invoices.data[0];
+      logStep("Found subscription invoice", { invoiceId: invoice.id, status: invoice.status });
+
+      // Finalize and send the invoice if it's a draft
+      if (invoice.status === "draft") {
+        await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(invoice.id);
+        logStep("Finalized and sent invoice", { invoiceId: invoice.id });
+      }
+
+      // Update local subscription record
+      const { error: subUpdateError } = await supabaseAdmin
+        .from("subscriptions")
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          status: "pending_payment",
+          plan_type: planType,
+          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_end: gracePeriodEnd.toISOString(), // Grace period until invoice is paid
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+
+      if (subUpdateError) {
+        logStep("Error updating subscription", { error: subUpdateError.message });
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment. Your subscription will renew automatically with invoices sent 14 days before each renewal.`,
+        invoiceId: invoice.id,
+        subscriptionId: subscription.id,
+        grace_period_until: gracePeriodEnd.toISOString(),
+        access_period: planType,
+        is_recurring: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     } else {
-      accessEnd = new Date(now);
-      accessEnd.setMonth(accessEnd.getMonth() + 1);
+      // ONE-TIME (prepaid) invoice - original flow
+      logStep("Creating one-time prepaid invoice");
+
+      // Create the invoice with bank transfer enabled and automatic tax
+      const invoice = await stripe.invoices.create({
+        customer: customerId,
+        collection_method: "send_invoice",
+        days_until_due: gracePeriodDays,
+        auto_advance: true,
+        automatic_tax: {
+          enabled: true,
+        },
+        payment_settings: {
+          payment_method_types: ["card", "customer_balance"],
+          payment_method_options: {
+            customer_balance: {
+              funding_type: "bank_transfer",
+              bank_transfer: {
+                type: "eu_bank_transfer",
+                eu_bank_transfer: {
+                  country: "DE",
+                },
+              },
+            },
+          },
+        },
+        metadata: {
+          user_id: user.id,
+          plan_type: planType,
+          billing_type: "prepaid",
+        },
+      });
+      logStep("Created invoice", { invoiceId: invoice.id });
+
+      // Add the invoice item
+      try {
+        await stripe.invoiceItems.create({
+          customer: customerId,
+          pricing: { price: priceId },
+          invoice: invoice.id,
+        });
+        logStep("Added invoice item", { priceId, invoiceId: invoice.id });
+      } catch (itemError) {
+        logStep("Failed to add invoice item, deleting empty invoice", { error: String(itemError) });
+        await stripe.invoices.del(invoice.id);
+        throw new Error("Failed to create invoice item. Please try again.");
+      }
+
+      // Calculate access period for prepaid
+      let accessEnd: Date;
+      if (planType === "yearly") {
+        accessEnd = new Date(now);
+        accessEnd.setFullYear(accessEnd.getFullYear() + 1);
+      } else {
+        accessEnd = new Date(now);
+        accessEnd.setMonth(accessEnd.getMonth() + 1);
+      }
+
+      // Finalize and send the invoice
+      const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+      await stripe.invoices.sendInvoice(invoice.id);
+      logStep("Finalized and sent invoice", { invoiceId: finalizedInvoice.id, planType });
+
+      // Update local subscription for prepaid
+      await supabaseAdmin
+        .from("subscriptions")
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: null, // No subscription for prepaid
+          status: "pending_payment",
+          plan_type: planType,
+          current_period_start: now.toISOString(),
+          current_period_end: gracePeriodEnd.toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment. This is a one-time payment with no automatic renewal.`,
+        invoiceId: finalizedInvoice.id,
+        grace_period_until: gracePeriodEnd.toISOString(),
+        access_period: planType,
+        is_recurring: false,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
-
-    // Update subscription record with full access period (not just grace period)
-    // Access will be granted once payment is confirmed via webhook
-    const { error: subUpdateError } = await supabaseAdmin
-      .from("subscriptions")
-      .update({
-        // Store the intended access end date in metadata for when payment completes
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
-
-    if (subUpdateError) {
-      logStep("Error updating subscription", { error: subUpdateError.message });
-    }
-
-    // Finalize and send the invoice
-    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-    await stripe.invoices.sendInvoice(invoice.id);
-    logStep("Finalized and sent invoice", { invoiceId: finalizedInvoice.id, planType });
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: `Invoice sent! You have ${gracePeriodDays} days access while awaiting payment. Renewal invoices are sent 14 days before expiry.`,
-      invoiceId: finalizedInvoice.id,
-      grace_period_until: gracePeriodEnd.toISOString(),
-      access_period: planType,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    // Roll back pending access if invoice/subscription creation failed
-    if (rollbackUserId && didUpsertPendingPayment) {
+    // Roll back subscription if creation failed
+    if (createdSubscriptionId) {
+      try {
+        const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+          apiVersion: "2025-08-27.basil",
+        });
+        await stripe.subscriptions.cancel(createdSubscriptionId);
+        logStep("Rolled back subscription after failure", { subscriptionId: createdSubscriptionId });
+      } catch (rollbackError) {
+        logStep("Failed to rollback subscription", { error: String(rollbackError) });
+      }
+    }
+
+    // Roll back pending access in database
+    if (rollbackUserId) {
       const { error: rollbackError } = await supabaseAdmin
         .from("subscriptions")
         .update({
