@@ -251,36 +251,23 @@ serve(async (req) => {
     });
     logStep("Created invoice", { invoiceId: invoice.id });
 
-    // Update subscription with grace period access
-
-    const { error: subError } = await supabaseAdmin
-      .from("subscriptions")
-      .upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: null,
-        status: "pending_payment", // Special status for invoice grace period
-        plan_type: planType,
-        current_period_start: now.toISOString(),
-        current_period_end: gracePeriodEnd.toISOString(),
-        updated_at: now.toISOString(),
-      }, { onConflict: "user_id" });
-
-    if (subError) {
-      logStep("Error creating grace period subscription", { error: subError.message });
-    } else {
-      didUpsertPendingPayment = true;
-      logStep("Grace period subscription created", { userId: user.id, until: gracePeriodEnd.toISOString() });
+    // CRITICAL: Add the invoice item IMMEDIATELY after creating invoice
+    // This prevents €0.00 invoices if later steps fail
+    try {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        pricing: { price: priceId },
+        invoice: invoice.id,
+      });
+      logStep("Added invoice item", { priceId, invoiceId: invoice.id });
+    } catch (itemError) {
+      // If adding item fails, delete the empty invoice to prevent €0.00 invoices
+      logStep("Failed to add invoice item, deleting empty invoice", { error: String(itemError) });
+      await stripe.invoices.del(invoice.id);
+      throw new Error("Failed to create invoice item. Please try again.");
     }
 
-    // Add the price to the invoice (always one-time, we handle renewals manually via cron)
-    // This gives us full control over when renewal invoices are sent (14 days early for IBAN)
-    await stripe.invoiceItems.create({
-      customer: customerId,
-      pricing: { price: priceId },
-      invoice: invoice.id,
-    });
-    logStep("Added invoice item");
+    // Update subscription with grace period access
 
     // Calculate access period based on plan type
     let accessEnd: Date;
