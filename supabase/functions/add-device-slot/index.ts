@@ -94,21 +94,34 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Customer found", { customerId });
 
-    // Find the active main subscription to add device slots to
-    const subscriptions = await stripe.subscriptions.list({
+    // Find the main subscription to add device slots to
+    // Include 'active' and 'past_due' (for invoice/SEPA users awaiting payment)
+    const activeSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 20,
     });
+    
+    const pastDueSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "past_due",
+      limit: 20,
+    });
+    
+    const allSubscriptions = [...activeSubscriptions.data, ...pastDueSubscriptions.data];
+    logStep("Found subscriptions", { 
+      activeCount: activeSubscriptions.data.length, 
+      pastDueCount: pastDueSubscriptions.data.length 
+    });
 
     // Find the main subscription (not device slot only)
-    const mainSubscription = subscriptions.data.find((sub: any) => {
+    let mainSubscription = allSubscriptions.find((sub: any) => {
       const items = sub.items.data;
       return items.some((item: any) => MAIN_SUBSCRIPTION_PRICES.includes(item.price.id));
     });
 
     if (!mainSubscription) {
-      // Also check for prepaid (non-recurring) subscriptions in local database
+      // Check local database for subscription status
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -123,17 +136,42 @@ serve(async (req) => {
         .limit(1)
         .maybeSingle();
       
+      logStep("Local subscription check", { localSub });
+      
       if (localSub) {
         const periodEnd = localSub.current_period_end ? new Date(localSub.current_period_end) : null;
         if (periodEnd && periodEnd > new Date()) {
-          // User has prepaid access but no recurring Stripe subscription
-          // For prepaid users, we need to create a standalone device slot subscription
-          // This is a limitation - prepaid users can't have aligned device slots
-          throw new Error("Device slots require an active recurring subscription. Prepaid plans cannot add device slots with aligned billing. Please contact support for assistance.");
+          // Check if they have a stripe subscription ID - could be invoice-based
+          if (localSub.stripe_subscription_id) {
+            // Try to fetch this specific subscription from Stripe
+            try {
+              const stripeSub = await stripe.subscriptions.retrieve(localSub.stripe_subscription_id);
+              if (stripeSub && stripeSub.items.data.some((item: any) => MAIN_SUBSCRIPTION_PRICES.includes(item.price.id))) {
+                logStep("Found invoice-based subscription via local DB", { 
+                  subscriptionId: stripeSub.id, 
+                  status: stripeSub.status,
+                  collectionMethod: stripeSub.collection_method
+                });
+                mainSubscription = stripeSub as any;
+              }
+            } catch (fetchError) {
+              logStep("Failed to fetch stripe subscription", { 
+                subscriptionId: localSub.stripe_subscription_id, 
+                error: fetchError instanceof Error ? fetchError.message : String(fetchError) 
+              });
+            }
+          }
+          
+          // If still no main subscription found, check if this is a prepaid (non-recurring) plan
+          if (!mainSubscription && !localSub.stripe_subscription_id) {
+            throw new Error("Device slots require an active recurring subscription. Prepaid plans cannot add device slots with aligned billing. Please contact support for assistance.");
+          }
         }
       }
       
-      throw new Error("No active subscription found. Please subscribe first before adding locations.");
+      if (!mainSubscription) {
+        throw new Error("No active subscription found. Please subscribe first before adding locations.");
+      }
     }
 
     logStep("Main subscription found", { 
