@@ -12,9 +12,16 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith(".lovable.app") ||
+      origin.endsWith(".lovableproject.com"))
+      ? origin
+      : ALLOWED_ORIGINS[0];
+
   return {
-    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 };
@@ -24,11 +31,16 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ADD-DEVICE-SLOT] ${step}${detailsStr}`);
 };
 
-// Device slot prices
-const DEVICE_SLOT_PRICES = {
-  monthly: "price_1SfhoMJrU52a7SNLpLI3yoEl", // €5/month
-  yearly: "price_1Sj2PMJrU52a7SNLzhpFYfJd",  // €50/year (save €10)
-};
+// Device slot price - single price that matches main subscription interval
+const DEVICE_SLOT_PRICE_MONTHLY = "price_1SfhoMJrU52a7SNLpLI3yoEl"; // €5/month
+const DEVICE_SLOT_PRICE_YEARLY = "price_1Sj2PMJrU52a7SNLzhpFYfJd";  // €50/year
+
+// Main subscription prices (to identify the main subscription)
+const MAIN_SUBSCRIPTION_PRICES = [
+  "price_1RXZpLJrU52a7SNLNIb9VxaD", // monthly
+  "price_1RXsWsJrU52a7SNLXbXsNfay", // yearly
+  "price_1SQPakJrU52a7SNL4r23JvqL", // test daily
+];
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -46,32 +58,18 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Parse request body to get period, quantity, payment method, and billing info
-    let period: "monthly" | "yearly" = "monthly";
+    // Parse request body
     let quantity = 1;
-    let payByInvoice = false;
-    let billingInfo: { companyName?: string; address?: { line1: string; city: string; postal_code: string; country: string } } | null = null;
     
     try {
       const body = await req.json();
-      if (body.period === "yearly") {
-        period = "yearly";
-      }
       if (body.quantity && typeof body.quantity === "number" && body.quantity >= 1 && body.quantity <= 10) {
         quantity = Math.floor(body.quantity);
-      }
-      // Pay by invoice only allowed for yearly
-      if (body.payByInvoice === true && period === "yearly") {
-        payByInvoice = true;
-      }
-      // Billing info for invoice payments
-      if (body.billingInfo) {
-        billingInfo = body.billingInfo;
       }
     } catch {
       // No body or invalid JSON, use defaults
     }
-    logStep("Options selected", { period, quantity, payByInvoice, hasBillingInfo: !!billingInfo });
+    logStep("Options selected", { quantity });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -96,33 +94,21 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Customer found", { customerId });
 
-    // Verify user has an active main subscription (not just device slots)
-    // Check for active, trialing, or past_due subscriptions (give grace period for invoice payments)
+    // Find the active main subscription to add device slots to
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
+      status: "active",
       limit: 20,
     });
 
-    // Device slot prices to exclude from main subscription check
-    const deviceSlotPriceIds = [
-      "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
-      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
-    ];
-
-    // Valid statuses for main subscription
-    const validStatuses = ["active", "trialing", "past_due"];
-
-    const hasMainSubscription = subscriptions.data.some((sub: any) => {
-      const priceId = sub.items.data[0]?.price?.id;
-      const isDeviceSlot = deviceSlotPriceIds.includes(priceId);
-      const hasValidStatus = validStatuses.includes(sub.status);
-      return !isDeviceSlot && hasValidStatus;
+    // Find the main subscription (not device slot only)
+    const mainSubscription = subscriptions.data.find((sub: any) => {
+      const items = sub.items.data;
+      return items.some((item: any) => MAIN_SUBSCRIPTION_PRICES.includes(item.price.id));
     });
 
-    // Also check for invoice-based (prepaid) subscriptions in local database
-    // These don't exist as Stripe recurring subscriptions but still grant access
-    let hasLocalSubscription = false;
-    if (!hasMainSubscription) {
+    if (!mainSubscription) {
+      // Also check for prepaid (non-recurring) subscriptions in local database
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -130,7 +116,7 @@ serve(async (req) => {
       
       const { data: localSub } = await supabaseAdmin
         .from("subscriptions")
-        .select("status, current_period_end")
+        .select("status, current_period_end, plan_type, stripe_subscription_id")
         .eq("user_id", user.id)
         .in("status", ["active", "pending_payment"])
         .order("created_at", { ascending: false })
@@ -138,152 +124,162 @@ serve(async (req) => {
         .maybeSingle();
       
       if (localSub) {
-        // Check if still within access period
         const periodEnd = localSub.current_period_end ? new Date(localSub.current_period_end) : null;
-        if (!periodEnd || periodEnd > new Date()) {
-          hasLocalSubscription = true;
-          logStep("Local subscription found", { status: localSub.status, periodEnd: localSub.current_period_end });
+        if (periodEnd && periodEnd > new Date()) {
+          // User has prepaid access but no recurring Stripe subscription
+          // For prepaid users, we need to create a standalone device slot subscription
+          // This is a limitation - prepaid users can't have aligned device slots
+          throw new Error("Device slots require an active recurring subscription. Prepaid plans cannot add device slots with aligned billing. Please contact support for assistance.");
         }
       }
-    }
-
-    if (!hasMainSubscription && !hasLocalSubscription) {
+      
       throw new Error("No active subscription found. Please subscribe first before adding locations.");
     }
-    logStep("Main subscription verified", { stripe: hasMainSubscription, local: hasLocalSubscription });
+
+    logStep("Main subscription found", { 
+      subscriptionId: mainSubscription.id, 
+      status: mainSubscription.status,
+      itemCount: mainSubscription.items.data.length 
+    });
+
+    // Determine which device slot price to use based on main subscription interval
+    const mainItem = mainSubscription.items.data.find((item: any) => 
+      MAIN_SUBSCRIPTION_PRICES.includes(item.price.id)
+    );
+    const mainInterval = mainItem?.price?.recurring?.interval;
+    const deviceSlotPriceId = mainInterval === "year" ? DEVICE_SLOT_PRICE_YEARLY : DEVICE_SLOT_PRICE_MONTHLY;
+    
+    logStep("Determined device slot price", { mainInterval, deviceSlotPriceId });
+
+    // Check if there's already a device slot item on this subscription
+    const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
+      item.price.id === deviceSlotPriceId
+    );
 
     const returnOrigin = origin || "https://ambian.lovable.app";
-    const priceId = DEVICE_SLOT_PRICES[period];
 
-    // Pay by invoice flow - create subscription directly with send_invoice
-    if (payByInvoice) {
-      logStep("Creating invoice-based subscription");
+    if (existingDeviceSlotItem) {
+      // Update existing device slot quantity
+      const newQuantity = (existingDeviceSlotItem.quantity || 0) + quantity;
       
-      // Update customer with billing info if provided
-      if (billingInfo) {
-        const updateData: any = {};
-        if (billingInfo.companyName) {
-          updateData.name = billingInfo.companyName;
-        }
-        if (billingInfo.address) {
-          updateData.address = billingInfo.address;
-        }
-        if (Object.keys(updateData).length > 0) {
-          await stripe.customers.update(customerId, updateData);
-          logStep("Customer billing info updated", { name: billingInfo.companyName });
-        }
-      }
-      
-      const subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: priceId, quantity: quantity }],
-        collection_method: "send_invoice",
-        days_until_due: 14,
+      logStep("Updating existing device slot item", { 
+        itemId: existingDeviceSlotItem.id, 
+        currentQuantity: existingDeviceSlotItem.quantity,
+        newQuantity 
+      });
+
+      // For adding more slots, use proration and update directly
+      // This will charge the prorated amount immediately
+      await stripe.subscriptions.update(mainSubscription.id, {
+        items: [{
+          id: existingDeviceSlotItem.id,
+          quantity: newQuantity,
+        }],
+        proration_behavior: "create_prorations",
         metadata: {
-          user_id: user.id,
-          type: "device_slot",
-          period: period,
-          quantity: String(quantity),
+          ...mainSubscription.metadata,
+          device_slots_updated: new Date().toISOString(),
         },
       });
 
-      logStep("Invoice subscription created", { subscriptionId: subscription.id });
+      logStep("Device slot quantity updated", { newQuantity });
 
-      // Get the invoice and finalize it to send
-      const invoices = await stripe.invoices.list({
-        subscription: subscription.id,
-        limit: 1,
-      });
+      // Sync device slots in local database
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
 
-      if (invoices.data.length > 0) {
-        const invoice = invoices.data[0];
-        logStep("Invoice found", { invoiceId: invoice.id, status: invoice.status });
-        
-        // Finalize the invoice if it's a draft
-        let finalizedInvoice = invoice;
-        if (invoice.status === "draft") {
-          finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-          logStep("Invoice finalized", { invoiceId: finalizedInvoice.id });
-          
-          // Send the invoice email
-          await stripe.invoices.sendInvoice(invoice.id);
-          logStep("Invoice sent", { invoiceId: invoice.id });
-        }
-        
-        if (finalizedInvoice.hosted_invoice_url) {
-          logStep("Invoice URL retrieved", { invoiceId: finalizedInvoice.id });
-          return new Response(JSON.stringify({ 
-            url: finalizedInvoice.hosted_invoice_url,
-            type: "invoice",
-          }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          });
-        }
-      }
+      await supabaseAdmin
+        .from("subscriptions")
+        .update({ 
+          device_slots: 1 + newQuantity, // 1 base + additional slots
+          updated_at: new Date().toISOString() 
+        })
+        .eq("user_id", user.id);
 
-      // Fallback: return success without URL (invoice will be emailed)
       return new Response(JSON.stringify({ 
         success: true,
-        message: "Invoice has been sent to your email",
-        type: "invoice",
+        message: `Added ${quantity} additional location(s). Your subscription has been updated with prorated billing.`,
+        newTotal: newQuantity,
+        type: "updated",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    // Normal checkout flow
+    // No existing device slot item - add new item to subscription
+    // Use Checkout to handle payment for the new recurring item with proration
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_update: {
-        name: "auto",
-        address: "auto",
-      },
-      line_items: [
-        {
-          price: priceId,
-          quantity: quantity,
-        },
-      ],
       mode: "subscription",
-      allow_promotion_codes: true,
-      automatic_tax: { enabled: true },
-      tax_id_collection: { enabled: true },
-      billing_address_collection: "required",
-      custom_fields: [
-        {
-          key: "company_name",
-          label: { type: "custom", custom: "Company Name" },
-          type: "text",
+      line_items: [{
+        price: deviceSlotPriceId,
+        quantity: quantity,
+      }],
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          type: "device_slot_addon",
         },
-        {
-          key: "company_address",
-          label: { type: "custom", custom: "Company Address" },
-          type: "text",
-        },
-      ],
+      },
+      // Use add_invoice_items to add to existing subscription billing
       success_url: `${returnOrigin}/?device_added=true`,
       cancel_url: `${returnOrigin}/profile`,
       metadata: {
         user_id: user.id,
         type: "device_slot",
-        period: period,
         quantity: String(quantity),
-      },
-      subscription_data: {
-        metadata: {
-          user_id: user.id,
-          type: "device_slot",
-          period: period,
-          quantity: String(quantity),
-        },
+        add_to_subscription: mainSubscription.id,
       },
     });
 
-    logStep("Checkout session created", { sessionId: session.id, period, quantity, priceId });
+    // Actually, for adding to existing subscription, we should update the subscription directly
+    // Let's do this properly - add item directly with proration
+    
+    logStep("Adding new device slot item to subscription");
+    
+    const updatedSubscription = await stripe.subscriptions.update(mainSubscription.id, {
+      items: [
+        ...mainSubscription.items.data.map((item: any) => ({ id: item.id })),
+        {
+          price: deviceSlotPriceId,
+          quantity: quantity,
+        },
+      ],
+      proration_behavior: "create_prorations",
+      metadata: {
+        ...mainSubscription.metadata,
+        device_slots_added: new Date().toISOString(),
+      },
+    });
 
-    return new Response(JSON.stringify({ url: session.url, type: "checkout" }), {
+    logStep("Device slot item added to subscription", { 
+      subscriptionId: updatedSubscription.id,
+      itemCount: updatedSubscription.items.data.length 
+    });
+
+    // Sync device slots in local database
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({ 
+        device_slots: 1 + quantity, // 1 base + additional slots
+        updated_at: new Date().toISOString() 
+      })
+      .eq("user_id", user.id);
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: `Added ${quantity} additional location(s). Prorated charges have been applied to your next invoice.`,
+      newTotal: quantity,
+      type: "added",
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

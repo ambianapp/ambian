@@ -24,7 +24,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SYNC-DEVICE-SLOTS] ${step}${detailsStr}`);
 };
 
-const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
+// Device slot price IDs
+const DEVICE_SLOT_PRICES = [
+  "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly €5
+  "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
+];
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -71,22 +75,24 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
-    // Count active device slot subscriptions
+    // Count device slot items across all active subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
     });
 
     let deviceSlotCount = 1; // Base slot
+    
     for (const sub of subscriptions.data) {
       for (const item of sub.items.data) {
-        const productId = typeof item.price.product === 'string' 
-          ? item.price.product 
-          : item.price.product.id;
-        
-        if (productId === DEVICE_SLOT_PRODUCT_ID) {
+        // Check if this item is a device slot by price ID
+        if (DEVICE_SLOT_PRICES.includes(item.price.id)) {
           deviceSlotCount += item.quantity || 1;
-          logStep("Found device slot subscription", { subscriptionId: sub.id, quantity: item.quantity });
+          logStep("Found device slot item", { 
+            subscriptionId: sub.id, 
+            itemId: item.id,
+            quantity: item.quantity 
+          });
         }
       }
     }
