@@ -1264,6 +1264,91 @@ async function sendDeviceSlotUnpaidCancellationEmail(
   }
 }
 
+async function sendDeviceSlotAutoCanceledEmail(
+  email: string,
+  customerName: string | null,
+  quantity: number
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+  
+  const locationText = quantity === 1 ? "location" : "locations";
+
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0;">
+                Additional Locations Canceled
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Your main Ambian subscription has ended, so your additional ${quantity} ${locationText} subscription${quantity > 1 ? 's have' : ' has'} been automatically canceled.
+              </p>
+              
+              <!-- Info Box -->
+              <div style="background: rgba(251, 191, 36, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(251, 191, 36, 0.3);">
+                <p style="color: #fbbf24; font-size: 14px; margin: 0;">
+                  <strong>Note:</strong> Additional location subscriptions require an active main subscription. If you resubscribe to Ambian, you can add locations again from your Profile page.
+                </p>
+              </div>
+              
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                If you'd like to continue using Ambian with multiple locations, please resubscribe and then add your additional locations.
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com/pricing" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      View Plans
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Questions? Contact us at <a href="mailto:support@ambianmusic.com" style="color: #8b5cf6; text-decoration: none;">support@ambianmusic.com</a>
+              </p>
+            </td>
+          </tr>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: `Additional Locations Canceled - Main Subscription Ended`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending device slot auto-canceled email", { error });
+      return false;
+    }
+
+    logStep("Device slot auto-canceled email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send device slot auto-canceled email", { error: String(error) });
+    return false;
+  }
+}
+
 const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
 async function syncDeviceSlotsForUser(
@@ -1966,6 +2051,8 @@ serve(async (req) => {
       const isDeviceSlot = DEVICE_SLOT_PRICES.includes(priceId || '');
 
       const userId = subscription.metadata?.user_id;
+      const customerId = typeof subscription.customer === 'string' ? subscription.customer : (subscription.customer as any)?.id;
+      
       if (userId) {
         // Only update main subscription status if it's not a device slot
         if (!isDeviceSlot) {
@@ -1978,6 +2065,94 @@ serve(async (req) => {
             .eq("user_id", userId);
 
           logStep("Subscription marked as canceled", { userId });
+          
+          // AUTO-CANCEL ALL DEVICE SLOT SUBSCRIPTIONS when main subscription ends
+          if (customerId) {
+            try {
+              const allSubscriptions = await stripe.subscriptions.list({
+                customer: customerId,
+                status: "active",
+                limit: 100,
+              });
+              
+              const deviceSlotSubs = allSubscriptions.data.filter((sub: any) => {
+                const subPriceId = sub.items?.data?.[0]?.price?.id;
+                return DEVICE_SLOT_PRICES.includes(subPriceId || '');
+              });
+              
+              logStep("Found device slot subscriptions to cancel", { count: deviceSlotSubs.length });
+              
+              for (const deviceSlotSub of deviceSlotSubs) {
+                try {
+                  // Cancel immediately since main subscription is gone
+                  await stripe.subscriptions.cancel(deviceSlotSub.id);
+                  logStep("Auto-canceled device slot subscription", { subscriptionId: deviceSlotSub.id });
+                  
+                  // Log activity
+                  const { data: profile } = await supabaseAdmin
+                    .from("profiles")
+                    .select("email")
+                    .eq("user_id", userId)
+                    .maybeSingle();
+                  
+                  await supabaseAdmin.from('activity_logs').insert({
+                    user_id: userId,
+                    user_email: profile?.email || null,
+                    event_type: 'device_slot_auto_canceled',
+                    event_message: 'Device slot subscription auto-canceled due to main subscription ending',
+                    event_details: { 
+                      deviceSlotSubscriptionId: deviceSlotSub.id,
+                      mainSubscriptionId: subscription.id 
+                    },
+                  });
+                } catch (cancelError) {
+                  logStep("Error canceling device slot subscription", { 
+                    subscriptionId: deviceSlotSub.id, 
+                    error: String(cancelError) 
+                  });
+                }
+              }
+              
+              // Sync device slots after cancellation
+              await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, customerId);
+              
+              // Send email notification about device slot cancellation if there were any
+              if (deviceSlotSubs.length > 0) {
+                const { data: profile } = await supabaseAdmin
+                  .from("profiles")
+                  .select("email")
+                  .eq("user_id", userId)
+                  .maybeSingle();
+                
+                if (profile?.email) {
+                  let customerName: string | null = null;
+                  try {
+                    const customer = await stripe.customers.retrieve(customerId);
+                    customerName = (customer as any).name;
+                  } catch (e) {
+                    logStep("Could not retrieve customer name", { error: String(e) });
+                  }
+                  
+                  const totalQuantity = deviceSlotSubs.reduce((sum: number, sub: any) => {
+                    return sum + (sub.items?.data?.[0]?.quantity || 1);
+                  }, 0);
+                  
+                  await sendDeviceSlotAutoCanceledEmail(
+                    profile.email,
+                    customerName,
+                    totalQuantity
+                  );
+                  
+                  logStep("Sent device slot auto-cancellation email", { 
+                    email: profile.email, 
+                    totalQuantity 
+                  });
+                }
+              }
+            } catch (e) {
+              logStep("Error auto-canceling device slot subscriptions", { error: String(e) });
+            }
+          }
         }
 
         // Log subscription canceled activity
@@ -1997,7 +2172,6 @@ serve(async (req) => {
 
         // Send churn email for main subscription cancellations (not device slots)
         if (!isDeviceSlot && profile?.email) {
-          const customerId = typeof subscription.customer === 'string' ? subscription.customer : (subscription.customer as any)?.id;
           let customerName: string | null = null;
           
           if (customerId) {
@@ -2018,7 +2192,6 @@ serve(async (req) => {
         
         // Send owner notification for device slot cancellations
         if (isDeviceSlot && profile?.email) {
-          const customerId = typeof subscription.customer === 'string' ? subscription.customer : (subscription.customer as any)?.id;
           let customerName: string | null = null;
           
           if (customerId) {
