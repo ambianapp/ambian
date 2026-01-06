@@ -31,9 +31,10 @@ interface PlaylistTrack {
 
 export const usePlaylistScheduler = () => {
   const { user } = useAuth();
-  const { triggerScheduledCrossfade, currentTrack } = usePlayer();
+  const { triggerScheduledCrossfade, currentTrack, isPlaying } = usePlayer();
   const { toast } = useToast();
   const lastScheduleIdRef = useRef<string | null>(null);
+  const lastPlaylistIdRef = useRef<string | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const cachedSchedulesRef = useRef<{ schedules: Schedule[]; fetchedAt: number } | null>(null);
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
@@ -47,6 +48,7 @@ export const usePlaylistScheduler = () => {
     localStorage.setItem(SCHEDULER_ENABLED_KEY, String(enabled));
     if (!enabled) {
       lastScheduleIdRef.current = null;
+      lastPlaylistIdRef.current = null;
       cachedSchedulesRef.current = null; // Clear cache when disabled
     }
   }, []);
@@ -56,6 +58,8 @@ export const usePlaylistScheduler = () => {
     const currentDay = now.getDay();
     const currentTime = now.toTimeString().slice(0, 5);
 
+    console.log("[Scheduler] Checking schedules at", currentTime, "day", currentDay);
+
     // Find all matching schedules and pick highest priority
     const matching = schedules.filter(s => {
       if (!s.is_active) return false;
@@ -63,32 +67,51 @@ export const usePlaylistScheduler = () => {
       const startTime = s.start_time.slice(0, 5);
       const endTime = s.end_time.slice(0, 5);
       
-      // Check if schedule spans midnight (e.g., 17:00 to 09:00)
+      // Check if schedule spans midnight (e.g., 21:00 to 09:00)
       const spansOvernight = startTime > endTime;
       
       if (spansOvernight) {
         // For overnight schedules, check if current time is after start OR before end
-        // Also need to check correct day
+        // Need to check correct day for each case
         const isAfterStart = currentTime >= startTime && s.days_of_week.includes(currentDay);
-        const isBeforeEnd = currentTime < endTime && s.days_of_week.includes((currentDay + 6) % 7); // yesterday's schedule
+        // If before end time, we started yesterday, so check yesterday's day
+        const yesterdayDay = (currentDay + 6) % 7;
+        const isBeforeEnd = currentTime < endTime && s.days_of_week.includes(yesterdayDay);
+        
+        console.log("[Scheduler]", s.name, "overnight check:", { 
+          startTime, endTime, currentTime, 
+          isAfterStart, isBeforeEnd, 
+          currentDay, yesterdayDay,
+          scheduleDays: s.days_of_week 
+        });
+        
         return isAfterStart || isBeforeEnd;
       } else {
         // Normal same-day schedule
-        return s.days_of_week.includes(currentDay) && 
+        const matches = s.days_of_week.includes(currentDay) && 
                currentTime >= startTime && 
                currentTime < endTime;
+        console.log("[Scheduler]", s.name, "day check:", { startTime, endTime, currentTime, matches });
+        return matches;
       }
     });
 
-    if (matching.length === 0) return null;
+    if (matching.length === 0) {
+      console.log("[Scheduler] No matching schedule found");
+      return null;
+    }
 
     // Return highest priority
-    return matching.reduce((prev, curr) =>
+    const selected = matching.reduce((prev, curr) =>
       curr.priority > prev.priority ? curr : prev
     );
+    console.log("[Scheduler] Selected schedule:", selected.name, "playlist:", selected.playlist_id);
+    return selected;
   }, []);
 
   const loadAndPlayPlaylist = useCallback(async (schedule: Schedule) => {
+    console.log("[Scheduler] Loading playlist for schedule:", schedule.name);
+    
     // Fetch playlist tracks
     const { data: playlistTracks, error } = await supabase
       .from("playlist_tracks")
@@ -97,7 +120,7 @@ export const usePlaylistScheduler = () => {
       .order("position");
 
     if (error || !playlistTracks || playlistTracks.length === 0) {
-      console.log("No tracks found for scheduled playlist");
+      console.log("[Scheduler] No tracks found for scheduled playlist");
       return;
     }
 
@@ -116,8 +139,12 @@ export const usePlaylistScheduler = () => {
       }));
 
     if (tracks.length > 0) {
+      console.log("[Scheduler] Starting scheduled playlist with", tracks.length, "tracks");
       // Use crossfade transition for smooth playlist changes
       await triggerScheduledCrossfade(tracks[0], tracks);
+      
+      // Update last playlist ID to prevent re-triggering
+      lastPlaylistIdRef.current = schedule.playlist_id;
       
       toast({
         title: "Scheduled playlist started",
@@ -126,14 +153,16 @@ export const usePlaylistScheduler = () => {
     }
   }, [triggerScheduledCrossfade, toast]);
 
-  const checkSchedule = useCallback(async () => {
+  const checkSchedule = useCallback(async (force = false) => {
     if (!user || !isEnabled) return;
+
+    console.log("[Scheduler] Checking schedule, force:", force);
 
     // Use cached schedules if still valid
     const now = Date.now();
     let schedules: Schedule[] | null = null;
     
-    if (cachedSchedulesRef.current && now - cachedSchedulesRef.current.fetchedAt < CACHE_TTL) {
+    if (!force && cachedSchedulesRef.current && now - cachedSchedulesRef.current.fetchedAt < CACHE_TTL) {
       schedules = cachedSchedulesRef.current.schedules;
     } else {
       // Fetch user's schedules from DB
@@ -143,40 +172,101 @@ export const usePlaylistScheduler = () => {
         .eq("user_id", user.id)
         .eq("is_active", true);
 
-      if (error || !data) return;
+      if (error || !data) {
+        console.log("[Scheduler] Error fetching schedules:", error);
+        return;
+      }
       
       schedules = data;
       cachedSchedulesRef.current = { schedules: data, fetchedAt: now };
+      console.log("[Scheduler] Fetched", data.length, "active schedules");
     }
 
     const currentSchedule = getCurrentSchedule(schedules);
 
     if (currentSchedule) {
-      // Only switch if schedule changed
-      if (lastScheduleIdRef.current !== currentSchedule.id) {
+      // Switch if schedule changed OR if playlist changed
+      const scheduleChanged = lastScheduleIdRef.current !== currentSchedule.id;
+      const playlistChanged = lastPlaylistIdRef.current !== currentSchedule.playlist_id;
+      
+      console.log("[Scheduler] Current schedule:", currentSchedule.name, 
+        "scheduleChanged:", scheduleChanged, 
+        "playlistChanged:", playlistChanged,
+        "lastScheduleId:", lastScheduleIdRef.current,
+        "currentScheduleId:", currentSchedule.id
+      );
+      
+      if (scheduleChanged) {
         lastScheduleIdRef.current = currentSchedule.id;
         await loadAndPlayPlaylist(currentSchedule);
       }
     } else {
-      // No active schedule
+      // No active schedule - reset tracking but don't stop music
+      console.log("[Scheduler] No active schedule, clearing refs");
       lastScheduleIdRef.current = null;
+      // Don't clear lastPlaylistIdRef so if we come back to same schedule, 
+      // we don't re-trigger unless the playlist actually changed
     }
   }, [user, isEnabled, getCurrentSchedule, loadAndPlayPlaylist]);
 
+  // Check on mount and interval
   useEffect(() => {
     if (!user || !isEnabled) return;
 
     // Check immediately on mount
-    checkSchedule();
+    console.log("[Scheduler] Initial check on mount");
+    checkSchedule(true); // Force refresh on mount
 
-    // Check every minute
-    checkIntervalRef.current = setInterval(checkSchedule, 60000);
+    // Check every minute (but intervals may not fire in background)
+    checkIntervalRef.current = setInterval(() => {
+      checkSchedule();
+    }, 60000);
 
     return () => {
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
       }
     };
+  }, [user, isEnabled, checkSchedule]);
+
+  // CRITICAL: Check schedule when tab becomes visible (handles Android wake)
+  useEffect(() => {
+    if (!user || !isEnabled) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("[Scheduler] Tab became visible, checking schedule");
+        // Force refresh schedules and check
+        cachedSchedulesRef.current = null; // Clear cache to get fresh data
+        checkSchedule(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user, isEnabled, checkSchedule]);
+
+  // CRITICAL: Check schedule when playback state changes (track ends)
+  useEffect(() => {
+    if (!user || !isEnabled || !isPlaying) return;
+
+    // When a new track starts, check if we should switch playlists
+    console.log("[Scheduler] Track changed, checking schedule");
+    checkSchedule();
+  }, [currentTrack?.id, isPlaying, user, isEnabled, checkSchedule]);
+
+  // Check schedule when online status changes (in case we were offline during transition)
+  useEffect(() => {
+    if (!user || !isEnabled) return;
+
+    const handleOnline = () => {
+      console.log("[Scheduler] Device came online, checking schedule");
+      cachedSchedulesRef.current = null; // Clear cache
+      checkSchedule(true);
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, [user, isEnabled, checkSchedule]);
 
   return { checkSchedule, isEnabled, toggleScheduler };
