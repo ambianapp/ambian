@@ -110,9 +110,8 @@ serve(async (req) => {
     // Device slot price IDs - these are not main subscriptions
     const deviceSlotPriceIds = [
       "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot €5/month
+      "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot €50/year
     ];
-    
-    const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
 
     // Count device slots from subscriptions that are still in effect (even if canceled at period end)
     const allSubscriptions = await stripe.subscriptions.list({
@@ -129,45 +128,40 @@ serve(async (req) => {
       // Only count subscriptions whose current period hasn't ended yet
       if (typeof sub.current_period_end === "number" && sub.current_period_end <= nowSec) continue;
 
-      // For invoice-based device slot subscriptions: if latest invoice is unpaid, do NOT grant access.
-      // This prevents canceled/unpaid invoice purchases from giving extra device slots.
-      let deviceSlotEligible = true;
-      if (sub.collection_method === "send_invoice") {
-        try {
-          const invoices = await stripe.invoices.list({ subscription: sub.id, limit: 1 });
-          const latest = invoices.data[0];
-          if (latest && (latest.status === "open" || latest.status === "draft")) {
-            deviceSlotEligible = false;
-            logStep("Skipping device slot subscription due to unpaid invoice", {
+      // Check each item in the subscription for device slot prices
+      for (const item of sub.items.data) {
+        if (deviceSlotPriceIds.includes(item.price.id)) {
+          // For invoice-based device slot items: if latest invoice is unpaid, do NOT grant access.
+          let deviceSlotEligible = true;
+          if (sub.collection_method === "send_invoice") {
+            try {
+              const invoices = await stripe.invoices.list({ subscription: sub.id, limit: 1 });
+              const latest = invoices.data[0];
+              if (latest && (latest.status === "open" || latest.status === "draft")) {
+                deviceSlotEligible = false;
+                logStep("Skipping device slot item due to unpaid invoice", {
+                  subscriptionId: sub.id,
+                  itemId: item.id,
+                  invoiceId: latest.id,
+                  invoiceStatus: latest.status,
+                });
+              }
+            } catch (e) {
+              deviceSlotEligible = false;
+              logStep("Error checking invoice status for device slot", { subscriptionId: sub.id, error: String(e) });
+            }
+          }
+
+          if (deviceSlotEligible) {
+            deviceSlotCount += item.quantity || 1;
+            logStep("Found device slot item", {
               subscriptionId: sub.id,
-              invoiceId: latest.id,
-              invoiceStatus: latest.status,
-              dueDate: latest.due_date ?? null,
+              itemId: item.id,
+              status: sub.status,
+              cancelAtPeriodEnd: sub.cancel_at_period_end,
+              quantity: item.quantity,
             });
           }
-        } catch (e) {
-          // If we can't verify invoice status, be safe and don't grant extra device slots
-          deviceSlotEligible = false;
-          logStep("Error checking invoice status for device slot subscription", { subscriptionId: sub.id, error: String(e) });
-        }
-      }
-
-      if (!deviceSlotEligible) continue;
-
-      for (const item of sub.items.data) {
-        const productId = typeof item.price.product === "string"
-          ? item.price.product
-          : item.price.product.id;
-
-        if (productId === DEVICE_SLOT_PRODUCT_ID) {
-          deviceSlotCount += item.quantity || 1;
-          logStep("Found device slot subscription", {
-            subscriptionId: sub.id,
-            status: sub.status,
-            cancelAtPeriodEnd: sub.cancel_at_period_end,
-            quantity: item.quantity,
-            currentPeriodEnd: sub.current_period_end,
-          });
         }
       }
     }

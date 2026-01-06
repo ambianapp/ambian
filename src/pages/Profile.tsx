@@ -25,14 +25,16 @@ interface Invoice {
   hostedUrl: string | null;
 }
 
-interface DeviceSlotSubscription {
-  id: string;
+interface DeviceSlotItem {
+  id: string; // Subscription item ID
+  subscriptionId: string;
   quantity: number;
   period: "monthly" | "yearly";
   amount: number;
   currency: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  isLineItem: boolean;
 }
 
 interface TimeRemaining {
@@ -49,24 +51,15 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
-  const [deviceSlotPeriod, setDeviceSlotPeriod] = useState<"monthly" | "yearly">("monthly");
   const [deviceSlotQuantity, setDeviceSlotQuantity] = useState(1);
-  const [deviceSlotPayByInvoice, setDeviceSlotPayByInvoice] = useState(false);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
-  const [deviceSlotSubs, setDeviceSlotSubs] = useState<DeviceSlotSubscription[]>([]);
+  const [deviceSlotSubs, setDeviceSlotSubs] = useState<DeviceSlotItem[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
-  const [showInvoiceConfirm, setShowInvoiceConfirm] = useState(false);
-  const [slotToCancel, setSlotToCancel] = useState<DeviceSlotSubscription | null>(null);
-  // Billing info for device slot invoice
-  const [deviceCompanyName, setDeviceCompanyName] = useState("");
-  const [deviceAddressLine, setDeviceAddressLine] = useState("");
-  const [deviceCity, setDeviceCity] = useState("");
-  const [devicePostalCode, setDevicePostalCode] = useState("");
-  const [deviceCountry, setDeviceCountry] = useState("FI");
+  const [slotToCancel, setSlotToCancel] = useState<DeviceSlotItem | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -398,83 +391,34 @@ const Profile = () => {
   };
 
   const handleAddDeviceSlotClick = () => {
-    // Show confirmation dialog for invoice payments
-    if (deviceSlotPayByInvoice && deviceSlotPeriod === "yearly") {
-      setShowInvoiceConfirm(true);
-    } else {
-      handleAddDeviceSlot();
-    }
+    handleAddDeviceSlot();
   };
 
   const handleAddDeviceSlot = async () => {
-    const isInvoice = deviceSlotPayByInvoice && deviceSlotPeriod === "yearly";
-    
-    // Validate billing info for invoice payments
-    if (isInvoice) {
-      if (!deviceCompanyName.trim() || !deviceAddressLine.trim() || !deviceCity.trim() || !devicePostalCode.trim()) {
-        toast({
-          title: t("common.error"),
-          description: t("devices.fillBillingInfo") || "Please fill in all company and address fields for the invoice.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    setShowInvoiceConfirm(false);
     setIsLoadingDevice(true);
     try {
-      const body: any = { 
-        period: deviceSlotPeriod, 
-        quantity: deviceSlotQuantity,
-        payByInvoice: isInvoice,
-      };
-      
-      // Add billing info for invoice payments
-      if (isInvoice) {
-        body.billingInfo = {
-          companyName: deviceCompanyName.trim(),
-          address: {
-            line1: deviceAddressLine.trim(),
-            city: deviceCity.trim(),
-            postal_code: devicePostalCode.trim(),
-            country: deviceCountry,
-          },
-        };
-      }
-      
-      const { data, error } = await supabase.functions.invoke("add-device-slot", { body });
+      const { data, error } = await supabase.functions.invoke("add-device-slot", { 
+        body: { quantity: deviceSlotQuantity }
+      });
       if (error) throw error;
       
-      // Handle checkout vs invoice responses
-      if (data?.type === "checkout" && data?.url) {
-        // Card payment - open Stripe Checkout
-        window.open(data.url, "_blank");
-      } else if (data?.type === "invoice") {
-        // Invoice payment - show success and refresh
+      if (data?.success) {
         toast({
-          title: t("devices.invoiceSent") || "Invoice sent",
-          description: t("devices.invoiceSentDesc") || "Invoice has been sent to your email. Your new location is now active.",
+          title: t("devices.addSuccess") || "Location added",
+          description: data.message || t("devices.addSuccessDesc") || "Your additional locations have been added.",
         });
         
-        // Clear billing info after successful invoice request
-        setDeviceCompanyName("");
-        setDeviceAddressLine("");
-        setDeviceCity("");
-        setDevicePostalCode("");
-        setDeviceCountry("FI");
+        // Refresh device slots and subscription
+        await Promise.all([
+          loadDeviceSlots(),
+          checkSubscription(),
+        ]);
         
-        // Sync device slots from Stripe and refresh the UI
-        try {
-          await supabase.functions.invoke("sync-device-slots");
-          await Promise.all([
-            loadDeviceSlots(),
-            loadInvoices(),
-            checkSubscription(),
-          ]);
-        } catch (syncError) {
-          console.error("Failed to sync device slots:", syncError);
-        }
+        // Reset quantity
+        setDeviceSlotQuantity(1);
+      } else if (data?.url) {
+        // Fallback to checkout if needed
+        window.open(data.url, "_blank");
       }
     } catch (error: any) {
       toast({
@@ -487,29 +431,32 @@ const Profile = () => {
     }
   };
 
-  const handleCancelDeviceSlotConfirm = (slot: DeviceSlotSubscription) => {
+  const handleCancelDeviceSlotConfirm = (slot: DeviceSlotItem) => {
     setSlotToCancel(slot);
   };
 
   const handleCancelDeviceSlot = async () => {
     if (!slotToCancel) return;
     
-    const subscriptionId = slotToCancel.id;
+    const { id: itemId, subscriptionId, quantity } = slotToCancel;
     setSlotToCancel(null);
-    setCancellingSlotId(subscriptionId);
+    setCancellingSlotId(itemId);
     try {
       const { error } = await supabase.functions.invoke("cancel-device-slot", {
-        body: { subscriptionId, cancelImmediately: false },
+        body: { itemId, subscriptionId, quantityToRemove: quantity },
       });
       if (error) throw error;
       
       toast({
         title: t("devices.cancelSuccess") || "Location removed",
-        description: t("devices.cancelSuccessDesc") || "The location will be removed at the end of the billing period.",
+        description: t("devices.cancelSuccessDesc") || "The location has been removed. A prorated credit will be applied.",
       });
       
       // Reload device slots
-      await loadDeviceSlots();
+      await Promise.all([
+        loadDeviceSlots(),
+        checkSubscription(),
+      ]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -921,68 +868,21 @@ const Profile = () => {
                   })()}
                 </div>
 
-                {/* Period selection - only show options matching main subscription */}
-                {(() => {
-                  const isYearlyMainSub = subscription.planType === "yearly";
-                  return (
-                    <div className={`grid gap-2 ${isYearlyMainSub ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                      <button
-                        type="button"
-                        onClick={() => setDeviceSlotPeriod("monthly")}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          deviceSlotPeriod === "monthly"
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                      >
-                        <div className="font-medium text-foreground text-sm">{t("subscription.monthly")}</div>
-                        <div className="text-sm text-muted-foreground">
-                          €{5 * deviceSlotQuantity}/month
-                        </div>
-                        <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
-                      </button>
-                      {isYearlyMainSub && (
-                        <button
-                          type="button"
-                          onClick={() => setDeviceSlotPeriod("yearly")}
-                          className={`p-3 rounded-lg border text-left transition-all ${
-                            deviceSlotPeriod === "yearly"
-                              ? "border-primary bg-primary/10"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          <div className="font-medium text-foreground text-sm">{t("subscription.yearly")}</div>
-                          <div className="text-sm text-muted-foreground">
-                            €{50 * deviceSlotQuantity}/year
-                          </div>
-                          <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
-                          <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* Pay by invoice option - only for yearly */}
-                {deviceSlotPeriod === "yearly" && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-                    <input
-                      type="checkbox"
-                      id="payByInvoice"
-                      checked={deviceSlotPayByInvoice}
-                      onChange={(e) => setDeviceSlotPayByInvoice(e.target.checked)}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="payByInvoice" className="flex-1 cursor-pointer">
-                      <div className="font-medium text-foreground text-sm">
-                        {t("devices.payByInvoice") || "Pay by invoice"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {t("devices.payByInvoiceDesc") || "Receive an invoice with 14 days to pay"}
-                      </div>
-                    </label>
+                {/* Pricing info - automatically matches main subscription */}
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <div className="font-medium text-foreground text-sm mb-1">
+                    {subscription.planType === "yearly" 
+                      ? `€${50 * deviceSlotQuantity}/year` 
+                      : `€${5 * deviceSlotQuantity}/month`}
                   </div>
-                )}
+                  <div className="text-xs text-muted-foreground">
+                    {t("devices.matchesSubscription") || "Billing matches your main subscription"} ({subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")})
+                  </div>
+                  <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
+                  {subscription.planType === "yearly" && (
+                    <div className="text-xs text-primary mt-1">Save €{10 * deviceSlotQuantity} vs monthly</div>
+                  )}
+                </div>
                 
                 <Button
                   onClick={handleAddDeviceSlotClick}
@@ -994,9 +894,7 @@ const Profile = () => {
                   ) : (
                     <Plus className="w-4 h-4 mr-2" />
                   )}
-                  {deviceSlotPayByInvoice && deviceSlotPeriod === "yearly" 
-                    ? (t("devices.requestInvoice") || "Request Invoice")
-                    : t("devices.addBtn")}
+                  {t("devices.addBtn")}
                 </Button>
               </div>
             )}
@@ -1318,103 +1216,6 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Invoice Billing Info Dialog */}
-      <AlertDialog open={showInvoiceConfirm} onOpenChange={setShowInvoiceConfirm}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("devices.confirmInvoiceTitle") || "Request Invoice"}</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-4">
-                {/* Order summary */}
-                <div className="p-3 rounded-lg border border-primary bg-primary/10">
-                  <div className="font-medium text-foreground">
-                    {deviceSlotQuantity} {deviceSlotQuantity === 1 ? t("devices.location") || "location" : t("devices.locations") || "locations"} ({t("subscription.yearly")})
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    €{50 * deviceSlotQuantity}/{t("subscription.year") || "year"} {t("pricing.exclVat")}
-                  </div>
-                </div>
-
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.confirmInvoiceNote") || "An invoice will be sent to your email with 14 days to pay."}
-                </p>
-
-                {/* Billing info fields */}
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="deviceCompanyName" className="text-foreground">{t("billing.companyName") || "Company Name"} *</Label>
-                    <Input
-                      id="deviceCompanyName"
-                      value={deviceCompanyName}
-                      onChange={(e) => setDeviceCompanyName(e.target.value)}
-                      placeholder={t("billing.companyNamePlaceholder") || "Your Company Ltd"}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="deviceAddressLine" className="text-foreground">{t("billing.streetAddress") || "Street Address"} *</Label>
-                    <Input
-                      id="deviceAddressLine"
-                      value={deviceAddressLine}
-                      onChange={(e) => setDeviceAddressLine(e.target.value)}
-                      placeholder={t("billing.streetAddressPlaceholder") || "123 Business Street"}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="devicePostalCode" className="text-foreground">{t("billing.postalCode") || "Postal Code"} *</Label>
-                      <Input
-                        id="devicePostalCode"
-                        value={devicePostalCode}
-                        onChange={(e) => setDevicePostalCode(e.target.value)}
-                        placeholder="00100"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="deviceCity" className="text-foreground">{t("billing.city") || "City"} *</Label>
-                      <Input
-                        id="deviceCity"
-                        value={deviceCity}
-                        onChange={(e) => setDeviceCity(e.target.value)}
-                        placeholder={t("billing.cityPlaceholder") || "Helsinki"}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="deviceCountry" className="text-foreground">{t("billing.country") || "Country"} *</Label>
-                    <select
-                      id="deviceCountry"
-                      value={deviceCountry}
-                      onChange={(e) => setDeviceCountry(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <option value="FI">Finland</option>
-                      <option value="SE">Sweden</option>
-                      <option value="DE">Germany</option>
-                      <option value="FR">France</option>
-                      <option value="NO">Norway</option>
-                      <option value="DK">Denmark</option>
-                      <option value="EE">Estonia</option>
-                      <option value="NL">Netherlands</option>
-                      <option value="BE">Belgium</option>
-                      <option value="AT">Austria</option>
-                      <option value="CH">Switzerland</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="US">United States</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAddDeviceSlot}>
-              {t("devices.confirmInvoiceBtn") || "Send Invoice"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Cancel Device Slot Confirmation Dialog */}
       <AlertDialog open={!!slotToCancel} onOpenChange={(open) => !open && setSlotToCancel(null)}>

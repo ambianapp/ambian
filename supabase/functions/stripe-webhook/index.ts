@@ -1349,7 +1349,11 @@ async function sendDeviceSlotAutoCanceledEmail(
   }
 }
 
-const DEVICE_SLOT_PRODUCT_ID = "prod_TcxjtTopFvWHDs";
+// Device slot price IDs
+const DEVICE_SLOT_PRICES = [
+  "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly €5
+  "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
+];
 
 async function syncDeviceSlotsForUser(
   supabase: any,
@@ -1359,7 +1363,7 @@ async function syncDeviceSlotsForUser(
 ) {
   logStep("Syncing device slots for user", { userId, customerId });
 
-  // Count active device slot subscriptions
+  // Count device slot items across all active subscriptions
   const subscriptions = await stripe.subscriptions.list({
     customer: customerId,
     status: "active",
@@ -1368,13 +1372,14 @@ async function syncDeviceSlotsForUser(
   let deviceSlotCount = 1; // Base slot
   for (const sub of subscriptions.data) {
     for (const item of sub.items.data) {
-      const productId = typeof item.price.product === 'string' 
-        ? item.price.product 
-        : (item.price.product as any).id;
-      
-      if (productId === DEVICE_SLOT_PRODUCT_ID) {
+      // Check by price ID for device slot items
+      if (DEVICE_SLOT_PRICES.includes(item.price.id)) {
         deviceSlotCount += item.quantity || 1;
-        logStep("Found device slot subscription", { subscriptionId: sub.id, quantity: item.quantity });
+        logStep("Found device slot item", { 
+          subscriptionId: sub.id, 
+          itemId: item.id,
+          quantity: item.quantity 
+        });
       }
     }
   }
@@ -2042,116 +2047,34 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription deleted", { subscriptionId: subscription.id });
 
-      // Check if this is a device slot subscription (don't send churn email for device slots)
-      const priceId = subscription.items?.data?.[0]?.price?.id;
-      const DEVICE_SLOT_PRICES = [
-        "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
-        "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
-      ];
-      const isDeviceSlot = DEVICE_SLOT_PRICES.includes(priceId || '');
+      // Check if this is a device-slot-only subscription (legacy) or main subscription
+      // With line items approach, main subscription includes device slots, so when it's deleted,
+      // device slots are automatically removed too
+      const subscriptionItems = subscription.items?.data || [];
+      const hasOnlyDeviceSlots = subscriptionItems.every((item: any) => 
+        DEVICE_SLOT_PRICES.includes(item.price?.id || '')
+      );
 
       const userId = subscription.metadata?.user_id;
       const customerId = typeof subscription.customer === 'string' ? subscription.customer : (subscription.customer as any)?.id;
       
       if (userId) {
-        // Only update main subscription status if it's not a device slot
-        if (!isDeviceSlot) {
+        // Only update main subscription status if this isn't a device-slot-only subscription
+        if (!hasOnlyDeviceSlots) {
           await supabaseAdmin
             .from("subscriptions")
             .update({ 
               status: "canceled",
+              device_slots: 1, // Reset to base slot when subscription is canceled
               updated_at: new Date().toISOString()
             })
             .eq("user_id", userId);
 
           logStep("Subscription marked as canceled", { userId });
-          
-          // AUTO-CANCEL ALL DEVICE SLOT SUBSCRIPTIONS when main subscription ends
+        } else {
+          // Legacy: device-slot-only subscription canceled, sync device slots
           if (customerId) {
-            try {
-              const allSubscriptions = await stripe.subscriptions.list({
-                customer: customerId,
-                status: "active",
-                limit: 100,
-              });
-              
-              const deviceSlotSubs = allSubscriptions.data.filter((sub: any) => {
-                const subPriceId = sub.items?.data?.[0]?.price?.id;
-                return DEVICE_SLOT_PRICES.includes(subPriceId || '');
-              });
-              
-              logStep("Found device slot subscriptions to cancel", { count: deviceSlotSubs.length });
-              
-              for (const deviceSlotSub of deviceSlotSubs) {
-                try {
-                  // Cancel immediately since main subscription is gone
-                  await stripe.subscriptions.cancel(deviceSlotSub.id);
-                  logStep("Auto-canceled device slot subscription", { subscriptionId: deviceSlotSub.id });
-                  
-                  // Log activity
-                  const { data: profile } = await supabaseAdmin
-                    .from("profiles")
-                    .select("email")
-                    .eq("user_id", userId)
-                    .maybeSingle();
-                  
-                  await supabaseAdmin.from('activity_logs').insert({
-                    user_id: userId,
-                    user_email: profile?.email || null,
-                    event_type: 'device_slot_auto_canceled',
-                    event_message: 'Device slot subscription auto-canceled due to main subscription ending',
-                    event_details: { 
-                      deviceSlotSubscriptionId: deviceSlotSub.id,
-                      mainSubscriptionId: subscription.id 
-                    },
-                  });
-                } catch (cancelError) {
-                  logStep("Error canceling device slot subscription", { 
-                    subscriptionId: deviceSlotSub.id, 
-                    error: String(cancelError) 
-                  });
-                }
-              }
-              
-              // Sync device slots after cancellation
-              await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, customerId);
-              
-              // Send email notification about device slot cancellation if there were any
-              if (deviceSlotSubs.length > 0) {
-                const { data: profile } = await supabaseAdmin
-                  .from("profiles")
-                  .select("email")
-                  .eq("user_id", userId)
-                  .maybeSingle();
-                
-                if (profile?.email) {
-                  let customerName: string | null = null;
-                  try {
-                    const customer = await stripe.customers.retrieve(customerId);
-                    customerName = (customer as any).name;
-                  } catch (e) {
-                    logStep("Could not retrieve customer name", { error: String(e) });
-                  }
-                  
-                  const totalQuantity = deviceSlotSubs.reduce((sum: number, sub: any) => {
-                    return sum + (sub.items?.data?.[0]?.quantity || 1);
-                  }, 0);
-                  
-                  await sendDeviceSlotAutoCanceledEmail(
-                    profile.email,
-                    customerName,
-                    totalQuantity
-                  );
-                  
-                  logStep("Sent device slot auto-cancellation email", { 
-                    email: profile.email, 
-                    totalQuantity 
-                  });
-                }
-              }
-            } catch (e) {
-              logStep("Error auto-canceling device slot subscriptions", { error: String(e) });
-            }
+            await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, customerId);
           }
         }
 
@@ -2165,13 +2088,13 @@ serve(async (req) => {
         await supabaseAdmin.from('activity_logs').insert({
           user_id: userId,
           user_email: profile?.email || null,
-          event_type: isDeviceSlot ? 'device_slot_canceled' : 'subscription_canceled',
-          event_message: isDeviceSlot ? 'Device slot canceled' : 'Subscription canceled',
+          event_type: hasOnlyDeviceSlots ? 'device_slot_canceled' : 'subscription_canceled',
+          event_message: hasOnlyDeviceSlots ? 'Device slot canceled' : 'Subscription canceled',
           event_details: { subscriptionId: subscription.id },
         });
 
-        // Send churn email for main subscription cancellations (not device slots)
-        if (!isDeviceSlot && profile?.email) {
+        // Send churn email for main subscription cancellations (not device slots only)
+        if (!hasOnlyDeviceSlots && profile?.email) {
           let customerName: string | null = null;
           
           if (customerId) {
@@ -2190,8 +2113,8 @@ serve(async (req) => {
           await sendOwnerCancellationNotificationEmail(profile.email, customerName, planType, false, 0);
         }
         
-        // Send owner notification for device slot cancellations
-        if (isDeviceSlot && profile?.email) {
+        // Send owner notification for legacy device slot subscription cancellations
+        if (hasOnlyDeviceSlots && profile?.email) {
           let customerName: string | null = null;
           
           if (customerId) {

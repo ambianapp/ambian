@@ -37,6 +37,13 @@ const DEVICE_SLOT_PRICES = [
   "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
 ];
 
+// Main subscription prices
+const MAIN_SUBSCRIPTION_PRICES = [
+  "price_1RXZpLJrU52a7SNLNIb9VxaD", // monthly
+  "price_1RXsWsJrU52a7SNLXbXsNfay", // yearly
+  "price_1SQPakJrU52a7SNL4r23JvqL", // test daily
+];
+
 serve(async (req) => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
@@ -72,7 +79,7 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
       logStep("No customer found");
-      return new Response(JSON.stringify({ deviceSlots: [] }), {
+      return new Response(JSON.stringify({ deviceSlots: [], totalSlots: 1 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -88,31 +95,47 @@ serve(async (req) => {
       limit: 100,
     });
 
-    // Filter for device slot subscriptions
-    const deviceSlotSubscriptions = subscriptions.data.filter((sub: any) => {
-      const priceId = sub.items.data[0]?.price.id;
-      return DEVICE_SLOT_PRICES.includes(priceId);
-    });
+    // Find device slot items within subscriptions (now they're line items on main subscription)
+    const deviceSlots: any[] = [];
+    let totalAdditionalSlots = 0;
 
-    logStep("Device slot subscriptions found", { count: deviceSlotSubscriptions.length });
+    for (const sub of subscriptions.data) {
+      // Check each item in the subscription
+      for (const item of sub.items.data) {
+        if (DEVICE_SLOT_PRICES.includes(item.price.id)) {
+          const isYearly = item.price.recurring?.interval === "year";
+          const quantity = item.quantity || 1;
+          totalAdditionalSlots += quantity;
+          
+          deviceSlots.push({
+            id: item.id, // Use item ID for cancellation
+            subscriptionId: sub.id,
+            quantity: quantity,
+            period: isYearly ? "yearly" : "monthly",
+            amount: item.price.unit_amount ? item.price.unit_amount / 100 : 0,
+            currency: item.price.currency,
+            currentPeriodEnd: new Date((item as any).current_period_end * 1000).toISOString(),
+            cancelAtPeriodEnd: sub.cancel_at_period_end,
+            // New field: indicates this is a line item on main subscription
+            isLineItem: true,
+          });
+          
+          logStep("Found device slot item", { 
+            itemId: item.id, 
+            subscriptionId: sub.id,
+            quantity, 
+            period: isYearly ? "yearly" : "monthly" 
+          });
+        }
+      }
+    }
 
-    const deviceSlots = deviceSlotSubscriptions.map((sub: any) => {
-      const item = sub.items.data[0];
-      const price = item.price;
-      const isYearly = price.recurring?.interval === "year";
-      
-      return {
-        id: sub.id,
-        quantity: item.quantity || 1,
-        period: isYearly ? "yearly" : "monthly",
-        amount: price.unit_amount ? price.unit_amount / 100 : 0,
-        currency: price.currency,
-        currentPeriodEnd: new Date(item.current_period_end * 1000).toISOString(),
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-      };
-    });
+    logStep("Device slots retrieved", { count: deviceSlots.length, totalAdditionalSlots });
 
-    return new Response(JSON.stringify({ deviceSlots }), {
+    return new Response(JSON.stringify({ 
+      deviceSlots,
+      totalSlots: 1 + totalAdditionalSlots, // 1 base + additional
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

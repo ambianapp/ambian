@@ -80,24 +80,21 @@ async function sendCancellationEmail(
     <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" style="height: 40px;">
   </div>
   
-  <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Location Subscription Cancelled</h1>
+  <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Additional Locations Removed</h1>
   
   <p>Hi ${name},</p>
   
-  <p>This email confirms that your additional ${locationText} subscription has been cancelled.</p>
+  <p>This email confirms that ${quantity} additional ${locationText} have been removed from your subscription.</p>
   
   <div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
-    <p style="margin: 0 0 10px 0;"><strong>Cancelled:</strong> ${quantity} additional ${locationText} (${periodText})</p>
+    <p style="margin: 0 0 10px 0;"><strong>Removed:</strong> ${quantity} additional ${locationText}</p>
     ${cancelImmediately 
-      ? `<p style="margin: 0; color: #dc2626;"><strong>Status:</strong> Cancelled immediately</p>`
+      ? `<p style="margin: 0; color: #dc2626;"><strong>Status:</strong> Removed immediately</p>`
       : `<p style="margin: 0;"><strong>Access until:</strong> ${formattedDate}</p>`
     }
   </div>
   
-  ${!cancelImmediately 
-    ? `<p>Your additional ${locationText} will remain active until ${formattedDate}. After this date, the ${locationText} will be removed from your account.</p>`
-    : `<p>Your additional ${locationText} have been removed from your account.</p>`
-  }
+  <p>Your subscription will be adjusted accordingly on your next billing date. A prorated credit will be applied to your account.</p>
   
   <p>If you have any questions or if this was a mistake, please contact us at <a href="mailto:support@ambian.fi" style="color: #6366f1;">support@ambian.fi</a>.</p>
   
@@ -118,7 +115,7 @@ async function sendCancellationEmail(
     const { error } = await resend.emails.send({
       from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
-      subject: `Location Subscription Cancelled - Ambian`,
+      subject: `Additional Locations Removed - Ambian`,
       html,
     });
 
@@ -158,11 +155,14 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get subscription ID from request body
+    // Get item ID and subscription ID from request body
     const body = await req.json();
-    const { subscriptionId, cancelImmediately } = body;
-    if (!subscriptionId) throw new Error("Subscription ID required");
-    logStep("Request parsed", { subscriptionId, cancelImmediately });
+    const { itemId, subscriptionId, quantityToRemove = 1 } = body;
+    
+    if (!itemId || !subscriptionId) {
+      throw new Error("Item ID and Subscription ID required");
+    }
+    logStep("Request parsed", { itemId, subscriptionId, quantityToRemove });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -183,53 +183,22 @@ serve(async (req) => {
       throw new Error("Subscription does not belong to this user");
     }
 
-    // Verify it's a device slot subscription
-    const priceId = subscription.items.data[0]?.price.id;
-    if (!DEVICE_SLOT_PRICES.includes(priceId)) {
-      throw new Error("This is not a device slot subscription");
+    // Find the device slot item
+    const deviceSlotItem = subscription.items.data.find((item: any) => item.id === itemId);
+    if (!deviceSlotItem) {
+      throw new Error("Device slot item not found on subscription");
     }
 
-    const quantity = subscription.items.data[0]?.quantity || 1;
-    const period = priceId === "price_1Sj2PMJrU52a7SNLzhpFYfJd" ? "yearly" : "monthly";
-    const endDate = new Date(subscription.current_period_end * 1000);
-
-    logStep("Subscription verified", { subscriptionId, priceId, quantity, period });
-
-    // Check if this subscription has unpaid invoices (invoice-based subscription not yet paid)
-    let hasUnpaidInvoice = false;
-    let shouldCancelImmediately = cancelImmediately;
-    
-    // Check if subscription is invoice-based and has unpaid invoices
-    if (subscription.collection_method === "send_invoice") {
-      logStep("Invoice-based subscription detected, checking for unpaid invoices");
-      
-      // Get recent invoices for this subscription
-      const invoices = await stripe.invoices.list({
-        subscription: subscriptionId,
-        limit: 10,
-      });
-
-      const unpaidInvoices = invoices.data.filter((inv: any) => inv.status === "open" || inv.status === "draft");
-
-      if (unpaidInvoices.length > 0) {
-        hasUnpaidInvoice = true;
-        shouldCancelImmediately = true;
-        logStep("Found unpaid invoices, will cancel immediately", {
-          invoices: unpaidInvoices.map((inv: any) => ({ id: inv.id, status: inv.status })),
-        });
-
-        for (const inv of unpaidInvoices) {
-          // Void open invoices; delete draft invoices
-          if (inv.status === "open") {
-            await stripe.invoices.voidInvoice(inv.id);
-            logStep("Voided unpaid invoice", { invoiceId: inv.id });
-          } else if (inv.status === "draft") {
-            await stripe.invoices.del(inv.id);
-            logStep("Deleted draft invoice", { invoiceId: inv.id });
-          }
-        }
-      }
+    // Verify it's a device slot price
+    if (!DEVICE_SLOT_PRICES.includes(deviceSlotItem.price.id)) {
+      throw new Error("This is not a device slot item");
     }
+
+    const currentQuantity = deviceSlotItem.quantity || 1;
+    const period = deviceSlotItem.price.recurring?.interval === "year" ? "yearly" : "monthly";
+    const endDate = new Date((deviceSlotItem as any).current_period_end * 1000);
+
+    logStep("Device slot item found", { itemId, currentQuantity, period });
 
     // Get user's full name from profile
     const adminClient = createClient(
@@ -242,31 +211,63 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .single();
 
-    if (shouldCancelImmediately) {
-      // Cancel immediately (either requested or unpaid invoice)
-      await stripe.subscriptions.cancel(subscriptionId);
-      logStep("Subscription cancelled immediately", { hasUnpaidInvoice });
-    } else {
-      // Cancel at end of billing period
+    const newQuantity = currentQuantity - quantityToRemove;
+
+    if (newQuantity <= 0) {
+      // Remove the item entirely from the subscription
+      logStep("Removing device slot item entirely");
+      
       await stripe.subscriptions.update(subscriptionId, {
-        cancel_at_period_end: true,
+        items: [{
+          id: itemId,
+          deleted: true,
+        }],
+        proration_behavior: "create_prorations",
       });
-      logStep("Subscription set to cancel at period end");
+
+      logStep("Device slot item removed from subscription");
+    } else {
+      // Reduce the quantity
+      logStep("Reducing device slot quantity", { from: currentQuantity, to: newQuantity });
+      
+      await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: itemId,
+          quantity: newQuantity,
+        }],
+        proration_behavior: "create_prorations",
+      });
+
+      logStep("Device slot quantity reduced");
     }
+
+    // Update local database
+    const remainingSlots = newQuantity > 0 ? newQuantity : 0;
+    await adminClient
+      .from("subscriptions")
+      .update({ 
+        device_slots: 1 + remainingSlots, // 1 base + remaining additional
+        updated_at: new Date().toISOString() 
+      })
+      .eq("user_id", user.id);
 
     // Send cancellation confirmation email (don't await to speed up response)
     EdgeRuntime.waitUntil(
       sendCancellationEmail(
         user.email,
         profile?.full_name || null,
-        quantity,
+        quantityToRemove,
         period,
         endDate,
-        cancelImmediately || false
+        true // Prorated removal is immediate
       )
     );
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: `Removed ${quantityToRemove} location(s). A prorated credit will be applied to your account.`,
+      remainingSlots: remainingSlots,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
