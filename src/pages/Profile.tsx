@@ -49,7 +49,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [isLoadingDevice, setIsLoadingDevice] = useState(false);
-  const [deviceSlotPeriod, setDeviceSlotPeriod] = useState<"monthly" | "yearly">("yearly");
+  const [deviceSlotPeriod, setDeviceSlotPeriod] = useState<"monthly" | "yearly">("monthly");
   const [deviceSlotQuantity, setDeviceSlotQuantity] = useState(1);
   const [deviceSlotPayByInvoice, setDeviceSlotPayByInvoice] = useState(false);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
@@ -921,40 +921,47 @@ const Profile = () => {
                   })()}
                 </div>
 
-                {/* Period selection */}
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDeviceSlotPeriod("monthly")}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      deviceSlotPeriod === "monthly"
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <div className="font-medium text-foreground text-sm">{t("subscription.monthly")}</div>
-                    <div className="text-sm text-muted-foreground">
-                      €{5 * deviceSlotQuantity}/month
+                {/* Period selection - only show options matching main subscription */}
+                {(() => {
+                  const isYearlyMainSub = subscription.planType === "yearly";
+                  return (
+                    <div className={`grid gap-2 ${isYearlyMainSub ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      <button
+                        type="button"
+                        onClick={() => setDeviceSlotPeriod("monthly")}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          deviceSlotPeriod === "monthly"
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="font-medium text-foreground text-sm">{t("subscription.monthly")}</div>
+                        <div className="text-sm text-muted-foreground">
+                          €{5 * deviceSlotQuantity}/month
+                        </div>
+                        <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
+                      </button>
+                      {isYearlyMainSub && (
+                        <button
+                          type="button"
+                          onClick={() => setDeviceSlotPeriod("yearly")}
+                          className={`p-3 rounded-lg border text-left transition-all ${
+                            deviceSlotPeriod === "yearly"
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="font-medium text-foreground text-sm">{t("subscription.yearly")}</div>
+                          <div className="text-sm text-muted-foreground">
+                            €{50 * deviceSlotQuantity}/year
+                          </div>
+                          <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
+                          <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
+                        </button>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeviceSlotPeriod("yearly")}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      deviceSlotPeriod === "yearly"
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <div className="font-medium text-foreground text-sm">{t("subscription.yearly")}</div>
-                    <div className="text-sm text-muted-foreground">
-                      €{50 * deviceSlotQuantity}/year
-                    </div>
-                    <div className="text-xs text-primary">Save €{10 * deviceSlotQuantity}</div>
-                    <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
-                  </button>
-                </div>
+                  );
+                })()}
 
                 {/* Pay by invoice option - only for yearly */}
                 {deviceSlotPeriod === "yearly" && (
