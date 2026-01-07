@@ -641,21 +641,33 @@ const PlayerBar = () => {
   ]);
 
   useEffect(() => {
-    // Skip play/pause management during crossfade - the crossfade logic handles everything
-    if (isCrossfadingRef.current || crossfadeCompleteRef.current) return;
+    // Skip play/pause management during ACTIVE crossfade transition only
+    // (not during the settling period after crossfade completes)
+    if (isCrossfadingRef.current) {
+      dbg("play/pause effect: skip (crossfade in progress)");
+      return;
+    }
     
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (activeAudio) {
       if (isPlaying && (currentTrack?.audioUrl || isCrossfadeActive)) {
         // Only call play if audio is actually paused to avoid interrupting playback
         if (activeAudio.paused) {
-          activeAudio.play().catch(console.error);
+          dbg("play/pause effect: calling play()", { 
+            trackId: currentTrack?.id, 
+            isCrossfadeActive,
+            hasSrc: !!activeAudio.src 
+          });
+          activeAudio.play().catch((err) => {
+            console.error("Play failed:", err);
+            dbg("play/pause effect: play() failed", { error: err.message });
+          });
         }
-      } else {
+      } else if (!isPlaying) {
         activeAudio.pause();
       }
     }
-  }, [isPlaying, currentTrack, isCrossfadeActive]);
+  }, [isPlaying, currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, dbg]);
 
   useEffect(() => {
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
