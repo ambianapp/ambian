@@ -110,7 +110,7 @@ export const usePlaylistScheduler = () => {
   }, []);
 
   const loadAndPlayPlaylist = useCallback(async (schedule: Schedule) => {
-    console.log("[Scheduler] Loading playlist for schedule:", schedule.name);
+    console.log("[Scheduler] Loading playlist for schedule:", schedule.name, "playlist_id:", schedule.playlist_id);
     
     // Fetch playlist tracks
     const { data: playlistTracks, error } = await supabase
@@ -120,7 +120,7 @@ export const usePlaylistScheduler = () => {
       .order("position");
 
     if (error || !playlistTracks || playlistTracks.length === 0) {
-      console.log("[Scheduler] No tracks found for scheduled playlist");
+      console.log("[Scheduler] No tracks found for scheduled playlist, error:", error);
       return;
     }
 
@@ -139,17 +139,23 @@ export const usePlaylistScheduler = () => {
       }));
 
     if (tracks.length > 0) {
-      console.log("[Scheduler] Starting scheduled playlist with", tracks.length, "tracks");
-      // Use crossfade transition for smooth playlist changes
-      await triggerScheduledCrossfade(tracks[0], tracks);
+      console.log("[Scheduler] Starting scheduled playlist with", tracks.length, "tracks, first track:", tracks[0].title);
       
-      // Update last playlist ID to prevent re-triggering
+      // Update last playlist ID BEFORE triggering to prevent race conditions
       lastPlaylistIdRef.current = schedule.playlist_id;
       
-      toast({
-        title: "Scheduled playlist started",
-        description: schedule.name || "Playing scheduled music",
-      });
+      // Use crossfade transition for smooth playlist changes
+      try {
+        await triggerScheduledCrossfade(tracks[0], tracks);
+        console.log("[Scheduler] triggerScheduledCrossfade completed successfully");
+        
+        toast({
+          title: "Scheduled playlist started",
+          description: schedule.name || "Playing scheduled music",
+        });
+      } catch (err) {
+        console.error("[Scheduler] triggerScheduledCrossfade failed:", err);
+      }
     }
   }, [triggerScheduledCrossfade, toast]);
 

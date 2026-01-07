@@ -422,8 +422,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // Trigger a scheduled crossfade transition (for playlist scheduler)
   const triggerScheduledCrossfade = useCallback(async (track: Track, playlist: Track[]) => {
+    console.log("[triggerScheduledCrossfade] Starting", { 
+      hasCurrentTrack: !!currentTrack, 
+      isPlaying, 
+      trackId: track.id,
+      playlistLength: playlist.length 
+    });
+    
     // If nothing is playing, just start normally
     if (!currentTrack || !isPlaying) {
+      console.log("[triggerScheduledCrossfade] Nothing playing, starting fresh");
       playlistTracksRef.current = playlist;
       const { data } = await supabase
         .from("tracks")
@@ -434,11 +442,18 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       if (data?.audio_url) {
         setOriginalDbUrl(data.audio_url);
         const signedUrl = await getSignedAudioUrl(data.audio_url);
-        setCurrentTrack({ ...track, audioUrl: signedUrl });
+        const trackWithUrl = { ...track, audioUrl: signedUrl };
+        console.log("[triggerScheduledCrossfade] Setting track with URL", { trackId: track.id });
+        setCurrentTrack(trackWithUrl);
       } else {
+        console.log("[triggerScheduledCrossfade] Setting track without URL", { trackId: track.id });
         setCurrentTrack(track);
       }
-      setIsPlaying(true);
+      // Set playing AFTER setting track to ensure audio element has src
+      setTimeout(() => {
+        console.log("[triggerScheduledCrossfade] Setting isPlaying=true");
+        setIsPlaying(true);
+      }, 100);
       return;
     }
 
