@@ -825,8 +825,8 @@ const Profile = () => {
                   {t("subscription.subscribeNow")}
                 </Button>
               </div>
-            ) : subscription.isPendingPayment && !subscription.isRecurring ? (
-              /* Prepaid/invoice users can't add device slots with aligned billing */
+            ) : !subscription.isRecurring ? (
+              /* Prepaid (non-recurring) users can't add device slots with aligned billing */
               <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Monitor className="w-5 h-5" />
