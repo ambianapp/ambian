@@ -60,6 +60,7 @@ const Profile = () => {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
   const [slotToCancel, setSlotToCancel] = useState<DeviceSlotItem | null>(null);
+  const [showAddConfirmDialog, setShowAddConfirmDialog] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -391,6 +392,11 @@ const Profile = () => {
   };
 
   const handleAddDeviceSlotClick = () => {
+    setShowAddConfirmDialog(true);
+  };
+
+  const handleConfirmAddDeviceSlot = () => {
+    setShowAddConfirmDialog(false);
     handleAddDeviceSlot();
   };
 
@@ -1273,6 +1279,50 @@ const Profile = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("devices.confirmCancelBtn") || "Yes, Cancel Location"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Add Device Slot Confirmation Dialog */}
+      <AlertDialog open={showAddConfirmDialog} onOpenChange={setShowAddConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("devices.confirmAddTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <p className="mb-3">{t("devices.confirmAddDesc")}</p>
+              <div className="p-3 rounded-lg border border-border bg-secondary/50 mb-3">
+                <div className="font-medium text-foreground">
+                  {deviceSlotQuantity} {deviceSlotQuantity === 1 
+                    ? t("devices.location") 
+                    : t("devices.locations")}
+                  {" • "}
+                  {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {subscription.planType === "yearly" 
+                    ? `€${50 * deviceSlotQuantity}/${t("subscription.year")}` 
+                    : `€${5 * deviceSlotQuantity}/${t("subscription.month")}`}
+                  {" "}({t("pricing.exclVat")})
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t("devices.confirmAddNote")}
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmAddDeviceSlot}
+              disabled={isLoadingDevice}
+            >
+              {isLoadingDevice ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              {t("devices.confirmAddBtn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
