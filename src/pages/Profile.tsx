@@ -833,15 +833,15 @@ const Profile = () => {
                   <p className="font-medium">{t("devices.needMore")}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {t("devices.prepaidNotSupported") || "Device slots for prepaid plans require contacting support. Please email support@ambianmusic.com for assistance."}
+                  {t("devices.prepaidNotSupported")}
                 </p>
                 <Button
-                  onClick={() => window.open("mailto:support@ambianmusic.com?subject=Add%20Device%20Slots%20Request", "_blank")}
+                  onClick={() => window.open("mailto:info@ambian.fi?subject=Add%20Device%20Slots%20Request", "_blank", "noopener,noreferrer")}
                   variant="outline"
                   className="w-full"
                 >
                   <Mail className="w-4 h-4 mr-2" />
-                  {t("help.contactSupport") || "Contact Support"}
+                  {t("help.contactSupport")}
                 </Button>
               </div>
             ) : (

@@ -204,7 +204,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Access will continue until the end of the billing period. No refunds will be issued.",
     "devices.confirmCancelBtn": "Cancel Location",
     "devices.matchesSubscription": "Billing matches your main subscription",
-    "devices.prepaidNotSupported": "Device slots for prepaid plans require contacting support. Please email support@ambianmusic.com for assistance.",
+    "devices.prepaidNotSupported": "Device slots for prepaid plans require contacting support. Please email info@ambian.fi for assistance.",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -460,6 +460,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.faqCancel": "How do I cancel my subscription?",
     "help.faqCancelAnswer": "You can manage or cancel your subscription anytime from Profile → Manage Subscription. Your access will continue until the end of your current billing period.",
     "help.contact": "Contact Support",
+    "help.contactSupport": "Contact Support",
     "help.contactDesc": "Still need help? Our support team is here for you",
     "help.emailSupport": "Email Support",
     "help.airplay": "AirPlay & Sonos",
@@ -862,7 +863,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Åtkomst fortsätter till slutet av faktureringsperioden. Ingen återbetalning ges.",
     "devices.confirmCancelBtn": "Avbryt plats",
     "devices.matchesSubscription": "Fakturering matchar din huvudprenumeration",
-    "devices.prepaidNotSupported": "Extra platser för förbetalda planer kräver kontakt med support. Vänligen mejla support@ambianmusic.com för hjälp.",
+    "devices.prepaidNotSupported": "Extra platser för förbetalda planer kräver kontakt med support. Vänligen mejla info@ambian.fi för hjälp.",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1118,6 +1119,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.faqCancel": "Hur avslutar jag mitt abonnemang?",
     "help.faqCancelAnswer": "Du kan hantera eller avsluta ditt abonnemang när som helst från Profil → Hantera abonnemang.",
     "help.contact": "Kontakta support",
+    "help.contactSupport": "Kontakta support",
     "help.contactDesc": "Behöver du fortfarande hjälp?",
     "help.emailSupport": "E-postsupport",
     "help.airplay": "AirPlay & Sonos",
@@ -1519,7 +1521,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Käyttöoikeus jatkuu laskutuskauden loppuun. Hyvitystä ei myönnetä.",
     "devices.confirmCancelBtn": "Peruuta sijainti",
     "devices.matchesSubscription": "Laskutus vastaa päätilausasi",
-    "devices.prepaidNotSupported": "Lisäsijaintien lisääminen ennakkoon maksetuille tilauksille vaatii tukea. Lähetä sähköpostia support@ambianmusic.com.",
+    "devices.prepaidNotSupported": "Lisäsijaintien lisääminen ennakkoon maksetuille tilauksille vaatii tukea. Lähetä sähköpostia info@ambian.fi.",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -1775,6 +1777,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.faqCancel": "Miten peruutan tilaukseni?",
     "help.faqCancelAnswer": "Voit hallita tai peruuttaa tilauksesi milloin tahansa kohdasta Profiili → Hallitse tilausta.",
     "help.contact": "Ota yhteyttä tukeen",
+    "help.contactSupport": "Ota yhteyttä tukeen",
     "help.contactDesc": "Tarvitsetko vielä apua?",
     "help.emailSupport": "Sähköpostituki",
     "help.airplay": "AirPlay & Sonos",
@@ -2177,7 +2180,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "Der Zugang bleibt bis zum Ende des Abrechnungszeitraums bestehen. Es erfolgt keine Rückerstattung.",
     "devices.confirmCancelBtn": "Standort stornieren",
     "devices.matchesSubscription": "Abrechnung entspricht Ihrem Hauptabonnement",
-    "devices.prepaidNotSupported": "Für vorausbezahlte Pläne wenden Sie sich bitte an den Support. E-Mail: support@ambianmusic.com",
+    "devices.prepaidNotSupported": "Für vorausbezahlte Pläne wenden Sie sich bitte an den Support. E-Mail: info@ambian.fi",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2433,6 +2436,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.faqCancel": "Wie kündige ich?",
     "help.faqCancelAnswer": "Unter Profil → Abo verwalten jederzeit möglich.",
     "help.contact": "Support kontaktieren",
+    "help.contactSupport": "Support kontaktieren",
     "help.contactDesc": "Noch Fragen?",
     "help.emailSupport": "E-Mail-Support",
     "help.airplay": "AirPlay & Sonos",
@@ -2834,7 +2838,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelNote": "L'accès continuera jusqu'à la fin de la période de facturation. Aucun remboursement ne sera effectué.",
     "devices.confirmCancelBtn": "Annuler l'emplacement",
     "devices.matchesSubscription": "La facturation correspond à votre abonnement principal",
-    "devices.prepaidNotSupported": "Pour les forfaits prépayés, veuillez contacter le support. Email : support@ambianmusic.com",
+    "devices.prepaidNotSupported": "Pour les forfaits prépayés, veuillez contacter le support. Email : info@ambian.fi",
     
     // Payment History
     "invoices.title": "Historique des paiements",
@@ -3090,6 +3094,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.faqCancel": "Comment annuler ?",
     "help.faqCancelAnswer": "Dans Profil → Gérer l'abonnement.",
     "help.contact": "Contacter le support",
+    "help.contactSupport": "Contacter le support",
     "help.contactDesc": "Besoin d'aide ?",
     "help.emailSupport": "Support par email",
     "help.airplay": "AirPlay & Sonos",
