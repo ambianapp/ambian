@@ -37,6 +37,18 @@ interface DeviceSlotItem {
   isLineItem: boolean;
 }
 
+// Expanded representation for individual location rows
+interface ExpandedDeviceSlot {
+  id: string; // Subscription item ID
+  subscriptionId: string;
+  index: number; // 0-based index within this item's quantity
+  period: "monthly" | "yearly";
+  amount: number;
+  currency: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
 interface TimeRemaining {
   days: number;
   hours: number;
@@ -59,7 +71,7 @@ const Profile = () => {
   const [deviceSlotSubs, setDeviceSlotSubs] = useState<DeviceSlotItem[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [cancellingSlotId, setCancellingSlotId] = useState<string | null>(null);
-  const [slotToCancel, setSlotToCancel] = useState<DeviceSlotItem | null>(null);
+  const [slotToCancel, setSlotToCancel] = useState<ExpandedDeviceSlot | null>(null);
   const [showAddConfirmDialog, setShowAddConfirmDialog] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -437,19 +449,19 @@ const Profile = () => {
     }
   };
 
-  const handleCancelDeviceSlotConfirm = (slot: DeviceSlotItem) => {
+  const handleCancelDeviceSlotConfirm = (slot: ExpandedDeviceSlot) => {
     setSlotToCancel(slot);
   };
 
   const handleCancelDeviceSlot = async () => {
     if (!slotToCancel) return;
     
-    const { id: itemId, subscriptionId, quantity } = slotToCancel;
+    const { id: itemId, subscriptionId } = slotToCancel;
     setSlotToCancel(null);
     setCancellingSlotId(itemId);
     try {
       const { error } = await supabase.functions.invoke("cancel-device-slot", {
-        body: { itemId, subscriptionId, quantityToRemove: quantity },
+        body: { itemId, subscriptionId, quantityToRemove: 1 },
       });
       if (error) throw error;
       
@@ -930,11 +942,23 @@ const Profile = () => {
             ) : deviceSlotSubs.length > 0 && (
               <div className="space-y-3">
                 <p className="font-medium text-foreground">{t("devices.activeSlots") || "Your additional locations"}</p>
-                {deviceSlotSubs.map((slot) => (
+                {/* Expand device slots into individual rows */}
+                {deviceSlotSubs.flatMap((slot) => 
+                  Array.from({ length: slot.quantity }, (_, idx) => ({
+                    id: slot.id,
+                    subscriptionId: slot.subscriptionId,
+                    index: idx,
+                    period: slot.period,
+                    amount: slot.amount,
+                    currency: slot.currency,
+                    currentPeriodEnd: slot.currentPeriodEnd,
+                    cancelAtPeriodEnd: slot.cancelAtPeriodEnd,
+                  } as ExpandedDeviceSlot))
+                ).map((expandedSlot, rowIndex) => (
                   <div
-                    key={slot.id}
+                    key={`${expandedSlot.id}-${expandedSlot.index}`}
                     className={`p-3 rounded-lg border ${
-                      slot.cancelAtPeriodEnd 
+                      expandedSlot.cancelAtPeriodEnd 
                         ? "border-destructive/30 bg-destructive/5" 
                         : "border-border bg-secondary/50"
                     }`}
@@ -942,34 +966,32 @@ const Profile = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium text-foreground text-sm">
-                          {slot.quantity} {slot.quantity === 1 
-                            ? (t("devices.location") || "location") 
-                            : (t("devices.locations") || "locations")}
+                          {t("devices.location") || "Location"} {rowIndex + 1}
                           {" • "}
-                          {slot.period === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                          {expandedSlot.period === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          €{slot.amount * slot.quantity}/{slot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
+                          €{expandedSlot.amount}/{expandedSlot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
                           {" • "}
-                          {slot.cancelAtPeriodEnd 
+                          {expandedSlot.cancelAtPeriodEnd 
                             ? (t("devices.endsOn") || "Ends") 
-                            : (t("subscription.renewsOn") || "Renews")}: {new Date(slot.currentPeriodEnd).toLocaleDateString()}
+                            : (t("subscription.renewsOn") || "Renews")}: {new Date(expandedSlot.currentPeriodEnd).toLocaleDateString()}
                         </div>
-                        {slot.cancelAtPeriodEnd && (
+                        {expandedSlot.cancelAtPeriodEnd && (
                           <div className="text-xs text-destructive mt-1">
                             {t("devices.willBeRemoved") || "Will be removed at end of billing period"}
                           </div>
                         )}
                       </div>
-                      {!slot.cancelAtPeriodEnd && (
+                      {!expandedSlot.cancelAtPeriodEnd && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleCancelDeviceSlotConfirm(slot)}
-                          disabled={cancellingSlotId === slot.id}
+                          onClick={() => handleCancelDeviceSlotConfirm(expandedSlot)}
+                          disabled={cancellingSlotId === expandedSlot.id}
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          {cancellingSlotId === slot.id ? (
+                          {cancellingSlotId === expandedSlot.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <X className="w-4 h-4" />
@@ -1255,9 +1277,7 @@ const Profile = () => {
                   </p>
                   <div className="p-3 rounded-lg border border-border bg-secondary/50 mb-3">
                     <div className="font-medium text-foreground">
-                      {slotToCancel.quantity} {slotToCancel.quantity === 1 
-                        ? (t("devices.location") || "location") 
-                        : (t("devices.locations") || "locations")}
+                      1 {t("devices.location") || "location"}
                       {" • "}
                       {slotToCancel.period === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
                     </div>
@@ -1266,7 +1286,7 @@ const Profile = () => {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {t("devices.confirmCancelNote") || "The location will remain active until the end of the current billing period."}
+                    {t("devices.confirmCancelNote") || "A prorated credit will be applied to your account."}
                   </p>
                 </>
               )}
