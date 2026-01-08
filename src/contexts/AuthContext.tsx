@@ -682,8 +682,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Initial validation after short delay
     const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
 
-    // Check every 30 seconds (reduced from 15s to decrease traffic)
-    const interval = setInterval(validateAndKickIfNeeded, 30 * 1000);
+    // Check every 2 minutes (reduced from 30s to decrease traffic at scale)
+    const interval = setInterval(validateAndKickIfNeeded, 2 * 60 * 1000);
 
     // Re-validate when page becomes visible
     let visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -718,9 +718,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!session) return;
 
+    // Check every 5 minutes (reduced from 60s to decrease traffic at scale)
     const interval = setInterval(() => {
       checkSubscription();
-    }, 60000);
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [session]);
 
