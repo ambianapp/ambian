@@ -252,11 +252,18 @@ serve(async (req) => {
       });
 
       createdSubscriptionId = subscription.id;
+      
+      // Get period dates from subscription item (new Stripe API structure)
+      const subscriptionItem = subscription.items.data[0];
+      const periodStart = subscriptionItem?.current_period_start ?? subscription.current_period_start;
+      const periodEnd = subscriptionItem?.current_period_end ?? subscription.current_period_end;
+      
       logStep("Created subscription", { 
         subscriptionId: subscription.id, 
         status: subscription.status,
         collectionMethod: subscription.collection_method,
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString()
+        currentPeriodStart: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000).toISOString() : null
       });
 
       // Get the invoice that was automatically created for this subscription
@@ -288,7 +295,7 @@ serve(async (req) => {
           stripe_subscription_id: subscription.id,
           status: "pending_payment",
           plan_type: planType,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : now.toISOString(),
           current_period_end: gracePeriodEnd.toISOString(), // Grace period until invoice is paid
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
