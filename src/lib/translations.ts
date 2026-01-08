@@ -205,6 +205,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelBtn": "Cancel Location",
     "devices.matchesSubscription": "Billing matches your main subscription",
     "devices.prepaidNotSupported": "Device slots for prepaid plans require contacting support. Please email info@ambian.fi for assistance.",
+    "devices.addSuccess": "Location Added",
+    "devices.addSuccessDesc": "Your additional location has been added successfully.",
+    "devices.confirmAddTitle": "Add Location?",
+    "devices.confirmAddDesc": "You are about to add the following location(s):",
+    "devices.confirmAddNote": "Prorated charges will be applied to your next billing cycle.",
+    "devices.confirmAddBtn": "Confirm & Add",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -864,6 +870,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelBtn": "Avbryt plats",
     "devices.matchesSubscription": "Fakturering matchar din huvudprenumeration",
     "devices.prepaidNotSupported": "Extra platser för förbetalda planer kräver kontakt med support. Vänligen mejla info@ambian.fi för hjälp.",
+    "devices.addSuccess": "Plats tillagd",
+    "devices.addSuccessDesc": "Din extra plats har lagts till.",
+    "devices.confirmAddTitle": "Lägg till plats?",
+    "devices.confirmAddDesc": "Du är på väg att lägga till följande plats(er):",
+    "devices.confirmAddNote": "Proportionella avgifter läggs till din nästa faktureringsperiod.",
+    "devices.confirmAddBtn": "Bekräfta & lägg till",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1522,6 +1534,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelBtn": "Peruuta sijainti",
     "devices.matchesSubscription": "Laskutus vastaa päätilausasi",
     "devices.prepaidNotSupported": "Lisäsijaintien lisääminen ennakkoon maksetuille tilauksille vaatii tukea. Lähetä sähköpostia info@ambian.fi.",
+    "devices.addSuccess": "Sijainti lisätty",
+    "devices.addSuccessDesc": "Lisäsijainti on lisätty onnistuneesti.",
+    "devices.confirmAddTitle": "Lisää sijainti?",
+    "devices.confirmAddDesc": "Olet lisäämässä seuraavat sijainnit:",
+    "devices.confirmAddNote": "Suhteelliset maksut lisätään seuraavaan laskutusjaksoon.",
+    "devices.confirmAddBtn": "Vahvista ja lisää",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -2181,6 +2199,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelBtn": "Standort stornieren",
     "devices.matchesSubscription": "Abrechnung entspricht Ihrem Hauptabonnement",
     "devices.prepaidNotSupported": "Für vorausbezahlte Pläne wenden Sie sich bitte an den Support. E-Mail: info@ambian.fi",
+    "devices.addSuccess": "Standort hinzugefügt",
+    "devices.addSuccessDesc": "Ihr zusätzlicher Standort wurde erfolgreich hinzugefügt.",
+    "devices.confirmAddTitle": "Standort hinzufügen?",
+    "devices.confirmAddDesc": "Du bist dabei, die folgenden Standorte hinzuzufügen:",
+    "devices.confirmAddNote": "Anteilige Gebühren werden Ihrem nächsten Abrechnungszeitraum hinzugefügt.",
+    "devices.confirmAddBtn": "Bestätigen & hinzufügen",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2839,6 +2863,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmCancelBtn": "Annuler l'emplacement",
     "devices.matchesSubscription": "La facturation correspond à votre abonnement principal",
     "devices.prepaidNotSupported": "Pour les forfaits prépayés, veuillez contacter le support. Email : info@ambian.fi",
+    "devices.addSuccess": "Emplacement ajouté",
+    "devices.addSuccessDesc": "Votre emplacement supplémentaire a été ajouté avec succès.",
+    "devices.confirmAddTitle": "Ajouter un emplacement ?",
+    "devices.confirmAddDesc": "Vous êtes sur le point d'ajouter les emplacements suivants :",
+    "devices.confirmAddNote": "Des frais au prorata seront appliqués à votre prochain cycle de facturation.",
+    "devices.confirmAddBtn": "Confirmer et ajouter",
     
     // Payment History
     "invoices.title": "Historique des paiements",
