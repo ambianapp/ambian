@@ -129,30 +129,14 @@ serve(async (req) => {
       if (typeof sub.current_period_end === "number" && sub.current_period_end <= nowSec) continue;
 
       // Check each item in the subscription for device slot prices
+      // For active subscriptions, count device slots regardless of invoice status
+      // (device slots are line items on the same subscription as the main plan)
       for (const item of sub.items.data) {
         if (deviceSlotPriceIds.includes(item.price.id)) {
-          // For invoice-based device slot items: if latest invoice is unpaid, do NOT grant access.
-          let deviceSlotEligible = true;
-          if (sub.collection_method === "send_invoice") {
-            try {
-              const invoices = await stripe.invoices.list({ subscription: sub.id, limit: 1 });
-              const latest = invoices.data[0];
-              if (latest && (latest.status === "open" || latest.status === "draft")) {
-                deviceSlotEligible = false;
-                logStep("Skipping device slot item due to unpaid invoice", {
-                  subscriptionId: sub.id,
-                  itemId: item.id,
-                  invoiceId: latest.id,
-                  invoiceStatus: latest.status,
-                });
-              }
-            } catch (e) {
-              deviceSlotEligible = false;
-              logStep("Error checking invoice status for device slot", { subscriptionId: sub.id, error: String(e) });
-            }
-          }
-
-          if (deviceSlotEligible) {
+          // Only count if subscription is active or has pending_payment grace period
+          const isEligible = sub.status === "active" || sub.status === "trialing";
+          
+          if (isEligible) {
             deviceSlotCount += item.quantity || 1;
             logStep("Found device slot item", {
               subscriptionId: sub.id,
@@ -160,6 +144,12 @@ serve(async (req) => {
               status: sub.status,
               cancelAtPeriodEnd: sub.cancel_at_period_end,
               quantity: item.quantity,
+            });
+          } else {
+            logStep("Skipping device slot item due to inactive subscription", {
+              subscriptionId: sub.id,
+              itemId: item.id,
+              status: sub.status,
             });
           }
         }
