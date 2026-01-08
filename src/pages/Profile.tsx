@@ -916,9 +916,6 @@ const Profile = () => {
                     {t("devices.matchesSubscription") || "Billing matches your main subscription"} ({subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")})
                   </div>
                   <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
-                  {subscription.planType === "yearly" && (
-                    <div className="text-xs text-primary mt-1">Save €{10 * deviceSlotQuantity} vs monthly</div>
-                  )}
                 </div>
                 
                 <Button
