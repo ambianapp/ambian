@@ -230,6 +230,9 @@ serve(async (req) => {
         items: [{ price: priceId }],
         collection_method: "send_invoice",
         days_until_due: gracePeriodDays,
+        automatic_tax: {
+          enabled: true,
+        },
         payment_settings: {
           payment_method_types: ["card", "customer_balance"],
           payment_method_options: {

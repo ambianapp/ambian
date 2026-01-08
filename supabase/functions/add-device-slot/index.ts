@@ -37,9 +37,11 @@ const DEVICE_SLOT_PRICE_YEARLY = "price_1Sj2PMJrU52a7SNLzhpFYfJd";  // €50/yea
 
 // Main subscription prices (to identify the main subscription)
 const MAIN_SUBSCRIPTION_PRICES = [
-  "price_1RXZpLJrU52a7SNLNIb9VxaD", // monthly
-  "price_1RXsWsJrU52a7SNLXbXsNfay", // yearly
-  "price_1SQPakJrU52a7SNL4r23JvqL", // test daily
+  "price_1S2BhCJrU52a7SNLtRRpyoCl", // monthly €8.90
+  "price_1S2BqdJrU52a7SNLAnOR8Nhf", // yearly €89
+  "price_1RREw6JrU52a7SNLjcBLbT7w", // monthly with VAT €11.17
+  "price_1RREw6JrU52a7SNLevS4o4gf", // yearly with VAT €111.70
+  "price_1SjxomJrU52a7SNL3ImdC1N0", // test daily
 ];
 
 serve(async (req) => {
