@@ -1727,6 +1727,192 @@ serve(async (req) => {
       logStep("Subscription updated from invoice payment");
     }
 
+    // Handle checkout.session.completed for one-time prepaid payments
+    // This is the reliable server-side way to activate prepaid access (instead of relying on client-side verify-payment)
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      logStep("Checkout session completed", { 
+        sessionId: session.id, 
+        mode: session.mode, 
+        paymentStatus: session.payment_status,
+        metadata: session.metadata 
+      });
+
+      // Only handle one-time payment mode (prepaid), subscriptions are handled by invoice.paid
+      if (session.mode === "payment" && session.payment_status === "paid") {
+        const userId = session.metadata?.user_id;
+        const planType = session.metadata?.plan_type || "monthly";
+        const paymentMode = session.metadata?.payment_mode;
+        
+        logStep("Processing prepaid payment", { userId, planType, paymentMode });
+
+        if (userId) {
+          // Prevent duplicate processing
+          const checkoutLockType = "checkout_session_processed";
+          const { data: alreadyProcessed } = await supabaseAdmin
+            .from("activity_logs")
+            .select("id")
+            .eq("event_type", checkoutLockType)
+            .contains("event_details", { sessionId: session.id })
+            .maybeSingle();
+
+          if (alreadyProcessed) {
+            logStep("Skipping duplicate checkout session processing", { sessionId: session.id });
+            return new Response(JSON.stringify({ received: true }), {
+              headers: { "Content-Type": "application/json" },
+              status: 200,
+            });
+          }
+
+          // Lock to prevent duplicate processing
+          await supabaseAdmin.from("activity_logs").insert({
+            user_id: userId,
+            user_email: session.customer_email || null,
+            event_type: checkoutLockType,
+            event_message: "Checkout session processing locked",
+            event_details: { sessionId: session.id },
+          });
+
+          // Check if user has existing valid access and extend from that date
+          const { data: existingSub } = await supabaseAdmin
+            .from("subscriptions")
+            .select("current_period_end, status")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          const now = new Date();
+          let startDate = now;
+          
+          // If user has existing valid access, extend from that end date
+          if (existingSub?.current_period_end) {
+            const existingEnd = new Date(existingSub.current_period_end);
+            if (existingEnd > now && existingSub.status !== "trialing") {
+              startDate = existingEnd;
+              logStep("Extending existing prepaid access", { existingEnd: existingEnd.toISOString() });
+            }
+          }
+
+          // Calculate end date based on plan type
+          let endDate: Date;
+          if (planType === "yearly") {
+            endDate = new Date(startDate);
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          } else if (planType === "daily_test") {
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 1);
+          } else {
+            endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 1);
+          }
+
+          logStep("Prepaid access period calculated", { 
+            planType, 
+            startDate: startDate.toISOString(), 
+            endDate: endDate.toISOString() 
+          });
+
+          // Get customer ID from session
+          const customerId = typeof session.customer === 'string' ? session.customer : null;
+
+          // Check if this is a first subscription (converting from trial)
+          const isFirstSubscription = !existingSub || existingSub.status === "trialing";
+
+          // Update subscription in database
+          const { error: upsertError } = await supabaseAdmin
+            .from("subscriptions")
+            .upsert({
+              user_id: userId,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: null, // No subscription, just one-time payment
+              status: "active",
+              plan_type: planType,
+              current_period_start: startDate.toISOString(),
+              current_period_end: endDate.toISOString(),
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "user_id" });
+
+          if (upsertError) {
+            logStep("Error activating prepaid subscription", { error: upsertError.message });
+          } else {
+            logStep("Prepaid subscription activated", { userId, planType, endDate: endDate.toISOString() });
+          }
+
+          // Get customer details for emails
+          let customerEmail = session.customer_email;
+          let customerName: string | null = null;
+          
+          if (customerId) {
+            try {
+              const customer = await stripe.customers.retrieve(customerId);
+              customerEmail = customerEmail || (customer as any).email;
+              customerName = (customer as any).name;
+            } catch (e) {
+              logStep("Could not retrieve customer details", { error: String(e) });
+            }
+          }
+
+          // Get amount from session
+          const amount = session.amount_total || 0;
+          const currency = session.currency || 'eur';
+
+          // Send confirmation email to customer
+          if (customerEmail) {
+            // For first subscription, send welcome email; otherwise, send prepaid confirmation
+            if (isFirstSubscription) {
+              await sendSubscriptionConfirmationEmail(
+                customerEmail,
+                customerName,
+                planType,
+                endDate
+              );
+              logStep("Welcome email sent for prepaid first subscription", { email: customerEmail });
+            } else {
+              await sendPaymentConfirmationEmail(
+                customerEmail,
+                customerName,
+                amount,
+                currency,
+                planType,
+                endDate,
+                null // No invoice number for prepaid checkout
+              );
+              logStep("Payment confirmation email sent for prepaid", { email: customerEmail });
+            }
+
+            // Send owner notification email
+            await sendOwnerPurchaseNotificationEmail(
+              customerEmail,
+              customerName,
+              planType,
+              amount,
+              currency,
+              isFirstSubscription,
+              false,
+              0
+            );
+            logStep("Owner notification sent for prepaid purchase", { customerEmail });
+
+            // Log the purchase activity
+            await supabaseAdmin.from("activity_logs").insert({
+              user_id: userId,
+              user_email: customerEmail,
+              event_type: isFirstSubscription ? "prepaid_first_subscription" : "prepaid_renewal",
+              event_message: `Prepaid ${planType} access activated`,
+              event_details: { 
+                sessionId: session.id, 
+                planType, 
+                amount, 
+                currency,
+                accessUntil: endDate.toISOString() 
+              },
+            });
+          }
+        } else {
+          logStep("No user_id in checkout session metadata", { sessionId: session.id });
+        }
+      }
+    }
+
     // Handle subscription events for recurring subscriptions
     if (event.type === "invoice.payment_failed") {
       const invoice = event.data.object as Stripe.Invoice;
