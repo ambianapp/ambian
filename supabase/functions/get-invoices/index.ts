@@ -25,6 +25,11 @@ const getCorsHeaders = (origin: string | null) => {
   };
 };
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[GET-INVOICES] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
@@ -53,20 +58,11 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
+    logStep("Fetching payment history", { email: user.email, userId: user.id });
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
-
-    // Find customer by email
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ invoices: [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    const customerId = customers.data[0].id;
 
     // Device slot price IDs
     const DEVICE_SLOT_PRICE_IDS = [
@@ -74,103 +70,198 @@ serve(async (req) => {
       "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly
     ];
 
-    // Fetch open invoices (pending payment)
-    const openInvoices = await stripe.invoices.list({
-      customer: customerId,
-      status: "open",
-      limit: 10,
-    });
-
-    // Fetch draft invoices too (they might also be orphaned)
-    const draftInvoices = await stripe.invoices.list({
-      customer: customerId,
-      status: "draft",
-      limit: 10,
-    });
-
-    // Process open and draft invoices - void/delete if subscription is canceled
-    const filteredOpenInvoices: any[] = [];
+    // Find customer by email
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customerId = customers.data.length > 0 ? customers.data[0].id : null;
     
-    for (const inv of [...openInvoices.data, ...draftInvoices.data]) {
-      // Check if this invoice is for a subscription
-      if (inv.subscription) {
-        try {
-          const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
-          const priceId = sub.items?.data?.[0]?.price?.id;
-          const isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "");
-          
-          // If the subscription is canceled (especially device slots), void/delete the invoice
-          if (sub.status === "canceled") {
-            console.log(`[GET-INVOICES] Found invoice for canceled subscription, cleaning up`, { 
-              invoiceId: inv.id, 
-              status: inv.status,
-              subscriptionId: sub.id,
-              isDeviceSlot 
-            });
+    logStep("Customer lookup", { customerId, hasCustomer: !!customerId });
+
+    const formattedInvoices: any[] = [];
+
+    // If customer exists, fetch their invoices
+    if (customerId) {
+      // Fetch open invoices (pending payment)
+      const openInvoices = await stripe.invoices.list({
+        customer: customerId,
+        status: "open",
+        limit: 10,
+      });
+
+      // Fetch draft invoices too (they might also be orphaned)
+      const draftInvoices = await stripe.invoices.list({
+        customer: customerId,
+        status: "draft",
+        limit: 10,
+      });
+
+      // Process open and draft invoices - void/delete if subscription is canceled
+      const filteredOpenInvoices: any[] = [];
+      
+      for (const inv of [...openInvoices.data, ...draftInvoices.data]) {
+        // Check if this invoice is for a subscription
+        if (inv.subscription) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
+            const priceId = sub.items?.data?.[0]?.price?.id;
+            const isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "");
             
-            if (inv.status === "open") {
-              await stripe.invoices.voidInvoice(inv.id);
-              console.log(`[GET-INVOICES] Voided invoice ${inv.id}`);
-            } else if (inv.status === "draft") {
-              await stripe.invoices.del(inv.id);
-              console.log(`[GET-INVOICES] Deleted draft invoice ${inv.id}`);
+            // If the subscription is canceled (especially device slots), void/delete the invoice
+            if (sub.status === "canceled") {
+              logStep("Found invoice for canceled subscription, cleaning up", { 
+                invoiceId: inv.id, 
+                status: inv.status,
+                subscriptionId: sub.id,
+                isDeviceSlot 
+              });
+              
+              if (inv.status === "open") {
+                await stripe.invoices.voidInvoice(inv.id);
+                logStep("Voided invoice", { invoiceId: inv.id });
+              } else if (inv.status === "draft") {
+                await stripe.invoices.del(inv.id);
+                logStep("Deleted draft invoice", { invoiceId: inv.id });
+              }
+              continue; // Don't include in results
+            }
+          } catch (e) {
+            logStep("Error checking subscription for invoice", { invoiceId: inv.id, error: String(e) });
+            // If subscription doesn't exist anymore, void/delete the invoice
+            try {
+              if (inv.status === "open") {
+                await stripe.invoices.voidInvoice(inv.id);
+                logStep("Voided orphaned invoice", { invoiceId: inv.id });
+              } else if (inv.status === "draft") {
+                await stripe.invoices.del(inv.id);
+                logStep("Deleted orphaned draft invoice", { invoiceId: inv.id });
+              }
+            } catch (cleanupError) {
+              logStep("Failed to cleanup invoice", { invoiceId: inv.id, error: String(cleanupError) });
             }
             continue; // Don't include in results
           }
-          
-          // For device slot subscriptions with open/draft invoices but active subscription,
-          // still show them (user needs to pay)
-        } catch (e) {
-          console.log(`[GET-INVOICES] Error checking subscription for invoice ${inv.id}:`, e);
-          // If subscription doesn't exist anymore, void/delete the invoice
-          try {
-            if (inv.status === "open") {
-              await stripe.invoices.voidInvoice(inv.id);
-              console.log(`[GET-INVOICES] Voided orphaned invoice ${inv.id}`);
-            } else if (inv.status === "draft") {
-              await stripe.invoices.del(inv.id);
-              console.log(`[GET-INVOICES] Deleted orphaned draft invoice ${inv.id}`);
-            }
-          } catch (cleanupError) {
-            console.log(`[GET-INVOICES] Failed to cleanup invoice ${inv.id}:`, cleanupError);
-          }
-          continue; // Don't include in results
+        }
+
+        // Only include open invoices in the UI (not draft)
+        if (inv.status === "open") {
+          filteredOpenInvoices.push(inv);
         }
       }
 
-      // Only include open invoices in the UI (not draft)
-      if (inv.status === "open") {
-        filteredOpenInvoices.push(inv);
+      // Fetch paid invoices
+      const paidInvoices = await stripe.invoices.list({
+        customer: customerId,
+        status: "paid",
+        limit: 20,
+      });
+
+      // Add invoices to results - open invoices first
+      const allInvoices = [...filteredOpenInvoices, ...paidInvoices.data];
+
+      for (const invoice of allInvoices) {
+        formattedInvoices.push({
+          id: invoice.id,
+          number: invoice.number,
+          amount: invoice.status === "paid" ? invoice.amount_paid : invoice.amount_due,
+          currency: invoice.currency,
+          date: invoice.created,
+          status: invoice.status,
+          dueDate: invoice.due_date,
+          pdfUrl: invoice.invoice_pdf,
+          hostedUrl: invoice.hosted_invoice_url,
+          type: "invoice",
+        });
       }
+
+      logStep("Fetched customer invoices", { count: formattedInvoices.length });
     }
 
-    // Fetch paid invoices
-    const paidInvoices = await stripe.invoices.list({
-      customer: customerId,
-      status: "paid",
-      limit: 20,
-    });
+    // Also fetch completed checkout sessions for one-time payments (prepaid)
+    // These may not have invoices but should still show in payment history
+    try {
+      // Fetch recent checkout sessions - we'll filter by user_id in metadata
+      const checkoutSessions = await stripe.checkout.sessions.list({
+        limit: 50,
+        expand: ["data.line_items"],
+      });
 
-    // Combine and format - open invoices first
-    const allInvoices = [...filteredOpenInvoices, ...paidInvoices.data];
+      for (const session of checkoutSessions.data) {
+        // Only include sessions for this user (by metadata or email)
+        const sessionUserId = session.metadata?.user_id;
+        const sessionEmail = session.customer_email || session.customer_details?.email;
+        
+        if (sessionUserId !== user.id && sessionEmail?.toLowerCase() !== user.email.toLowerCase()) {
+          continue;
+        }
 
-    const formattedInvoices = allInvoices.map((invoice: any) => ({
-      id: invoice.id,
-      number: invoice.number,
-      amount: invoice.status === "paid" ? invoice.amount_paid : invoice.amount_due,
-      currency: invoice.currency,
-      date: invoice.created,
-      status: invoice.status,
-      dueDate: invoice.due_date,
-      pdfUrl: invoice.invoice_pdf,
-      hostedUrl: invoice.hosted_invoice_url,
-    }));
+        // Only include successful one-time payments
+        if (session.mode !== "payment" || session.payment_status !== "paid") {
+          continue;
+        }
+
+        // Skip if we already have an invoice for this (shouldn't happen for one-time payments, but just in case)
+        const existingEntry = formattedInvoices.find(inv => 
+          inv.id === session.id || 
+          (session.payment_intent && inv.paymentIntentId === session.payment_intent)
+        );
+        if (existingEntry) {
+          continue;
+        }
+
+        // Get receipt URL from the charge
+        let receiptUrl: string | null = null;
+        if (session.payment_intent) {
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+            if (paymentIntent.latest_charge) {
+              const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
+              receiptUrl = charge.receipt_url;
+            }
+          } catch (e) {
+            logStep("Could not fetch receipt for checkout session", { sessionId: session.id });
+          }
+        }
+
+        // Get plan type from metadata or line items
+        const planType = session.metadata?.plan_type || "prepaid";
+        const lineItemDescription = session.line_items?.data?.[0]?.description || `${planType} access`;
+
+        formattedInvoices.push({
+          id: session.id,
+          number: null, // Checkout sessions don't have invoice numbers
+          amount: session.amount_total || 0,
+          currency: session.currency || "eur",
+          date: session.created,
+          status: "paid",
+          dueDate: null,
+          pdfUrl: null, // No PDF for checkout payments
+          hostedUrl: receiptUrl, // Use receipt URL instead
+          type: "checkout",
+          description: lineItemDescription,
+          paymentIntentId: session.payment_intent,
+        });
+
+        logStep("Added checkout session to history", { 
+          sessionId: session.id, 
+          amount: session.amount_total,
+          planType 
+        });
+      }
+    } catch (checkoutError) {
+      logStep("Error fetching checkout sessions", { error: String(checkoutError) });
+      // Continue - invoices are still returned even if checkout sessions fail
+    }
+
+    // Sort by date descending (newest first)
+    formattedInvoices.sort((a, b) => b.date - a.date);
+
+    logStep("Returning payment history", { totalCount: formattedInvoices.length });
 
     return new Response(JSON.stringify({ invoices: formattedInvoices }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error: any) {
+    logStep("ERROR", { message: error.message });
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
