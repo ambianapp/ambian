@@ -87,12 +87,22 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Check for existing customer
+    // Check for existing customer or create one
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId: string | undefined;
+    let customerId: string;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Found existing customer", { customerId });
+    } else {
+      // Create a new customer to ensure all payments are properly linked
+      const newCustomer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          user_id: user.id,
+        },
+      });
+      customerId = newCustomer.id;
+      logStep("Created new customer", { customerId });
     }
 
     const returnOrigin = origin || "https://ambian.lovable.app";
@@ -102,14 +112,13 @@ serve(async (req) => {
       ? `${returnOrigin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}&mode=prepaid`
       : `${returnOrigin}/?checkout=success`;
 
-    // Build checkout session options
+    // Build checkout session options - always use customer ID since we create one
     const sessionOptions: any = {
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      customer_update: customerId ? {
+      customer_update: {
         name: "auto",
         address: "auto",
-      } : undefined,
+      },
       line_items: [
         {
           price: priceId,
