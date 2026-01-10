@@ -515,8 +515,8 @@ const Pricing = () => {
             </div>
           ) : (
             <>
-              {/* Invoice Option */}
-              <Card className={`border-border ${selectedPlan === "monthly" ? "opacity-70" : ""}`}>
+              {/* Invoice Option - Only for yearly prepaid */}
+              <Card className={`border-border ${(selectedPlan === "monthly" || paymentType === "subscription") ? "opacity-70" : ""}`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <FileText className="w-5 h-5 text-primary" />
@@ -533,7 +533,7 @@ const Pricing = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {selectedPlan === "monthly" && (
+                  {(selectedPlan === "monthly" || paymentType === "subscription") && (
                     <p className="text-sm text-amber-500 text-center">
                       {t("pricing.invoiceYearlyOnly")}
                     </p>
@@ -542,7 +542,7 @@ const Pricing = () => {
                     variant="outline"
                     className="w-full"
                     onClick={() => setShowInvoiceDialog(true)}
-                    disabled={selectedPlan === "monthly"}
+                    disabled={selectedPlan === "monthly" || paymentType === "subscription"}
                   >
                     {t("pricing.requestInvoice")}
                   </Button>
