@@ -218,6 +218,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.proratedUntil": "prorated until",
     "devices.daysRemaining": "days",
     "devices.proratedPricing": "Prorated for remaining subscription period",
+    "devices.prepaidNotice": "This is a one-time purchase. You'll need to renew when your subscription expires.",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -890,6 +891,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.proratedUntil": "proportionellt till",
     "devices.daysRemaining": "dagar",
     "devices.proratedPricing": "Proportionellt för återstående prenumerationsperiod",
+    "devices.prepaidNotice": "Detta är ett engångsköp. Du behöver förnya när din prenumeration går ut.",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1561,6 +1563,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.proratedUntil": "suhteellinen hinta",
     "devices.daysRemaining": "päivää",
     "devices.proratedPricing": "Suhteellinen hinta jäljellä olevalle tilausjaksolle",
+    "devices.prepaidNotice": "Tämä on kertaostos. Sinun tulee uusia, kun tilauksesi päättyy.",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -2233,6 +2236,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.proratedUntil": "anteilig bis",
     "devices.daysRemaining": "Tage",
     "devices.proratedPricing": "Anteilig für verbleibende Abonnementperiode",
+    "devices.prepaidNotice": "Dies ist ein Einmalkauf. Sie müssen verlängern, wenn Ihr Abonnement abläuft.",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2904,6 +2908,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.proratedUntil": "au prorata jusqu'au",
     "devices.daysRemaining": "jours",
     "devices.proratedPricing": "Au prorata pour la période d'abonnement restante",
+    "devices.prepaidNotice": "Ceci est un achat unique. Vous devrez renouveler à l'expiration de votre abonnement.",
     
     // Payment History
     "invoices.title": "Historique des paiements",
