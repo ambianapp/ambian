@@ -215,6 +215,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.included": "Included",
     "devices.addLocation": "Add another device",
     "devices.add": "Add",
+    "devices.proratedUntil": "prorated until",
+    "devices.daysRemaining": "days",
+    "devices.proratedPricing": "Prorated for remaining subscription period",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -884,6 +887,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.included": "Ingår",
     "devices.addLocation": "Lägg till en enhet till",
     "devices.add": "Lägg till",
+    "devices.proratedUntil": "proportionellt till",
+    "devices.daysRemaining": "dagar",
+    "devices.proratedPricing": "Proportionellt för återstående prenumerationsperiod",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1552,6 +1558,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.included": "Sisältyy",
     "devices.addLocation": "Lisää toinen laite",
     "devices.add": "Lisää",
+    "devices.proratedUntil": "suhteellinen hinta",
+    "devices.daysRemaining": "päivää",
+    "devices.proratedPricing": "Suhteellinen hinta jäljellä olevalle tilausjaksolle",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -2221,6 +2230,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.included": "Enthalten",
     "devices.addLocation": "Ein weiteres Gerät hinzufügen",
     "devices.add": "Hinzufügen",
+    "devices.proratedUntil": "anteilig bis",
+    "devices.daysRemaining": "Tage",
+    "devices.proratedPricing": "Anteilig für verbleibende Abonnementperiode",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2889,6 +2901,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.included": "Inclus",
     "devices.addLocation": "Ajouter un autre appareil",
     "devices.add": "Ajouter",
+    "devices.proratedUntil": "au prorata jusqu'au",
+    "devices.daysRemaining": "jours",
+    "devices.proratedPricing": "Au prorata pour la période d'abonnement restante",
     
     // Payment History
     "invoices.title": "Historique des paiements",
