@@ -226,8 +226,8 @@ const Pricing = () => {
 
     setIsInvoiceLoading(true);
     try {
-      // Invoice payment is yearly-only, use recurring subscription price for auto-renewal
-      const yearlyPriceId = SUBSCRIPTION_PLANS.yearly.priceId;
+      // Invoice payment is yearly one-time only, use prepaid price
+      const yearlyPriceId = PREPAID_PLANS.yearly.priceId;
       const { data, error } = await supabase.functions.invoke("create-invoice", {
         body: { 
           priceId: yearlyPriceId,
