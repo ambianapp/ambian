@@ -812,142 +812,37 @@ const Profile = () => {
             <CardDescription>{t("devices.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(() => {
-              const computedSlots = 1 + deviceSlotSubs.reduce((sum, slot) => sum + slot.quantity, 0);
-              const activeSlots = Math.max(subscription.deviceSlots || 1, computedSlots);
+            {/* Location List - show all locations including base */}
+            <div className="space-y-2">
+              {/* Base subscription location (always included) */}
+              <div className="p-3 rounded-lg border border-primary/30 bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+                      1
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground text-sm">
+                        {t("devices.location") || "Location"} 1
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t("devices.includedInSubscription") || "Included in subscription"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-primary font-medium px-2 py-1 rounded bg-primary/10">
+                    {t("devices.included") || "Included"}
+                  </div>
+                </div>
+              </div>
 
-              return (
-                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
-                  <div>
-                    <p className="font-medium text-foreground">{t("devices.active")}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("devices.canPlay", { count: activeSlots })}
-                    </p>
-                  </div>
-                  <div className="px-4 py-2 rounded-full bg-primary/20 text-primary font-bold text-xl">
-                    {activeSlots}
-                  </div>
+              {/* Additional locations */}
+              {isLoadingSlots ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
-              );
-            })()}
-
-            {/* Show disabled state with message if no active subscription or cancelled */}
-            {(!subscription.subscribed || subscription.isTrial || subscription.cancelAtPeriodEnd) ? (
-              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Monitor className="w-5 h-5" />
-                  <p className="font-medium">{t("devices.needMore")}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.subscriptionRequired") || "An active subscription is required before you can add additional locations."}
-                </p>
-                <Button
-                  onClick={() => navigate("/pricing")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {t("subscription.subscribeNow")}
-                </Button>
-              </div>
-            ) : !subscription.isRecurring ? (
-              /* Prepaid (non-recurring) users can't add device slots with aligned billing */
-              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Monitor className="w-5 h-5" />
-                  <p className="font-medium">{t("devices.needMore")}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.prepaidNotSupported")}
-                </p>
-                <Button
-                  onClick={() => window.open("mailto:info@ambian.fi?subject=Add%20Device%20Slots%20Request", "_blank", "noopener,noreferrer")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  {t("help.contactSupport")}
-                </Button>
-              </div>
-            ) : (
-              <div className="p-4 rounded-lg border border-border space-y-4">
-                <div>
-                  <p className="font-medium text-foreground">{t("devices.needMore")}</p>
-                  <p className="text-sm text-muted-foreground">{t("devices.addFor")}</p>
-                </div>
-                
-                {/* Quantity selection */}
-                <div>
-                  <Label className="text-sm font-medium text-foreground mb-2 block">
-                    {t("devices.quantity") || "Number of device slots"}
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setDeviceSlotQuantity(Math.max(1, deviceSlotQuantity - 1))}
-                      disabled={deviceSlotQuantity <= 1}
-                    >
-                      -
-                    </Button>
-                    <div className="w-16 text-center font-bold text-lg">{deviceSlotQuantity}</div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setDeviceSlotQuantity(Math.min(10, deviceSlotQuantity + 1))}
-                      disabled={deviceSlotQuantity >= 10}
-                    >
-                      +
-                    </Button>
-                  </div>
-                  {(() => {
-                    const currentTotal = 1 + deviceSlotSubs.reduce((sum, slot) => sum + slot.quantity, 0);
-                    return (
-                      <p className="text-sm text-primary mt-2 font-medium">
-                        {t("devices.totalAfterOrder")}: {currentTotal + deviceSlotQuantity} {t("devices.locations")}
-                      </p>
-                    );
-                  })()}
-                </div>
-
-                {/* Pricing info - automatically matches main subscription */}
-                <div className="p-3 rounded-lg border border-border bg-secondary/30">
-                  <div className="font-medium text-foreground text-sm mb-1">
-                    {subscription.planType === "yearly" 
-                      ? `€${50 * deviceSlotQuantity}/year` 
-                      : `€${5 * deviceSlotQuantity}/month`}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t("devices.matchesSubscription") || "Billing matches your main subscription"} ({subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")})
-                  </div>
-                  <div className="text-xs text-muted-foreground/70">{t("pricing.exclVat")}</div>
-                </div>
-                
-                <Button
-                  onClick={handleAddDeviceSlotClick}
-                  disabled={isLoadingDevice}
-                  className="w-full"
-                >
-                  {isLoadingDevice ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Plus className="w-4 h-4 mr-2" />
-                  )}
-                  {t("devices.addBtn")}
-                </Button>
-              </div>
-            )}
-            {isLoadingSlots ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : deviceSlotSubs.length > 0 && (
-              <div className="space-y-3">
-                <p className="font-medium text-foreground">{t("devices.activeSlots") || "Your additional locations"}</p>
-                {/* Expand device slots into individual rows */}
-                {deviceSlotSubs.flatMap((slot) => 
+              ) : (
+                deviceSlotSubs.flatMap((slot) => 
                   Array.from({ length: slot.quantity }, (_, idx) => ({
                     id: slot.id,
                     subscriptionId: slot.subscriptionId,
@@ -968,24 +863,31 @@ const Profile = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-foreground text-sm">
-                          {t("devices.location") || "Location"} {rowIndex + 1}
-                          {" • "}
-                          {expandedSlot.period === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                          expandedSlot.cancelAtPeriodEnd 
+                            ? "bg-destructive/20 text-destructive" 
+                            : "bg-secondary text-foreground"
+                        }`}>
+                          {rowIndex + 2}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          €{expandedSlot.amount}/{expandedSlot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
-                          {" • "}
-                          {expandedSlot.cancelAtPeriodEnd 
-                            ? (t("devices.endsOn") || "Ends") 
-                            : (t("subscription.renewsOn") || "Renews")}: {new Date(expandedSlot.currentPeriodEnd).toLocaleDateString()}
-                        </div>
-                        {expandedSlot.cancelAtPeriodEnd && (
-                          <div className="text-xs text-destructive mt-1">
-                            {t("devices.willBeRemoved") || "Will be removed at end of billing period"}
+                        <div>
+                          <div className="font-medium text-foreground text-sm">
+                            {t("devices.location") || "Location"} {rowIndex + 2}
                           </div>
-                        )}
+                          <div className="text-xs text-muted-foreground">
+                            €{expandedSlot.amount}/{expandedSlot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
+                            {" • "}
+                            {expandedSlot.cancelAtPeriodEnd 
+                              ? (t("devices.endsOn") || "Ends") 
+                              : (t("subscription.renewsOn") || "Renews")}: {new Date(expandedSlot.currentPeriodEnd).toLocaleDateString()}
+                          </div>
+                          {expandedSlot.cancelAtPeriodEnd && (
+                            <div className="text-xs text-destructive mt-1">
+                              {t("devices.willBeRemoved") || "Will be removed at end of billing period"}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {!expandedSlot.cancelAtPeriodEnd && (
                         <Button
@@ -1004,7 +906,82 @@ const Profile = () => {
                       )}
                     </div>
                   </div>
-                ))}
+                ))
+              )}
+            </div>
+
+            {/* Add Location Button */}
+            {(!subscription.subscribed || subscription.isTrial || subscription.cancelAtPeriodEnd) ? (
+              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Plus className="w-5 h-5" />
+                  <p className="font-medium">{t("devices.needMore")}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.subscriptionRequired") || "An active subscription is required before you can add additional locations."}
+                </p>
+                <Button
+                  onClick={() => navigate("/pricing")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {t("subscription.subscribeNow")}
+                </Button>
+              </div>
+            ) : !subscription.isRecurring ? (
+              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Plus className="w-5 h-5" />
+                  <p className="font-medium">{t("devices.needMore")}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("devices.prepaidNotSupported")}
+                </p>
+                <Button
+                  onClick={() => window.open("mailto:info@ambian.fi?subject=Add%20Device%20Slots%20Request", "_blank", "noopener,noreferrer")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  {t("help.contactSupport")}
+                </Button>
+              </div>
+            ) : (
+              <div className="p-4 rounded-lg border border-dashed border-border hover:border-primary/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{t("devices.addLocation") || "Add another location"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {subscription.planType === "yearly" 
+                          ? `€50/${t("subscription.year") || "year"}`
+                          : `€5/${t("subscription.month") || "month"}`}
+                        {" • "}{t("pricing.exclVat")}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setDeviceSlotQuantity(1);
+                      handleAddDeviceSlotClick();
+                    }}
+                    disabled={isLoadingDevice}
+                    size="sm"
+                  >
+                    {isLoadingDevice ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-1" />
+                        {t("devices.add") || "Add"}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
 

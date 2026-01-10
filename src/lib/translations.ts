@@ -211,6 +211,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "You are about to add the following location(s):",
     "devices.confirmAddNote": "Prorated charges will be applied to your next billing cycle.",
     "devices.confirmAddBtn": "Confirm & Add",
+    "devices.includedInSubscription": "Included in subscription",
+    "devices.included": "Included",
+    "devices.addLocation": "Add another location",
+    "devices.add": "Add",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -876,6 +880,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Du är på väg att lägga till följande plats(er):",
     "devices.confirmAddNote": "Proportionella avgifter läggs till din nästa faktureringsperiod.",
     "devices.confirmAddBtn": "Bekräfta & lägg till",
+    "devices.includedInSubscription": "Ingår i prenumerationen",
+    "devices.included": "Ingår",
+    "devices.addLocation": "Lägg till en plats till",
+    "devices.add": "Lägg till",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1540,6 +1548,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Olet lisäämässä seuraavat sijainnit:",
     "devices.confirmAddNote": "Suhteelliset maksut lisätään seuraavaan laskutusjaksoon.",
     "devices.confirmAddBtn": "Vahvista ja lisää",
+    "devices.includedInSubscription": "Sisältyy tilaukseen",
+    "devices.included": "Sisältyy",
+    "devices.addLocation": "Lisää toinen sijainti",
+    "devices.add": "Lisää",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -2205,6 +2217,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Du bist dabei, die folgenden Standorte hinzuzufügen:",
     "devices.confirmAddNote": "Anteilige Gebühren werden Ihrem nächsten Abrechnungszeitraum hinzugefügt.",
     "devices.confirmAddBtn": "Bestätigen & hinzufügen",
+    "devices.includedInSubscription": "Im Abonnement enthalten",
+    "devices.included": "Enthalten",
+    "devices.addLocation": "Einen weiteren Standort hinzufügen",
+    "devices.add": "Hinzufügen",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2869,6 +2885,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Vous êtes sur le point d'ajouter les emplacements suivants :",
     "devices.confirmAddNote": "Des frais au prorata seront appliqués à votre prochain cycle de facturation.",
     "devices.confirmAddBtn": "Confirmer et ajouter",
+    "devices.includedInSubscription": "Inclus dans l'abonnement",
+    "devices.included": "Inclus",
+    "devices.addLocation": "Ajouter un autre emplacement",
+    "devices.add": "Ajouter",
     
     // Payment History
     "invoices.title": "Historique des paiements",
