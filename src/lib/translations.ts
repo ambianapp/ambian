@@ -1588,7 +1588,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.startTrial": "Aloita ilmainen kokeilu",
     "pricing.saveYearly": "Säästä 17,80€/vuosi",
     "pricing.saveOneTime": "Säästä 17,80€",
-    "pricing.invoiceYearlyOnly": "Laskumaksu toimii vain vuosittaisessa kertamaksussa",
+    "pricing.invoiceYearlyOnly": "Maksaminen laskulla toimii vain vuosittaisessa kertamaksussa",
     
     // Billing
     "billing.companyName": "Yrityksen nimi",
