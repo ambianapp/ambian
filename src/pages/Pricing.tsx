@@ -425,7 +425,7 @@ const Pricing = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
+              <div className="min-h-[88px]">
                 <div className="text-4xl font-bold text-foreground mb-1">
                   {currentPlans.monthly.price}
                   {paymentType === "subscription" && (
@@ -469,15 +469,14 @@ const Pricing = () => {
               <CardDescription>{t(currentPlans.yearly.savingsKey)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
+              <div className="min-h-[88px]">
                 <div className="text-4xl font-bold text-foreground mb-1">
                   {currentPlans.yearly.price}
                   {paymentType === "subscription" && (
                     <span className="text-lg font-normal text-muted-foreground">/{t("subscription.year")}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground whitespace-nowrap">≈ €7.40/{t("subscription.month")}</p>
-                <p className="text-xs text-muted-foreground whitespace-nowrap">{t("pricing.exclVat")}</p>
+                <p className="text-sm text-muted-foreground whitespace-nowrap">≈ €7.40/{t("subscription.month")} · {t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "yearly" && user && (
                 <Button
