@@ -476,8 +476,8 @@ const Pricing = () => {
                     <span className="text-lg font-normal text-muted-foreground">/{t("subscription.year")}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">≈ €7.40/{t("subscription.month")}</p>
-                <p className="text-xs text-muted-foreground">{t("pricing.exclVat")}</p>
+                <p className="text-sm text-muted-foreground whitespace-nowrap">≈ €7.40/{t("subscription.month")}</p>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">{t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "yearly" && user && (
                 <Button
