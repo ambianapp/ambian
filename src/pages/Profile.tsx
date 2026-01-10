@@ -549,16 +549,23 @@ const Profile = () => {
                       
                       return (
                         <p className="text-sm text-muted-foreground">
-                          {openInvoices.length > 1 
-                            ? `${openInvoices.length} ${t("invoices.openInvoices") || "open invoices"}: `
-                            : ""}
-                          {formatCurrency(totalAmount, currency)}
-                          {earliestDueDate && ` • ${t("invoices.dueBy")}: ${earliestDueDate.toLocaleDateString()}`}
+                          {openInvoices.length > 1 && (
+                            <span className="font-medium">{openInvoices.length} {t("invoices.openInvoices") || "open invoices"}</span>
+                          )}
+                          {openInvoices.length > 1 ? " · " : ""}
+                          {t("invoices.total") || "Total"}: {formatCurrency(totalAmount, currency)}
+                          {earliestDueDate && (
+                            <>
+                              <br className="sm:hidden" />
+                              <span className="hidden sm:inline"> · </span>
+                              {t("invoices.dueBy")}: {earliestDueDate.toLocaleDateString()}
+                            </>
+                          )}
                         </p>
                       );
                     })()}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
                     {invoices.filter(inv => inv.status === "open").map((openInvoice, idx) => (
                       openInvoice.hostedUrl && (
                         <Button
