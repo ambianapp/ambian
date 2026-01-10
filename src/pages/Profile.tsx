@@ -79,6 +79,12 @@ const Profile = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [trialTimeRemaining, setTrialTimeRemaining] = useState<TimeRemaining | null>(null);
+  const [prepaidProration, setPrepaidProration] = useState<{
+    remainingDays: number;
+    proratedPrice: number;
+    periodEnd: string;
+  } | null>(null);
+  const [isLoadingProration, setIsLoadingProration] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -89,6 +95,49 @@ const Profile = () => {
     if (searchParams.get("plan_changed") === "true") {
       checkSubscription();
       toast({ title: t("subscription.planChanged"), description: t("subscription.planChangedDesc") });
+      navigate("/profile", { replace: true });
+    }
+    
+    // Check if returning from prepaid device slot checkout
+    const deviceSlotAdded = searchParams.get("device_slot_added");
+    const sessionId = searchParams.get("session_id");
+    
+    if (deviceSlotAdded === "true" && sessionId) {
+      // Verify the payment and update device slots
+      const verifyPayment = async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke("verify-device-slot-payment", {
+            body: { sessionId },
+          });
+          
+          if (error) throw error;
+          
+          if (data?.success) {
+            toast({
+              title: t("devices.addSuccess") || "Device added",
+              description: t("devices.addSuccessDesc") || "Your additional device has been added.",
+            });
+            
+            // Refresh subscription data
+            await checkSubscription();
+          }
+        } catch (error: any) {
+          console.error("Failed to verify device slot payment:", error);
+          toast({
+            title: t("common.error"),
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        
+        navigate("/profile", { replace: true });
+      };
+      
+      verifyPayment();
+    }
+    
+    // Check if device slot checkout was cancelled
+    if (searchParams.get("device_slot_cancelled") === "true") {
       navigate("/profile", { replace: true });
     }
   }, [searchParams, checkSubscription, toast, navigate, t]);
@@ -151,6 +200,41 @@ const Profile = () => {
     loadDeviceSlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  // Load proration info for prepaid users
+  const loadPrepaidProration = async () => {
+    if (!user || subscription.isRecurring || !subscription.subscribed || subscription.isTrial) {
+      setPrepaidProration(null);
+      return;
+    }
+    
+    setIsLoadingProration(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("add-device-slot-prepaid", {
+        body: { mode: "calculate" },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        setPrepaidProration({
+          remainingDays: data.remainingDays,
+          proratedPrice: data.proratedPrice,
+          periodEnd: data.periodEnd,
+        });
+      }
+    } catch (error: any) {
+      console.error("Failed to load prepaid proration:", error);
+      setPrepaidProration(null);
+    } finally {
+      setIsLoadingProration(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPrepaidProration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, subscription.isRecurring, subscription.subscribed, subscription.isTrial]);
 
   // Determine if user has a password set (for OAuth users who may have added one)
   useEffect(() => {
@@ -441,6 +525,30 @@ const Profile = () => {
     } catch (error: any) {
       toast({
         title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingDevice(false);
+    }
+  };
+
+  const handleAddPrepaidDeviceSlot = async () => {
+    setIsLoadingDevice(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("add-device-slot-prepaid", {
+        body: { mode: "checkout", quantity: deviceSlotQuantity },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });
@@ -930,22 +1038,52 @@ const Profile = () => {
                 </Button>
               </div>
             ) : !subscription.isRecurring ? (
-              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Plus className="w-5 h-5" />
-                  <p className="font-medium">{t("devices.needMore")}</p>
+              // Prepaid users can add devices with prorated pricing
+              <div className="p-4 rounded-lg border border-dashed border-border hover:border-primary/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{t("devices.addLocation") || "Add another device"}</p>
+                      {isLoadingProration ? (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          {t("common.loading") || "Loading..."}
+                        </p>
+                      ) : prepaidProration ? (
+                        <p className="text-sm text-muted-foreground">
+                          €{prepaidProration.proratedPrice.toFixed(2)} {t("devices.proratedUntil") || "prorated until"}{" "}
+                          {new Date(prepaidProration.periodEnd).toLocaleDateString()}
+                          <span className="text-xs ml-1">({prepaidProration.remainingDays} {t("devices.daysRemaining") || "days"})</span>
+                          {" • "}{t("pricing.exclVat")}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {t("devices.proratedPricing") || "Prorated for remaining subscription period"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setDeviceSlotQuantity(1);
+                      handleAddPrepaidDeviceSlot();
+                    }}
+                    disabled={isLoadingDevice || isLoadingProration || !prepaidProration}
+                    size="sm"
+                  >
+                    {isLoadingDevice ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-1" />
+                        {t("devices.add") || "Add"}
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {t("devices.prepaidNotSupported")}
-                </p>
-                <Button
-                  onClick={() => window.open("mailto:info@ambian.fi?subject=Add%20Device%20Slots%20Request", "_blank", "noopener,noreferrer")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  {t("help.contactSupport")}
-                </Button>
               </div>
             ) : (
               <div className="p-4 rounded-lg border border-dashed border-border hover:border-primary/50 transition-colors">
