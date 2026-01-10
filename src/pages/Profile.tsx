@@ -1064,6 +1064,9 @@ const Profile = () => {
                           {t("devices.proratedPricing") || "Prorated for remaining subscription period"}
                         </p>
                       )}
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        {t("devices.prepaidNotice") || "This is a one-time purchase. You'll need to renew when your subscription expires."}
+                      </p>
                     </div>
                   </div>
                   <Button
