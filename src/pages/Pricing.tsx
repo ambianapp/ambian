@@ -77,6 +77,7 @@ const Pricing = () => {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("FI");
+  const [vatId, setVatId] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   
   const navigate = useNavigate();
@@ -238,6 +239,7 @@ const Pricing = () => {
             postal_code: postalCode.trim(),
             country: country,
           },
+          vatId: vatId.trim() || undefined,
         },
       });
 
@@ -253,6 +255,7 @@ const Pricing = () => {
       setCity("");
       setPostalCode("");
       setCountry("FI");
+      setVatId("");
     } catch (error: any) {
       let errorMessage = error?.message || "Failed to create invoice";
 
@@ -729,6 +732,18 @@ const Pricing = () => {
                   <option value="GB">{t("countries.uk")}</option>
                   <option value="US">{t("countries.usa")}</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="vatId">{t("billing.vatId")}</Label>
+                <Input
+                  id="vatId"
+                  value={vatId}
+                  onChange={(e) => setVatId(e.target.value.toUpperCase())}
+                  placeholder={t("billing.vatIdPlaceholder")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("billing.vatIdHint")}
+                </p>
               </div>
               <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
                 <Clock className="w-3 h-3 inline mr-1" />

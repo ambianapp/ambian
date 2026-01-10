@@ -66,8 +66,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId, companyName, address } = await req.json();
-    logStep("Received request", { priceId, companyName, address });
+    const { priceId, companyName, address, vatId } = await req.json();
+    logStep("Received request", { priceId, companyName, address, vatId: vatId ? "provided" : "not provided" });
 
     const { data, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
@@ -176,6 +176,28 @@ serve(async (req) => {
         });
         logStep("Updated customer with company info");
       }
+      
+      // Add VAT ID if provided (for B2B reverse-charge)
+      if (vatId) {
+        try {
+          // Check if customer already has this tax ID
+          const existingTaxIds = await stripe.customers.listTaxIds(customerId);
+          const hasVatId = existingTaxIds.data.some((t: { value: string }) => t.value === vatId);
+          
+          if (!hasVatId) {
+            await stripe.customers.createTaxId(customerId, {
+              type: "eu_vat",
+              value: vatId,
+            });
+            logStep("Added VAT ID to customer", { vatId });
+          } else {
+            logStep("VAT ID already exists on customer");
+          }
+        } catch (vatError) {
+          logStep("Failed to add VAT ID (may be invalid format)", { error: String(vatError) });
+          // Continue without VAT ID - Stripe Tax will still calculate based on address
+        }
+      }
     } else {
       const newCustomer = await stripe.customers.create({
         email: user.email,
@@ -193,6 +215,19 @@ serve(async (req) => {
       });
       customerId = newCustomer.id;
       logStep("Created new customer", { customerId });
+      
+      // Add VAT ID to new customer if provided
+      if (vatId) {
+        try {
+          await stripe.customers.createTaxId(customerId, {
+            type: "eu_vat",
+            value: vatId,
+          });
+          logStep("Added VAT ID to new customer", { vatId });
+        } catch (vatError) {
+          logStep("Failed to add VAT ID (may be invalid format)", { error: String(vatError) });
+        }
+      }
     }
 
     // Get the price to determine if it's recurring or one-time
