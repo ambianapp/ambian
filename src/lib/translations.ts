@@ -278,6 +278,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.city": "City",
     "billing.cityPlaceholder": "Helsinki",
     "billing.country": "Country",
+    "billing.vatId": "VAT ID (optional)",
+    "billing.vatIdPlaceholder": "e.g. FI12345678",
+    "billing.vatIdHint": "Enter your EU VAT number for reverse-charge invoicing",
     "devices.fillBillingInfo": "Please fill in all company and address fields for the invoice.",
     
     // Countries
@@ -951,6 +954,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.city": "Stad",
     "billing.cityPlaceholder": "Stockholm",
     "billing.country": "Land",
+    "billing.vatId": "Moms-ID (valfritt)",
+    "billing.vatIdPlaceholder": "t.ex. SE123456789012",
+    "billing.vatIdHint": "Ange ditt EU-momsnummer för omvänd momsfakturering",
     "devices.fillBillingInfo": "Fyll i alla företags- och adressfält för fakturan.",
     
     // Countries
@@ -1623,6 +1629,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.city": "Kaupunki",
     "billing.cityPlaceholder": "Helsinki",
     "billing.country": "Maa",
+    "billing.vatId": "ALV-tunnus (valinnainen)",
+    "billing.vatIdPlaceholder": "esim. FI12345678",
+    "billing.vatIdHint": "Syötä EU:n ALV-numerosi käänteistä verotusta varten",
     "devices.fillBillingInfo": "Täytä kaikki yritys- ja osoitetiedot laskua varten.",
     
     // Countries
@@ -2296,6 +2305,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.city": "Stadt",
     "billing.cityPlaceholder": "Berlin",
     "billing.country": "Land",
+    "billing.vatId": "USt-IdNr. (optional)",
+    "billing.vatIdPlaceholder": "z.B. DE123456789",
+    "billing.vatIdHint": "Geben Sie Ihre EU-USt-IdNr. für Rechnungen mit Umkehr der Steuerschuldnerschaft ein",
     "devices.fillBillingInfo": "Bitte füllen Sie alle Firmen- und Adressfelder für die Rechnung aus.",
     
     // Countries
@@ -2968,6 +2980,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "billing.city": "Ville",
     "billing.cityPlaceholder": "Paris",
     "billing.country": "Pays",
+    "billing.vatId": "N° TVA (optionnel)",
+    "billing.vatIdPlaceholder": "ex. FR12345678901",
+    "billing.vatIdHint": "Entrez votre numéro de TVA intracommunautaire pour l'autoliquidation",
     "devices.fillBillingInfo": "Veuillez remplir tous les champs d'entreprise et d'adresse pour la facture.",
     
     // Countries
