@@ -171,8 +171,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.reactivate": "Reactivate Subscription",
 
     // Device slots
-    "devices.title": "Multiple Locations",
-    "devices.subtitle": "Play music in multiple locations at the same time",
+    "devices.title": "Multiple devices",
+    "devices.subtitle": "Play music on multiple devices at the same time with the same account",
     "devices.active": "Active Locations",
     "devices.canPlay": "You can play music in {count} location(s) at the same time",
     "devices.needMore": "Need music in more locations?",
@@ -840,8 +840,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.reactivate": "Återaktivera prenumeration",
     
     // Device slots
-    "devices.title": "Flera platser",
-    "devices.subtitle": "Spela musik på flera platser samtidigt",
+    "devices.title": "Flera enheter",
+    "devices.subtitle": "Spela musik på flera enheter samtidigt med samma konto",
     "devices.active": "Aktiva platser",
     "devices.canPlay": "Du kan spela musik på {count} plats(er) samtidigt",
     "devices.needMore": "Behöver du musik på fler platser?",
@@ -1508,8 +1508,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.reactivate": "Aktivoi tilaus uudelleen",
     
     // Device slots
-    "devices.title": "Useita sijainteja",
-    "devices.subtitle": "Toista musiikkia useissa paikoissa samanaikaisesti",
+    "devices.title": "Useita laitteita",
+    "devices.subtitle": "Toista musiikkia useilla laitteilla samanaikaisesti samalla tilillä",
     "devices.active": "Aktiiviset sijainnit",
     "devices.canPlay": "Voit toistaa musiikkia {count} paikassa samanaikaisesti",
     "devices.needMore": "Tarvitsetko musiikkia useammassa paikassa?",
@@ -2177,8 +2177,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.reactivate": "Abonnement reaktivieren",
     
     // Device slots
-    "devices.title": "Mehrere Standorte",
-    "devices.subtitle": "Spiele Musik an mehreren Standorten gleichzeitig",
+    "devices.title": "Mehrere Geräte",
+    "devices.subtitle": "Musik auf mehreren Geräten gleichzeitig mit demselben Konto abspielen",
     "devices.active": "Aktive Standorte",
     "devices.canPlay": "Du kannst Musik an {count} Standort(en) gleichzeitig abspielen",
     "devices.needMore": "Brauchst du Musik an mehr Standorten?",
@@ -2845,8 +2845,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.reactivate": "Réactiver l'abonnement",
     
     // Device slots
-    "devices.title": "Emplacements multiples",
-    "devices.subtitle": "Diffusez de la musique dans plusieurs endroits simultanément",
+    "devices.title": "Appareils multiples",
+    "devices.subtitle": "Diffusez de la musique sur plusieurs appareils simultanément avec le même compte",
     "devices.active": "Emplacements actifs",
     "devices.canPlay": "Vous pouvez diffuser de la musique dans {count} emplacement(s) simultanément",
     "devices.needMore": "Besoin de musique dans plus d'endroits ?",
