@@ -345,27 +345,26 @@ serve(async (req) => {
 
       logStep("Device slot quantity updated", { newQuantity, invoiceId });
 
-      // For send_invoice subscriptions, DON'T update local device_slots immediately
-      // The webhook will handle this when the invoice is paid
-      // This prevents abuse where users get slots without paying
-      if (!isSendInvoice) {
-        // For card payments, update immediately since payment is automatic
-        const supabaseAdmin = createClient(
-          Deno.env.get("SUPABASE_URL") ?? "",
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-        );
+      // Update local device_slots immediately for both card and invoice payments
+      // For invoice users: they get immediate access for their FIRST batch (abuse check blocks further requests)
+      // If they don't pay within 7 days, the webhook will revoke access
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
 
-        await supabaseAdmin
-          .from("subscriptions")
-          .update({
-            device_slots: 1 + newQuantity, // 1 base + additional slots
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", user.id);
-      }
+      await supabaseAdmin
+        .from("subscriptions")
+        .update({
+          device_slots: 1 + newQuantity, // 1 base + additional slots
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      logStep("Updated local device_slots", { newTotal: 1 + newQuantity, isSendInvoice });
 
       const message = isSendInvoice
-        ? `Invoice sent for ${quantity} additional location(s). Your locations will be activated once payment is received.`
+        ? `Added ${quantity} additional location(s). An invoice has been sent - please pay within 7 days to keep access.`
         : `Added ${quantity} additional location(s). Your subscription has been updated.`;
 
       return new Response(JSON.stringify({
@@ -415,27 +414,26 @@ serve(async (req) => {
       invoiceId,
     });
 
-    // For send_invoice subscriptions, DON'T update local device_slots immediately
-    // The webhook will handle this when the invoice is paid
-    // This prevents abuse where users get slots without paying
-    if (!isSendInvoice) {
-      // For card payments, update immediately since payment is automatic
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
+    // Update local device_slots immediately for both card and invoice payments
+    // For invoice users: they get immediate access for their FIRST batch (abuse check blocks further requests)
+    // If they don't pay within 7 days, the webhook will revoke access
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
 
-      await supabaseAdmin
-        .from("subscriptions")
-        .update({
-          device_slots: 1 + quantity, // 1 base + additional slots
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-    }
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({
+        device_slots: 1 + quantity, // 1 base + additional slots
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    logStep("Updated local device_slots", { newTotal: 1 + quantity, isSendInvoice });
 
     const message = isSendInvoice
-      ? `Invoice sent for ${quantity} additional location(s). Your locations will be activated once payment is received.`
+      ? `Added ${quantity} additional location(s). An invoice has been sent - please pay within 7 days to keep access.`
       : `Added ${quantity} additional location(s). Your subscription has been updated.`;
 
     return new Response(JSON.stringify({
