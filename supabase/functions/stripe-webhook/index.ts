@@ -1503,9 +1503,10 @@ serve(async (req) => {
       const invoice = event.data.object as Stripe.Invoice;
       logStep("Invoice paid", { invoiceId: invoice.id, customerId: invoice.customer });
 
-      // Check if this is a device slot payment
+      // Check if this is a device slot payment (supports both old 'device_slot' and new 'device_slot_addon' types)
       const isDeviceSlot = invoice.metadata?.type === "device_slot" || 
-        invoice.lines?.data?.some((line: any) => line.metadata?.type === "device_slot");
+        invoice.metadata?.type === "device_slot_addon" ||
+        invoice.lines?.data?.some((line: any) => line.metadata?.type === "device_slot" || line.metadata?.type === "device_slot_addon");
 
       if (isDeviceSlot) {
         logStep("Device slot payment detected");

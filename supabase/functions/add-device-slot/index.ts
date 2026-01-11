@@ -38,8 +38,10 @@ const maybeCreateAndSendInvoiceForSendInvoiceSubscription = async (params: {
   customerId: string;
   subscriptionId: string;
   collectionMethod?: string | null;
+  userId?: string;
+  quantity?: number;
 }) => {
-  const { stripe, customerId, subscriptionId, collectionMethod } = params;
+  const { stripe, customerId, subscriptionId, collectionMethod, userId, quantity } = params;
 
   // Only invoice immediately for invoice-based subscriptions
   if (collectionMethod !== "send_invoice") return null;
@@ -57,6 +59,8 @@ const maybeCreateAndSendInvoiceForSendInvoiceSubscription = async (params: {
     metadata: {
       type: "device_slot_addon",
       subscription_id: subscriptionId,
+      user_id: userId || "",
+      quantity: String(quantity || 1),
     },
   });
 
@@ -92,6 +96,55 @@ const MAIN_SUBSCRIPTION_PRICES = [
   "price_1RREw6JrU52a7SNLevS4o4gf", // yearly with VAT €111.70
   "price_1SjxomJrU52a7SNL3ImdC1N0", // test daily
 ];
+
+// Check for abuse: open invoices or too many uncollectible invoices
+const checkDeviceSlotInvoiceAbuse = async (
+  stripe: Stripe,
+  customerId: string
+): Promise<{ blocked: boolean; reason?: string }> => {
+  logStep("Checking for device slot invoice abuse", { customerId });
+
+  // Check for open device slot invoices (already pending payment)
+  const openInvoices = await stripe.invoices.list({
+    customer: customerId,
+    status: "open",
+    limit: 100,
+  });
+
+  const openDeviceSlotInvoices = openInvoices.data.filter(
+    (inv: Stripe.Invoice) => inv.metadata?.type === "device_slot_addon"
+  );
+
+  if (openDeviceSlotInvoices.length > 0) {
+    logStep("Found open device slot invoices", { count: openDeviceSlotInvoices.length });
+    return {
+      blocked: true,
+      reason: "You have an unpaid invoice for additional locations. Please pay the existing invoice before adding more locations.",
+    };
+  }
+
+  // Check for uncollectible device slot invoices (abuse pattern)
+  const uncollectibleInvoices = await stripe.invoices.list({
+    customer: customerId,
+    status: "uncollectible",
+    limit: 100,
+  });
+
+  const uncollectibleDeviceSlotInvoices = uncollectibleInvoices.data.filter(
+    (inv: Stripe.Invoice) => inv.metadata?.type === "device_slot_addon"
+  );
+
+  if (uncollectibleDeviceSlotInvoices.length >= 2) {
+    logStep("Too many uncollectible device slot invoices", { count: uncollectibleDeviceSlotInvoices.length });
+    return {
+      blocked: true,
+      reason: "You have multiple unpaid invoices for additional locations. Please contact support or use card payment instead.",
+    };
+  }
+
+  logStep("No device slot invoice abuse detected");
+  return { blocked: false };
+};
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -231,6 +284,16 @@ serve(async (req) => {
       itemCount: mainSubscription.items.data.length 
     });
 
+    // Check if this is a send_invoice subscription - if so, check for abuse
+    const isSendInvoice = (mainSubscription as any).collection_method === "send_invoice";
+    
+    if (isSendInvoice) {
+      const abuseCheck = await checkDeviceSlotInvoiceAbuse(stripe, customerId);
+      if (abuseCheck.blocked) {
+        throw new Error(abuseCheck.reason);
+      }
+    }
+
     // Determine which device slot price to use based on main subscription interval
     const mainItem = mainSubscription.items.data.find((item: any) => 
       MAIN_SUBSCRIPTION_PRICES.includes(item.price.id)
@@ -276,30 +339,42 @@ serve(async (req) => {
         customerId,
         subscriptionId: mainSubscription.id,
         collectionMethod: (mainSubscription as any).collection_method,
+        userId: user.id,
+        quantity,
       });
 
       logStep("Device slot quantity updated", { newQuantity, invoiceId });
 
-      // Sync device slots in local database
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
+      // For send_invoice subscriptions, DON'T update local device_slots immediately
+      // The webhook will handle this when the invoice is paid
+      // This prevents abuse where users get slots without paying
+      if (!isSendInvoice) {
+        // For card payments, update immediately since payment is automatic
+        const supabaseAdmin = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        );
 
-      await supabaseAdmin
-        .from("subscriptions")
-        .update({
-          device_slots: 1 + newQuantity, // 1 base + additional slots
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            device_slots: 1 + newQuantity, // 1 base + additional slots
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id);
+      }
+
+      const message = isSendInvoice
+        ? `Invoice sent for ${quantity} additional location(s). Your locations will be activated once payment is received.`
+        : `Added ${quantity} additional location(s). Your subscription has been updated.`;
 
       return new Response(JSON.stringify({
         success: true,
-        message: `Added ${quantity} additional location(s). Your subscription has been updated.`,
+        message,
         newTotal: newQuantity,
         type: "updated",
         invoiceId: invoiceId || undefined,
+        pendingPayment: isSendInvoice,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -330,6 +405,8 @@ serve(async (req) => {
       customerId,
       subscriptionId: updatedSubscription.id,
       collectionMethod: (updatedSubscription as any).collection_method,
+      userId: user.id,
+      quantity,
     });
 
     logStep("Device slot item added to subscription", {
@@ -338,26 +415,36 @@ serve(async (req) => {
       invoiceId,
     });
 
-    // Sync device slots in local database
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
+    // For send_invoice subscriptions, DON'T update local device_slots immediately
+    // The webhook will handle this when the invoice is paid
+    // This prevents abuse where users get slots without paying
+    if (!isSendInvoice) {
+      // For card payments, update immediately since payment is automatic
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
 
-    await supabaseAdmin
-      .from("subscriptions")
-      .update({
-        device_slots: 1 + quantity, // 1 base + additional slots
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
+      await supabaseAdmin
+        .from("subscriptions")
+        .update({
+          device_slots: 1 + quantity, // 1 base + additional slots
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+    }
+
+    const message = isSendInvoice
+      ? `Invoice sent for ${quantity} additional location(s). Your locations will be activated once payment is received.`
+      : `Added ${quantity} additional location(s). Your subscription has been updated.`;
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Added ${quantity} additional location(s). Your subscription has been updated.`,
+      message,
       newTotal: quantity,
       type: "added",
       invoiceId: invoiceId || undefined,
+      pendingPayment: isSendInvoice,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
