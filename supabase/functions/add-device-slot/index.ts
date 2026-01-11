@@ -56,6 +56,7 @@ const maybeCreateAndSendInvoiceForSendInvoiceSubscription = async (params: {
     days_until_due: INVOICE_DAYS_UNTIL_DUE,
     auto_advance: true,
     pending_invoice_items_behavior: "include",
+    automatic_tax: { enabled: true },
     metadata: {
       type: "device_slot_addon",
       subscription_id: subscriptionId,
