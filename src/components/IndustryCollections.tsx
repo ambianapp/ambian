@@ -407,7 +407,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
               collectionPlaylists.map((playlist) => (
                 <div 
                   key={playlist.id} 
-                  className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group ${
+                  className={`flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group ${
                     isMultiSelectMode && selectedPlaylistIds.has(playlist.id) ? "bg-primary/10 ring-1 ring-primary/30" : ""
                   }`}
                   onClick={() => handlePlaylistClick(playlist)}
@@ -425,23 +425,28 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                       />
                     </div>
                   )}
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-secondary shrink-0">
+                    <img
+                      src={playlist.cover_url || "/placeholder.svg"}
+                      alt={playlist.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayPlaylist(playlist.id);
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Play className="w-5 h-5 text-white fill-white" />
+                    </button>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">{playlist.name}</p>
                     {playlist.description && (
                       <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
                     )}
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-9 w-9 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayPlaylist(playlist.id);
-                    }}
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
                 </div>
               ))
             ) : (
