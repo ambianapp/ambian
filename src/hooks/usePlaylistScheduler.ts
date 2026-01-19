@@ -30,9 +30,12 @@ interface PlaylistTrack {
 }
 
 export const usePlaylistScheduler = () => {
-  const { user } = useAuth();
+  const { user, subscription } = useAuth();
   const { triggerScheduledCrossfade, currentTrack, isPlaying } = usePlayer();
   const { toast } = useToast();
+  
+  // Don't run scheduler if user doesn't have active access
+  const hasAccess = subscription.subscribed || subscription.isTrial;
   const lastScheduleIdRef = useRef<string | null>(null);
   const lastPlaylistIdRef = useRef<string | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -160,7 +163,7 @@ export const usePlaylistScheduler = () => {
   }, [triggerScheduledCrossfade, toast]);
 
   const checkSchedule = useCallback(async (force = false) => {
-    if (!user || !isEnabled) return;
+    if (!user || !isEnabled || !hasAccess) return;
 
     console.log("[Scheduler] Checking schedule, force:", force);
 
@@ -213,11 +216,11 @@ export const usePlaylistScheduler = () => {
       // Don't clear lastPlaylistIdRef so if we come back to same schedule, 
       // we don't re-trigger unless the playlist actually changed
     }
-  }, [user, isEnabled, getCurrentSchedule, loadAndPlayPlaylist]);
+  }, [user, isEnabled, hasAccess, getCurrentSchedule, loadAndPlayPlaylist]);
 
   // Check on mount and interval
   useEffect(() => {
-    if (!user || !isEnabled) return;
+    if (!user || !isEnabled || !hasAccess) return;
 
     // Check immediately on mount
     console.log("[Scheduler] Initial check on mount");
@@ -233,11 +236,11 @@ export const usePlaylistScheduler = () => {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, [user, isEnabled, checkSchedule]);
+  }, [user, isEnabled, hasAccess, checkSchedule]);
 
   // CRITICAL: Check schedule when tab becomes visible (handles Android wake)
   useEffect(() => {
-    if (!user || !isEnabled) return;
+    if (!user || !isEnabled || !hasAccess) return;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -250,20 +253,20 @@ export const usePlaylistScheduler = () => {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [user, isEnabled, checkSchedule]);
+  }, [user, isEnabled, hasAccess, checkSchedule]);
 
   // CRITICAL: Check schedule when playback state changes (track ends)
   useEffect(() => {
-    if (!user || !isEnabled || !isPlaying) return;
+    if (!user || !isEnabled || !isPlaying || !hasAccess) return;
 
     // When a new track starts, check if we should switch playlists
     console.log("[Scheduler] Track changed, checking schedule");
     checkSchedule();
-  }, [currentTrack?.id, isPlaying, user, isEnabled, checkSchedule]);
+  }, [currentTrack?.id, isPlaying, user, isEnabled, hasAccess, checkSchedule]);
 
   // Check schedule when online status changes (in case we were offline during transition)
   useEffect(() => {
-    if (!user || !isEnabled) return;
+    if (!user || !isEnabled || !hasAccess) return;
 
     const handleOnline = () => {
       console.log("[Scheduler] Device came online, checking schedule");
@@ -273,7 +276,7 @@ export const usePlaylistScheduler = () => {
 
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, [user, isEnabled, checkSchedule]);
+  }, [user, isEnabled, hasAccess, checkSchedule]);
 
   return { checkSchedule, isEnabled, toggleScheduler };
 };
