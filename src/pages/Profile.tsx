@@ -1178,22 +1178,13 @@ const Profile = () => {
                         </span>
                         {invoice.hostedUrl && (
                           <Button
-                            variant="ghost"
-                            size="icon"
+                            variant="outline"
+                            size="sm"
                             onClick={() => window.open(invoice.hostedUrl!, "_blank")}
-                            title={t("invoices.preview") || "Preview"}
+                            className="gap-1.5"
                           >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {invoice.pdfUrl && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => window.open(invoice.pdfUrl!, "_blank")}
-                            title={t("invoices.download") || "Download"}
-                          >
-                            <Download className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
+                            {t("invoices.show")}
                           </Button>
                         )}
                       </div>

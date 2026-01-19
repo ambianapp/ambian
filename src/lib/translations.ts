@@ -230,6 +230,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.payNow": "Pay Now",
     "invoices.openInvoices": "open invoices",
     "invoices.preview": "Preview",
+    "invoices.show": "Show Invoice",
     "invoices.download": "Download",
     
     // Pricing
@@ -920,6 +921,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.payNow": "Betala nu",
     "invoices.openInvoices": "öppna fakturor",
     "invoices.preview": "Förhandsgranska",
+    "invoices.show": "Visa faktura",
     "invoices.download": "Ladda ner",
     
     // Pricing
@@ -1609,6 +1611,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.payNow": "Maksa nyt",
     "invoices.openInvoices": "avointa laskua",
     "invoices.preview": "Esikatselu",
+    "invoices.show": "Näytä lasku",
     "invoices.download": "Lataa",
     
     // Pricing
@@ -2299,6 +2302,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.payNow": "Jetzt bezahlen",
     "invoices.openInvoices": "offene Rechnungen",
     "invoices.preview": "Vorschau",
+    "invoices.show": "Rechnung anzeigen",
     "invoices.download": "Herunterladen",
     
     // Pricing
@@ -2988,6 +2992,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.payNow": "Payer maintenant",
     "invoices.openInvoices": "factures en attente",
     "invoices.preview": "Aperçu",
+    "invoices.show": "Voir la facture",
     "invoices.download": "Télécharger",
     
     // Pricing
