@@ -63,9 +63,11 @@ async function sendInvoiceReminderEmail(
     day: 'numeric',
   });
 
-  const urgencyText = daysRemaining <= 1 
-    ? "⚠️ Your invoice is due tomorrow!" 
-    : `⏰ Your invoice is due in ${daysRemaining} days`;
+  const urgencyText = daysRemaining === 0
+    ? "🚨 Your invoice is due today!"
+    : daysRemaining === 1 
+      ? "⚠️ Your invoice is due tomorrow!" 
+      : `⏰ Your invoice is due in ${daysRemaining} days`;
 
   const html = emailWrapper(`
           <!-- Header -->
@@ -108,7 +110,7 @@ async function sendInvoiceReminderEmail(
                   <tr>
                     <td style="padding: 8px 0;">
                       <span style="color: #888888; font-size: 14px;">Due by:</span>
-                      <span style="color: ${daysRemaining <= 1 ? '#fca5a5' : '#ffffff'}; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedDueDate}</span>
+                      <span style="color: ${daysRemaining === 0 ? '#ef4444' : daysRemaining === 1 ? '#fca5a5' : '#ffffff'}; font-size: 14px; margin-left: 12px; font-weight: 500;">${formattedDueDate}</span>
                     </td>
                   </tr>
                 </table>
@@ -153,7 +155,7 @@ async function sendInvoiceReminderEmail(
     const { data, error } = await resend.emails.send({
       from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
-      subject: `${daysRemaining <= 1 ? '⚠️ ' : ''}Payment Reminder: Invoice due ${daysRemaining <= 1 ? 'tomorrow' : `in ${daysRemaining} days`} (${formattedAmount})`,
+      subject: `${daysRemaining === 0 ? '🚨 ' : daysRemaining === 1 ? '⚠️ ' : ''}Payment Reminder: Invoice due ${daysRemaining === 0 ? 'TODAY' : daysRemaining === 1 ? 'tomorrow' : `in ${daysRemaining} days`} (${formattedAmount})`,
       html,
     });
 
@@ -195,6 +197,13 @@ serve(async (req) => {
     let remindersSent = 0;
     let errors = 0;
 
+    // Helper to get date without time (midnight UTC)
+    const getDateOnly = (date: Date): Date => {
+      return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    };
+
+    const todayMidnight = getDateOnly(now);
+
     for (const invoice of invoices.data) {
       // Skip if no due date or no customer email
       if (!invoice.due_date || !invoice.customer_email) {
@@ -202,10 +211,21 @@ serve(async (req) => {
       }
 
       const dueDate = new Date(invoice.due_date * 1000);
-      const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const dueDateMidnight = getDateOnly(dueDate);
+      
+      // Calculate days until due based on calendar days, not hours
+      const daysUntilDue = Math.round((dueDateMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
 
-      // Send reminder if due in 2 days or 1 day (but not overdue or too far out)
-      if (daysUntilDue <= 2 && daysUntilDue >= 0) {
+      logStep("Checking invoice", {
+        invoiceId: invoice.id,
+        dueDate: dueDate.toISOString(),
+        dueDateMidnight: dueDateMidnight.toISOString(),
+        todayMidnight: todayMidnight.toISOString(),
+        daysUntilDue,
+      });
+
+      // Send reminder if due in exactly 2 days, 1 day, or today (day 0)
+      if (daysUntilDue >= 0 && daysUntilDue <= 2) {
         logStep("Sending reminder for invoice", { 
           invoiceId: invoice.id, 
           number: invoice.number,
