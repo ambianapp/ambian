@@ -346,7 +346,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                 className="gap-2"
               >
                 <Shuffle className="w-4 h-4" />
-                Play All Shuffled
+                {t("industry.playAllShuffled")}
               </Button>
               
               <Button
@@ -356,7 +356,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                 className="gap-2"
               >
                 <Check className="w-4 h-4" />
-                {isMultiSelectMode ? "Cancel Selection" : "Select Playlists"}
+                {isMultiSelectMode ? t("industry.cancelSelection") : t("industry.selectPlaylists")}
               </Button>
 
               {isMultiSelectMode && (
@@ -366,7 +366,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                     size="sm"
                     variant="outline"
                   >
-                    {selectedPlaylistIds.size === collectionPlaylists.length ? "Deselect All" : "Select All"}
+                    {selectedPlaylistIds.size === collectionPlaylists.length ? t("industry.deselectAll") : t("industry.selectAll")}
                   </Button>
                   
                   {selectedPlaylistIds.size > 0 && (
@@ -376,7 +376,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                       className="gap-2"
                     >
                       <Play className="w-4 h-4" />
-                      Play {selectedPlaylistIds.size} Selected
+                      {t("industry.playSelected", { count: selectedPlaylistIds.size })}
                     </Button>
                   )}
                 </>
@@ -421,7 +421,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
               ))
             ) : (
               <p className="col-span-full text-center text-muted-foreground py-8">
-                No playlists in this collection yet.
+                {t("industry.noPlaylists")}
               </p>
             )}
           </div>
