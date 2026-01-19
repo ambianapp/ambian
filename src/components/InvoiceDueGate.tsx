@@ -16,6 +16,7 @@ interface Invoice {
   dueDate: number | null;
   pdfUrl: string | null;
   hostedUrl: string | null;
+  label?: string;
 }
 
 const InvoiceDueGate = () => {
@@ -95,7 +96,7 @@ const InvoiceDueGate = () => {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-foreground">
-                      {invoice.number || t("profile.invoice")}
+                      {invoice.label || invoice.number || t("profile.invoice")}
                     </span>
                     <span className="text-lg font-bold text-foreground">
                       {formatCurrency(invoice.amount, invoice.currency)}
