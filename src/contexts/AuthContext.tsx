@@ -649,7 +649,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Session validation interval - check periodically to enforce device limits
   const consecutiveKicksRef = useRef(0);
-  const MAX_CONSECUTIVE_KICKS = 1;
+  const MAX_CONSECUTIVE_KICKS = 3; // Require 3 consecutive failures before kicking (was 1)
   
   useEffect(() => {
     if (!session) return;
@@ -657,6 +657,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const validateAndKickIfNeeded = async () => {
       // If in device limit mode, don't validate (user is in read-only mode)
       if (isDeviceLimitReached) return;
+      
+      // Don't validate until session is registered - this prevents race conditions on login
+      if (!isSessionRegistered) {
+        console.log("Skipping validation - session not yet registered");
+        return;
+      }
 
       // Always validate against the LATEST session from the auth client.
       const latestSession = (await supabase.auth.getSession()).data.session;
@@ -683,8 +689,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // Initial validation after short delay
-    const initialTimeout = setTimeout(validateAndKickIfNeeded, 5000);
+    // Initial validation after longer delay to allow registration to complete (was 5s, now 15s)
+    const initialTimeout = setTimeout(validateAndKickIfNeeded, 15000);
 
     // Check every 2 minutes (reduced from 30s to decrease traffic at scale)
     const interval = setInterval(validateAndKickIfNeeded, 2 * 60 * 1000);
