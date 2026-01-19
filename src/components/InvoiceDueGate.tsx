@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CreditCard, ExternalLink, Loader2, User } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
+import LanguageSelector from "@/components/LanguageSelector";
 
 interface Invoice {
   id: string;
@@ -150,9 +151,12 @@ const InvoiceDueGate = () => {
             <span>{user?.email}</span>
           </div>
           
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            {t("common.signOut")}
-          </Button>
+          <div className="flex items-center justify-center gap-2">
+            <LanguageSelector />
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              {t("common.signOut")}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
