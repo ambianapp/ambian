@@ -158,6 +158,26 @@ serve(async (req) => {
       const allInvoices = [...filteredOpenInvoices, ...paidInvoices.data];
 
       for (const invoice of allInvoices) {
+        // Determine invoice type from line items
+        let invoiceLabel = "Subscription";
+        let isDeviceSlot = false;
+        let isYearly = false;
+        
+        if (invoice.lines?.data?.length > 0) {
+          const lineItem = invoice.lines.data[0];
+          const priceId = lineItem.price?.id;
+          isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "");
+          isYearly = lineItem.price?.recurring?.interval === "year";
+          
+          if (isDeviceSlot) {
+            invoiceLabel = "Additional Device";
+          } else if (isYearly) {
+            invoiceLabel = "Yearly Subscription";
+          } else {
+            invoiceLabel = "Monthly Subscription";
+          }
+        }
+        
         formattedInvoices.push({
           id: invoice.id,
           number: invoice.number,
@@ -169,6 +189,9 @@ serve(async (req) => {
           pdfUrl: invoice.invoice_pdf,
           hostedUrl: invoice.hosted_invoice_url,
           type: "invoice",
+          label: invoiceLabel,
+          isDeviceSlot,
+          isYearly,
         });
       }
 
