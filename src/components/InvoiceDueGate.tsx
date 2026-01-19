@@ -38,7 +38,31 @@ const InvoiceDueGate = () => {
         const unpaidInvoices = (data?.invoices || []).filter(
           (inv: Invoice) => inv.status === "open" || inv.status === "draft"
         );
-        setInvoices(unpaidInvoices);
+        
+        // Sort invoices: main subscription invoices first, device slots last
+        // This ensures users pay the access-granting invoice first
+        const sortedInvoices = unpaidInvoices.sort((a: Invoice, b: Invoice) => {
+          const aIsDeviceSlot = a.label?.toLowerCase().includes("device") || 
+                                a.label?.toLowerCase().includes("laite") ||
+                                a.label?.toLowerCase().includes("enhet") ||
+                                a.label?.toLowerCase().includes("gerät") ||
+                                a.label?.toLowerCase().includes("appareil");
+          const bIsDeviceSlot = b.label?.toLowerCase().includes("device") || 
+                                b.label?.toLowerCase().includes("laite") ||
+                                b.label?.toLowerCase().includes("enhet") ||
+                                b.label?.toLowerCase().includes("gerät") ||
+                                b.label?.toLowerCase().includes("appareil");
+          
+          // Main subscription invoices (non-device) come first
+          if (aIsDeviceSlot && !bIsDeviceSlot) return 1;
+          if (!aIsDeviceSlot && bIsDeviceSlot) return -1;
+          
+          // Within same type, sort by due date (earliest first)
+          if (a.dueDate && b.dueDate) return a.dueDate - b.dueDate;
+          return 0;
+        });
+        
+        setInvoices(sortedInvoices);
       } catch (error) {
         console.error("Failed to load invoices:", error);
       } finally {
