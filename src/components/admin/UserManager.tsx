@@ -346,6 +346,33 @@ export function UserManager() {
 
   const hasActiveFilters = searchQuery || statusFilter !== "all" || roleFilter !== "all";
 
+  const downloadCSV = () => {
+    const headers = ["Name", "Email", "Role", "Subscription Status", "Plan Type", "Subscription End", "Joined"];
+    const rows = filteredUsers.map((user) => [
+      user.full_name || "",
+      user.email || "",
+      user.role || "user",
+      user.subscription?.status || "none",
+      user.subscription?.plan_type || "",
+      user.subscription?.current_period_end ? formatDate(user.subscription.current_period_end) : "",
+      formatDate(user.created_at),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `users-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${filteredUsers.length} users`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -358,10 +385,16 @@ export function UserManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Users ({filteredUsers.length} of {users.length})</h3>
-        <Button variant="outline" size="sm" onClick={loadUsers}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={downloadCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadUsers}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
