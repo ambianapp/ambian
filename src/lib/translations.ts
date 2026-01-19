@@ -450,6 +450,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.showMore": "More",
     "home.industryTitle": "Playlists by Industry",
     "home.industrySubtitle": "Curated music for your business",
+    "industry.playAllShuffled": "Play All Shuffled",
+    "industry.selectPlaylists": "Select Playlists",
+    "industry.cancelSelection": "Cancel Selection",
+    "industry.selectAll": "Select All",
+    "industry.deselectAll": "Deselect All",
+    "industry.playSelected": "Play {count} Selected",
+    "industry.noPlaylists": "No playlists in this collection yet.",
     
     // Help page
     "help.title": "Help Center",
@@ -1163,6 +1170,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.showMore": "Mer",
     "home.industryTitle": "Spellistor per bransch",
     "home.industrySubtitle": "Kurerad musik för ditt företag",
+    "industry.playAllShuffled": "Spela alla blandade",
+    "industry.selectPlaylists": "Välj spellistor",
+    "industry.cancelSelection": "Avbryt val",
+    "industry.selectAll": "Välj alla",
+    "industry.deselectAll": "Avmarkera alla",
+    "industry.playSelected": "Spela {count} valda",
+    "industry.noPlaylists": "Inga spellistor i denna samling ännu.",
     
     // Help page
     "help.title": "Hjälpcenter",
@@ -1875,6 +1889,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.showMore": "Lisää",
     "home.industryTitle": "Soittolistat toimialoittain",
     "home.industrySubtitle": "Kuratoitua musiikkia yrityksellesi",
+    "industry.playAllShuffled": "Toista kaikki sekoitettuna",
+    "industry.selectPlaylists": "Valitse soittolistoja",
+    "industry.cancelSelection": "Peruuta valinta",
+    "industry.selectAll": "Valitse kaikki",
+    "industry.deselectAll": "Poista valinnat",
+    "industry.playSelected": "Toista {count} valittua",
+    "industry.noPlaylists": "Ei soittolistoja tässä kokoelmassa vielä.",
     
     // Help page
     "help.title": "Ohjekeskus",
@@ -2588,6 +2609,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.showMore": "Mehr",
     "home.industryTitle": "Playlists nach Branche",
     "home.industrySubtitle": "Kuratierte Musik für Ihr Unternehmen",
+    "industry.playAllShuffled": "Alle zufällig abspielen",
+    "industry.selectPlaylists": "Playlists auswählen",
+    "industry.cancelSelection": "Auswahl abbrechen",
+    "industry.selectAll": "Alle auswählen",
+    "industry.deselectAll": "Alle abwählen",
+    "industry.playSelected": "{count} Ausgewählte abspielen",
+    "industry.noPlaylists": "Noch keine Playlists in dieser Sammlung.",
     
     // Help page
     "help.title": "Hilfecenter",
@@ -3300,6 +3328,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.showMore": "Plus",
     "home.industryTitle": "Playlists par secteur",
     "home.industrySubtitle": "Musique sélectionnée pour votre entreprise",
+    "industry.playAllShuffled": "Tout lire en aléatoire",
+    "industry.selectPlaylists": "Sélectionner des playlists",
+    "industry.cancelSelection": "Annuler la sélection",
+    "industry.selectAll": "Tout sélectionner",
+    "industry.deselectAll": "Tout désélectionner",
+    "industry.playSelected": "Lire {count} sélectionnées",
+    "industry.noPlaylists": "Pas encore de playlists dans cette collection.",
     
     // Help page
     "help.title": "Centre d'aide",
