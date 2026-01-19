@@ -257,18 +257,40 @@ const Pricing = () => {
       setCountry("FI");
       setVatId("");
     } catch (error: any) {
-      let errorMessage = error?.message || "Failed to create invoice";
+      console.error("Invoice creation error:", error);
+      let errorMessage = "Failed to create invoice";
 
+      // Try multiple paths to extract the actual error message
+      if (error?.message) {
+        // Check if the message itself contains JSON
+        try {
+          const parsed = JSON.parse(error.message);
+          if (parsed?.error) errorMessage = parsed.error;
+          else if (parsed?.message) errorMessage = parsed.message;
+          else errorMessage = error.message;
+        } catch {
+          errorMessage = error.message;
+        }
+      }
+
+      // Check context.body (Supabase functions error structure)
       const maybeBody = error?.context?.body;
       if (typeof maybeBody === "string") {
         try {
           const parsed = JSON.parse(maybeBody);
           if (parsed?.error) errorMessage = parsed.error;
+          else if (parsed?.message) errorMessage = parsed.message;
         } catch {
           // ignore
         }
-      } else if (maybeBody && typeof maybeBody === "object" && maybeBody.error) {
-        errorMessage = maybeBody.error;
+      } else if (maybeBody && typeof maybeBody === "object") {
+        if (maybeBody.error) errorMessage = maybeBody.error;
+        else if (maybeBody.message) errorMessage = maybeBody.message;
+      }
+
+      // Check error.error (direct object structure)
+      if (error?.error && typeof error.error === "string") {
+        errorMessage = error.error;
       }
 
       toast({
