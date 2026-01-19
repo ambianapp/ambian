@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail, FlaskConical } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail, FlaskConical, ExternalLink } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 import {
   Dialog,
@@ -602,10 +602,19 @@ const Pricing = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {hasOpenInvoices && (
-                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center">
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center space-y-2">
                       <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
                         {t("pricing.unpaidInvoiceWarning") || "You have an unpaid invoice. Please pay it first before requesting a new one."}
                       </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                        onClick={() => navigate("/profile?tab=billing")}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        {t("pricing.viewUnpaidInvoice") || "View & Pay Invoice"}
+                      </Button>
                     </div>
                   )}
                   {!hasOpenInvoices && (selectedPlan === "monthly" || paymentType === "subscription") && (
