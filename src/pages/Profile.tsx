@@ -920,29 +920,31 @@ const Profile = () => {
             <CardDescription>{t("devices.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Location List - show all locations including base */}
+            {/* Device List - show all devices including base */}
             <div className="space-y-2">
-              {/* Base subscription location (always included) */}
-              <div className="p-3 rounded-lg border border-primary/30 bg-primary/5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-                      1
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground text-sm">
-                        {t("devices.location") || "Location"} 1
+              {/* Base subscription device (only show when user has active subscription) */}
+              {subscription.subscribed && !subscription.isTrial && (
+                <div className="p-3 rounded-lg border border-primary/30 bg-primary/5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+                        1
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {t("devices.includedInSubscription") || "Included in subscription"}
+                      <div>
+                        <div className="font-medium text-foreground text-sm">
+                          {t("devices.location") || "Device"} 1
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {t("devices.includedInSubscription") || "Included in subscription"}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-xs text-primary font-medium px-2 py-1 rounded bg-primary/10">
-                    {t("devices.included") || "Included"}
+                    <div className="text-xs text-primary font-medium px-2 py-1 rounded bg-primary/10">
+                      {t("devices.included") || "Included"}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Additional locations */}
               {isLoadingSlots ? (
