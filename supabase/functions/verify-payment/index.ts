@@ -147,6 +147,56 @@ serve(async (req) => {
 
     logStep("Subscription updated successfully");
 
+    // Void any open invoices for this customer since they've now paid via card
+    // This prevents confusion where old unpaid invoices remain open after card payment
+    if (customerId) {
+      try {
+        const openInvoices = await stripe.invoices.list({
+          customer: customerId,
+          status: "open",
+          limit: 10,
+        });
+        
+        const DEVICE_SLOT_PRICE_IDS = [
+          "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+          "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+        ];
+        
+        for (const openInv of openInvoices.data) {
+          const invoiceLineItem = openInv.lines?.data?.[0];
+          const isDeviceSlotInvoice = invoiceLineItem?.price?.id && DEVICE_SLOT_PRICE_IDS.includes(invoiceLineItem.price.id);
+          
+          if (!isDeviceSlotInvoice) {
+            await stripe.invoices.voidInvoice(openInv.id);
+            logStep("Voided old open invoice after card payment", { 
+              invoiceId: openInv.id, 
+              invoiceNumber: openInv.number 
+            });
+          }
+        }
+        
+        // Also delete any draft invoices
+        const draftInvoices = await stripe.invoices.list({
+          customer: customerId,
+          status: "draft",
+          limit: 10,
+        });
+        
+        for (const draftInv of draftInvoices.data) {
+          const invoiceLineItem = draftInv.lines?.data?.[0];
+          const isDeviceSlotInvoice = invoiceLineItem?.price?.id && DEVICE_SLOT_PRICE_IDS.includes(invoiceLineItem.price.id);
+          
+          if (!isDeviceSlotInvoice) {
+            await stripe.invoices.del(draftInv.id);
+            logStep("Deleted old draft invoice after card payment", { invoiceId: draftInv.id });
+          }
+        }
+      } catch (cleanupError) {
+        logStep("Error cleaning up old invoices", { error: String(cleanupError) });
+        // Don't fail the process if cleanup fails
+      }
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
       plan_type: planType,
