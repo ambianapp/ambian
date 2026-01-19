@@ -9,6 +9,7 @@ import LikedSongsView from "@/components/LikedSongsView";
 import ScheduleManager from "@/components/ScheduleManager";
 import MobileSidebar from "@/components/MobileSidebar";
 import SubscriptionGate from "@/components/SubscriptionGate";
+import InvoiceDueGate from "@/components/InvoiceDueGate";
 import TrialBanner from "@/components/TrialBanner";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import { DeviceLimitDialog } from "@/components/DeviceLimitDialog";
@@ -169,6 +170,11 @@ const Index = () => {
   // On first load (no cached subscription), wait for subscription to resolve.
   if (isSubscriptionLoading) {
     return <AmbianLoadingScreen />;
+  }
+
+  // Show Invoice Due Gate when user has unpaid invoice past due date
+  if (subscription.hasUnpaidInvoice) {
+    return <InvoiceDueGate />;
   }
 
   if (!subscription.subscribed && !subscription.isTrial && !isAdmin) {
