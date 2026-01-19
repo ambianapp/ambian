@@ -1,49 +1,147 @@
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, FileText, User } from "lucide-react";
+import { AlertCircle, CreditCard, ExternalLink, Loader2, User, Zap } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
+
+interface Invoice {
+  id: string;
+  number: string;
+  amount: number;
+  currency: string;
+  date: number;
+  status: string;
+  dueDate: number | null;
+  pdfUrl: string | null;
+  hostedUrl: string | null;
+}
 
 const InvoiceDueGate = () => {
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
-  const navigate = useNavigate();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadInvoices = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase.functions.invoke("get-invoices");
+        if (error) throw error;
+        
+        // Filter to only show open/unpaid invoices
+        const unpaidInvoices = (data?.invoices || []).filter(
+          (inv: Invoice) => inv.status === "open" || inv.status === "draft"
+        );
+        setInvoices(unpaidInvoices);
+      } catch (error) {
+        console.error("Failed to load invoices:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInvoices();
+  }, [user]);
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("fi-FI", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100);
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString("fi-FI");
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full text-center space-y-8 animate-fade-in">
+      <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
         {/* Logo */}
-        <div className="mb-6">
+        <div className="mb-4">
           <img src={ambianLogo} alt="Ambian" className="h-14 w-auto mx-auto" />
         </div>
 
         {/* Alert Banner */}
-        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6">
-          <div className="flex items-center justify-center gap-2 text-destructive mb-3">
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-5">
+          <div className="flex items-center justify-center gap-2 text-destructive mb-2">
             <AlertCircle className="w-6 h-6" />
             <span className="font-bold text-lg">{t("invoiceDue.title")}</span>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {t("invoiceDue.description")}
           </p>
         </div>
 
-        {/* CTA Button */}
-        <div className="space-y-4">
-          <Button 
-            size="lg" 
-            className="w-full h-14 text-lg gap-2" 
-            onClick={() => navigate("/profile", { state: { tab: "billing" } })}
-          >
-            <FileText className="w-5 h-5" />
-            {t("invoiceDue.payNow")}
-          </Button>
-          
-          <p className="text-sm text-muted-foreground">
-            {t("invoiceDue.hint")}
+        {/* Unpaid Invoices List */}
+        <div className="space-y-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : invoices.length > 0 ? (
+            <>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                {t("invoiceDue.unpaidInvoices")}
+              </h3>
+              {invoices.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="bg-card border border-border rounded-lg p-4 text-left"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-foreground">
+                      {invoice.number || t("profile.invoice")}
+                    </span>
+                    <span className="text-lg font-bold text-foreground">
+                      {formatCurrency(invoice.amount, invoice.currency)}
+                    </span>
+                  </div>
+                  {invoice.dueDate && (
+                    <p className="text-xs text-destructive mb-3">
+                      {t("invoiceDue.dueOn")} {formatDate(invoice.dueDate)}
+                    </p>
+                  )}
+                  {invoice.hostedUrl && (
+                    <Button
+                      size="sm"
+                      className="w-full gap-2"
+                      onClick={() => window.open(invoice.hostedUrl!, "_blank")}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {t("invoiceDue.payInvoice")}
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">
+              {t("invoiceDue.noInvoicesFound")}
+            </p>
+          )}
+        </div>
+
+        {/* Card Payment Tip */}
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+          <div className="flex items-center justify-center gap-2 text-primary mb-2">
+            <Zap className="w-5 h-5" />
+            <span className="font-semibold text-sm">{t("invoiceDue.tipTitle")}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("invoiceDue.tipDescription")}
           </p>
         </div>
+
+        {/* Hint */}
+        <p className="text-xs text-muted-foreground">
+          {t("invoiceDue.hint")}
+        </p>
 
         {/* User info */}
         <div className="pt-4 border-t border-border space-y-3">
