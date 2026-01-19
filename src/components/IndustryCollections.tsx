@@ -57,6 +57,26 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
   const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set());
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
+  // Translation key mapping for collection names
+  const collectionTranslationKeys: Record<string, { name: string; desc: string }> = {
+    "Spa & Wellness": { name: "industry.spaWellness", desc: "industry.spaWellnessDesc" },
+    "Beauty Salon": { name: "industry.beautySalon", desc: "industry.beautySalonDesc" },
+    "Gym & Fitness": { name: "industry.gymFitness", desc: "industry.gymFitnessDesc" },
+    "Restaurant & Café": { name: "industry.restaurantCafe", desc: "industry.restaurantCafeDesc" },
+    "Retail & Shopping": { name: "industry.retailShopping", desc: "industry.retailShoppingDesc" },
+    "Hotel & Lobby": { name: "industry.hotelLobby", desc: "industry.hotelLobbyDesc" },
+  };
+
+  const getTranslatedName = (name: string) => {
+    const keys = collectionTranslationKeys[name];
+    return keys ? t(keys.name) : name;
+  };
+
+  const getTranslatedDescription = (name: string, fallback: string | null) => {
+    const keys = collectionTranslationKeys[name];
+    return keys ? t(keys.desc) : (fallback || "");
+  };
+
   useEffect(() => {
     loadCollections();
   }, []);
@@ -305,7 +325,7 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
                 <span className="text-xs sm:text-sm font-medium text-foreground text-center leading-tight line-clamp-2">
-                  {collection.name}
+                  {getTranslatedName(collection.name)}
                 </span>
               </button>
             );
@@ -325,12 +345,10 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                     return <Icon className="w-6 h-6 text-primary" />;
                   })()}
                   <div className="flex-1">
-                    <span>{selectedCollection.name}</span>
-                    {selectedCollection.description && (
-                      <p className="text-sm font-normal text-muted-foreground mt-1">
-                        {selectedCollection.description}
-                      </p>
-                    )}
+                    <span>{getTranslatedName(selectedCollection.name)}</span>
+                    <p className="text-sm font-normal text-muted-foreground mt-1">
+                      {getTranslatedDescription(selectedCollection.name, selectedCollection.description)}
+                    </p>
                   </div>
                 </>
               )}
