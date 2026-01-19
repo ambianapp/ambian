@@ -79,6 +79,8 @@ const Pricing = () => {
   const [country, setCountry] = useState("FI");
   const [vatId, setVatId] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [hasOpenInvoices, setHasOpenInvoices] = useState(false);
+  const [isCheckingInvoices, setIsCheckingInvoices] = useState(false);
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -141,6 +143,35 @@ const Pricing = () => {
 
     verifyPayment();
   }, [searchParams, user, checkSubscription, navigate, toast, t]);
+
+  // Check if user has open invoices (to block invoice requests upfront)
+  useEffect(() => {
+    const checkOpenInvoices = async () => {
+      if (!user) {
+        setHasOpenInvoices(false);
+        return;
+      }
+      
+      setIsCheckingInvoices(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("get-invoices");
+        if (error) throw error;
+        
+        // Check if there are any open invoices
+        const openInvoices = (data || []).filter(
+          (inv: any) => inv.status === "open" || inv.status === "draft"
+        );
+        setHasOpenInvoices(openInvoices.length > 0);
+      } catch (error) {
+        console.error("Error checking invoices:", error);
+        setHasOpenInvoices(false);
+      } finally {
+        setIsCheckingInvoices(false);
+      }
+    };
+
+    checkOpenInvoices();
+  }, [user]);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -549,7 +580,7 @@ const Pricing = () => {
           ) : (
             <>
               {/* Invoice Option - Only for yearly prepaid */}
-              <Card className={`border-border ${(selectedPlan === "monthly" || paymentType === "subscription") ? "opacity-70" : ""}`}>
+              <Card className={`border-border ${(selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices) ? "opacity-70" : ""}`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <FileText className="w-5 h-5 text-primary" />
@@ -566,7 +597,14 @@ const Pricing = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {(selectedPlan === "monthly" || paymentType === "subscription") && (
+                  {hasOpenInvoices && (
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center">
+                      <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                        {t("pricing.unpaidInvoiceWarning") || "You have an unpaid invoice. Please pay it first before requesting a new one."}
+                      </p>
+                    </div>
+                  )}
+                  {!hasOpenInvoices && (selectedPlan === "monthly" || paymentType === "subscription") && (
                     <p className="text-sm text-amber-500 text-center">
                       {t("pricing.invoiceYearlyOnly")}
                     </p>
@@ -575,8 +613,11 @@ const Pricing = () => {
                     variant="outline"
                     className="w-full"
                     onClick={() => setShowInvoiceDialog(true)}
-                    disabled={selectedPlan === "monthly" || paymentType === "subscription"}
+                    disabled={selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices || isCheckingInvoices}
                   >
+                    {isCheckingInvoices ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
                     {t("pricing.requestInvoice")}
                   </Button>
                 </CardContent>
