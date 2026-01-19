@@ -702,6 +702,101 @@ async function sendSubscriptionCanceledEmail(
   }
 }
 
+// Email sent when access is suspended due to unpaid invoice
+async function sendAccessSuspendedEmail(
+  email: string,
+  customerName: string | null,
+  planType: string
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                🚫 Access Suspended
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Unfortunately, your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription has been suspended because we didn't receive payment for your invoice within the grace period.
+              </p>
+              
+              <!-- Warning Box -->
+              <div style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <h3 style="color: #fca5a5; font-size: 16px; margin: 0 0 12px;">What does this mean?</h3>
+                <ul style="color: #e0e0e0; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                  <li>You no longer have access to Ambian's music library</li>
+                  <li>Playback has been disabled on all your devices</li>
+                  <li>Your playlists and preferences are saved</li>
+                </ul>
+              </div>
+              
+              <!-- Solution Box -->
+              <div style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(139, 92, 246, 0.3);">
+                <h3 style="color: #8b5cf6; font-size: 16px; margin: 0 0 12px;">💳 How to restore access</h3>
+                <p style="color: #e0e0e0; font-size: 14px; line-height: 1.6; margin: 0;">
+                  To regain access to Ambian, please subscribe again with a valid payment method. Your previous preferences and playlists will be restored instantly.
+                </p>
+              </div>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com/pricing" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Subscribe Again
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 0;">
+                If you believe this is an error or have already made payment, please contact us and we'll resolve it right away.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                Need help? Contact us at <a href="mailto:info@ambian.fi" style="color: #8b5cf6; text-decoration: none;">info@ambian.fi</a>
+              </p>
+            </td>
+          </tr>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: "🚫 Your Ambian access has been suspended - Invoice unpaid",
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending access suspended email", { error });
+      return false;
+    }
+
+    logStep("Access suspended email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send access suspended email", { error: String(error) });
+    return false;
+  }
+}
+
 // Owner notification email when a purchase is made
 async function sendOwnerPurchaseNotificationEmail(
   customerEmail: string,
@@ -2078,6 +2173,36 @@ serve(async (req) => {
               
               logStep("Main subscription marked as canceled due to unpaid invoice", { userId });
               
+              // Get customer details for email
+              const customerId = typeof subscription.customer === 'string' 
+                ? subscription.customer 
+                : (subscription.customer as any)?.id;
+              
+              let customerEmail: string | null = null;
+              let customerName: string | null = null;
+              
+              if (customerId) {
+                try {
+                  const customer = await stripe.customers.retrieve(customerId);
+                  customerEmail = (customer as any).email;
+                  customerName = (customer as any).name;
+                } catch (e) {
+                  logStep("Could not retrieve customer for email", { error: String(e) });
+                }
+              }
+              
+              // Determine plan type from subscription
+              const priceId = subscription.items?.data?.[0]?.price?.id;
+              const planType = priceId?.includes("yearly") || 
+                subscription.items?.data?.[0]?.price?.recurring?.interval === "year" 
+                  ? "yearly" : "monthly";
+              
+              // Send access suspended email to user
+              if (customerEmail) {
+                await sendAccessSuspendedEmail(customerEmail, customerName, planType);
+                logStep("Sent access suspended email", { to: customerEmail });
+              }
+              
               // Log activity
               const { data: profile } = await supabaseAdmin
                 .from("profiles")
@@ -2087,7 +2212,7 @@ serve(async (req) => {
 
               await supabaseAdmin.from('activity_logs').insert({
                 user_id: userId,
-                user_email: profile?.email || null,
+                user_email: profile?.email || customerEmail || null,
                 event_type: 'subscription_canceled_unpaid',
                 event_message: 'Subscription canceled due to unpaid invoice',
                 event_details: { subscriptionId: subscription.id, invoiceId: invoice.id },
