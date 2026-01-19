@@ -320,6 +320,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "gate.trialExpired": "Trial Expired",
     "gate.trialExpiredMessage": "Your free trial has ended. Subscribe now to continue enjoying unlimited music for your business.",
     "gate.daysRemaining": "{days} day(s) remaining",
+    
+    // Invoice Due Gate
+    "invoiceDue.title": "Invoice Payment Due",
+    "invoiceDue.description": "You have an unpaid invoice. Please pay it now to continue using Ambian.",
+    "invoiceDue.payNow": "View & Pay Invoice",
+    "invoiceDue.hint": "After payment, access will be restored automatically.",
     "gate.priceMonthly": "€7.40",
     "gate.perMonth": "/month",
     "gate.billedYearly": "when billed yearly (€89/year)",
@@ -998,6 +1004,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "gate.trialExpired": "Provperioden har löpt ut",
     "gate.trialExpiredMessage": "Din gratis provperiod har tagit slut. Prenumerera nu för att fortsätta njuta av obegränsad musik för ditt företag.",
     "gate.daysRemaining": "{days} dag(ar) kvar",
+    
+    // Invoice Due Gate
+    "invoiceDue.title": "Faktura förfallen",
+    "invoiceDue.description": "Du har en obetald faktura. Vänligen betala den nu för att fortsätta använda Ambian.",
+    "invoiceDue.payNow": "Visa & Betala faktura",
+    "invoiceDue.hint": "Efter betalning återställs åtkomsten automatiskt.",
     "gate.priceMonthly": "€7.40",
     "gate.perMonth": "/månad",
     "gate.billedYearly": "vid årsbetalning (€89/år)",
@@ -1675,6 +1687,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "gate.trialExpired": "Kokeilu päättynyt",
     "gate.trialExpiredMessage": "Ilmainen kokeilusi on päättynyt. Tilaa nyt jatkaaksesi rajattoman musiikin nauttimista yrityksellesi.",
     "gate.daysRemaining": "{days} päivää jäljellä",
+    
+    // Invoice Due Gate
+    "invoiceDue.title": "Lasku erääntynyt",
+    "invoiceDue.description": "Sinulla on maksamaton lasku. Maksa se nyt jatkaaksesi Ambianin käyttöä.",
+    "invoiceDue.payNow": "Näytä ja maksa lasku",
+    "invoiceDue.hint": "Maksun jälkeen pääsy palautuu automaattisesti.",
     "gate.priceMonthly": "€7.40",
     "gate.perMonth": "/kk",
     "gate.billedYearly": "vuosimaksulla (€89/vuosi)",
@@ -2353,6 +2371,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "gate.trialExpired": "Testversion abgelaufen",
     "gate.trialExpiredMessage": "Deine kostenlose Testversion ist abgelaufen. Abonniere jetzt, um weiterhin unbegrenzte Musik für dein Unternehmen zu genießen.",
     "gate.daysRemaining": "{days} Tag(e) verbleibend",
+    
+    // Invoice Due Gate
+    "invoiceDue.title": "Rechnung fällig",
+    "invoiceDue.description": "Sie haben eine unbezahlte Rechnung. Bitte bezahlen Sie diese jetzt, um Ambian weiter zu nutzen.",
+    "invoiceDue.payNow": "Rechnung anzeigen & bezahlen",
+    "invoiceDue.hint": "Nach der Zahlung wird der Zugang automatisch wiederhergestellt.",
     "gate.priceMonthly": "€7.40",
     "gate.perMonth": "/Monat",
     "gate.billedYearly": "bei jährlicher Zahlung (€89/Jahr)",
@@ -3030,6 +3054,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "gate.trialExpired": "Essai expiré",
     "gate.trialExpiredMessage": "Votre essai gratuit est terminé. Abonnez-vous maintenant pour continuer à profiter de musique illimitée pour votre entreprise.",
     "gate.daysRemaining": "{days} jour(s) restant(s)",
+    
+    // Invoice Due Gate
+    "invoiceDue.title": "Facture en attente",
+    "invoiceDue.description": "Vous avez une facture impayée. Veuillez la payer maintenant pour continuer à utiliser Ambian.",
+    "invoiceDue.payNow": "Voir et payer la facture",
+    "invoiceDue.hint": "Après le paiement, l'accès sera rétabli automatiquement.",
     "gate.priceMonthly": "€7.40",
     "gate.perMonth": "/mois",
     "gate.billedYearly": "en paiement annuel (€89/an)",

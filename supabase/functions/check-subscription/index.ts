@@ -208,9 +208,48 @@ serve(async (req) => {
             logStep("Invoice paid, subscription valid");
             // Continue to normal active subscription handling below
           }
-          // Invoice is open - give grace period until due date
+          // Invoice is open - check if past due
           else if (latestInvoice.status === "open") {
             const dueDate = latestInvoice.due_date ? new Date(latestInvoice.due_date * 1000) : null;
+            const isPastDue = dueDate && now > dueDate;
+            
+            if (isPastDue) {
+              // Invoice is past due - block access and return hasUnpaidInvoice
+              logStep("Invoice past due, blocking access", { dueDate: dueDate?.toISOString() });
+              
+              // Update local status to inactive
+              await supabaseClient
+                .from("subscriptions")
+                .upsert({
+                  user_id: user.id,
+                  stripe_customer_id: customerId,
+                  stripe_subscription_id: subscription.id,
+                  status: "pending_payment",
+                  plan_type: subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+                  current_period_end: dueDate.toISOString(),
+                  device_slots: deviceSlotCount,
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: "user_id" });
+              
+              return new Response(JSON.stringify({
+                subscribed: false, // Block access
+                is_trial: false,
+                trial_days_remaining: 0,
+                trial_end: null,
+                plan_type: subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+                subscription_end: dueDate.toISOString(),
+                is_recurring: true,
+                is_pending_payment: true,
+                has_unpaid_invoice: true, // New flag for past due invoices
+                collection_method: collectionMethod,
+                device_slots: deviceSlotCount,
+              }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              });
+            }
+            
+            // Invoice still within grace period
             const gracePeriodEnd = dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
             
             logStep("Invoice open, granting access until due date", { gracePeriodEnd: gracePeriodEnd.toISOString() });
@@ -238,6 +277,7 @@ serve(async (req) => {
               subscription_end: gracePeriodEnd.toISOString(),
               is_recurring: true,
               is_pending_payment: true,
+              has_unpaid_invoice: false,
               collection_method: collectionMethod,
               device_slots: deviceSlotCount,
             }), {

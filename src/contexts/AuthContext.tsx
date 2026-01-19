@@ -29,6 +29,7 @@ interface SubscriptionInfo {
   trialEnd: string | null;
   isRecurring: boolean;
   isPendingPayment: boolean;
+  hasUnpaidInvoice: boolean;
   deviceSlots: number;
   collectionMethod: 'charge_automatically' | 'send_invoice' | null;
   cancelAtPeriodEnd: boolean;
@@ -130,6 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       trialEnd: null,
       isRecurring: false,
       isPendingPayment: false,
+      hasUnpaidInvoice: false,
       deviceSlots: 1,
       collectionMethod: null,
       cancelAtPeriodEnd: false,
@@ -168,6 +170,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         trialEnd: data.trial_end || null,
         isRecurring: data.is_recurring || false,
         isPendingPayment: data.is_pending_payment || false,
+        hasUnpaidInvoice: data.has_unpaid_invoice || false,
         deviceSlots: data.device_slots || 1,
         collectionMethod: data.collection_method || null,
         cancelAtPeriodEnd: data.cancel_at_period_end || false,
@@ -207,6 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             trialEnd: null,
             isRecurring: true,
             isPendingPayment: subRow?.status === "pending_payment",
+            hasUnpaidInvoice: false,
             deviceSlots: subRow?.device_slots ?? 1,
             collectionMethod: null,
             cancelAtPeriodEnd: false,
@@ -472,7 +476,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAdmin(false);
       setIsSubscriptionLoading(false);
-      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
+      setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, hasUnpaidInvoice: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
       setIsDeviceLimitReached(false);
       setActiveDevices([]);
       setIsSessionRegistered(false);
@@ -587,7 +591,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(false);
           setIsSubscriptionLoading(false);
-          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
+          setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, hasUnpaidInvoice: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
           setIsDeviceLimitReached(false);
           setActiveDevices([]);
           setIsSessionRegistered(false);
