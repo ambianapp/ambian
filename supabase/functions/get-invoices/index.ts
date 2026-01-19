@@ -171,15 +171,22 @@ serve(async (req) => {
           const lineItem = invoice.lines.data[0];
           const priceId = lineItem.price?.id;
           const recurring = lineItem.price?.recurring;
+          const description = (lineItem.description || "").toLowerCase();
           
-          isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "");
+          // Check if device slot by price ID OR description
+          isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "") || 
+                         description.includes("device slot") ||
+                         description.includes("extra device");
           isOneTime = !recurring; // No recurring = one-time payment
-          isYearly = recurring?.interval === "year";
+          isYearly = recurring?.interval === "year" || description.includes("year");
           
           // Count device slots if multiple line items
-          const deviceSlotCount = invoice.lines.data.filter((li: any) => 
-            DEVICE_SLOT_PRICE_IDS.includes(li.price?.id || "")
-          ).length;
+          const deviceSlotCount = invoice.lines.data.filter((li: any) => {
+            const liDesc = (li.description || "").toLowerCase();
+            return DEVICE_SLOT_PRICE_IDS.includes(li.price?.id || "") ||
+                   liDesc.includes("device slot") ||
+                   liDesc.includes("extra device");
+          }).length;
           
           logStep("Invoice line item analysis", {
             invoiceId: invoice.id,
@@ -196,7 +203,6 @@ serve(async (req) => {
               ? `Additional Devices (${deviceSlotCount}×)` 
               : "Additional Device";
           } else if (isOneTime) {
-            // One-time payment (prepaid) - check description or amount for yearly
             invoiceLabel = "Yearly Access";
           } else if (isYearly) {
             invoiceLabel = "Yearly Subscription";
