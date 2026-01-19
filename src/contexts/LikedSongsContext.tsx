@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface LikedSongsContextType {
@@ -28,6 +29,7 @@ interface LikedSongsProviderProps {
 
 export const LikedSongsProvider = ({ children }: LikedSongsProviderProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [likedSongIds, setLikedSongIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -109,12 +111,12 @@ export const LikedSongsProvider = ({ children }: LikedSongsProviderProps) => {
   const toggleLike = useCallback(
     async (trackId: string) => {
       if (!user) {
-        toast({ title: "Sign in required", variant: "destructive" });
+        toast({ title: t("toast.signInRequired"), variant: "destructive" });
         return;
       }
 
       if (!isUuid(trackId)) {
-        toast({ title: "Cannot like this track", variant: "destructive" });
+        toast({ title: t("toast.cannotLikeTrack"), variant: "destructive" });
         return;
       }
 
@@ -141,9 +143,9 @@ export const LikedSongsProvider = ({ children }: LikedSongsProviderProps) => {
         if (error) {
           // Revert on error
           setLikedSongIds((prev) => new Set([...prev, trackId]));
-          toast({ title: "Error removing from liked songs", variant: "destructive" });
+          toast({ title: t("toast.errorRemovingLiked"), variant: "destructive" });
         } else {
-          toast({ title: "Removed from Liked Songs" });
+          toast({ title: t("toast.removedFromLiked") });
         }
       } else {
         const { error } = await supabase
@@ -157,13 +159,13 @@ export const LikedSongsProvider = ({ children }: LikedSongsProviderProps) => {
             updated.delete(trackId);
             return updated;
           });
-          toast({ title: "Error adding to liked songs", variant: "destructive" });
+          toast({ title: t("toast.errorAddingLiked"), variant: "destructive" });
         } else {
-          toast({ title: "Added to Liked Songs" });
+          toast({ title: t("toast.addedToLiked") });
         }
       }
     },
-    [user, likedSongIds, toast]
+    [user, likedSongIds, toast, t]
   );
 
   const refreshLikedSongs = useCallback(async () => {

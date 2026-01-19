@@ -307,10 +307,10 @@ const Profile = () => {
 
       if (error) throw error;
 
-      toast({ title: "Profile updated", description: "Your changes have been saved." });
+      toast({ title: t("toast.profileUpdated"), description: t("toast.profileUpdatedDesc") });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: error.message,
         variant: "destructive",
       });

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLikedSongs } from "@/contexts/LikedSongsContext";
 
@@ -34,6 +35,7 @@ interface UserPlaylist {
 
 const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
@@ -62,7 +64,7 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
 
   const handleAddToPlaylist = async (playlistId: string, playlistName: string) => {
     if (!user || !isUuid(track.id)) {
-      toast({ title: "Cannot add this track", variant: "destructive" });
+      toast({ title: t("toast.cannotAddTrack"), variant: "destructive" });
       return;
     }
 
@@ -75,7 +77,7 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
       .maybeSingle();
 
     if (existing) {
-      toast({ title: "Track already in playlist" });
+      toast({ title: t("toast.trackAlreadyInPlaylist") });
       return;
     }
 
@@ -99,9 +101,9 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
       });
 
     if (error) {
-      toast({ title: "Error adding track", variant: "destructive" });
+      toast({ title: t("toast.errorAddingTrack"), variant: "destructive" });
     } else {
-      toast({ title: `Added to ${playlistName}` });
+      toast({ title: t("toast.addedToPlaylist", { playlist: playlistName }) });
     }
   };
 
