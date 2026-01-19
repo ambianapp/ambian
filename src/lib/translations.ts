@@ -1787,7 +1787,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "gate.pricesExclVat": "Hinnat eivät sisällä ALV:tä",
     "gate.startListening": "Aloita kuuntelu",
     "gate.viewPlans": "Näytä paketit",
-    "gate.noLicense": "Ei musiikin käyttölupaa tarvita. Peruuta milloin tahansa.",
+    "gate.noLicense": "Ei tarvetta musiikkiluville. Peruuta milloin tahansa.",
     
     // Search
     "search.title": "Haku",
