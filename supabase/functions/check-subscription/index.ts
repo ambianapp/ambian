@@ -157,6 +157,50 @@ serve(async (req) => {
     }
     logStep("Total device slots calculated", { deviceSlotCount });
 
+    // Check for past_due subscriptions FIRST - these have unpaid invoices
+    const pastDueSubscriptions = allSubscriptions.data.filter((sub: any) => {
+      const priceId = sub.items.data[0]?.price?.id;
+      const isDeviceSlot = deviceSlotPriceIds.includes(priceId);
+      return !isDeviceSlot && sub.status === "past_due";
+    });
+
+    if (pastDueSubscriptions.length > 0) {
+      const pastDueSub = pastDueSubscriptions[0];
+      logStep("Found past_due subscription - blocking access", { 
+        subscriptionId: pastDueSub.id,
+        status: pastDueSub.status 
+      });
+      
+      // Update local status to reflect unpaid invoice
+      await supabaseClient
+        .from("subscriptions")
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: pastDueSub.id,
+          status: "pending_payment",
+          plan_type: pastDueSub.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+          device_slots: deviceSlotCount,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      
+      return new Response(JSON.stringify({
+        subscribed: false, // Block access
+        is_trial: false,
+        trial_days_remaining: 0,
+        trial_end: null,
+        plan_type: pastDueSub.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+        is_recurring: true,
+        is_pending_payment: true,
+        has_unpaid_invoice: true, // Flag for past due invoices
+        collection_method: pastDueSub.collection_method,
+        device_slots: deviceSlotCount,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Filter to only ACTIVE main subscriptions (not device slots, not canceled)
     const mainSubscriptions = allSubscriptions.data.filter((sub: any) => {
       const priceId = sub.items.data[0]?.price?.id;
