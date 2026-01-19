@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail, FlaskConical, ExternalLink } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
+import LanguageSelector from "@/components/LanguageSelector";
 import {
   Dialog,
   DialogContent,
@@ -374,7 +375,7 @@ const Pricing = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Back button and Logo */}
         <div className="flex flex-col items-center pt-4 space-y-4">
-          <div className="w-full">
+          <div className="w-full flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
@@ -384,6 +385,7 @@ const Pricing = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("common.back")}
             </Button>
+            <LanguageSelector />
           </div>
           <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
         </div>
