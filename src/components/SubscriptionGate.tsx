@@ -28,7 +28,7 @@ const SubscriptionGate = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-[calc(200px+var(--safe-bottom-tight))]">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pb-[calc(200px+var(--safe-bottom-tight))] md:pt-16 lg:pt-24">
       <div className="max-w-md w-full text-center space-y-8 animate-fade-in">
         {/* Trial Banner */}
         {showTrialBanner && (
