@@ -1709,7 +1709,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoiceDue.dueOn": "Eräpäivä:",
     "invoiceDue.payInvoice": "Maksa nyt",
     "invoiceDue.noInvoicesFound": "Maksamattomia laskuja ei löytynyt. Päivitä sivu.",
-    "invoiceDue.tipTitle": "Maksa kortilla välittömään pääsyyn",
+    "invoiceDue.tipTitle": "Maksa kortilla jatkaaksesi kuuntelua välittömästi",
     "invoiceDue.tipDescription": "Korttimaksut käsitellään heti. Pankkisiirrot (IBAN) voivat kestää 1-3 arkipäivää.",
     "gate.priceMonthly": "€7.40",
     "gate.perMonth": "/kk",
