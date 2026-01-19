@@ -80,11 +80,12 @@ serve(async (req) => {
 
     // If customer exists, fetch their invoices
     if (customerId) {
-      // Fetch open invoices (pending payment)
+      // Fetch open invoices (pending payment) with line items expanded
       const openInvoices = await stripe.invoices.list({
         customer: customerId,
         status: "open",
         limit: 10,
+        expand: ["data.lines.data.price"],
       });
 
       // Fetch draft invoices too (they might also be orphaned)
@@ -92,6 +93,7 @@ serve(async (req) => {
         customer: customerId,
         status: "draft",
         limit: 10,
+        expand: ["data.lines.data.price"],
       });
 
       // Process open and draft invoices - void/delete if subscription is canceled
@@ -147,11 +149,12 @@ serve(async (req) => {
         }
       }
 
-      // Fetch paid invoices
+      // Fetch paid invoices with line items expanded
       const paidInvoices = await stripe.invoices.list({
         customer: customerId,
         status: "paid",
         limit: 20,
+        expand: ["data.lines.data.price"],
       });
 
       // Add invoices to results - open invoices first
@@ -162,15 +165,39 @@ serve(async (req) => {
         let invoiceLabel = "Subscription";
         let isDeviceSlot = false;
         let isYearly = false;
+        let isOneTime = false;
         
         if (invoice.lines?.data?.length > 0) {
           const lineItem = invoice.lines.data[0];
           const priceId = lineItem.price?.id;
+          const recurring = lineItem.price?.recurring;
+          
           isDeviceSlot = DEVICE_SLOT_PRICE_IDS.includes(priceId || "");
-          isYearly = lineItem.price?.recurring?.interval === "year";
+          isOneTime = !recurring; // No recurring = one-time payment
+          isYearly = recurring?.interval === "year";
+          
+          // Count device slots if multiple line items
+          const deviceSlotCount = invoice.lines.data.filter((li: any) => 
+            DEVICE_SLOT_PRICE_IDS.includes(li.price?.id || "")
+          ).length;
+          
+          logStep("Invoice line item analysis", {
+            invoiceId: invoice.id,
+            priceId,
+            isDeviceSlot,
+            isOneTime,
+            isYearly,
+            deviceSlotCount,
+            description: lineItem.description
+          });
           
           if (isDeviceSlot) {
-            invoiceLabel = "Additional Device";
+            invoiceLabel = deviceSlotCount > 1 
+              ? `Additional Devices (${deviceSlotCount}×)` 
+              : "Additional Device";
+          } else if (isOneTime) {
+            // One-time payment (prepaid) - check description or amount for yearly
+            invoiceLabel = "Yearly Access";
           } else if (isYearly) {
             invoiceLabel = "Yearly Subscription";
           } else {
