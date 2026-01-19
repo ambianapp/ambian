@@ -83,7 +83,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       .order("start_time");
 
     if (schedulesError) {
-      toast({ title: "Error loading schedules", description: schedulesError.message, variant: "destructive" });
+      toast({ title: t("toast.errorLoadingSchedules"), description: schedulesError.message, variant: "destructive" });
     } else {
       setSchedules(schedulesData || []);
     }
@@ -96,7 +96,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       .order("name");
 
     if (playlistsError) {
-      toast({ title: "Error loading playlists", description: playlistsError.message, variant: "destructive" });
+      toast({ title: t("toast.errorLoadingPlaylists"), description: playlistsError.message, variant: "destructive" });
     } else {
       setPlaylists(playlistsData || []);
     }
@@ -132,12 +132,12 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
   const handleSave = async () => {
     if (!formPlaylistId) {
-      toast({ title: "Please select a playlist", variant: "destructive" });
+      toast({ title: t("toast.selectPlaylist"), variant: "destructive" });
       return;
     }
 
     if (formDays.length === 0) {
-      toast({ title: "Please select at least one day", variant: "destructive" });
+      toast({ title: t("toast.selectDay"), variant: "destructive" });
       return;
     }
 
@@ -159,9 +159,9 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
         .eq("id", editingSchedule.id);
 
       if (error) {
-        toast({ title: "Error updating schedule", description: error.message, variant: "destructive" });
+        toast({ title: t("toast.errorUpdatingSchedule"), description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Schedule updated" });
+        toast({ title: t("toast.scheduleUpdated") });
         setIsDialogOpen(false);
         loadData();
       }
@@ -171,9 +171,9 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
         .insert(scheduleData);
 
       if (error) {
-        toast({ title: "Error creating schedule", description: error.message, variant: "destructive" });
+        toast({ title: t("toast.errorCreatingSchedule"), description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Schedule created" });
+        toast({ title: t("toast.scheduleCreated") });
         setIsDialogOpen(false);
         loadData();
       }
@@ -187,7 +187,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       .eq("id", schedule.id);
 
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
       setSchedules(prev =>
         prev.map(s => (s.id === schedule.id ? { ...s, is_active: !s.is_active } : s))
@@ -202,9 +202,9 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       .eq("id", scheduleId);
 
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Schedule deleted" });
+      toast({ title: t("toast.scheduleDeleted") });
       setSchedules(prev => prev.filter(s => s.id !== scheduleId));
     }
   };

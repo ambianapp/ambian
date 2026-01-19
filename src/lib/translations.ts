@@ -26,6 +26,29 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.error": "Error",
     "common.success": "Success",
     
+    // Toast messages
+    "toast.profileUpdated": "Profile updated",
+    "toast.profileUpdatedDesc": "Your changes have been saved.",
+    "toast.errorLoadingSchedules": "Error loading schedules",
+    "toast.errorLoadingPlaylists": "Error loading playlists",
+    "toast.selectPlaylist": "Please select a playlist",
+    "toast.selectDay": "Please select at least one day",
+    "toast.scheduleUpdated": "Schedule updated",
+    "toast.scheduleCreated": "Schedule created",
+    "toast.scheduleDeleted": "Schedule deleted",
+    "toast.errorUpdatingSchedule": "Error updating schedule",
+    "toast.errorCreatingSchedule": "Error creating schedule",
+    "toast.signInRequired": "Sign in required",
+    "toast.cannotLikeTrack": "Cannot like this track",
+    "toast.removedFromLiked": "Removed from Liked Songs",
+    "toast.addedToLiked": "Added to Liked Songs",
+    "toast.errorRemovingLiked": "Error removing from liked songs",
+    "toast.errorAddingLiked": "Error adding to liked songs",
+    "toast.cannotAddTrack": "Cannot add this track",
+    "toast.trackAlreadyInPlaylist": "Track already in playlist",
+    "toast.errorAddingTrack": "Error adding track",
+    "toast.addedToPlaylist": "Added to {playlist}",
+    
     // Offline
     "offline.noConnection": "No internet connection",
     
@@ -720,7 +743,29 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.error": "Fel",
     "common.success": "Lyckades",
     
-    // Offline
+    // Toast messages
+    "toast.profileUpdated": "Profil uppdaterad",
+    "toast.profileUpdatedDesc": "Dina ändringar har sparats.",
+    "toast.errorLoadingSchedules": "Fel vid laddning av scheman",
+    "toast.errorLoadingPlaylists": "Fel vid laddning av spellistor",
+    "toast.selectPlaylist": "Välj en spellista",
+    "toast.selectDay": "Välj minst en dag",
+    "toast.scheduleUpdated": "Schema uppdaterat",
+    "toast.scheduleCreated": "Schema skapat",
+    "toast.scheduleDeleted": "Schema borttaget",
+    "toast.errorUpdatingSchedule": "Fel vid uppdatering av schema",
+    "toast.errorCreatingSchedule": "Fel vid skapande av schema",
+    "toast.signInRequired": "Inloggning krävs",
+    "toast.cannotLikeTrack": "Kan inte gilla detta spår",
+    "toast.removedFromLiked": "Borttagen från Gillade låtar",
+    "toast.addedToLiked": "Tillagd i Gillade låtar",
+    "toast.errorRemovingLiked": "Fel vid borttagning från gillade låtar",
+    "toast.errorAddingLiked": "Fel vid tillägg i gillade låtar",
+    "toast.cannotAddTrack": "Kan inte lägga till detta spår",
+    "toast.trackAlreadyInPlaylist": "Spår finns redan i spellistan",
+    "toast.errorAddingTrack": "Fel vid tillägg av spår",
+    "toast.addedToPlaylist": "Tillagd i {playlist}",
+    
     "offline.noConnection": "Ingen internetanslutning",
     
     "common.back": "Tillbaka",
@@ -1411,7 +1456,29 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.error": "Virhe",
     "common.success": "Onnistui",
     
-    // Offline
+    // Toast messages
+    "toast.profileUpdated": "Profiili päivitetty",
+    "toast.profileUpdatedDesc": "Muutoksesi on tallennettu.",
+    "toast.errorLoadingSchedules": "Virhe aikataulujen latauksessa",
+    "toast.errorLoadingPlaylists": "Virhe soittolistojen latauksessa",
+    "toast.selectPlaylist": "Valitse soittolista",
+    "toast.selectDay": "Valitse vähintään yksi päivä",
+    "toast.scheduleUpdated": "Aikataulu päivitetty",
+    "toast.scheduleCreated": "Aikataulu luotu",
+    "toast.scheduleDeleted": "Aikataulu poistettu",
+    "toast.errorUpdatingSchedule": "Virhe aikataulun päivityksessä",
+    "toast.errorCreatingSchedule": "Virhe aikataulun luomisessa",
+    "toast.signInRequired": "Kirjautuminen vaaditaan",
+    "toast.cannotLikeTrack": "Kappaletta ei voi tykätä",
+    "toast.removedFromLiked": "Poistettu tykätyistä",
+    "toast.addedToLiked": "Lisätty tykättyihin",
+    "toast.errorRemovingLiked": "Virhe tykätyistä poistamisessa",
+    "toast.errorAddingLiked": "Virhe tykättyihin lisäämisessä",
+    "toast.cannotAddTrack": "Kappaletta ei voi lisätä",
+    "toast.trackAlreadyInPlaylist": "Kappale on jo soittolistalla",
+    "toast.errorAddingTrack": "Virhe kappaleen lisäämisessä",
+    "toast.addedToPlaylist": "Lisätty: {playlist}",
+    
     "offline.noConnection": "Ei internet-yhteyttä",
     
     "common.back": "Takaisin",
@@ -2102,7 +2169,29 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.error": "Fehler",
     "common.success": "Erfolg",
     
-    // Offline
+    // Toast messages
+    "toast.profileUpdated": "Profil aktualisiert",
+    "toast.profileUpdatedDesc": "Ihre Änderungen wurden gespeichert.",
+    "toast.errorLoadingSchedules": "Fehler beim Laden der Zeitpläne",
+    "toast.errorLoadingPlaylists": "Fehler beim Laden der Playlists",
+    "toast.selectPlaylist": "Bitte wählen Sie eine Playlist",
+    "toast.selectDay": "Bitte wählen Sie mindestens einen Tag",
+    "toast.scheduleUpdated": "Zeitplan aktualisiert",
+    "toast.scheduleCreated": "Zeitplan erstellt",
+    "toast.scheduleDeleted": "Zeitplan gelöscht",
+    "toast.errorUpdatingSchedule": "Fehler beim Aktualisieren des Zeitplans",
+    "toast.errorCreatingSchedule": "Fehler beim Erstellen des Zeitplans",
+    "toast.signInRequired": "Anmeldung erforderlich",
+    "toast.cannotLikeTrack": "Dieser Titel kann nicht geliked werden",
+    "toast.removedFromLiked": "Aus Favoriten entfernt",
+    "toast.addedToLiked": "Zu Favoriten hinzugefügt",
+    "toast.errorRemovingLiked": "Fehler beim Entfernen aus Favoriten",
+    "toast.errorAddingLiked": "Fehler beim Hinzufügen zu Favoriten",
+    "toast.cannotAddTrack": "Dieser Titel kann nicht hinzugefügt werden",
+    "toast.trackAlreadyInPlaylist": "Titel ist bereits in der Playlist",
+    "toast.errorAddingTrack": "Fehler beim Hinzufügen des Titels",
+    "toast.addedToPlaylist": "Zu {playlist} hinzugefügt",
+    
     "offline.noConnection": "Keine Internetverbindung",
     
     "common.back": "Zurück",
@@ -2792,7 +2881,29 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.error": "Erreur",
     "common.success": "Succès",
     
-    // Offline
+    // Toast messages
+    "toast.profileUpdated": "Profil mis à jour",
+    "toast.profileUpdatedDesc": "Vos modifications ont été enregistrées.",
+    "toast.errorLoadingSchedules": "Erreur lors du chargement des plannings",
+    "toast.errorLoadingPlaylists": "Erreur lors du chargement des playlists",
+    "toast.selectPlaylist": "Veuillez sélectionner une playlist",
+    "toast.selectDay": "Veuillez sélectionner au moins un jour",
+    "toast.scheduleUpdated": "Planning mis à jour",
+    "toast.scheduleCreated": "Planning créé",
+    "toast.scheduleDeleted": "Planning supprimé",
+    "toast.errorUpdatingSchedule": "Erreur lors de la mise à jour du planning",
+    "toast.errorCreatingSchedule": "Erreur lors de la création du planning",
+    "toast.signInRequired": "Connexion requise",
+    "toast.cannotLikeTrack": "Impossible d'aimer ce titre",
+    "toast.removedFromLiked": "Retiré des favoris",
+    "toast.addedToLiked": "Ajouté aux favoris",
+    "toast.errorRemovingLiked": "Erreur lors de la suppression des favoris",
+    "toast.errorAddingLiked": "Erreur lors de l'ajout aux favoris",
+    "toast.cannotAddTrack": "Impossible d'ajouter ce titre",
+    "toast.trackAlreadyInPlaylist": "Titre déjà dans la playlist",
+    "toast.errorAddingTrack": "Erreur lors de l'ajout du titre",
+    "toast.addedToPlaylist": "Ajouté à {playlist}",
+    
     "offline.noConnection": "Pas de connexion internet",
     
     "common.back": "Retour",
