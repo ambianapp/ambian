@@ -143,12 +143,6 @@ serve(async (req) => {
           type: "text",
           optional: false,
         },
-        {
-          key: "city",
-          label: { type: "custom", custom: "City" },
-          type: "text",
-          optional: false,
-        },
       ],
       allow_promotion_codes: !promoCode, // Allow manual entry if no code provided
     };
