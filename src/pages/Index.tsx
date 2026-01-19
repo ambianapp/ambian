@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import HomeView from "@/components/HomeView";
@@ -62,6 +62,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { syncDeviceSlots } = useAuth();
 
+  // Track whether we're handling a popstate event to prevent pushing duplicate history
+  const isPopstateRef = useRef(false);
+
   // Restore last UI state on mount (helps when the preview/browser remounts the app)
   useEffect(() => {
     try {
@@ -85,6 +88,47 @@ const Index = () => {
       // ignore
     }
   }, [activeView, selectedPlaylist]);
+
+  // Push history state when navigating to playlist or non-home views (for back button support)
+  useEffect(() => {
+    // Skip if this change came from a popstate event (back/forward button)
+    if (isPopstateRef.current) {
+      isPopstateRef.current = false;
+      return;
+    }
+
+    // Push state when entering a playlist or non-home view
+    if (selectedPlaylist) {
+      window.history.pushState({ type: 'playlist', playlist: selectedPlaylist }, '');
+    } else if (activeView !== 'home') {
+      window.history.pushState({ type: 'view', view: activeView }, '');
+    }
+  }, [selectedPlaylist, activeView]);
+
+  // Listen for browser back/forward navigation (popstate)
+  useEffect(() => {
+    const handlePopstate = (event: PopStateEvent) => {
+      isPopstateRef.current = true;
+      
+      const state = event.state as { type?: string; playlist?: SelectedPlaylist; view?: string } | null;
+      
+      if (state?.type === 'playlist' && state.playlist) {
+        // Navigated back to a playlist
+        setSelectedPlaylist(state.playlist);
+      } else if (state?.type === 'view' && state.view) {
+        // Navigated back to a specific view
+        setSelectedPlaylist(null);
+        setActiveView(state.view);
+      } else {
+        // Navigated back to home (no state = initial state)
+        setSelectedPlaylist(null);
+        setActiveView('home');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, []);
 
   // Handle navigation state from other pages (e.g., Profile -> Search, Help -> Playlist)
   useEffect(() => {
