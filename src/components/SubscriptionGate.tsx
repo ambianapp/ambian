@@ -4,6 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Check, User, Shield, Clock, AlertCircle } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const SubscriptionGate = () => {
   const { user, isAdmin, signOut, subscription } = useAuth();
@@ -112,6 +113,7 @@ const SubscriptionGate = () => {
           </div>
           
           <div className="flex items-center justify-center gap-3">
+            <LanguageSelector />
             <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
               {t("nav.profile")}
             </Button>
