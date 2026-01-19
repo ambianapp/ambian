@@ -79,7 +79,7 @@ const InvoiceDueGate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-start p-4 pt-8 md:pt-16 lg:pt-24">
       <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
         {/* Logo */}
         <div className="mb-4">
