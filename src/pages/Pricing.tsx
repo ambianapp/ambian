@@ -156,11 +156,15 @@ const Pricing = () => {
       try {
         const { data, error } = await supabase.functions.invoke("get-invoices");
         if (error) throw error;
-        
-        // Check if there are any open invoices
-        const openInvoices = (data || []).filter(
-          (inv: any) => inv.status === "open" || inv.status === "draft"
+
+        const invoices = Array.isArray(data?.invoices) ? data.invoices : [];
+
+        // We only need to know if there's anything unpaid/open right now.
+        // (The backend function already filters out draft in UI results, but keep it safe.)
+        const openInvoices = invoices.filter(
+          (inv: any) => inv?.status === "open" || inv?.status === "draft"
         );
+
         setHasOpenInvoices(openInvoices.length > 0);
       } catch (error) {
         console.error("Error checking invoices:", error);
@@ -612,8 +616,13 @@ const Pricing = () => {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => setShowInvoiceDialog(true)}
-                    disabled={selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices || isCheckingInvoices}
+                    onClick={() => {
+                      if (selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices || subscription.isPendingPayment) {
+                        return;
+                      }
+                      setShowInvoiceDialog(true);
+                    }}
+                    disabled={selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices || subscription.isPendingPayment || isCheckingInvoices}
                   >
                     {isCheckingInvoices ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
