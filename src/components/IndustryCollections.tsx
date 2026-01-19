@@ -402,13 +402,18 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
             </div>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+          <div className="flex flex-col gap-1 mt-4">
             {collectionPlaylists.length > 0 ? (
               collectionPlaylists.map((playlist) => (
-                <div key={playlist.id} className="relative">
+                <div 
+                  key={playlist.id} 
+                  className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group ${
+                    isMultiSelectMode && selectedPlaylistIds.has(playlist.id) ? "bg-primary/10 ring-1 ring-primary/30" : ""
+                  }`}
+                  onClick={() => handlePlaylistClick(playlist)}
+                >
                   {isMultiSelectMode && (
                     <div 
-                      className="absolute top-2 left-2 z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         togglePlaylistSelection(playlist.id);
@@ -416,29 +421,31 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
                     >
                       <Checkbox 
                         checked={selectedPlaylistIds.has(playlist.id)}
-                        className="h-5 w-5 bg-background/80 border-2"
+                        className="h-5 w-5"
                       />
                     </div>
                   )}
-                  <div className={isMultiSelectMode && selectedPlaylistIds.has(playlist.id) ? "ring-2 ring-primary rounded-lg" : ""}>
-                    <PlaylistCard
-                      playlist={{
-                        id: playlist.id,
-                        name: playlist.name,
-                        description: playlist.description || "",
-                        cover: playlist.cover_url || "/placeholder.svg",
-                        trackCount: 0,
-                        tracks: [],
-                      }}
-                      onClick={() => handlePlaylistClick(playlist)}
-                      onPlay={() => handlePlayPlaylist(playlist.id)}
-                      compact
-                    />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">{playlist.name}</p>
+                    {playlist.description && (
+                      <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
+                    )}
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-9 w-9 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayPlaylist(playlist.id);
+                    }}
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
                 </div>
               ))
             ) : (
-              <p className="col-span-full text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-8">
                 {t("industry.noPlaylists")}
               </p>
             )}
