@@ -293,6 +293,15 @@ const Pricing = () => {
         errorMessage = error.error;
       }
 
+      // If Supabase only gives a generic non-2xx message, provide a more helpful fallback.
+      if (
+        typeof errorMessage === "string" &&
+        /non-2xx|non 2xx|returned a non/i.test(errorMessage)
+      ) {
+        errorMessage =
+          "Invoice request was blocked. If you already have an unpaid invoice, please pay it before requesting a new one.";
+      }
+
       toast({
         title: t("common.error"),
         description: errorMessage,
