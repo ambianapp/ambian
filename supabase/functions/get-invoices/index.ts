@@ -180,13 +180,20 @@ serve(async (req) => {
           isOneTime = !recurring; // No recurring = one-time payment
           isYearly = recurring?.interval === "year" || description.includes("year");
           
-          // Count device slots if multiple line items
-          const deviceSlotCount = invoice.lines.data.filter((li: any) => {
+          // Get quantity from line item (not count of line items - Stripe creates multiple for proration)
+          // Look for positive quantity line items (not credit/proration adjustments)
+          let deviceSlotQuantity = 0;
+          for (const li of invoice.lines.data) {
             const liDesc = (li.description || "").toLowerCase();
-            return DEVICE_SLOT_PRICE_IDS.includes(li.price?.id || "") ||
+            const isDeviceItem = DEVICE_SLOT_PRICE_IDS.includes(li.price?.id || "") ||
                    liDesc.includes("device slot") ||
                    liDesc.includes("extra device");
-          }).length;
+            // Use quantity if positive, or check if it's the main charge (not adjustment)
+            if (isDeviceItem && li.quantity && li.quantity > 0 && !liDesc.includes("unused time")) {
+              deviceSlotQuantity = li.quantity;
+              break;
+            }
+          }
           
           logStep("Invoice line item analysis", {
             invoiceId: invoice.id,
@@ -194,13 +201,13 @@ serve(async (req) => {
             isDeviceSlot,
             isOneTime,
             isYearly,
-            deviceSlotCount,
+            deviceSlotQuantity,
             description: lineItem.description
           });
           
           if (isDeviceSlot) {
-            invoiceLabel = deviceSlotCount > 1 
-              ? `Additional Devices (${deviceSlotCount}×)` 
+            invoiceLabel = deviceSlotQuantity > 1 
+              ? `Additional Devices (${deviceSlotQuantity}×)` 
               : "Additional Device";
           } else if (isOneTime) {
             invoiceLabel = "Yearly Access";
