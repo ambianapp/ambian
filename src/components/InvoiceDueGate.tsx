@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CreditCard, ExternalLink, Loader2, User, Zap } from "lucide-react";
+import { AlertCircle, CreditCard, ExternalLink, Loader2, User } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 
 interface Invoice {
@@ -73,9 +73,18 @@ const InvoiceDueGate = () => {
             <AlertCircle className="w-6 h-6" />
             <span className="font-bold text-lg">{t("invoiceDue.title")}</span>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-sm mb-3">
             {t("invoiceDue.description")}
           </p>
+          <div className="bg-background/50 rounded-lg p-3 text-left space-y-1">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-primary" />
+              {t("invoiceDue.tipTitle")}
+            </p>
+            <p className="text-xs text-muted-foreground pl-6">
+              {t("invoiceDue.tipDescription")}
+            </p>
+          </div>
         </div>
 
         {/* Unpaid Invoices List */}
@@ -128,16 +137,6 @@ const InvoiceDueGate = () => {
           )}
         </div>
 
-        {/* Card Payment Tip */}
-        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
-          <div className="flex items-center justify-center gap-2 text-primary mb-2">
-            <Zap className="w-5 h-5" />
-            <span className="font-semibold text-sm">{t("invoiceDue.tipTitle")}</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {t("invoiceDue.tipDescription")}
-          </p>
-        </div>
 
         {/* Hint */}
         <p className="text-xs text-muted-foreground">
