@@ -220,11 +220,12 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
     const idsToPlay = playlistIds || collectionPlaylists.map(p => p.id);
     if (idsToPlay.length === 0) return;
 
-    // Fetch all tracks from selected playlists
+    // Fetch all tracks from selected playlists - use explicit high limit to avoid default 1000 row limit
     const { data: allTracksData } = await supabase
       .from("playlist_tracks")
       .select("tracks(*), playlist_id")
-      .in("playlist_id", idsToPlay);
+      .in("playlist_id", idsToPlay)
+      .limit(10000);
 
     if (!allTracksData || allTracksData.length === 0) return;
 
