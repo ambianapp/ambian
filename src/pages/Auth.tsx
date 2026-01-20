@@ -312,8 +312,8 @@ const Auth = () => {
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </div>
 
-      {/* Left Side - Brand Info - Only on xl (1280px+) */}
-      <div className="hidden xl:flex xl:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
+      {/* Left Side - Brand Info - Desktop/tablet landscape split */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
         {/* Slow Moving Gradient Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Large soft color blobs that drift slowly */}
@@ -322,23 +322,23 @@ const Auth = () => {
           <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-primary/12 rounded-full blur-[80px] animate-drift-delayed" />
         </div>
         
-        <div className="relative z-10 flex flex-col justify-center p-12 xl:p-16">
+        <div className="relative z-10 flex flex-col justify-center p-8 lg:p-10 xl:p-16">
           {/* Logo */}
-          <img src={ambianLogo} alt="Ambian" className="h-24 w-auto mb-8 self-start" />
+          <img src={ambianLogo} alt="Ambian" className="h-16 xl:h-24 w-auto mb-6 xl:mb-8 self-start" />
           
           {/* Main Headline */}
           <div className="mb-6">
-            <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-4 leading-tight">
+            <h1 className="text-3xl xl:text-5xl font-bold text-foreground mb-3 xl:mb-4 leading-tight">
               {t("auth.noLicenses")}
             </h1>
-            <p className="text-lg text-muted-foreground max-w-lg">
+            <p className="hidden xl:block text-lg text-muted-foreground max-w-lg">
               {t("auth.noLicensesDesc")}
             </p>
           </div>
 
           {/* Free Trial & Pricing */}
-          <div className="mb-8 p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="mb-6 xl:mb-8 p-4 xl:p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50">
+            <div className="flex items-center gap-3 mb-3 xl:mb-4">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-2xl">🎉</span>
               </div>
@@ -348,14 +348,14 @@ const Auth = () => {
               </div>
             </div>
             
-            <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
+            <div className="mt-3 xl:mt-4 p-3 xl:p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
               <div className="text-sm text-muted-foreground mb-1">{t("auth.startingAt")}</div>
-              <div className="text-3xl font-bold text-foreground">€7.40<span className="text-lg font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
+              <div className="text-2xl xl:text-3xl font-bold text-foreground">€7.40<span className="text-base xl:text-lg font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
             </div>
           </div>
           
           {/* Who it's for */}
-          <div className="mb-6">
+          <div className="hidden xl:block mb-6">
             <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
               {t("auth.perfectFor")}
             </h3>
@@ -388,7 +388,7 @@ const Auth = () => {
           </div>
           
           {/* Features */}
-          <div className="space-y-3">
+          <div className="space-y-2 xl:space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Music className="w-4 h-4 text-primary" />
@@ -406,10 +406,10 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full xl:w-1/2 flex items-center justify-center p-4 md:p-6 overflow-hidden relative z-10">
-        <div className="w-full max-w-md space-y-3 md:space-y-3 animate-fade-in">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 md:p-6 overflow-hidden relative z-10">
+        <div className="w-full max-w-md space-y-2 md:space-y-3 animate-fade-in lg:[@media(max-height:820px)]:scale-[0.94] lg:[@media(max-height:820px)]:origin-center">
           {/* Mobile/Tablet Logo */}
-          <div className="xl:hidden">
+          <div className="lg:hidden">
             <img src={ambianLogo} alt="Ambian" className="h-10 md:h-12 mx-auto mb-1" />
             <p className="text-xs text-muted-foreground text-center mb-1">
               {t("auth.noLicensesShort")}
@@ -417,11 +417,11 @@ const Auth = () => {
           </div>
           
           {/* Header */}
-          <div className="text-center xl:text-left">
+          <div className="text-center lg:text-left">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">
               {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
-            <p className="text-muted-foreground mt-1 md:mt-2 hidden xl:block">
+            <p className="text-muted-foreground mt-1 md:mt-2 hidden lg:block">
               {isLogin
                 ? t("auth.signInToAccess")
                 : t("auth.trialInfo")}
@@ -429,7 +429,7 @@ const Auth = () => {
           </div>
 
           {/* Tablet (iPad) compact trial + price line */}
-          <div className="hidden md:flex xl:hidden items-center justify-center gap-2 text-xs text-muted-foreground">
+          <div className="hidden md:flex lg:hidden items-center justify-center gap-2 text-xs text-muted-foreground">
             <span className="font-semibold text-primary">{t("auth.threeDaysFree")}</span>
             <span>•</span>
             <span className="text-muted-foreground">{t("auth.startingAt")}</span>
@@ -438,10 +438,10 @@ const Auth = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleAuth} className="space-y-3 md:space-y-3">
+          <form onSubmit={handleAuth} className="space-y-2 md:space-y-3">
 
             <div className="space-y-2">
-              <Label htmlFor="email">{t("auth.email")}</Label>
+              <Label htmlFor="email" className="text-sm">{t("auth.email")}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -461,7 +461,7 @@ const Auth = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t("auth.password")}</Label>
+                <Label htmlFor="password" className="text-sm">{t("auth.password")}</Label>
                 {isLogin && (
                   <button
                     type="button"
@@ -502,7 +502,7 @@ const Auth = () => {
                     onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
                     className="mt-1"
                   />
-                  <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  <Label htmlFor="terms" className="text-xs xl:text-sm text-muted-foreground leading-snug cursor-pointer">
                     {t("auth.iAccept")}{" "}
                     <Link to="/terms" className="text-primary hover:underline" target="_blank">
                       {t("auth.termsAndConditions")}
@@ -525,7 +525,7 @@ const Auth = () => {
                     onCheckedChange={(checked) => setAcceptedMarketing(checked === true)}
                     className="mt-1"
                   />
-                  <Label htmlFor="marketing" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  <Label htmlFor="marketing" className="text-xs xl:text-sm text-muted-foreground leading-snug cursor-pointer">
                     {t("auth.marketingOptIn")}
                   </Label>
                 </div>
@@ -585,7 +585,7 @@ const Auth = () => {
             Google
           </Button>
 
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-1 md:space-y-2">
             <p className="text-base text-muted-foreground">
               {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}{" "}
               <button
@@ -597,7 +597,7 @@ const Auth = () => {
               </button>
             </p>
             {isLogin && (
-              <p className="text-xs text-muted-foreground hidden xl:block">
+              <p className="text-xs text-muted-foreground hidden lg:block">
                 {t("auth.trialInfo")}
               </p>
             )}
