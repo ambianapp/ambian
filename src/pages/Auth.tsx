@@ -82,6 +82,8 @@ const Auth = () => {
         if (error) throw error;
         // Mark that this browser has an account for future visits
         localStorage.setItem('ambian_has_account', 'true');
+        // Clear scroll positions to start fresh after login
+        sessionStorage.removeItem('ambian_scroll:home');
         navigate("/");
       } else {
         const redirectUrl = `${window.location.origin}/`;
@@ -117,6 +119,8 @@ const Auth = () => {
         
         // Mark that this browser has an account for future visits
         localStorage.setItem('ambian_has_account', 'true');
+        // Clear scroll positions to start fresh after signup
+        sessionStorage.removeItem('ambian_scroll:home');
         toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToAmbian") });
         navigate("/");
       }
