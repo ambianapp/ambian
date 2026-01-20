@@ -303,7 +303,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex relative overflow-hidden">
+    <div className="h-[100dvh] bg-background flex relative overflow-hidden">
       {/* Mobile Background Effects - Top Only */}
       <div className="xl:hidden absolute inset-x-0 top-0 h-[50vh] overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-primary/25 rounded-full blur-[100px] animate-drift" />
@@ -406,12 +406,12 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full xl:w-1/2 flex items-start md:items-center justify-center p-4 pt-4 md:pt-4 overflow-auto relative z-10">
-        <div className="w-full max-w-md space-y-3 md:space-y-4 animate-fade-in">
+      <div className="w-full xl:w-1/2 flex items-center justify-center p-4 md:p-6 overflow-hidden relative z-10">
+        <div className="w-full max-w-md space-y-3 md:space-y-3 animate-fade-in">
           {/* Mobile/Tablet Logo */}
           <div className="xl:hidden">
             <img src={ambianLogo} alt="Ambian" className="h-10 md:h-12 mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground text-center mb-1 md:mb-2">
+            <p className="text-xs text-muted-foreground text-center mb-1">
               {t("auth.noLicensesShort")}
             </p>
           </div>
@@ -428,8 +428,17 @@ const Auth = () => {
             </p>
           </div>
 
+          {/* Tablet (iPad) compact trial + price line */}
+          <div className="hidden md:flex xl:hidden items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-primary">{t("auth.threeDaysFree")}</span>
+            <span>•</span>
+            <span className="text-muted-foreground">{t("auth.startingAt")}</span>
+            <span className="font-semibold text-foreground">€7.40</span>
+            <span className="text-muted-foreground">{t("auth.perMonth")}</span>
+          </div>
+
           {/* Form */}
-          <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
+          <form onSubmit={handleAuth} className="space-y-3 md:space-y-3">
 
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
@@ -441,7 +450,7 @@ const Auth = () => {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 bg-card border-border"
+                  className="pl-10 h-11 md:h-11 bg-card border-border"
                   required
                 />
               </div>
@@ -474,7 +483,7 @@ const Auth = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-12 bg-card border-border"
+                  className="pl-10 h-11 md:h-11 bg-card border-border"
                   required
                 />
               </div>
@@ -485,7 +494,7 @@ const Auth = () => {
 
             {/* Terms Checkbox - Only show for signup */}
             {!isLogin && (
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-2">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id="terms"
@@ -507,7 +516,7 @@ const Auth = () => {
                 {errors.terms && (
                   <p className="text-sm text-destructive">{errors.terms}</p>
                 )}
-                
+
                 {/* Marketing opt-in checkbox */}
                 <div className="flex items-start gap-3">
                   <Checkbox
@@ -525,7 +534,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full h-12"
+              className="w-full h-11 md:h-11"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -551,7 +560,7 @@ const Auth = () => {
 
           <Button
             variant="outline"
-            className="w-full h-12"
+            className="w-full h-11 md:h-11"
             onClick={handleGoogleLogin}
             disabled={isLoading}
           >
@@ -594,8 +603,8 @@ const Auth = () => {
             )}
           </div>
 
-          {/* Mobile/Tablet Pricing Info - Bottom */}
-          <div className="xl:hidden mt-2 md:mt-4 pt-2 md:pt-4 border-t border-border/50">
+          {/* Mobile Pricing Info - Bottom */}
+          <div className="md:hidden mt-2 pt-2 border-t border-border/50">
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
