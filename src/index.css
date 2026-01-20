@@ -70,6 +70,18 @@
     @apply border-border;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    /* iOS Safari (especially iPad landscape) can mis-report 100vh; prefer svh/dvh */
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Plus Jakarta Sans', sans-serif;
