@@ -78,6 +78,17 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const urlCreatedAtRef = useRef<number>(Date.now());
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasRestoredRef = useRef(false);
+  
+  // Track if audio has been unlocked by user gesture (Safari/iOS requirement)
+  const audioUnlockedRef = useRef(false);
+  
+  // Call this on first user-initiated play to unlock audio on Safari/iOS
+  const unlockAudio = useCallback(() => {
+    if (!audioUnlockedRef.current) {
+      audioUnlockedRef.current = true;
+      console.log("[Audio] Audio unlocked by user gesture");
+    }
+  }, []);
 
   // Update audio URL (used for URL refresh)
   const updateAudioUrl = useCallback((newUrl: string) => {
@@ -251,6 +262,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // Mark audio as unlocked since this is a user gesture
+    unlockAudio();
+
     if (playlistTracks) {
       playlistTracksRef.current = playlistTracks;
     }
@@ -279,11 +293,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentTrack(track);
     }
     setIsPlaying(true);
-  }, [canPlayMusic, openDeviceLimitDialog]);
+  }, [canPlayMusic, openDeviceLimitDialog, unlockAudio]);
 
   const handlePlayPause = useCallback(() => {
+    // Mark audio as unlocked since this is a user gesture
+    unlockAudio();
     setIsPlaying((prev) => !prev);
-  }, []);
+  }, [unlockAudio]);
 
   const fetchAndPlayTrack = useCallback(async (track: Track) => {
     if (track.audioUrl) {
@@ -426,7 +442,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       hasCurrentTrack: !!currentTrack, 
       isPlaying, 
       trackId: track.id,
-      playlistLength: playlist.length 
+      playlistLength: playlist.length,
+      audioUnlocked: audioUnlockedRef.current
     });
     
     // If nothing is playing, just start normally
@@ -449,10 +466,18 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         console.log("[triggerScheduledCrossfade] Setting track without URL", { trackId: track.id });
         setCurrentTrack(track);
       }
+      
       // Set playing AFTER setting track to ensure audio element has src
+      // On Safari/iOS, this will only work if audio was previously unlocked by user gesture
       setTimeout(() => {
-        console.log("[triggerScheduledCrossfade] Setting isPlaying=true");
+        console.log("[triggerScheduledCrossfade] Setting isPlaying=true, audioUnlocked:", audioUnlockedRef.current);
         setIsPlaying(true);
+        
+        // If audio hasn't been unlocked yet (no prior user interaction), 
+        // the play will fail silently on Safari/iOS - this is expected browser behavior
+        if (!audioUnlockedRef.current) {
+          console.log("[triggerScheduledCrossfade] Audio not yet unlocked - play may fail on Safari/iOS until user taps play");
+        }
       }, 100);
       return;
     }
