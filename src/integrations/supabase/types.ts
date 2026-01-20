@@ -394,6 +394,152 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_commissions: {
+        Row: {
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          partner_id: string
+          payout_id: string | null
+          period_end: string
+          period_start: string
+          referral_signup_id: string
+          status: string
+          stripe_payment_intent_id: string | null
+          subscription_amount: number
+        }
+        Insert: {
+          commission_amount: number
+          commission_rate: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id: string
+          payout_id?: string | null
+          period_end: string
+          period_start: string
+          referral_signup_id: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          subscription_amount: number
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id?: string
+          payout_id?: string | null
+          period_end?: string
+          period_start?: string
+          referral_signup_id?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          subscription_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "referral_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_commissions_referral_signup_id_fkey"
+            columns: ["referral_signup_id"]
+            isOneToOne: false
+            referencedRelation: "referral_signups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_partners: {
+        Row: {
+          commission_duration_months: number
+          commission_rate: number
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          referral_code: string
+          stripe_connect_account_id: string | null
+          stripe_connect_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          commission_duration_months?: number
+          commission_rate?: number
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          referral_code: string
+          stripe_connect_account_id?: string | null
+          stripe_connect_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commission_duration_months?: number
+          commission_rate?: number
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          referral_code?: string
+          stripe_connect_account_id?: string | null
+          stripe_connect_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_signups: {
+        Row: {
+          commission_end_date: string | null
+          created_at: string
+          free_months_granted: number
+          id: string
+          partner_id: string
+          referral_code: string
+          subscription_start_date: string | null
+          user_id: string
+        }
+        Insert: {
+          commission_end_date?: string | null
+          created_at?: string
+          free_months_granted?: number
+          id?: string
+          partner_id: string
+          referral_code: string
+          subscription_start_date?: string | null
+          user_id: string
+        }
+        Update: {
+          commission_end_date?: string | null
+          created_at?: string
+          free_months_granted?: number
+          id?: string
+          partner_id?: string
+          referral_code?: string
+          subscription_start_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_signups_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "referral_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string
