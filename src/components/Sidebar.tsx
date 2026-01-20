@@ -223,70 +223,72 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         />
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex flex-col gap-1">
-        {navItems.map((item) => (
-          <div key={item.id} className="flex items-center">
-            <Button
-              variant="ghost"
-              className={cn(
-                "justify-start gap-4 h-12 text-base font-medium flex-1",
-                activeView === item.id
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+      {/* Scrollable area (fixes iPad Safari landscape height/scroll quirks) */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle [webkit-overflow-scrolling:touch]">
+        {/* Main Navigation */}
+        <nav className="flex flex-col gap-1">
+          {navItems.map((item) => (
+            <div key={item.id} className="flex items-center">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "justify-start gap-4 h-12 text-base font-medium flex-1",
+                  activeView === item.id
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => onViewChange(item.id)}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </Button>
+              {/* Scheduler toggle next to Schedule item */}
+              {item.id === "schedule" && onToggleScheduler && (
+                <Switch
+                  checked={schedulerEnabled}
+                  onCheckedChange={onToggleScheduler}
+                  className="mr-2"
+                />
               )}
-              onClick={() => onViewChange(item.id)}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </Button>
-            {/* Scheduler toggle next to Schedule item */}
-            {item.id === "schedule" && onToggleScheduler && (
-              <Switch
-                checked={schedulerEnabled}
-                onCheckedChange={onToggleScheduler}
-                className="mr-2"
-              />
-            )}
-          </div>
-        ))}
-        <Button
-          variant="ghost"
-          className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
-          onClick={() => navigate("/profile")}
-        >
-          <User className="w-5 h-5" />
-          <span className="flex items-center gap-2">
-            {t("nav.profile")}
-            {subscription.isPendingPayment && (
-              <AlertCircle className="w-4 h-4 text-yellow-500" />
-            )}
-          </span>
-        </Button>
-        <Button
-          variant="ghost"
-          className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
-          onClick={() => navigate("/help")}
-        >
-          <HelpCircle className="w-5 h-5" />
-          {t("nav.help")}
-        </Button>
-        <div className="px-3 py-1">
-          <LanguageSelector />
-        </div>
-        {isAdmin && (
+            </div>
+          ))}
           <Button
             variant="ghost"
             className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/profile")}
           >
-            <Shield className="w-5 h-5 text-primary" />
-            {t("sidebar.adminPanel")}
+            <User className="w-5 h-5" />
+            <span className="flex items-center gap-2">
+              {t("nav.profile")}
+              {subscription.isPendingPayment && (
+                <AlertCircle className="w-4 h-4 text-yellow-500" />
+              )}
+            </span>
           </Button>
-        )}
-      </nav>
+          <Button
+            variant="ghost"
+            className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/help")}
+          >
+            <HelpCircle className="w-5 h-5" />
+            {t("nav.help")}
+          </Button>
+          <div className="px-3 py-1">
+            <LanguageSelector />
+          </div>
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              className="justify-start gap-4 h-12 text-base font-medium text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/admin")}
+            >
+              <Shield className="w-5 h-5 text-primary" />
+              {t("sidebar.adminPanel")}
+            </Button>
+          )}
+        </nav>
 
-      <div className="flex-1 flex flex-col gap-4 mt-4 min-h-0">
+        <div className="flex flex-col gap-4 mt-4">
         <div className="flex items-center justify-between px-2">
           <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
           <Button 
@@ -340,7 +342,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         </DialogContent>
       </Dialog>
 
-        <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle [webkit-overflow-scrolling:touch]">
+        <div className="space-y-1">
           {playlistsError && (
             <div className="px-2 py-2">
               <p className="text-xs text-muted-foreground">{playlistsError}</p>
@@ -395,6 +397,8 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
             </p>
           )}
         </div>
+      </div>
+
       </div>
 
     </aside>
