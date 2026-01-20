@@ -795,44 +795,50 @@ const PlayerBar = () => {
     };
   }, [initWebAudio]);
 
-  // Apply volume using both methods (Web Audio for iOS, direct for others)
+  // Apply volume:
+  // - Desktop: HTMLMediaElement.volume
+  // - iOS: Web Audio GainNodes
+  // IMPORTANT: during crossfade we must NOT overwrite scheduled gain ramps.
   useEffect(() => {
     const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
-    
+
     // Resume AudioContext if suspended (Safari suspends aggressively)
-    if (audioContextRef.current?.state === 'suspended') {
+    if (audioContextRef.current?.state === "suspended") {
       audioContextRef.current.resume().catch(console.warn);
     }
-    
+
     // Method 1: Direct volume (works on desktop browsers)
-    if (audioRef.current) {
-      audioRef.current.volume = targetVolume;
-    }
-    if (crossfadeAudioRef.current) {
-      crossfadeAudioRef.current.volume = targetVolume;
-    }
-    
+    // Keep these in sync so non-iOS works even if WebAudio fails.
+    if (audioRef.current) audioRef.current.volume = targetVolume;
+    if (crossfadeAudioRef.current) crossfadeAudioRef.current.volume = targetVolume;
+
     // Method 2: Web Audio API gain (works on iOS)
-    // Use setValueAtTime for more reliable behavior on iOS
-    const currentTime = audioContextRef.current?.currentTime ?? 0;
-    
-    if (mainGainNodeRef.current) {
-      try {
-        mainGainNodeRef.current.gain.cancelScheduledValues(currentTime);
-        mainGainNodeRef.current.gain.setValueAtTime(targetVolume, currentTime);
-      } catch {
-        mainGainNodeRef.current.gain.value = targetVolume;
-      }
+    const ctx = audioContextRef.current;
+    const now = ctx?.currentTime ?? 0;
+    const mainGain = mainGainNodeRef.current;
+    const crossGain = crossfadeGainNodeRef.current;
+    if (!ctx || !mainGain || !crossGain) return;
+
+    // During an active crossfade, gain ramps are scheduled by the crossfade logic.
+    // Don't cancel/override them here or we'll create clicks/pops.
+    if (isCrossfadingRef.current) return;
+
+    const activeGain = isCrossfadeActive ? crossGain : mainGain;
+    const inactiveGain = isCrossfadeActive ? mainGain : crossGain;
+
+    try {
+      activeGain.gain.cancelScheduledValues(now);
+      activeGain.gain.setValueAtTime(activeGain.gain.value, now);
+      activeGain.gain.linearRampToValueAtTime(targetVolume, now + 0.01);
+
+      inactiveGain.gain.cancelScheduledValues(now);
+      inactiveGain.gain.setValueAtTime(inactiveGain.gain.value, now);
+      inactiveGain.gain.linearRampToValueAtTime(0, now + 0.01);
+    } catch {
+      activeGain.gain.value = targetVolume;
+      inactiveGain.gain.value = 0;
     }
-    if (crossfadeGainNodeRef.current) {
-      try {
-        crossfadeGainNodeRef.current.gain.cancelScheduledValues(currentTime);
-        crossfadeGainNodeRef.current.gain.setValueAtTime(targetVolume, currentTime);
-      } catch {
-        crossfadeGainNodeRef.current.gain.value = targetVolume;
-      }
-    }
-  }, [volume, isMuted]);
+  }, [volume, isMuted, isCrossfadeActive]);
 
   
 
@@ -920,7 +926,8 @@ const PlayerBar = () => {
       // Set current values explicitly to prevent jumps
       const currentOutVolume = fadingOutGain.gain.value;
       fadingOutGain.gain.setValueAtTime(currentOutVolume, now);
-      fadingInGain.gain.setValueAtTime(0.001, now); // Use small value instead of 0 (exponential ramp can't start from 0)
+      // Linear ramps can start from 0; starting at 0 avoids tiny discontinuities that can click on iOS.
+      fadingInGain.gain.setValueAtTime(0, now);
       
       // Schedule smooth ramps
       fadingOutGain.gain.linearRampToValueAtTime(0, fadeEndTime);
@@ -1123,7 +1130,7 @@ const PlayerBar = () => {
         // Set current values explicitly to prevent jumps
         const currentOutVolume = fadingOutGain.gain.value;
         fadingOutGain.gain.setValueAtTime(currentOutVolume, now);
-        fadingInGain.gain.setValueAtTime(0.001, now); // Use small value (exponential ramp can't start from 0)
+        fadingInGain.gain.setValueAtTime(0, now);
         
         // Schedule smooth ramps
         fadingOutGain.gain.linearRampToValueAtTime(0, fadeEndTime);
