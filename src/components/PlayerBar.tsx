@@ -913,27 +913,12 @@ const PlayerBar = () => {
     // Set initial volume to 0 BEFORE playing to prevent pop
     fadingInAudio.volume = 0;
     
-    // Use Web Audio smooth ramping if available (prevents popping on iOS)
+    // Initialize Web Audio gains for crossfade
     const ctx = audioContextRef.current;
-    const now = ctx?.currentTime ?? 0;
-    const fadeEndTime = now + CROSSFADE_DURATION;
-    
-    if (fadingOutGain && fadingInGain && ctx) {
-      // Cancel any scheduled changes first
-      fadingOutGain.gain.cancelScheduledValues(now);
+    if (fadingInGain && ctx) {
+      const now = ctx.currentTime;
       fadingInGain.gain.cancelScheduledValues(now);
-      
-      // Set current values explicitly to prevent jumps
-      const currentOutVolume = fadingOutGain.gain.value;
-      fadingOutGain.gain.setValueAtTime(currentOutVolume, now);
-      // Linear ramps can start from 0; starting at 0 avoids tiny discontinuities that can click on iOS.
       fadingInGain.gain.setValueAtTime(0, now);
-      
-      // Schedule smooth ramps
-      fadingOutGain.gain.linearRampToValueAtTime(0, fadeEndTime);
-      fadingInGain.gain.linearRampToValueAtTime(targetVolume, fadeEndTime);
-      
-      dbg("startCrossfade: using Web Audio smooth ramp", { now, fadeEndTime, targetVolume });
     }
     
     // Start playing the fading-in audio
@@ -942,22 +927,45 @@ const PlayerBar = () => {
       console.error(err);
     });
 
-    // Still use interval for direct volume (desktop browsers) and for tracking completion
+    // Use interval for BOTH direct volume AND Web Audio gains
+    // This ensures consistent timing on PC and iOS Safari
     const steps = 50;
     const stepTime = (CROSSFADE_DURATION * 1000) / steps;
     let step = 0;
-    const startVolume = fadingOutAudio.volume || targetVolume;
+    const startOutVolume = fadingOutGain?.gain.value ?? fadingOutAudio.volume ?? targetVolume;
+
+    dbg("startCrossfade: starting interval-based fade", { startOutVolume, targetVolume, steps, stepTime });
 
     crossfadeIntervalRef.current = setInterval(() => {
       step++;
       const progress = Math.min(1, step / steps);
 
-      const fadeOutValue = Math.max(0, startVolume * (1 - progress));
-      const fadeInValue = Math.max(0, Math.min(1, targetVolume * progress));
+      // Use ease-in-out curve for smoother perceived fade
+      const easedProgress = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-      // Direct volume for desktop browsers (Web Audio handles iOS)
+      const fadeOutValue = Math.max(0, startOutVolume * (1 - easedProgress));
+      const fadeInValue = Math.max(0, Math.min(1, targetVolume * easedProgress));
+
+      // Direct volume for desktop browsers
       fadingOutAudio.volume = fadeOutValue;
       fadingInAudio.volume = fadeInValue;
+      
+      // Web Audio gains for iOS - use tiny ramps to avoid clicks
+      const ctx = audioContextRef.current;
+      if (ctx && fadingOutGain && fadingInGain) {
+        const now = ctx.currentTime;
+        const rampTime = 0.02; // 20ms micro-ramp to prevent clicks
+        
+        fadingOutGain.gain.cancelScheduledValues(now);
+        fadingOutGain.gain.setValueAtTime(fadingOutGain.gain.value, now);
+        fadingOutGain.gain.linearRampToValueAtTime(fadeOutValue, now + rampTime);
+        
+        fadingInGain.gain.cancelScheduledValues(now);
+        fadingInGain.gain.setValueAtTime(fadingInGain.gain.value, now);
+        fadingInGain.gain.linearRampToValueAtTime(fadeInValue, now + rampTime);
+      }
 
       if (step >= steps) {
         if (crossfadeIntervalRef.current) {
@@ -1112,34 +1120,22 @@ const PlayerBar = () => {
       const fadingInAudio = isCrossfadeActive ? audioRef.current : crossfadeAudioRef.current;
       const fadingOutGain = isCrossfadeActive ? crossfadeGainNodeRef.current : mainGainNodeRef.current;
       const fadingInGain = isCrossfadeActive ? mainGainNodeRef.current : crossfadeGainNodeRef.current;
+      const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
       
       fadingInAudio.src = track.audioUrl;
       fadingInAudio.volume = 0;
       
-      // Use Web Audio smooth ramping if available (prevents popping on iOS)
+      // Initialize Web Audio gain for fade-in element
       const ctx = audioContextRef.current;
-      const now = ctx?.currentTime ?? 0;
-      const fadeEndTime = now + CROSSFADE_DURATION;
-      const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
-      
-      if (fadingOutGain && fadingInGain && ctx) {
-        // Cancel any scheduled changes first
-        fadingOutGain.gain.cancelScheduledValues(now);
+      if (fadingInGain && ctx) {
+        const now = ctx.currentTime;
         fadingInGain.gain.cancelScheduledValues(now);
-        
-        // Set current values explicitly to prevent jumps
-        const currentOutVolume = fadingOutGain.gain.value;
-        fadingOutGain.gain.setValueAtTime(currentOutVolume, now);
         fadingInGain.gain.setValueAtTime(0, now);
-        
-        // Schedule smooth ramps
-        fadingOutGain.gain.linearRampToValueAtTime(0, fadeEndTime);
-        fadingInGain.gain.linearRampToValueAtTime(targetVolume, fadeEndTime);
       }
       
       fadingInAudio.play().catch(console.error);
       
-      const startVolume = fadingOutAudio.volume || 1;
+      const startOutVolume = fadingOutGain?.gain.value ?? fadingOutAudio.volume ?? 1;
       const steps = 50;
       const stepTime = (CROSSFADE_DURATION * 1000) / steps;
       let step = 0;
@@ -1148,12 +1144,32 @@ const PlayerBar = () => {
         step++;
         const progress = Math.min(1, step / steps);
         
-        const fadeOutValue = Math.max(0, startVolume * (1 - progress));
-        const fadeInValue = Math.max(0, Math.min(1, targetVolume * progress));
+        // Use ease-in-out curve for smoother perceived fade
+        const easedProgress = progress < 0.5 
+          ? 2 * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         
-        // Direct volume for desktop browsers (Web Audio handles iOS)
+        const fadeOutValue = Math.max(0, startOutVolume * (1 - easedProgress));
+        const fadeInValue = Math.max(0, Math.min(1, targetVolume * easedProgress));
+        
+        // Direct volume for desktop browsers
         fadingOutAudio.volume = fadeOutValue;
         fadingInAudio.volume = fadeInValue;
+        
+        // Web Audio gains for iOS - use tiny ramps to avoid clicks
+        const ctx = audioContextRef.current;
+        if (ctx && fadingOutGain && fadingInGain) {
+          const now = ctx.currentTime;
+          const rampTime = 0.02; // 20ms micro-ramp to prevent clicks
+          
+          fadingOutGain.gain.cancelScheduledValues(now);
+          fadingOutGain.gain.setValueAtTime(fadingOutGain.gain.value, now);
+          fadingOutGain.gain.linearRampToValueAtTime(fadeOutValue, now + rampTime);
+          
+          fadingInGain.gain.cancelScheduledValues(now);
+          fadingInGain.gain.setValueAtTime(fadingInGain.gain.value, now);
+          fadingInGain.gain.linearRampToValueAtTime(fadeInValue, now + rampTime);
+        }
         
         if (step >= steps) {
           clearInterval(intervalId);
