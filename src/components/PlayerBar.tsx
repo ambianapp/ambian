@@ -144,6 +144,33 @@ const PlayerBar = () => {
   }, [isCrossfadeActive]);
   const lastCrossfadeSwapAtRef = useRef<number>(0); // Prevent post-swap reloads
 
+  const softStop = useCallback((el: HTMLAudioElement | null, gain: GainNode | null) => {
+    if (!el) return;
+
+    // De-zipper: ramp gain to 0 briefly before pausing/clearing src to avoid pops (esp. iOS).
+    const ctx = audioContextRef.current;
+    const now = ctx?.currentTime ?? 0;
+    if (gain && ctx) {
+      try {
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.02);
+      } catch {
+        // ignore
+      }
+    }
+
+    // Pause slightly after ramp starts.
+    window.setTimeout(() => {
+      try {
+        el.pause();
+        el.src = "";
+      } catch {
+        // ignore
+      }
+    }, 30);
+  }, []);
+
   // Reset crossfade state - used when user manually skips tracks
   const resetCrossfadeState = useCallback(() => {
     if (crossfadeIntervalRef.current) {
@@ -157,12 +184,30 @@ const PlayerBar = () => {
     preloadedNextTrackRef.current = null;
     isPreloadingRef.current = false;
     lastSetTrackIdRef.current = null;
-    if (crossfadeAudioRef.current) {
-      crossfadeAudioRef.current.pause();
-      crossfadeAudioRef.current.src = "";
+    // Cancel any scheduled gain ramps and reset to current target volume
+    const ctx = audioContextRef.current;
+    const now = ctx?.currentTime ?? 0;
+    const targetVol = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
+    for (const g of [mainGainNodeRef.current, crossfadeGainNodeRef.current]) {
+      if (!g || !ctx) continue;
+      try {
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(targetVol, now);
+      } catch {
+        g.gain.value = targetVol;
+      }
     }
+
+    // Soft-stop the secondary audio element to avoid iOS pops
+    softStop(crossfadeAudioRef.current, crossfadeGainNodeRef.current);
     setIsCrossfadeActive(false);
-  }, []);
+  }, [isMuted, softStop]);
+
+  const softStopActiveAudio = useCallback(() => {
+    const activeEl = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    const activeGain = isCrossfadeActive ? crossfadeGainNodeRef.current : mainGainNodeRef.current;
+    softStop(activeEl, activeGain);
+  }, [isCrossfadeActive, softStop]);
 
   // Safety: if the track changes for any reason while a crossfade timer is still running,
   // stop that timer so it can’t “complete” ~5s later and interfere with the new song.
@@ -523,19 +568,21 @@ const PlayerBar = () => {
       handlePlayPause();
     });
     navigator.mediaSession.setActionHandler('previoustrack', () => {
+      softStopActiveAudio();
       resetCrossfadeState();
-      handlePrevious();
+      window.setTimeout(() => handlePrevious(), 35);
     });
     navigator.mediaSession.setActionHandler('nexttrack', () => {
+      softStopActiveAudio();
       resetCrossfadeState();
-      handleNext();
+      window.setTimeout(() => handleNext(), 35);
     });
     
     // Remove seek handlers to prevent 10-second skip buttons
     navigator.mediaSession.setActionHandler('seekbackward', null);
     navigator.mediaSession.setActionHandler('seekforward', null);
 
-  }, [currentTrack, handlePlayPause, handlePrevious, handleNext]);
+  }, [currentTrack, handlePlayPause, handlePrevious, handleNext, resetCrossfadeState, softStopActiveAudio]);
 
   // Update playback state for media session
   useEffect(() => {
@@ -930,9 +977,8 @@ const PlayerBar = () => {
             mainAudioSrcRef.current = normalizeUrl(next.audioUrl);
           }
 
-          // Stop the faded-out audio and clear its src
-          fadingOutAudio.pause();
-          fadingOutAudio.src = "";
+          // Stop the faded-out audio and clear its src (soft-stop to avoid pops on iOS)
+          softStop(fadingOutAudio, fadingOutGain);
           
           // Reset gain for the faded-out element for next use
           if (fadingOutGain) {
@@ -965,7 +1011,7 @@ const PlayerBar = () => {
         }
       }
     }, stepTime);
-  }, [crossfade, repeat, isMuted, setCurrentTrackDirect, normalizeUrl, isCrossfadeActive, dbg, currentTrack?.id]);
+  }, [crossfade, repeat, isMuted, setCurrentTrackDirect, normalizeUrl, isCrossfadeActive, dbg, currentTrack?.id, softStop]);
 
   // Monitor for crossfade trigger point - works for whichever audio element is active
   useEffect(() => {
@@ -1109,9 +1155,8 @@ const PlayerBar = () => {
           // Swap: update playlist and toggle active audio element
           playlistTracksRef.current = playlist;
           
-          // Stop the faded-out audio
-          fadingOutAudio.pause();
-          fadingOutAudio.src = "";
+          // Stop the faded-out audio (soft-stop to avoid pops on iOS)
+          softStop(fadingOutAudio, fadingOutGain);
           
           // Reset gain for the faded-out element for next use
           if (fadingOutGain) {
@@ -1145,7 +1190,7 @@ const PlayerBar = () => {
       // No crossfade - just switch directly (handled by PlayerContext)
       clearScheduledTransition();
     }
-  }, [pendingScheduledTransition, crossfade, isPlaying, currentTrack?.audioUrl, volume, isMuted, clearScheduledTransition, isCrossfadeActive, setCurrentTrackDirect]);
+  }, [pendingScheduledTransition, crossfade, isPlaying, currentTrack?.audioUrl, volume, isMuted, clearScheduledTransition, isCrossfadeActive, setCurrentTrackDirect, softStop]);
 
   // Save current position for persistence
   const savePositionRef = useRef<NodeJS.Timeout | null>(null);
@@ -1413,7 +1458,17 @@ const PlayerBar = () => {
             >
               <Shuffle className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handlePrevious(); }} className="text-foreground h-11 w-11">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                softStopActiveAudio();
+                resetCrossfadeState();
+                // tiny delay to let gain ramp begin (prevents pop)
+                window.setTimeout(() => handlePrevious(), 35);
+              }}
+              className="text-foreground h-11 w-11"
+            >
               <SkipBack className="w-6 h-6" />
             </Button>
           </div>
@@ -1425,7 +1480,16 @@ const PlayerBar = () => {
           
           {/* Right controls - justify-start to push buttons toward center */}
           <div className="flex-1 flex items-center justify-start gap-2">
-            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handleNext(); }} className="text-foreground h-11 w-11">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                softStopActiveAudio();
+                resetCrossfadeState();
+                window.setTimeout(() => handleNext(), 35);
+              }}
+              className="text-foreground h-11 w-11"
+            >
               <SkipForward className="w-6 h-6" />
             </Button>
             <Button
@@ -1503,13 +1567,31 @@ const PlayerBar = () => {
             >
               <Shuffle className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handlePrevious(); }} className="text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                softStopActiveAudio();
+                resetCrossfadeState();
+                window.setTimeout(() => handlePrevious(), 35);
+              }}
+              className="text-foreground"
+            >
               <SkipBack className="w-5 h-5" />
             </Button>
             <Button variant="player" size="iconLg" onClick={handlePlayPause} className="h-12 w-12">
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => { resetCrossfadeState(); handleNext(); }} className="text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                softStopActiveAudio();
+                resetCrossfadeState();
+                window.setTimeout(() => handleNext(), 35);
+              }}
+              className="text-foreground"
+            >
               <SkipForward className="w-5 h-5" />
             </Button>
             <Button 
