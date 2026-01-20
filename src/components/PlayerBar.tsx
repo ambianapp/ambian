@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3, ListMusic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -10,13 +10,6 @@ import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { useToast } from "@/hooks/use-toast";
 import SignedImage from "@/components/SignedImage";
 import { Track } from "@/data/musicData";
-
-// iOS/iPadOS ignores programmatic volume changes - only system volume works
-const isIOSDevice = () => {
-  if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-};
 
 const CROSSFADE_DURATION = 5; // seconds
 
@@ -50,6 +43,14 @@ const PlayerBar = () => {
   const [progress, setProgress] = useState([0]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  
+  // Web Audio API for iOS volume control (iOS ignores HTMLMediaElement.volume)
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mainGainNodeRef = useRef<GainNode | null>(null);
+  const crossfadeGainNodeRef = useRef<GainNode | null>(null);
+  const mainSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const crossfadeSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const webAudioInitializedRef = useRef(false);
 
   const normalizeUrl = useCallback((url: string) => {
     try {
@@ -62,9 +63,6 @@ const PlayerBar = () => {
   const { user, getDeviceId } = useAuth();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
-  
-  // Check if we're on iOS (volume control doesn't work programmatically)
-  const isIOS = useMemo(() => isIOSDevice(), []);
   
   const isLiked = currentTrack ? checkIsLiked(currentTrack.id) : false;
 
@@ -679,10 +677,79 @@ const PlayerBar = () => {
     }
   }, [isPlaying, currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, dbg]);
 
+  // Initialize Web Audio API for iOS volume control
+  const initWebAudio = useCallback(() => {
+    if (webAudioInitializedRef.current) return;
+    if (!audioRef.current) return;
+    
+    try {
+      // Create AudioContext (Safari needs webkit prefix sometimes)
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      
+      audioContextRef.current = new AudioCtx();
+      
+      // Create gain nodes for volume control
+      mainGainNodeRef.current = audioContextRef.current.createGain();
+      crossfadeGainNodeRef.current = audioContextRef.current.createGain();
+      
+      // Connect main audio element
+      if (audioRef.current && !mainSourceNodeRef.current) {
+        mainSourceNodeRef.current = audioContextRef.current.createMediaElementSource(audioRef.current);
+        mainSourceNodeRef.current.connect(mainGainNodeRef.current);
+        mainGainNodeRef.current.connect(audioContextRef.current.destination);
+      }
+      
+      // Connect crossfade audio element
+      if (crossfadeAudioRef.current && !crossfadeSourceNodeRef.current) {
+        crossfadeSourceNodeRef.current = audioContextRef.current.createMediaElementSource(crossfadeAudioRef.current);
+        crossfadeSourceNodeRef.current.connect(crossfadeGainNodeRef.current);
+        crossfadeGainNodeRef.current.connect(audioContextRef.current.destination);
+      }
+      
+      webAudioInitializedRef.current = true;
+      console.log("[Audio] Web Audio API initialized for volume control");
+    } catch (err) {
+      console.warn("[Audio] Web Audio API initialization failed:", err);
+    }
+  }, []);
+
+  // Initialize Web Audio on first user interaction (required by browsers)
   useEffect(() => {
+    const handleInteraction = () => {
+      initWebAudio();
+      // Resume AudioContext if suspended (Safari requirement)
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+    };
+    
+    // Listen for user interaction to initialize
+    document.addEventListener('click', handleInteraction, { once: false });
+    document.addEventListener('touchstart', handleInteraction, { once: false });
+    
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+    };
+  }, [initWebAudio]);
+
+  // Apply volume using both methods (Web Audio for iOS, direct for others)
+  useEffect(() => {
+    const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+    
+    // Method 1: Direct volume (works on desktop browsers)
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (activeAudio) {
-      activeAudio.volume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+      activeAudio.volume = targetVolume;
+    }
+    
+    // Method 2: Web Audio API gain (works on iOS)
+    if (mainGainNodeRef.current) {
+      mainGainNodeRef.current.gain.value = isCrossfadeActive ? 0 : targetVolume;
+    }
+    if (crossfadeGainNodeRef.current) {
+      crossfadeGainNodeRef.current.gain.value = isCrossfadeActive ? targetVolume : 0;
     }
   }, [volume, isMuted, isCrossfadeActive]);
 
@@ -1378,26 +1445,24 @@ const PlayerBar = () => {
           </div>
         </div>
 
-        {/* Volume Control - hidden on iOS since programmatic volume doesn't work */}
-        {!isIOS && (
-          <div className="flex items-center gap-3 w-48 justify-end">
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={() => setIsMuted(!isMuted)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
-            <Slider
-              value={isMuted ? [0] : volume}
-              onValueChange={setVolume}
-              max={100}
-              step={1}
-              className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
-            />
-          </div>
-        )}
+        {/* Volume Control */}
+        <div className="flex items-center gap-3 w-48 justify-end">
+          <Button
+            variant="ghost"
+            size="iconSm"
+            onClick={() => setIsMuted(!isMuted)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </Button>
+          <Slider
+            value={isMuted ? [0] : volume}
+            onValueChange={setVolume}
+            max={100}
+            step={1}
+            className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
+          />
+        </div>
       </div>
     </>
   );
