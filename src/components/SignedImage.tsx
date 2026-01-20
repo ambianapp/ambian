@@ -9,11 +9,10 @@ type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
 };
 
 function isAudioBucketUrl(url: string) {
-  // Check for both audio files and covers in the private audio bucket
-  // Handles: /storage/v1/object/public/audio/, /storage/v1/object/audio/, and full supabase URLs
+  // Only sign URLs from the private audio bucket
+  // Check specifically for /audio/ bucket paths, NOT other storage buckets
   return url.includes("/storage/v1/object/public/audio/") || 
-         url.includes("/storage/v1/object/audio/") ||
-         url.includes(".supabase.co/storage/");
+         url.includes("/storage/v1/object/audio/");
 }
 
 /**
