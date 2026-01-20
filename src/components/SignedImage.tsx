@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef } from "react";
+import { useEffect, useState, forwardRef, useRef } from "react";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
@@ -8,75 +8,119 @@ type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   fallbackSrc?: string;
 };
 
-function isAudioBucketPublicUrl(url: string) {
+function isAudioBucketUrl(url: string) {
   // Check for both audio files and covers in the private audio bucket
+  // Handles: /storage/v1/object/public/audio/, /storage/v1/object/audio/, and full supabase URLs
   return url.includes("/storage/v1/object/public/audio/") || 
-         url.includes("/storage/v1/object/audio/");
+         url.includes("/storage/v1/object/audio/") ||
+         url.includes(".supabase.co/storage/");
 }
 
 /**
- * Renders an image and automatically converts private-bucket public URLs
+ * Renders an image and automatically converts private-bucket URLs
  * (e.g. /storage/v1/object/public/audio/...) into a signed URL.
+ * Shows a neutral background while loading to prevent white flash.
  */
 const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
-  ({ src, alt, className, fallbackSrc = "/placeholder.svg", loading = "lazy", ...props }, ref) => {
-    // Start with fallback to prevent white flash, then resolve the actual src
-    const [resolvedSrc, setResolvedSrc] = useState<string>(fallbackSrc);
+  ({ src, alt, className, fallbackSrc = "/placeholder.svg", loading = "lazy", style, ...props }, ref) => {
+    const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const mountedRef = useRef(true);
+    const currentSrcRef = useRef(src);
 
     useEffect(() => {
-      let cancelled = false;
+      mountedRef.current = true;
+      return () => {
+        mountedRef.current = false;
+      };
+    }, []);
+
+    useEffect(() => {
+      // Track the current src to avoid race conditions
+      currentSrcRef.current = src;
       setHasError(false);
+      setIsLoading(true);
 
       async function resolve() {
         const next = src || "";
-        if (!next) {
-          setResolvedSrc(fallbackSrc);
+        
+        if (!next || next === "/placeholder.svg") {
+          if (mountedRef.current && currentSrcRef.current === src) {
+            setResolvedSrc(fallbackSrc);
+            setIsLoading(false);
+          }
           return;
         }
 
         // Public assets or relative paths (e.g. /playlists/...) should be used as-is.
-        if (!isAudioBucketPublicUrl(next)) {
-          if (!cancelled) setResolvedSrc(next);
+        if (!isAudioBucketUrl(next)) {
+          if (mountedRef.current && currentSrcRef.current === src) {
+            setResolvedSrc(next);
+            setIsLoading(false);
+          }
           return;
         }
 
         try {
           const signed = await getSignedAudioUrl(next);
-          if (cancelled) return;
+          if (!mountedRef.current || currentSrcRef.current !== src) return;
+          
           if (signed) {
             setResolvedSrc(signed);
           } else {
-            // Failed to get signed URL, use fallback
+            console.warn("[SignedImage] Failed to get signed URL for:", next?.substring(0, 60));
             setResolvedSrc(fallbackSrc);
           }
         } catch (err) {
-          if (!cancelled) setResolvedSrc(fallbackSrc);
+          console.error("[SignedImage] Error signing URL:", err);
+          if (mountedRef.current && currentSrcRef.current === src) {
+            setResolvedSrc(fallbackSrc);
+          }
+        } finally {
+          if (mountedRef.current && currentSrcRef.current === src) {
+            setIsLoading(false);
+          }
         }
       }
 
       resolve();
-
-      return () => {
-        cancelled = true;
-      };
     }, [src, fallbackSrc]);
 
     const handleError = () => {
-      if (!hasError) {
+      if (!hasError && mountedRef.current) {
+        console.warn("[SignedImage] Image failed to load:", resolvedSrc?.substring(0, 60));
         setHasError(true);
         setResolvedSrc(fallbackSrc);
       }
     };
 
+    const handleLoad = () => {
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
+    };
+
+    // Show a neutral background while loading or if no source
+    const showPlaceholder = isLoading || !resolvedSrc;
+
     return (
       <img
         ref={ref}
-        src={resolvedSrc}
+        src={resolvedSrc || fallbackSrc}
         alt={alt}
         loading={loading}
-        className={cn(className)}
+        className={cn(
+          className,
+          showPlaceholder && "bg-muted"
+        )}
+        style={{
+          ...style,
+          // Ensure a background color while loading to prevent white flash
+          backgroundColor: showPlaceholder ? 'hsl(var(--muted))' : undefined,
+        }}
         onError={handleError}
+        onLoad={handleLoad}
         {...props}
       />
     );
