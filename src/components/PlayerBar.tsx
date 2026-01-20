@@ -857,22 +857,42 @@ const PlayerBar = () => {
     const fadingInGain = isCrossfadeActive ? mainGainNodeRef.current : crossfadeGainNodeRef.current;
     const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
 
-    // Start playing the fading-in audio (already preloaded)
-    // Set initial volume to 0 via both methods
+    // Set initial volume to 0 BEFORE playing to prevent pop
     fadingInAudio.volume = 0;
-    if (fadingInGain) {
-      fadingInGain.gain.value = 0;
+    
+    // Use Web Audio smooth ramping if available (prevents popping on iOS)
+    const ctx = audioContextRef.current;
+    const now = ctx?.currentTime ?? 0;
+    const fadeEndTime = now + CROSSFADE_DURATION;
+    
+    if (fadingOutGain && fadingInGain && ctx) {
+      // Cancel any scheduled changes first
+      fadingOutGain.gain.cancelScheduledValues(now);
+      fadingInGain.gain.cancelScheduledValues(now);
+      
+      // Set current values explicitly to prevent jumps
+      const currentOutVolume = fadingOutGain.gain.value;
+      fadingOutGain.gain.setValueAtTime(currentOutVolume, now);
+      fadingInGain.gain.setValueAtTime(0.001, now); // Use small value instead of 0 (exponential ramp can't start from 0)
+      
+      // Schedule smooth ramps
+      fadingOutGain.gain.linearRampToValueAtTime(0, fadeEndTime);
+      fadingInGain.gain.linearRampToValueAtTime(targetVolume, fadeEndTime);
+      
+      dbg("startCrossfade: using Web Audio smooth ramp", { now, fadeEndTime, targetVolume });
     }
     
+    // Start playing the fading-in audio
     fadingInAudio.play().catch((err) => {
       dbg("startCrossfade: fading-in play() failed", err);
       console.error(err);
     });
 
+    // Still use interval for direct volume (desktop browsers) and for tracking completion
     const steps = 50;
     const stepTime = (CROSSFADE_DURATION * 1000) / steps;
     let step = 0;
-    const startVolume = fadingOutGain?.gain.value ?? fadingOutAudio.volume ?? targetVolume;
+    const startVolume = fadingOutAudio.volume || targetVolume;
 
     crossfadeIntervalRef.current = setInterval(() => {
       step++;
@@ -881,16 +901,9 @@ const PlayerBar = () => {
       const fadeOutValue = Math.max(0, startVolume * (1 - progress));
       const fadeInValue = Math.max(0, Math.min(1, targetVolume * progress));
 
-      // Fade using both methods (direct for desktop, GainNode for iOS)
+      // Direct volume for desktop browsers (Web Audio handles iOS)
       fadingOutAudio.volume = fadeOutValue;
       fadingInAudio.volume = fadeInValue;
-      
-      if (fadingOutGain) {
-        fadingOutGain.gain.value = fadeOutValue;
-      }
-      if (fadingInGain) {
-        fadingInGain.gain.value = fadeInValue;
-      }
 
       if (step >= steps) {
         if (crossfadeIntervalRef.current) {
@@ -920,6 +933,12 @@ const PlayerBar = () => {
           // Stop the faded-out audio and clear its src
           fadingOutAudio.pause();
           fadingOutAudio.src = "";
+          
+          // Reset gain for the faded-out element for next use
+          if (fadingOutGain) {
+            fadingOutGain.gain.cancelScheduledValues(audioContextRef.current?.currentTime ?? 0);
+            fadingOutGain.gain.setValueAtTime(targetVolume, audioContextRef.current?.currentTime ?? 0);
+          }
 
           // Toggle which audio element is active BEFORE updating track state
           lastCrossfadeSwapAtRef.current = Date.now();
@@ -1043,13 +1062,31 @@ const PlayerBar = () => {
       
       fadingInAudio.src = track.audioUrl;
       fadingInAudio.volume = 0;
-      if (fadingInGain) {
-        fadingInGain.gain.value = 0;
+      
+      // Use Web Audio smooth ramping if available (prevents popping on iOS)
+      const ctx = audioContextRef.current;
+      const now = ctx?.currentTime ?? 0;
+      const fadeEndTime = now + CROSSFADE_DURATION;
+      const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+      
+      if (fadingOutGain && fadingInGain && ctx) {
+        // Cancel any scheduled changes first
+        fadingOutGain.gain.cancelScheduledValues(now);
+        fadingInGain.gain.cancelScheduledValues(now);
+        
+        // Set current values explicitly to prevent jumps
+        const currentOutVolume = fadingOutGain.gain.value;
+        fadingOutGain.gain.setValueAtTime(currentOutVolume, now);
+        fadingInGain.gain.setValueAtTime(0.001, now); // Use small value (exponential ramp can't start from 0)
+        
+        // Schedule smooth ramps
+        fadingOutGain.gain.linearRampToValueAtTime(0, fadeEndTime);
+        fadingInGain.gain.linearRampToValueAtTime(targetVolume, fadeEndTime);
       }
+      
       fadingInAudio.play().catch(console.error);
       
-      const startVolume = fadingOutGain?.gain.value ?? fadingOutAudio.volume ?? 1;
-      const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
+      const startVolume = fadingOutAudio.volume || 1;
       const steps = 50;
       const stepTime = (CROSSFADE_DURATION * 1000) / steps;
       let step = 0;
@@ -1061,16 +1098,9 @@ const PlayerBar = () => {
         const fadeOutValue = Math.max(0, startVolume * (1 - progress));
         const fadeInValue = Math.max(0, Math.min(1, targetVolume * progress));
         
-        // Use both methods for cross-browser compatibility
+        // Direct volume for desktop browsers (Web Audio handles iOS)
         fadingOutAudio.volume = fadeOutValue;
         fadingInAudio.volume = fadeInValue;
-        
-        if (fadingOutGain) {
-          fadingOutGain.gain.value = fadeOutValue;
-        }
-        if (fadingInGain) {
-          fadingInGain.gain.value = fadeInValue;
-        }
         
         if (step >= steps) {
           clearInterval(intervalId);
@@ -1082,6 +1112,12 @@ const PlayerBar = () => {
           // Stop the faded-out audio
           fadingOutAudio.pause();
           fadingOutAudio.src = "";
+          
+          // Reset gain for the faded-out element for next use
+          if (fadingOutGain) {
+            fadingOutGain.gain.cancelScheduledValues(audioContextRef.current?.currentTime ?? 0);
+            fadingOutGain.gain.setValueAtTime(targetVolume, audioContextRef.current?.currentTime ?? 0);
+          }
           
           // Mark swap time to prevent src-setting effect from interfering
           lastCrossfadeSwapAtRef.current = Date.now();
