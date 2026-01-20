@@ -603,7 +603,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
 
       if (session?.user) {
         // Re-check cache with user ID now that we know the user
@@ -619,18 +618,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const isNewOAuthUser = now - createdAt < 2 * 60 * 1000; // 2 minutes
         
         // For new OAuth users, always show loading screen regardless of cache
-        const shouldShowLoading = isNewOAuthUser || (!validCache && !hasShownInitialLoading());
+        // For returning users WITH cache, skip loading screen entirely
+        const hasValidCache = !!validCache;
+        const shouldShowLoading = isNewOAuthUser || (!hasValidCache && !hasShownInitialLoading());
+        
         if (isNewOAuthUser) {
           sessionStorage.removeItem(SHOWN_LOADING_KEY);
         }
-        setIsSubscriptionLoading(shouldShowLoading);
         
-        checkAdminRole(session.user.id);
-        checkSubscription(session, true).finally(() => {
+        // If we have a valid cache, stop loading immediately (don't wait for API)
+        if (hasValidCache && !isNewOAuthUser) {
+          setIsLoading(false);
+          setIsSubscriptionLoading(false);
+        } else {
+          setIsSubscriptionLoading(shouldShowLoading);
+          // Only show main loading if we need to show subscription loading
+          if (!shouldShowLoading) {
+            setIsLoading(false);
+          }
+        }
+        
+        // Run all async operations in parallel for speed
+        Promise.all([
+          checkAdminRole(session.user.id),
+          checkSubscription(session, true),
+          registerSession(session.user.id),
+        ]).finally(() => {
           initialLoadComplete.current = true;
+          setIsLoading(false);
         });
-        // Register session on app load
-        registerSession(session.user.id);
         
         // Handle OAuth signup - add to Resend audience and send welcome email for new users
         // This handles the case where OAuth redirects back and onAuthStateChange is blocked
@@ -639,6 +655,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at);
         }
       } else {
+        setIsLoading(false);
         setIsSubscriptionLoading(false);
         initialLoadComplete.current = true;
       }
