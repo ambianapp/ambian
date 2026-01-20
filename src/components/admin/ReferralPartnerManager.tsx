@@ -31,7 +31,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Copy, ExternalLink, Users, DollarSign, TrendingUp, RefreshCw } from "lucide-react";
+import { Plus, Copy, ExternalLink, Users, DollarSign, TrendingUp, RefreshCw, Link2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface ReferralPartner {
@@ -86,6 +86,7 @@ export function ReferralPartnerManager() {
   const [commissions, setCommissions] = useState<ReferralCommission[]>([]);
   const [partnerStats, setPartnerStats] = useState<Map<string, PartnerStats>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [connectingPartnerId, setConnectingPartnerId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<ReferralPartner | null>(null);
   
@@ -98,6 +99,24 @@ export function ReferralPartnerManager() {
 
   useEffect(() => {
     fetchData();
+    
+    // Check for connect return URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const connectComplete = urlParams.get("connect_complete");
+    const connectRefresh = urlParams.get("connect_refresh");
+    const partnerId = urlParams.get("partner_id");
+    
+    if (partnerId && (connectComplete || connectRefresh)) {
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      if (connectComplete) {
+        // Verify the connect status
+        handleVerifyConnect(partnerId);
+      } else if (connectRefresh) {
+        toast.info("Stripe Connect setup was not completed. Please try again.");
+      }
+    }
   }, []);
 
   const fetchData = async () => {
@@ -147,6 +166,52 @@ export function ReferralPartnerManager() {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setFormCode(code);
+  };
+
+  const handleStartConnect = async (partnerId: string) => {
+    setConnectingPartnerId(partnerId);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-partner-connect-link", {
+        body: { partnerId },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast.success("Stripe Connect onboarding opened in new tab");
+      }
+    } catch (error: any) {
+      console.error("Error creating connect link:", error);
+      toast.error(error.message || "Failed to start Stripe Connect");
+    } finally {
+      setConnectingPartnerId(null);
+    }
+  };
+
+  const handleVerifyConnect = async (partnerId: string) => {
+    setConnectingPartnerId(partnerId);
+    try {
+      const { data, error } = await supabase.functions.invoke("complete-partner-connect", {
+        body: { partnerId },
+      });
+
+      if (error) throw error;
+      
+      if (data?.status === "active") {
+        toast.success("Stripe Connect is now active! Partner can receive payouts.");
+      } else if (data?.status === "pending_verification") {
+        toast.info("Stripe is verifying the partner's account. This may take a few days.");
+      } else {
+        toast.info(`Connect status: ${data?.status}`);
+      }
+      
+      fetchData();
+    } catch (error: any) {
+      console.error("Error verifying connect:", error);
+      toast.error(error.message || "Failed to verify Stripe Connect status");
+    } finally {
+      setConnectingPartnerId(null);
+    }
   };
 
   const resetForm = () => {
@@ -461,7 +526,36 @@ export function ReferralPartnerManager() {
                             {partner.commission_rate}% for {partner.commission_duration_months}mo
                           </div>
                         </TableCell>
-                        <TableCell>{getConnectStatusBadge(partner.stripe_connect_status)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getConnectStatusBadge(partner.stripe_connect_status)}
+                            {partner.stripe_connect_status !== 'active' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => partner.stripe_connect_account_id 
+                                  ? handleVerifyConnect(partner.id) 
+                                  : handleStartConnect(partner.id)
+                                }
+                                disabled={connectingPartnerId === partner.id}
+                              >
+                                {connectingPartnerId === partner.id ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin" />
+                                ) : partner.stripe_connect_account_id ? (
+                                  <>
+                                    <RefreshCw className="h-3 w-3 mr-1" />
+                                    Verify
+                                  </>
+                                ) : (
+                                  <>
+                                    <Link2 className="h-3 w-3 mr-1" />
+                                    Connect
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{stats?.totalSignups || 0}</TableCell>
                         <TableCell>
                           <div className="text-sm">
