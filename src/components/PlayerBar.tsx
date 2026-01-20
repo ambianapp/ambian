@@ -1222,6 +1222,7 @@ const PlayerBar = () => {
       {/* Hidden Audio Elements - always render both so refs are stable */}
       <audio
         ref={audioRef}
+        crossOrigin="anonymous"
         preload="auto"
         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
         onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
@@ -1271,6 +1272,7 @@ const PlayerBar = () => {
       {/* Hidden crossfade audio element - preloaded ahead of time */}
       <audio 
         ref={crossfadeAudioRef}
+        crossOrigin="anonymous"
         preload="auto"
         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
         onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
