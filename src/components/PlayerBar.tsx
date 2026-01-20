@@ -738,20 +738,40 @@ const PlayerBar = () => {
   useEffect(() => {
     const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
     
+    // Resume AudioContext if suspended (Safari suspends aggressively)
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume().catch(console.warn);
+    }
+    
     // Method 1: Direct volume (works on desktop browsers)
-    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
-    if (activeAudio) {
-      activeAudio.volume = targetVolume;
+    if (audioRef.current) {
+      audioRef.current.volume = targetVolume;
+    }
+    if (crossfadeAudioRef.current) {
+      crossfadeAudioRef.current.volume = targetVolume;
     }
     
     // Method 2: Web Audio API gain (works on iOS)
+    // Use setValueAtTime for more reliable behavior on iOS
+    const currentTime = audioContextRef.current?.currentTime ?? 0;
+    
     if (mainGainNodeRef.current) {
-      mainGainNodeRef.current.gain.value = isCrossfadeActive ? 0 : targetVolume;
+      try {
+        mainGainNodeRef.current.gain.cancelScheduledValues(currentTime);
+        mainGainNodeRef.current.gain.setValueAtTime(targetVolume, currentTime);
+      } catch {
+        mainGainNodeRef.current.gain.value = targetVolume;
+      }
     }
     if (crossfadeGainNodeRef.current) {
-      crossfadeGainNodeRef.current.gain.value = isCrossfadeActive ? targetVolume : 0;
+      try {
+        crossfadeGainNodeRef.current.gain.cancelScheduledValues(currentTime);
+        crossfadeGainNodeRef.current.gain.setValueAtTime(targetVolume, currentTime);
+      } catch {
+        crossfadeGainNodeRef.current.gain.value = targetVolume;
+      }
     }
-  }, [volume, isMuted, isCrossfadeActive]);
+  }, [volume, isMuted]);
 
   
 
