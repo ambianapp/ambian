@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3, ListMusic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -10,6 +10,13 @@ import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { useToast } from "@/hooks/use-toast";
 import SignedImage from "@/components/SignedImage";
 import { Track } from "@/data/musicData";
+
+// iOS/iPadOS ignores programmatic volume changes - only system volume works
+const isIOSDevice = () => {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
 
 const CROSSFADE_DURATION = 5; // seconds
 
@@ -55,6 +62,9 @@ const PlayerBar = () => {
   const { user, getDeviceId } = useAuth();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
+  
+  // Check if we're on iOS (volume control doesn't work programmatically)
+  const isIOS = useMemo(() => isIOSDevice(), []);
   
   const isLiked = currentTrack ? checkIsLiked(currentTrack.id) : false;
 
@@ -1368,24 +1378,26 @@ const PlayerBar = () => {
           </div>
         </div>
 
-        {/* Volume Control */}
-        <div className="flex items-center gap-3 w-48 justify-end">
-          <Button
-            variant="ghost"
-            size="iconSm"
-            onClick={() => setIsMuted(!isMuted)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </Button>
-          <Slider
-            value={isMuted ? [0] : volume}
-            onValueChange={setVolume}
-            max={100}
-            step={1}
-            className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
-          />
-        </div>
+        {/* Volume Control - hidden on iOS since programmatic volume doesn't work */}
+        {!isIOS && (
+          <div className="flex items-center gap-3 w-48 justify-end">
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={() => setIsMuted(!isMuted)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
+            <Slider
+              value={isMuted ? [0] : volume}
+              onValueChange={setVolume}
+              max={100}
+              step={1}
+              className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
+            />
+          </div>
+        )}
       </div>
     </>
   );
