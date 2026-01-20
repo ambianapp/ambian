@@ -301,15 +301,15 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex relative overflow-hidden">
       {/* Mobile Background Effects - Top Only */}
-      <div className="lg:hidden absolute inset-x-0 top-0 h-[50vh] overflow-hidden pointer-events-none">
+      <div className="xl:hidden absolute inset-x-0 top-0 h-[50vh] overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-primary/25 rounded-full blur-[100px] animate-drift" />
         <div className="absolute top-[10%] right-[-10%] w-[60%] h-[60%] bg-primary/15 rounded-full blur-[80px] animate-drift-slow" />
         {/* Fade to background */}
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </div>
 
-      {/* Left Side - Brand Info */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
+      {/* Left Side - Brand Info - Only on xl (1280px+) */}
+      <div className="hidden xl:flex xl:w-1/2 relative bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
         {/* Slow Moving Gradient Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Large soft color blobs that drift slowly */}
@@ -402,22 +402,22 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-start md:items-center justify-center p-4 pt-4 md:pt-4 overflow-auto relative z-10">
-        <div className="w-full max-w-md space-y-3 md:space-y-6 animate-fade-in">
+      <div className="w-full xl:w-1/2 flex items-start md:items-center justify-center p-4 pt-4 md:pt-4 overflow-auto relative z-10">
+        <div className="w-full max-w-md space-y-3 md:space-y-4 animate-fade-in">
           {/* Mobile/Tablet Logo */}
-          <div className="lg:hidden">
-            <img src={ambianLogo} alt="Ambian" className="h-12 mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground text-center mb-2">
+          <div className="xl:hidden">
+            <img src={ambianLogo} alt="Ambian" className="h-10 md:h-12 mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground text-center mb-1 md:mb-2">
               {t("auth.noLicensesShort")}
             </p>
           </div>
           
           {/* Header */}
-          <div className="text-center lg:text-left">
-            <h1 className="text-2xl font-bold text-foreground">
+          <div className="text-center xl:text-left">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">
               {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
-            <p className="text-muted-foreground mt-2 hidden lg:block">
+            <p className="text-muted-foreground mt-1 md:mt-2 hidden xl:block">
               {isLogin
                 ? t("auth.signInToAccess")
                 : t("auth.trialInfo")}
@@ -584,14 +584,14 @@ const Auth = () => {
               </button>
             </p>
             {isLogin && (
-              <p className="text-xs text-muted-foreground hidden lg:block">
+              <p className="text-xs text-muted-foreground hidden xl:block">
                 {t("auth.trialInfo")}
               </p>
             )}
           </div>
 
-          {/* Mobile Pricing Info - Bottom */}
-          <div className="lg:hidden mt-4 pt-4 border-t border-border/50">
+          {/* Mobile/Tablet Pricing Info - Bottom */}
+          <div className="xl:hidden mt-2 md:mt-4 pt-2 md:pt-4 border-t border-border/50">
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
