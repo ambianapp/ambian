@@ -198,7 +198,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   );
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 pb-28 gap-4 h-full overflow-y-auto scrollbar-subtle">
+    <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 pb-28 gap-6 h-full overflow-hidden">
       {/* Logo */}
       <div className="flex items-center gap-3 px-2 py-4">
         <img 
@@ -325,7 +325,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         </DialogContent>
       </Dialog>
 
-        <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle">
+        <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle [webkit-overflow-scrolling:touch]">
           {/* Liked Songs - always shown */}
           <Button
             variant="ghost"
