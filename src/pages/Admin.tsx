@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ListMusic, Users, Settings, BarChart3, Building2, ScrollText } from "lucide-react";
+import { ArrowLeft, ListMusic, Users, Settings, BarChart3, Building2, ScrollText, UserPlus } from "lucide-react";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 import IndustryCollectionManager from "@/components/admin/IndustryCollectionManager";
 import { UserManager } from "@/components/admin/UserManager";
@@ -12,6 +12,7 @@ import { PriceMigration } from "@/components/admin/PriceMigration";
 import { Analytics } from "@/components/admin/Analytics";
 import { ActivityLogs } from "@/components/admin/ActivityLogs";
 import { CrossfadeDebugPanel } from "@/components/admin/CrossfadeDebugPanel";
+import { ReferralPartnerManager } from "@/components/admin/ReferralPartnerManager";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -44,7 +45,7 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full max-w-4xl grid-cols-6">
+          <TabsList className="grid w-full max-w-5xl grid-cols-7">
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Analytics</span>
@@ -64,6 +65,10 @@ const Admin = () => {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">{t("admin.users")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="referrals" className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Referrals</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -95,6 +100,11 @@ const Admin = () => {
           {/* Users Tab */}
           <TabsContent value="users" className="mt-6">
             <UserManager />
+          </TabsContent>
+
+          {/* Referrals Tab */}
+          <TabsContent value="referrals" className="mt-6">
+            <ReferralPartnerManager />
           </TabsContent>
 
           {/* Settings Tab */}
