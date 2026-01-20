@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.send-invoice-reminders]
 verify_jwt = false
+
+[functions.create-partner-connect-link]
+verify_jwt = true
+
+[functions.complete-partner-connect]
+verify_jwt = true
