@@ -853,10 +853,17 @@ const PlayerBar = () => {
     // Determine which audio is fading out and which is fading in
     const fadingOutAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     const fadingInAudio = isCrossfadeActive ? audioRef.current : crossfadeAudioRef.current;
+    const fadingOutGain = isCrossfadeActive ? crossfadeGainNodeRef.current : mainGainNodeRef.current;
+    const fadingInGain = isCrossfadeActive ? mainGainNodeRef.current : crossfadeGainNodeRef.current;
     const targetVolume = isMuted ? 0 : Math.min(1, userVolumeRef.current / 100);
 
     // Start playing the fading-in audio (already preloaded)
+    // Set initial volume to 0 via both methods
     fadingInAudio.volume = 0;
+    if (fadingInGain) {
+      fadingInGain.gain.value = 0;
+    }
+    
     fadingInAudio.play().catch((err) => {
       dbg("startCrossfade: fading-in play() failed", err);
       console.error(err);
@@ -865,15 +872,25 @@ const PlayerBar = () => {
     const steps = 50;
     const stepTime = (CROSSFADE_DURATION * 1000) / steps;
     let step = 0;
-    const startVolume = fadingOutAudio.volume;
+    const startVolume = fadingOutGain?.gain.value ?? fadingOutAudio.volume ?? targetVolume;
 
     crossfadeIntervalRef.current = setInterval(() => {
       step++;
       const progress = Math.min(1, step / steps);
 
-      // Fade out current, fade in next
-      fadingOutAudio.volume = Math.max(0, startVolume * (1 - progress));
-      fadingInAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
+      const fadeOutValue = Math.max(0, startVolume * (1 - progress));
+      const fadeInValue = Math.max(0, Math.min(1, targetVolume * progress));
+
+      // Fade using both methods (direct for desktop, GainNode for iOS)
+      fadingOutAudio.volume = fadeOutValue;
+      fadingInAudio.volume = fadeInValue;
+      
+      if (fadingOutGain) {
+        fadingOutGain.gain.value = fadeOutValue;
+      }
+      if (fadingInGain) {
+        fadingInGain.gain.value = fadeInValue;
+      }
 
       if (step >= steps) {
         if (crossfadeIntervalRef.current) {
@@ -1021,12 +1038,17 @@ const PlayerBar = () => {
       // Determine which audio element is currently playing
       const fadingOutAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
       const fadingInAudio = isCrossfadeActive ? audioRef.current : crossfadeAudioRef.current;
+      const fadingOutGain = isCrossfadeActive ? crossfadeGainNodeRef.current : mainGainNodeRef.current;
+      const fadingInGain = isCrossfadeActive ? mainGainNodeRef.current : crossfadeGainNodeRef.current;
       
       fadingInAudio.src = track.audioUrl;
       fadingInAudio.volume = 0;
+      if (fadingInGain) {
+        fadingInGain.gain.value = 0;
+      }
       fadingInAudio.play().catch(console.error);
       
-      const startVolume = fadingOutAudio.volume;
+      const startVolume = fadingOutGain?.gain.value ?? fadingOutAudio.volume ?? 1;
       const targetVolume = isMuted ? 0 : Math.min(1, volume[0] / 100);
       const steps = 50;
       const stepTime = (CROSSFADE_DURATION * 1000) / steps;
@@ -1036,8 +1058,19 @@ const PlayerBar = () => {
         step++;
         const progress = Math.min(1, step / steps);
         
-        fadingOutAudio.volume = Math.max(0, startVolume * (1 - progress));
-        fadingInAudio.volume = Math.max(0, Math.min(1, targetVolume * progress));
+        const fadeOutValue = Math.max(0, startVolume * (1 - progress));
+        const fadeInValue = Math.max(0, Math.min(1, targetVolume * progress));
+        
+        // Use both methods for cross-browser compatibility
+        fadingOutAudio.volume = fadeOutValue;
+        fadingInAudio.volume = fadeInValue;
+        
+        if (fadingOutGain) {
+          fadingOutGain.gain.value = fadeOutValue;
+        }
+        if (fadingInGain) {
+          fadingInGain.gain.value = fadeInValue;
+        }
         
         if (step >= steps) {
           clearInterval(intervalId);
