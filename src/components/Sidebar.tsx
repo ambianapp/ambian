@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   const { toast } = useToast();
   const [ownPlaylists, setOwnPlaylists] = useState<SidebarPlaylist[]>([]);
   const [likedPlaylists, setLikedPlaylists] = useState<SidebarPlaylist[]>([]);
+  const [playlistsError, setPlaylistsError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
@@ -60,8 +61,10 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   const fetchPlaylists = async () => {
     if (!user) return;
 
+    setPlaylistsError(null);
+
     // Fetch user's own playlists
-    const { data: userPlaylists } = await supabase
+    const { data: userPlaylists, error: userPlaylistsError } = await supabase
       .from("playlists")
       .select("id, name, cover_url, description")
       .eq("user_id", user.id)
@@ -69,17 +72,27 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
       .order("created_at", { ascending: false })
       .limit(5);
 
+    if (userPlaylistsError) {
+      console.warn("[Sidebar] Failed to load user playlists", userPlaylistsError);
+      setPlaylistsError("Failed to load playlists");
+    }
+
     if (userPlaylists) {
       setOwnPlaylists(userPlaylists);
     }
 
     // Fetch liked playlists
-    const { data: likedData } = await supabase
+    const { data: likedData, error: likedPlaylistsError } = await supabase
       .from("liked_playlists")
       .select("playlist_id, playlists(id, name, cover_url, description)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5);
+
+    if (likedPlaylistsError) {
+      console.warn("[Sidebar] Failed to load liked playlists", likedPlaylistsError);
+      setPlaylistsError("Failed to load playlists");
+    }
 
     if (likedData) {
       const playlists = likedData
@@ -192,10 +205,12 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     }
   };
 
-  const allPlaylists = [...ownPlaylists, ...likedPlaylists];
-  const uniquePlaylists = allPlaylists.filter(
-    (playlist, index, self) => index === self.findIndex((p) => p.id === playlist.id)
-  );
+  const uniquePlaylists = useMemo(() => {
+    const allPlaylists = [...ownPlaylists, ...likedPlaylists];
+    return allPlaylists.filter(
+      (playlist, index, self) => index === self.findIndex((p) => p.id === playlist.id)
+    );
+  }, [ownPlaylists, likedPlaylists]);
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-card/50 border-r border-border p-4 pb-28 gap-6 h-full overflow-hidden">
@@ -326,6 +341,19 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
       </Dialog>
 
         <div className="flex-1 overflow-y-auto space-y-1 scrollbar-subtle [webkit-overflow-scrolling:touch]">
+          {playlistsError && (
+            <div className="px-2 py-2">
+              <p className="text-xs text-muted-foreground">{playlistsError}</p>
+              <Button
+                variant="ghost"
+                className="h-8 px-2 mt-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={fetchPlaylists}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+
           {/* Liked Songs - always shown */}
           <Button
             variant="ghost"
