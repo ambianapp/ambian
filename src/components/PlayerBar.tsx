@@ -714,6 +714,18 @@ const PlayerBar = () => {
     }
   }, []);
 
+  const ensureAudioContextRunning = useCallback(async () => {
+    initWebAudio();
+    const ctx = audioContextRef.current;
+    if (ctx?.state === "suspended") {
+      try {
+        await ctx.resume();
+      } catch (err) {
+        console.warn("[Audio] AudioContext resume failed:", err);
+      }
+    }
+  }, [initWebAudio]);
+
   // Initialize Web Audio on first user interaction (required by browsers)
   useEffect(() => {
     const handleInteraction = () => {
@@ -727,10 +739,12 @@ const PlayerBar = () => {
     // Listen for user interaction to initialize
     document.addEventListener('click', handleInteraction, { once: false });
     document.addEventListener('touchstart', handleInteraction, { once: false });
+    document.addEventListener('pointerdown', handleInteraction, { once: false });
     
     return () => {
       document.removeEventListener('click', handleInteraction);
       document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('pointerdown', handleInteraction);
     };
   }, [initWebAudio]);
 
@@ -1470,14 +1484,34 @@ const PlayerBar = () => {
           <Button
             variant="ghost"
             size="iconSm"
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={async () => {
+              await ensureAudioContextRunning();
+
+              setIsMuted((prev) => {
+                const next = !prev;
+                // If user unmutes while the slider is at 0, restore a sane value.
+                if (!next && volume[0] === 0) {
+                  const restore = Math.max(5, userVolumeRef.current || 75);
+                  setVolume([restore]);
+                }
+                return next;
+              });
+            }}
             className="text-muted-foreground hover:text-foreground"
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </Button>
           <Slider
-            value={isMuted ? [0] : volume}
-            onValueChange={setVolume}
+            value={volume}
+            onPointerDown={() => {
+              // iOS requires resume() to happen in direct user gesture handlers
+              void ensureAudioContextRunning();
+            }}
+            onValueChange={(next) => {
+              void ensureAudioContextRunning();
+              setVolume(next);
+              if (next[0] > 0 && isMuted) setIsMuted(false);
+            }}
             max={100}
             step={1}
             className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
