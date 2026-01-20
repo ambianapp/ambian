@@ -746,66 +746,70 @@ const Pricing = () => {
 
         {/* Invoice Request Dialog */}
         <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("pricing.requestInvoice")}</DialogTitle>
               <DialogDescription>
                 {t("pricing.payByInvoiceDesc")}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-3 py-2">
               {/* Show selected yearly plan info */}
-              <div className="p-3 rounded-lg border border-primary bg-primary/10">
-                <div className="font-medium text-foreground">{t("pricing.yearly")}</div>
-                <div className="text-sm text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")}</div>
-                <div className="text-xs text-primary mt-1">{t(currentPlans.yearly.savingsKey)}</div>
+              <div className="p-2.5 rounded-lg border border-primary bg-primary/10">
+                <div className="font-medium text-foreground text-sm">{t("pricing.yearly")}</div>
+                <div className="text-xs text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")}</div>
+                <div className="text-xs text-primary mt-0.5">{t(currentPlans.yearly.savingsKey)}</div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="companyName">{t("billing.companyName")} *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="companyName" className="text-sm">{t("billing.companyName")} *</Label>
                 <Input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder={t("billing.companyNamePlaceholder")}
+                  className="h-9"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="addressLine">{t("billing.streetAddress")} *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="addressLine" className="text-sm">{t("billing.streetAddress")} *</Label>
                 <Input
                   id="addressLine"
                   value={addressLine}
                   onChange={(e) => setAddressLine(e.target.value)}
                   placeholder={t("billing.streetAddressPlaceholder")}
+                  className="h-9"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="postalCode">{t("billing.postalCode")} *</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="postalCode" className="text-sm">{t("billing.postalCode")} *</Label>
                   <Input
                     id="postalCode"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     placeholder="00100"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">{t("billing.city")} *</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="city" className="text-sm">{t("billing.city")} *</Label>
                   <Input
                     id="city"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder={t("billing.cityPlaceholder")}
+                    className="h-9"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">{t("billing.country")} *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="country" className="text-sm">{t("billing.country")} *</Label>
                 <select
                   id="country"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="FI">{t("countries.finland")}</option>
                   <option value="SE">{t("countries.sweden")}</option>
@@ -825,13 +829,14 @@ const Pricing = () => {
                   <option value="US">{t("countries.usa")}</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="vatId">{t("billing.vatId")}</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="vatId" className="text-sm">{t("billing.vatId")}</Label>
                 <Input
                   id="vatId"
                   value={vatId}
                   onChange={(e) => setVatId(e.target.value.toUpperCase())}
                   placeholder={t("billing.vatIdPlaceholder")}
+                  className="h-9"
                 />
                 <p className="text-xs text-muted-foreground">
                   {t("billing.vatIdHint")}
@@ -841,18 +846,16 @@ const Pricing = () => {
                 <Clock className="w-3 h-3 inline mr-1" />
                 {t("subscription.ibanNote")}
               </p>
-              <div className="pt-2">
-                <Button
-                  className="w-full"
-                  onClick={handleInvoiceRequest}
-                  disabled={isInvoiceLoading}
-                >
-                  {isInvoiceLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : null}
-                  {t("pricing.payNow")} ({currentPlans[selectedPlan].price})
-                </Button>
-              </div>
+              <Button
+                className="w-full"
+                onClick={handleInvoiceRequest}
+                disabled={isInvoiceLoading}
+              >
+                {isInvoiceLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                {t("pricing.payNow")} ({currentPlans[selectedPlan].price})
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
