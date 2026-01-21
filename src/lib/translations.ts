@@ -234,7 +234,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addSuccessDesc": "Your additional location has been added successfully.",
     "devices.confirmAddTitle": "Add device?",
     "devices.confirmAddDesc": "You are about to add the following device(s):",
-    "devices.confirmAddNote": "Prorated charges will be applied to your next billing cycle.",
+    
     "devices.confirmAddBtn": "Confirm & Add",
     "devices.includedInSubscription": "Included in subscription",
     "devices.included": "Included",
@@ -974,7 +974,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addSuccessDesc": "Din extra plats har lagts till.",
     "devices.confirmAddTitle": "Lägg till enhet?",
     "devices.confirmAddDesc": "Du är på väg att lägga till följande enhet(er):",
-    "devices.confirmAddNote": "Proportionella avgifter läggs till din nästa faktureringsperiod.",
+    
     "devices.confirmAddBtn": "Bekräfta & lägg till",
     "devices.includedInSubscription": "Ingår i prenumerationen",
     "devices.included": "Ingår",
@@ -1713,7 +1713,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addSuccessDesc": "Lisäsijainti on lisätty onnistuneesti.",
     "devices.confirmAddTitle": "Lisää laite?",
     "devices.confirmAddDesc": "Olet lisäämässä seuraavat laitteet:",
-    "devices.confirmAddNote": "Suhteelliset maksut lisätään seuraavaan laskutusjaksoon.",
+    
     "devices.confirmAddBtn": "Vahvista ja lisää",
     "devices.includedInSubscription": "Sisältyy tilaukseen",
     "devices.included": "Sisältyy",
@@ -2453,7 +2453,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addSuccessDesc": "Ihr zusätzlicher Standort wurde erfolgreich hinzugefügt.",
     "devices.confirmAddTitle": "Gerät hinzufügen?",
     "devices.confirmAddDesc": "Du bist dabei, die folgenden Geräte hinzuzufügen:",
-    "devices.confirmAddNote": "Anteilige Gebühren werden Ihrem nächsten Abrechnungszeitraum hinzugefügt.",
+    
     "devices.confirmAddBtn": "Bestätigen & hinzufügen",
     "devices.includedInSubscription": "Im Abonnement enthalten",
     "devices.included": "Enthalten",
@@ -3192,7 +3192,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addSuccessDesc": "Votre emplacement supplémentaire a été ajouté avec succès.",
     "devices.confirmAddTitle": "Ajouter un appareil ?",
     "devices.confirmAddDesc": "Vous êtes sur le point d'ajouter les appareils suivants :",
-    "devices.confirmAddNote": "Des frais au prorata seront appliqués à votre prochain cycle de facturation.",
+    
     "devices.confirmAddBtn": "Confirmer et ajouter",
     "devices.includedInSubscription": "Inclus dans l'abonnement",
     "devices.included": "Inclus",

@@ -1509,9 +1509,6 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                {t("devices.confirmAddNote")}
-              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
