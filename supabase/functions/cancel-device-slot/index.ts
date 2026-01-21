@@ -237,6 +237,16 @@ serve(async (req) => {
       if (activeSchedule) {
         // Update existing schedule to remove the item in the next phase
         logStep("Updating existing subscription schedule", { scheduleId: activeSchedule.id });
+
+          const activeScheduleCurrentPhase = activeSchedule.phases?.[0];
+          const currentPhaseItems = (activeScheduleCurrentPhase?.items || []).map((item: any) => ({
+            price: typeof item.price === "string" ? item.price : item.price.id,
+            quantity: item.quantity,
+          }));
+
+          const currentPhaseStart = activeScheduleCurrentPhase?.start_date ?? undefined;
+          const currentPhaseEnd =
+            activeScheduleCurrentPhase?.end_date ?? subscription.current_period_end ?? undefined;
         
         // Get items for the next phase (excluding this device slot item)
         const nextPhaseItems = subscription.items.data
@@ -247,18 +257,15 @@ serve(async (req) => {
           }));
         
         await stripe.subscriptionSchedules.update(activeSchedule.id, {
+            end_behavior: "release",
           phases: [
             {
-              items: subscription.items.data.map((item: any) => ({
-                price: item.price.id,
-                quantity: item.quantity,
-              })),
-              start_date: activeSchedule.phases[0].start_date,
-              end_date: subscription.current_period_end,
+                items: currentPhaseItems,
+                ...(currentPhaseStart ? { start_date: currentPhaseStart } : {}),
+                ...(currentPhaseEnd ? { end_date: currentPhaseEnd } : {}),
             },
             {
               items: nextPhaseItems,
-              start_date: subscription.current_period_end,
             },
           ],
         });
@@ -323,24 +330,31 @@ serve(async (req) => {
       
       if (activeSchedule) {
         // Update existing schedule
+        const activeScheduleCurrentPhase = activeSchedule.phases?.[0];
+        const currentPhaseItems = (activeScheduleCurrentPhase?.items || []).map((item: any) => ({
+          price: typeof item.price === "string" ? item.price : item.price.id,
+          quantity: item.quantity,
+        }));
+
+        const currentPhaseStart = activeScheduleCurrentPhase?.start_date ?? undefined;
+        const currentPhaseEnd =
+          activeScheduleCurrentPhase?.end_date ?? subscription.current_period_end ?? undefined;
+
         const nextPhaseItems = subscription.items.data.map((item: any) => ({
           price: item.price.id,
           quantity: item.id === itemId ? newQuantity : item.quantity,
         }));
         
         await stripe.subscriptionSchedules.update(activeSchedule.id, {
+          end_behavior: "release",
           phases: [
             {
-              items: subscription.items.data.map((item: any) => ({
-                price: item.price.id,
-                quantity: item.quantity,
-              })),
-              start_date: activeSchedule.phases[0].start_date,
-              end_date: subscription.current_period_end,
+              items: currentPhaseItems,
+              ...(currentPhaseStart ? { start_date: currentPhaseStart } : {}),
+              ...(currentPhaseEnd ? { end_date: currentPhaseEnd } : {}),
             },
             {
               items: nextPhaseItems,
-              start_date: subscription.current_period_end,
             },
           ],
         });
