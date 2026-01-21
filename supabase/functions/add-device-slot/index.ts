@@ -324,11 +324,14 @@ serve(async (req) => {
           ? [{ id: existingDeviceSlotItem.id, quantity: (existingDeviceSlotItem.quantity || 0) + quantity }]
           : [...mainSubscription.items.data.map((item: any) => ({ id: item.id })), { price: deviceSlotPriceId, quantity }];
 
-        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        // Use createPreview (Stripe SDK v18+) instead of deprecated retrieveUpcoming
+        const upcomingInvoice = await stripe.invoices.createPreview({
           customer: customerId,
           subscription: mainSubscription.id,
-          subscription_items: subscriptionItems,
-          subscription_proration_behavior: "create_prorations",
+          subscription_details: {
+            items: subscriptionItems,
+            proration_behavior: "create_prorations",
+          },
         });
 
         // Find the proration line items (they have type 'invoiceitem' and negative/positive amounts)
