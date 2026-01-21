@@ -341,6 +341,15 @@ serve(async (req) => {
           return item.amount > 0 ? sum + item.amount : sum;
         }, 0);
 
+        // Get tax amount from the proration items
+        const proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
+          // Use tax_amounts array if available for proration items
+          if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
+            return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
+          }
+          return sum;
+        }, 0);
+
         // Get period info
         const periodEnd = mainItem?.current_period_end 
           ? new Date(mainItem.current_period_end * 1000) 
@@ -350,10 +359,18 @@ serve(async (req) => {
         const remainingMs = periodEnd.getTime() - now.getTime();
         const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
 
+        logStep("Proration calculated", { 
+          proratedAmountCents, 
+          proratedTaxCents,
+          totalWithTax: proratedAmountCents + proratedTaxCents
+        });
+
         return new Response(JSON.stringify({
           success: true,
           mode: "calculate",
-          proratedPrice: proratedAmountCents / 100, // Convert to euros
+          proratedPrice: proratedAmountCents / 100, // Convert to euros (excl. tax)
+          proratedTax: proratedTaxCents / 100, // Tax amount in euros
+          proratedTotal: (proratedAmountCents + proratedTaxCents) / 100, // Total incl. tax
           fullPrice: fullPrice * quantity,
           remainingDays,
           periodEnd: periodEnd.toISOString(),

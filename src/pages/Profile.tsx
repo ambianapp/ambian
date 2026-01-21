@@ -86,6 +86,8 @@ const Profile = () => {
   } | null>(null);
   const [recurringProration, setRecurringProration] = useState<{
     proratedPrice: number;
+    proratedTax: number;
+    proratedTotal: number;
     fullPrice: number;
     remainingDays: number;
     periodEnd: string;
@@ -510,6 +512,8 @@ const Profile = () => {
         if (data?.success) {
           setRecurringProration({
             proratedPrice: data.proratedPrice,
+            proratedTax: data.proratedTax || 0,
+            proratedTotal: data.proratedTotal || data.proratedPrice,
             fullPrice: data.fullPrice,
             remainingDays: data.remainingDays,
             periodEnd: data.periodEnd,
@@ -1465,20 +1469,22 @@ const Profile = () => {
             <AlertDialogDescription>
               <p className="mb-3">{t("devices.confirmAddDesc")}</p>
               <div className="p-3 rounded-lg border border-border bg-secondary/50 mb-3">
-                <div className="font-medium text-foreground">
-                  {deviceSlotQuantity} {deviceSlotQuantity === 1 
-                    ? t("devices.location") 
-                    : t("devices.locations")}
-                  {" • "}
-                  {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
+                <div className="font-medium text-foreground mb-2">
+                  {deviceSlotQuantity} {t("devices.additionalDevice") || "Additional device"}{deviceSlotQuantity > 1 ? "s" : ""}
                 </div>
                 
                 {/* Show prorated amount for recurring subscriptions */}
                 {subscription.isRecurring && recurringProration ? (
-                  <div className="mt-2 space-y-1.5">
-                    <div className="text-sm font-medium text-foreground">
-                      {t("devices.chargedNow") || "Charged now"}: €{recurringProration.proratedPrice.toFixed(2)}
+                  <div className="space-y-1.5">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">{t("devices.chargedNow") || "Charged now"}: </span>
+                      <span className="font-medium text-foreground">€{recurringProration.proratedTotal.toFixed(2)}</span>
                     </div>
+                    {recurringProration.proratedTax > 0 && (
+                      <div className="text-xs text-muted-foreground pl-4">
+                        (€{recurringProration.proratedPrice.toFixed(2)} + €{recurringProration.proratedTax.toFixed(2)} {t("pricing.vat") || "VAT"})
+                      </div>
+                    )}
                     <div className="text-sm text-muted-foreground">
                       {t("devices.validUntil") || "Valid until subscription renewal"} {new Date(recurringProration.periodEnd).toLocaleDateString(language === "fi" ? "fi-FI" : language === "sv" ? "sv-SE" : "en-GB", { day: 'numeric', month: 'numeric', year: 'numeric' })}
                     </div>
