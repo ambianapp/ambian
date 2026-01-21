@@ -52,18 +52,19 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
     // If decoding fails, use as-is
   }
   
-  const { data, error } = await supabase.storage
-    .from('audio')
-    .createSignedUrl(filePath, SIGNED_URL_EXPIRY);
-  
+  // Use backend function to validate access (trial / pending_payment) and generate signed URL.
+  // This avoids client-side policy mismatches that can block trial users.
+  const { data, error } = await supabase.functions.invoke("get-signed-audio-url", {
+    body: { audioUrl },
+  });
+
   if (error) {
-    console.error("Error creating signed URL:", error);
+    console.error("Error creating signed URL (backend):", error);
     return undefined;
   }
-  
-  // The signedUrl from Supabase is a full URL like:
-  // https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1/object/sign/audio/file.mp3?token=xxx
-  const signedUrl = data.signedUrl;
+
+  const signedUrl = (data as any)?.signedUrl as string | undefined;
+  if (!signedUrl) return undefined;
   
   if (!CDN_ENABLED) {
     return signedUrl;
