@@ -1480,11 +1480,9 @@ const Profile = () => {
                       <span className="text-muted-foreground">{t("devices.chargedNow") || "Charged now"}: </span>
                       <span className="font-medium text-foreground">€{recurringProration.proratedTotal.toFixed(2)}</span>
                     </div>
-                    {recurringProration.proratedTax > 0 && (
-                      <div className="text-xs text-muted-foreground pl-4">
-                        (€{recurringProration.proratedPrice.toFixed(2)} + €{recurringProration.proratedTax.toFixed(2)} {t("pricing.vat") || "VAT"})
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground pl-4">
+                      (€{recurringProration.proratedPrice.toFixed(2)} + €{recurringProration.proratedTax.toFixed(2)} {t("pricing.vat") || "VAT"})
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {t("devices.validUntil") || "Valid until subscription renewal"} {new Date(recurringProration.periodEnd).toLocaleDateString(language === "fi" ? "fi-FI" : language === "sv" ? "sv-SE" : "en-GB", { day: 'numeric', month: 'numeric', year: 'numeric' })}
                     </div>

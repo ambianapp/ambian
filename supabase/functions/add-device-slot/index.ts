@@ -325,9 +325,11 @@ serve(async (req) => {
           : [...mainSubscription.items.data.map((item: any) => ({ id: item.id })), { price: deviceSlotPriceId, quantity }];
 
         // Use createPreview (Stripe SDK v18+) instead of deprecated retrieveUpcoming
+        // Ensure automatic tax is enabled so VAT/tax amounts are returned when applicable.
         const upcomingInvoice = await stripe.invoices.createPreview({
           customer: customerId,
           subscription: mainSubscription.id,
+          automatic_tax: { enabled: true },
           subscription_details: {
             items: subscriptionItems,
             proration_behavior: "create_prorations",
@@ -338,7 +340,10 @@ serve(async (req) => {
         logStep("Invoice preview response", {
           total: upcomingInvoice.total,
           subtotal: upcomingInvoice.subtotal,
-          tax: upcomingInvoice.tax,
+          tax: (upcomingInvoice as any).tax,
+          total_tax_amounts: (upcomingInvoice as any).total_tax_amounts,
+          total_excluding_tax: (upcomingInvoice as any).total_excluding_tax,
+          total_including_tax: (upcomingInvoice as any).total_including_tax,
           lineItemCount: upcomingInvoice.lines.data.length,
           lineItems: upcomingInvoice.lines.data.map((line: any) => ({
             description: line.description,
@@ -395,17 +400,26 @@ serve(async (req) => {
           return sum;
         }, 0);
 
-        // If no tax on line items, calculate proportional tax from invoice totals
-        // Stripe calculates tax at invoice level, so we need to get proportional tax for proration
-        if (proratedTaxCents === 0 && upcomingInvoice.tax && upcomingInvoice.subtotal > 0) {
-          const taxRate = upcomingInvoice.tax / upcomingInvoice.subtotal;
-          proratedTaxCents = Math.round(proratedAmountCents * taxRate);
-          logStep("Calculated proportional tax", {
-            invoiceTax: upcomingInvoice.tax,
-            invoiceSubtotal: upcomingInvoice.subtotal,
-            taxRate: (taxRate * 100).toFixed(2) + '%',
-            proratedTaxCents,
-          });
+        // If no tax on line items, calculate proportional tax from invoice totals.
+        // Stripe may provide tax at invoice level (tax/total_tax_amounts), not per line item.
+        if (proratedTaxCents === 0 && (upcomingInvoice as any).subtotal > 0) {
+          const invoiceTaxCents =
+            typeof (upcomingInvoice as any).tax === "number"
+              ? (upcomingInvoice as any).tax
+              : Array.isArray((upcomingInvoice as any).total_tax_amounts)
+                ? (upcomingInvoice as any).total_tax_amounts.reduce((sum: number, t: any) => sum + (t?.amount || 0), 0)
+                : 0;
+
+          if (invoiceTaxCents > 0) {
+            const taxRate = invoiceTaxCents / (upcomingInvoice as any).subtotal;
+            proratedTaxCents = Math.round(proratedAmountCents * taxRate);
+            logStep("Calculated proportional tax", {
+              invoiceTaxCents,
+              invoiceSubtotalCents: (upcomingInvoice as any).subtotal,
+              taxRate: (taxRate * 100).toFixed(2) + "%",
+              proratedTaxCents,
+            });
+          }
         }
 
         // Get period info
