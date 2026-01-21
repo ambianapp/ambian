@@ -349,51 +349,51 @@ serve(async (req) => {
           })),
         });
 
-        // Find the proration line items OR new device slot line items
-        // With createPreview, new items may not be marked as proration but are the charge
-        const deviceSlotItems = upcomingInvoice.lines.data.filter((line: any) => 
-          line.price?.id === deviceSlotPriceId
-        );
+        // Find the proration line items - these are typically:
+        // 1. Items with proration=true, OR
+        // 2. Items that are NOT the standard recurring charges (identified by description patterns)
+        // The proration items have descriptions like "Remaining time for..." or "Jäljellä oleva aika..."
+        
+        // Standard recurring items have descriptions like "1 × Product Name (at €X / period)"
+        const isRecurringCharge = (description: string) => {
+          return description && (
+            description.includes(' × ') || 
+            description.includes(' x ') ||
+            /^\d+\s*[×x]\s*.+\(at\s/.test(description)
+          );
+        };
         
         const prorationItems = upcomingInvoice.lines.data.filter((line: any) => 
-          line.proration === true
+          line.proration === true || 
+          (line.amount > 0 && !isRecurringCharge(line.description || ''))
         );
 
-        logStep("Filtered items", {
-          deviceSlotItemsCount: deviceSlotItems.length,
+        logStep("Filtered proration items", {
           prorationItemsCount: prorationItems.length,
-          deviceSlotItems: deviceSlotItems.map((l: any) => ({ amount: l.amount, proration: l.proration })),
-          prorationItems: prorationItems.map((l: any) => ({ amount: l.amount, description: l.description })),
+          prorationItems: prorationItems.map((l: any) => ({ 
+            amount: l.amount, 
+            description: l.description,
+            proration: l.proration,
+            tax_amounts: l.tax_amounts,
+          })),
         });
         
-        // For proration calculation: use proration items if available, otherwise calculate from device slot items
-        // Proration items show the pro-rated charge for partial period
+        // For proration calculation: sum positive proration items
         let proratedAmountCents = 0;
         let proratedTaxCents = 0;
 
-        if (prorationItems.length > 0) {
-          // Sum up only the positive proration (the charge for new service)
-          proratedAmountCents = prorationItems.reduce((sum: number, item: any) => {
-            return item.amount > 0 ? sum + item.amount : sum;
-          }, 0);
+        // Sum up only the positive amounts (charges for new service)
+        proratedAmountCents = prorationItems.reduce((sum: number, item: any) => {
+          return item.amount > 0 ? sum + item.amount : sum;
+        }, 0);
 
-          // Get tax amount from the proration items
-          proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
-            if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
-              return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
-            }
-            return sum;
-          }, 0);
-        } else if (deviceSlotItems.length > 0) {
-          // Fallback: use device slot items directly (they might represent the full charge for the period)
-          const newDeviceSlotItem = deviceSlotItems.find((item: any) => item.amount > 0);
-          if (newDeviceSlotItem) {
-            proratedAmountCents = newDeviceSlotItem.amount;
-            if (newDeviceSlotItem.tax_amounts && newDeviceSlotItem.tax_amounts.length > 0) {
-              proratedTaxCents = newDeviceSlotItem.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
-            }
+        // Get tax amount from the proration items
+        proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
+          if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
+            return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
           }
-        }
+          return sum;
+        }, 0);
 
         // Get period info
         const periodEnd = mainItem?.current_period_end 
