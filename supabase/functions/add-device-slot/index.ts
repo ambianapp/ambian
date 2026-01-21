@@ -501,13 +501,16 @@ serve(async (req) => {
       });
 
       // For adding more slots, use proration and update directly
-      // For invoice-based subscriptions, we'll also create+send an invoice immediately.
+      // For card subscriptions: always_invoice charges immediately
+      // For invoice-based subscriptions: create_prorations + manual invoice creation
+      const prorationBehavior = isSendInvoice ? "create_prorations" : "always_invoice";
+      
       await stripe.subscriptions.update(mainSubscription.id, {
         items: [{
           id: existingDeviceSlotItem.id,
           quantity: newQuantity,
         }],
-        proration_behavior: "create_prorations",
+        proration_behavior: prorationBehavior,
         metadata: {
           ...mainSubscription.metadata,
           device_slots_updated: new Date().toISOString(),
@@ -561,8 +564,11 @@ serve(async (req) => {
     }
 
     // No existing device slot item - add new item to subscription
-    // Add item directly with proration
-    logStep("Adding new device slot item to subscription");
+    // For card subscriptions: always_invoice charges immediately
+    // For invoice-based subscriptions: create_prorations + manual invoice creation
+    const prorationBehavior = isSendInvoice ? "create_prorations" : "always_invoice";
+    
+    logStep("Adding new device slot item to subscription", { prorationBehavior });
 
     const updatedSubscription = await stripe.subscriptions.update(mainSubscription.id, {
       items: [
@@ -572,7 +578,7 @@ serve(async (req) => {
           quantity: quantity,
         },
       ],
-      proration_behavior: "create_prorations",
+      proration_behavior: prorationBehavior,
       metadata: {
         ...mainSubscription.metadata,
         device_slots_added: new Date().toISOString(),
