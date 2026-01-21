@@ -88,7 +88,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const lastValidationResultRef = useRef<{ result: 'valid' | 'kicked' | 'error'; timestamp: number } | null>(null);
   const consecutiveKicksRef = useRef(0);
   const isDisconnectingRef = useRef(false);
-  const lastSelfHealAttemptRef = useRef<number>(0);
 
   const loadSubscriptionCache = (userId?: string): SubscriptionInfo | null => {
     try {
@@ -568,20 +567,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Validate current session against active_sessions table
   // Returns: 'valid' | 'kicked' | 'error'
   // Cached for 10 seconds to prevent duplicate queries
-  // If skipSelfHeal is true (used by realtime listener), we skip the self-heal logic
-  const validateSession = useCallback(async (currentSession: Session, skipSelfHeal = false): Promise<'valid' | 'kicked' | 'error'> => {
+  const validateSession = useCallback(async (currentSession: Session): Promise<'valid' | 'kicked' | 'error'> => {
     if (isSigningOut.current) return 'valid';
     
     const now = Date.now();
     const CACHE_TTL = 10000; // 10 seconds
     
-    // Return cached result if recent (but not if skipSelfHeal - realtime needs fresh check)
-    if (!skipSelfHeal && lastValidationResultRef.current && now - lastValidationResultRef.current.timestamp < CACHE_TTL) {
+    // Return cached result if recent
+    if (lastValidationResultRef.current && now - lastValidationResultRef.current.timestamp < CACHE_TTL) {
       return lastValidationResultRef.current.result;
     }
     
-    // Prevent duplicate calls within 3 seconds (but not if skipSelfHeal)
-    if (!skipSelfHeal && now - lastValidationCallRef.current < 3000) {
+    // Prevent duplicate calls within 3 seconds
+    if (now - lastValidationCallRef.current < 3000) {
       return lastValidationResultRef.current?.result ?? 'valid';
     }
     lastValidationCallRef.current = now;
@@ -604,36 +602,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       let result: 'valid' | 'kicked' | 'error';
       
-      // If session not found, could mean device limit or was disconnected
+       // If session not found, could mean device limit or was disconnected
       if (!data) {
         // Check if we're in device limit mode
         if (isDeviceLimitReached) {
           result = 'valid'; // Don't kick out - user knows they're in read-only mode
-        } else if (skipSelfHeal) {
-          // Realtime told us we were deleted - this is a real kick, no self-heal
-          console.log("[SessionValidation] Session deleted via realtime - forcing kick");
-          result = 'kicked';
-        } else {
-          // Self-heal: on iOS/Safari especially, we can temporarily miss our own row
-          // right after a device disconnect or wake event. Before treating this as a kick,
-          // try to force re-register once, then let the next validation decide.
-          const SELF_HEAL_COOLDOWN_MS = 15_000;
-          const nowMs = Date.now();
-          if (nowMs - lastSelfHealAttemptRef.current > SELF_HEAL_COOLDOWN_MS) {
-            lastSelfHealAttemptRef.current = nowMs;
-            console.warn('[SessionValidation] Missing session row; attempting self-heal register');
-            try {
-              await registerSession(currentSession.user.id, true);
-              // Return 'error' to avoid incrementing kick counters; next pass will confirm.
-              result = 'error';
-            } catch (e) {
-              console.warn('[SessionValidation] Self-heal register failed:', e);
-              result = 'error';
-            }
-          } else {
-            console.log("Session not found in active_sessions - may have been disconnected");
-            result = 'kicked';
-          }
+         } else {
+           console.log("Session not found in active_sessions - disconnected");
+           result = 'kicked';
         }
       } else {
         result = 'valid';
@@ -646,7 +622,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn("Error validating session (will retry):", error);
       return 'error';
     }
-  }, [getDeviceId, isDeviceLimitReached, registerSession]);
+  }, [getDeviceId, isDeviceLimitReached]);
 
   const signOut = async () => {
     isSigningOut.current = true;
@@ -981,9 +957,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const latestSession = (await supabase.auth.getSession()).data.session;
           if (!latestSession?.user) return;
 
-          // IMPORTANT: Pass skipSelfHeal=true so that if our session was deleted,
-          // we don't try to re-register - we should actually sign out.
-          const result = await validateSession(latestSession, true);
+          const result = await validateSession(latestSession);
           if (result === 'kicked') {
             toast.error(
               "You've been disconnected from another device. Need more locations? Add extra device slots in your Profile settings.",
