@@ -1487,7 +1487,7 @@ const Profile = () => {
                       {t("devices.validUntil") || "Valid until subscription renewal"} {new Date(recurringProration.periodEnd).toLocaleDateString(language === "fi" ? "fi-FI" : language === "sv" ? "sv-SE" : "en-GB", { day: 'numeric', month: 'numeric', year: 'numeric' })}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {t("devices.thenRegular") || "Then"} €{recurringProration.fullPrice}/{recurringProration.interval === "year" ? t("subscription.year") : t("subscription.month")} {t("pricing.exclVat") || "excl. VAT"}
+                      {t("devices.thenRegular") || "Then"} €{recurringProration.fullPrice}/{recurringProration.interval === "year" ? t("subscription.year") : t("subscription.month")} {t("pricing.plusVat") || "+ VAT"}
                     </div>
                     {recurringProration.isSendInvoice && (
                       <div className="text-xs text-primary/80 mt-1">
