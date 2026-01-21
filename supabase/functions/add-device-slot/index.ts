@@ -313,12 +313,19 @@ serve(async (req) => {
     if (mode === "calculate") {
       logStep("Calculate mode - returning proration preview");
       
-      // Get period end for display
-      const periodEndTimestamp = mainSubscription.current_period_end;
-      const periodEnd = periodEndTimestamp ? new Date(periodEndTimestamp * 1000) : new Date();
+      // Get period end from the MAIN subscription (not from any schedule)
+      // This is the actual billing renewal date
+      const mainSubscriptionPeriodEnd = mainSubscription.current_period_end;
+      const periodEnd = mainSubscriptionPeriodEnd ? new Date(mainSubscriptionPeriodEnd * 1000) : new Date();
       const now = new Date();
       const msRemaining = periodEnd.getTime() - now.getTime();
       const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+      
+      logStep("Period end from main subscription", { 
+        mainSubscriptionPeriodEnd,
+        periodEndDate: periodEnd.toISOString(),
+        daysRemaining 
+      });
       
       // Use Stripe's invoice preview to get accurate proration with tax
       // Check if there's already a device slot item on this subscription
