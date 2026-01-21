@@ -1678,7 +1678,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.reactivate": "Aktivoi tilaus uudelleen",
     
     // Device slots
-    "devices.title": "Useita laitteita",
+    "devices.title": "Lisää laitteita",
     "devices.subtitle": "Toista musiikkia useilla laitteilla samanaikaisesti samalla tilillä",
     "devices.active": "Aktiiviset sijainnit",
     "devices.canPlay": "Voit toistaa musiikkia {count} paikassa samanaikaisesti",
