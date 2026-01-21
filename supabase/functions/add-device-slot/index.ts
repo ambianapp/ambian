@@ -334,24 +334,66 @@ serve(async (req) => {
           },
         });
 
-        // Find the proration line items (they have type 'invoiceitem' and negative/positive amounts)
+        // Log all line items to understand structure
+        logStep("Invoice preview response", {
+          total: upcomingInvoice.total,
+          subtotal: upcomingInvoice.subtotal,
+          tax: upcomingInvoice.tax,
+          lineItemCount: upcomingInvoice.lines.data.length,
+          lineItems: upcomingInvoice.lines.data.map((line: any) => ({
+            description: line.description,
+            amount: line.amount,
+            proration: line.proration,
+            type: line.type,
+            price_id: line.price?.id,
+          })),
+        });
+
+        // Find the proration line items OR new device slot line items
+        // With createPreview, new items may not be marked as proration but are the charge
+        const deviceSlotItems = upcomingInvoice.lines.data.filter((line: any) => 
+          line.price?.id === deviceSlotPriceId
+        );
+        
         const prorationItems = upcomingInvoice.lines.data.filter((line: any) => 
           line.proration === true
         );
-        
-        // Sum up only the positive proration (the charge for new service)
-        const proratedAmountCents = prorationItems.reduce((sum: number, item: any) => {
-          return item.amount > 0 ? sum + item.amount : sum;
-        }, 0);
 
-        // Get tax amount from the proration items
-        const proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
-          // Use tax_amounts array if available for proration items
-          if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
-            return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
+        logStep("Filtered items", {
+          deviceSlotItemsCount: deviceSlotItems.length,
+          prorationItemsCount: prorationItems.length,
+          deviceSlotItems: deviceSlotItems.map((l: any) => ({ amount: l.amount, proration: l.proration })),
+          prorationItems: prorationItems.map((l: any) => ({ amount: l.amount, description: l.description })),
+        });
+        
+        // For proration calculation: use proration items if available, otherwise calculate from device slot items
+        // Proration items show the pro-rated charge for partial period
+        let proratedAmountCents = 0;
+        let proratedTaxCents = 0;
+
+        if (prorationItems.length > 0) {
+          // Sum up only the positive proration (the charge for new service)
+          proratedAmountCents = prorationItems.reduce((sum: number, item: any) => {
+            return item.amount > 0 ? sum + item.amount : sum;
+          }, 0);
+
+          // Get tax amount from the proration items
+          proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
+            if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
+              return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
+            }
+            return sum;
+          }, 0);
+        } else if (deviceSlotItems.length > 0) {
+          // Fallback: use device slot items directly (they might represent the full charge for the period)
+          const newDeviceSlotItem = deviceSlotItems.find((item: any) => item.amount > 0);
+          if (newDeviceSlotItem) {
+            proratedAmountCents = newDeviceSlotItem.amount;
+            if (newDeviceSlotItem.tax_amounts && newDeviceSlotItem.tax_amounts.length > 0) {
+              proratedTaxCents = newDeviceSlotItem.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
+            }
           }
-          return sum;
-        }, 0);
+        }
 
         // Get period info
         const periodEnd = mainItem?.current_period_end 
