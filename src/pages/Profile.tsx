@@ -84,6 +84,16 @@ const Profile = () => {
     proratedPrice: number;
     periodEnd: string;
   } | null>(null);
+  const [recurringProration, setRecurringProration] = useState<{
+    proratedPrice: number;
+    fullPrice: number;
+    remainingDays: number;
+    periodEnd: string;
+    interval: string;
+    currency: string;
+    isSendInvoice: boolean;
+    estimated?: boolean;
+  } | null>(null);
   const [isLoadingProration, setIsLoadingProration] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -487,7 +497,37 @@ const Profile = () => {
     navigate("/auth");
   };
 
-  const handleAddDeviceSlotClick = () => {
+  const handleAddDeviceSlotClick = async () => {
+    // For recurring subscriptions, fetch the prorated amount first
+    if (subscription.isRecurring) {
+      setIsLoadingProration(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("add-device-slot", {
+          body: { mode: "calculate", quantity: deviceSlotQuantity },
+        });
+        
+        if (error) throw error;
+        
+        if (data?.success) {
+          setRecurringProration({
+            proratedPrice: data.proratedPrice,
+            fullPrice: data.fullPrice,
+            remainingDays: data.remainingDays,
+            periodEnd: data.periodEnd,
+            interval: data.interval,
+            currency: data.currency,
+            isSendInvoice: data.isSendInvoice,
+            estimated: data.estimated,
+          });
+        }
+      } catch (error: any) {
+        console.error("Failed to calculate proration:", error);
+        // Still show dialog but without proration info
+        setRecurringProration(null);
+      } finally {
+        setIsLoadingProration(false);
+      }
+    }
     setShowAddConfirmDialog(true);
   };
 
@@ -1434,12 +1474,44 @@ const Profile = () => {
                   {" • "}
                   {subscription.planType === "yearly" ? t("subscription.yearly") : t("subscription.monthly")}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {subscription.planType === "yearly" 
-                    ? `€${50 * deviceSlotQuantity}/${t("subscription.year")}` 
-                    : `€${5 * deviceSlotQuantity}/${t("subscription.month")}`}
-                  {" "}({t("pricing.exclVat")})
-                </div>
+                
+                {/* Show prorated amount for recurring subscriptions */}
+                {subscription.isRecurring && recurringProration ? (
+                  <div className="mt-2 space-y-1">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">{t("devices.chargeNow") || "Charge now"}: </span>
+                      <span className="font-semibold text-foreground">
+                        €{recurringProration.proratedPrice.toFixed(2)}
+                      </span>
+                      {recurringProration.estimated && (
+                        <span className="text-xs text-muted-foreground ml-1">({t("common.estimated") || "estimated"})</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("devices.proratedFor") || "Prorated for"} {recurringProration.remainingDays} {t("devices.daysRemaining") || "days until"} {new Date(recurringProration.periodEnd).toLocaleDateString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("devices.thenRegular") || "Then"} €{recurringProration.fullPrice}/{recurringProration.interval === "year" ? t("subscription.year") : t("subscription.month")} {t("pricing.exclVat") || "(excl. VAT)"}
+                    </div>
+                    {recurringProration.isSendInvoice && (
+                      <div className="text-xs text-primary/80 mt-1">
+                        {t("devices.invoiceNote") || "An invoice will be sent for payment"}
+                      </div>
+                    )}
+                  </div>
+                ) : subscription.isRecurring && isLoadingProration ? (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {t("common.loading") || "Loading..."}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {subscription.planType === "yearly" 
+                      ? `€${50 * deviceSlotQuantity}/${t("subscription.year")}` 
+                      : `€${5 * deviceSlotQuantity}/${t("subscription.month")}`}
+                    {" "}({t("pricing.exclVat")})
+                  </div>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
                 {t("devices.confirmAddNote")}
@@ -1450,7 +1522,7 @@ const Profile = () => {
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmAddDeviceSlot}
-              disabled={isLoadingDevice}
+              disabled={isLoadingDevice || isLoadingProration}
             >
               {isLoadingDevice ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

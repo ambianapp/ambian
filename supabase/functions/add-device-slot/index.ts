@@ -165,16 +165,20 @@ serve(async (req) => {
 
     // Parse request body
     let quantity = 1;
+    let mode: "calculate" | "execute" = "execute";
     
     try {
       const body = await req.json();
       if (body.quantity && typeof body.quantity === "number" && body.quantity >= 1 && body.quantity <= 10) {
         quantity = Math.floor(body.quantity);
       }
+      if (body.mode === "calculate") {
+        mode = "calculate";
+      }
     } catch {
       // No body or invalid JSON, use defaults
     }
-    logStep("Options selected", { quantity });
+    logStep("Options selected", { quantity, mode });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -301,8 +305,98 @@ serve(async (req) => {
     );
     const mainInterval = mainItem?.price?.recurring?.interval;
     const deviceSlotPriceId = mainInterval === "year" ? DEVICE_SLOT_PRICE_YEARLY : DEVICE_SLOT_PRICE_MONTHLY;
+    const fullPrice = mainInterval === "year" ? 50 : 5; // €50/year or €5/month
     
     logStep("Determined device slot price", { mainInterval, deviceSlotPriceId });
+
+    // If mode is "calculate", return proration preview without making changes
+    if (mode === "calculate") {
+      logStep("Calculate mode - returning proration preview");
+      
+      // Use Stripe's upcoming invoice preview to get exact proration
+      try {
+        // Check if there's already a device slot item on this subscription
+        const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
+          item.price.id === deviceSlotPriceId
+        );
+
+        const subscriptionItems = existingDeviceSlotItem
+          ? [{ id: existingDeviceSlotItem.id, quantity: (existingDeviceSlotItem.quantity || 0) + quantity }]
+          : [...mainSubscription.items.data.map((item: any) => ({ id: item.id })), { price: deviceSlotPriceId, quantity }];
+
+        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+          customer: customerId,
+          subscription: mainSubscription.id,
+          subscription_items: subscriptionItems,
+          subscription_proration_behavior: "create_prorations",
+        });
+
+        // Find the proration line items (they have type 'invoiceitem' and negative/positive amounts)
+        const prorationItems = upcomingInvoice.lines.data.filter((line: any) => 
+          line.proration === true
+        );
+        
+        // Sum up only the positive proration (the charge for new service)
+        const proratedAmountCents = prorationItems.reduce((sum: number, item: any) => {
+          return item.amount > 0 ? sum + item.amount : sum;
+        }, 0);
+
+        // Get period info
+        const periodEnd = mainItem?.current_period_end 
+          ? new Date(mainItem.current_period_end * 1000) 
+          : new Date(mainSubscription.current_period_end * 1000);
+        
+        const now = new Date();
+        const remainingMs = periodEnd.getTime() - now.getTime();
+        const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+
+        return new Response(JSON.stringify({
+          success: true,
+          mode: "calculate",
+          proratedPrice: proratedAmountCents / 100, // Convert to euros
+          fullPrice: fullPrice * quantity,
+          remainingDays,
+          periodEnd: periodEnd.toISOString(),
+          quantity,
+          interval: mainInterval,
+          currency: upcomingInvoice.currency || "eur",
+          isSendInvoice,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      } catch (prorationError: any) {
+        logStep("Failed to calculate proration", { error: prorationError.message });
+        
+        // Fallback to simple calculation if Stripe preview fails
+        const periodEnd = mainItem?.current_period_end 
+          ? new Date(mainItem.current_period_end * 1000) 
+          : new Date(mainSubscription.current_period_end * 1000);
+        
+        const now = new Date();
+        const remainingMs = periodEnd.getTime() - now.getTime();
+        const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+        const totalDays = mainInterval === "year" ? 365 : 30;
+        const proratedPrice = (fullPrice * quantity * remainingDays) / totalDays;
+
+        return new Response(JSON.stringify({
+          success: true,
+          mode: "calculate",
+          proratedPrice: Math.round(proratedPrice * 100) / 100,
+          fullPrice: fullPrice * quantity,
+          remainingDays,
+          periodEnd: periodEnd.toISOString(),
+          quantity,
+          interval: mainInterval,
+          currency: "eur",
+          isSendInvoice,
+          estimated: true, // Flag that this is estimated, not exact
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
 
     // Check if there's already a device slot item on this subscription
     const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
