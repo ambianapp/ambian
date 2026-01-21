@@ -573,14 +573,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const now = Date.now();
     const CACHE_TTL = 10000; // 10 seconds
     
-    // Return cached result if recent
-    if (lastValidationResultRef.current && now - lastValidationResultRef.current.timestamp < CACHE_TTL) {
+    // Return cached VALID result if recent.
+    // Never cache 'kicked' because transient races (especially around disconnect/visibility)
+    // can incorrectly sign out healthy sessions on the next UI interaction.
+    if (
+      lastValidationResultRef.current?.result === 'valid' &&
+      now - lastValidationResultRef.current.timestamp < CACHE_TTL
+    ) {
       return lastValidationResultRef.current.result;
     }
     
-    // Prevent duplicate calls within 3 seconds
-    if (now - lastValidationCallRef.current < 3000) {
-      return lastValidationResultRef.current?.result ?? 'valid';
+    // Prevent duplicate calls within 3 seconds ONLY if the last result was valid.
+    // If the last result was 'error' or 'kicked', we want a fresh re-check.
+    if (now - lastValidationCallRef.current < 3000 && lastValidationResultRef.current?.result === 'valid') {
+      return 'valid';
     }
     lastValidationCallRef.current = now;
     
@@ -615,8 +621,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         result = 'valid';
       }
       
-      // Cache the result
-      lastValidationResultRef.current = { result, timestamp: now };
+      // Cache only VALID results (see comment above)
+      if (result === 'valid') {
+        lastValidationResultRef.current = { result, timestamp: now };
+      } else {
+        lastValidationResultRef.current = null;
+      }
       return result;
     } catch (error) {
       console.warn("Error validating session (will retry):", error);
@@ -957,8 +967,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const latestSession = (await supabase.auth.getSession()).data.session;
           if (!latestSession?.user) return;
 
-          const result = await validateSession(latestSession);
-          if (result === 'kicked') {
+          // Realtime can fire during transient DB propagation; confirm kick twice before signing out.
+          const confirmKick = async (): Promise<boolean> => {
+            const r1 = await validateSession(latestSession);
+            if (r1 !== 'kicked') return false;
+
+            // Short delay, then re-check to avoid false positives.
+            await new Promise((r) => setTimeout(r, 1500));
+            const freshSession = (await supabase.auth.getSession()).data.session;
+            if (!freshSession?.user) return false;
+
+            const r2 = await validateSession(freshSession);
+            return r2 === 'kicked';
+          };
+
+          if (await confirmKick()) {
             toast.error(
               "You've been disconnected from another device. Need more locations? Add extra device slots in your Profile settings.",
               { duration: Infinity, closeButton: true }
