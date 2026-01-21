@@ -143,6 +143,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isSigningOut = useRef(false);
   const initialLoadComplete = useRef(false);
 
+  // Keep a stable device ID for the lifetime of this JS runtime.
+  // On iOS/Safari, localStorage can occasionally be cleared/blocked mid-session.
+  // If that happens and the deviceId changes, we can accidentally treat the current
+  // device as "kicked" which leads to sign-out and broken media/cover loading.
+  const deviceIdRef = useRef<string | null>(null);
+
   // Can play music only if session is registered (not in device limit state)
   const canPlayMusic = isSessionRegistered && !isDeviceLimitReached;
 
@@ -263,12 +269,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Get or create a persistent device ID (survives token refreshes)
   const getDeviceId = useCallback(() => {
-    const storageKey = 'ambian_device_id';
-    let deviceId = localStorage.getItem(storageKey);
+    // 1) Prefer the in-memory ID for stability during the current session.
+    if (deviceIdRef.current) return deviceIdRef.current;
+
+    const storageKey = "ambian_device_id";
+    const sessionKey = "ambian_device_id_session";
+
+    // 2) Try localStorage first, then sessionStorage as a fallback.
+    let deviceId: string | null = null;
+    try {
+      deviceId = localStorage.getItem(storageKey);
+    } catch {
+      // ignore
+    }
+
+    if (!deviceId) {
+      try {
+        deviceId = sessionStorage.getItem(sessionKey);
+      } catch {
+        // ignore
+      }
+    }
+
+    // 3) Generate if missing.
     if (!deviceId) {
       deviceId = crypto.randomUUID();
-      localStorage.setItem(storageKey, deviceId);
     }
+
+    // 4) Persist best-effort (don’t crash if storage is blocked).
+    try {
+      localStorage.setItem(storageKey, deviceId);
+    } catch {
+      // ignore
+    }
+    try {
+      sessionStorage.setItem(sessionKey, deviceId);
+    } catch {
+      // ignore
+    }
+
+    deviceIdRef.current = deviceId;
     return deviceId;
   }, []);
 
