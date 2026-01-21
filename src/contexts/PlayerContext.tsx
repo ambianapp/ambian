@@ -180,7 +180,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [savePlaybackState]);
 
-  // Restore playback state on mount
+  // Force pause when device limit is reached (canPlayMusic becomes false)
+  // This ensures the isPlaying state syncs with the enforced pause in PlayerBar
+  useEffect(() => {
+    if (!canPlayMusic && isPlaying) {
+      console.log("[Player] Device limit reached - forcing pause state");
+      setIsPlaying(false);
+    }
+  }, [canPlayMusic, isPlaying]);
   useEffect(() => {
     if (hasRestoredRef.current) return;
     hasRestoredRef.current = true;
