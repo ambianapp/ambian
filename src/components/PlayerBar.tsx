@@ -1210,7 +1210,14 @@ const PlayerBar = () => {
       
       return () => clearInterval(intervalId);
     } else {
-      // No crossfade - just switch directly (handled by PlayerContext)
+      // No crossfade - switch directly: update playlist and track
+      console.log("[PlayerBar] Scheduled transition without crossfade - switching directly");
+      playlistTracksRef.current = playlist;
+      
+      // Set the new track - this will trigger the src effect to load and play
+      setCurrentTrackDirect(track);
+      lastSetTrackIdRef.current = track.id;
+      
       clearScheduledTransition();
     }
   }, [pendingScheduledTransition, crossfade, isPlaying, currentTrack?.audioUrl, volume, isMuted, clearScheduledTransition, isCrossfadeActive, setCurrentTrackDirect, softStop]);
