@@ -1725,7 +1725,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.prepaidNotice": "Tämä on kertaostos. Sinun tulee uusia, kun tilauksesi päättyy.",
     "devices.chargedNow": "Veloitetaan nyt",
     "devices.validUntil": "Voimassa tilauksen uusimiseen saakka",
-    "devices.thenRegular": "Sitten",
+    "devices.thenRegular": "Sen jälkeen",
     "devices.invoiceNote": "Lasku lähetetään maksua varten",
     
     // Payment History
