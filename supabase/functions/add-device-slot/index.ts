@@ -320,16 +320,26 @@ serve(async (req) => {
     if (mode === "calculate") {
       logStep("Calculate mode - returning proration preview");
       
-      // Get period end from the MAIN subscription (not from any schedule)
-      // This is the actual billing renewal date
-      const mainSubscriptionPeriodEnd = mainSubscription.current_period_end;
-      const periodEnd = mainSubscriptionPeriodEnd ? new Date(mainSubscriptionPeriodEnd * 1000) : new Date();
+      // Get period end from the subscription items (Stripe API 2025+ puts it on items, not subscription root)
+      // The main subscription item has the actual billing renewal date
+      const mainSubItem = mainSubscription.items.data.find((item: any) => 
+        MAIN_SUBSCRIPTION_PRICES.includes(item.price.id)
+      );
+      
+      // Try getting current_period_end from: 1) the main item, 2) any item, 3) subscription root
+      const periodEndTimestamp = 
+        mainSubItem?.current_period_end || 
+        mainSubscription.items.data[0]?.current_period_end ||
+        mainSubscription.current_period_end;
+      
+      const periodEnd = periodEndTimestamp ? new Date(periodEndTimestamp * 1000) : new Date();
       const now = new Date();
       const msRemaining = periodEnd.getTime() - now.getTime();
       const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
       
-      logStep("Period end from main subscription", { 
-        mainSubscriptionPeriodEnd,
+      logStep("Period end from subscription items", { 
+        mainSubItemId: mainSubItem?.id,
+        periodEndTimestamp,
         periodEndDate: periodEnd.toISOString(),
         daysRemaining 
       });
