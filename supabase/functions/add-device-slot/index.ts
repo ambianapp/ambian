@@ -313,7 +313,35 @@ serve(async (req) => {
     if (mode === "calculate") {
       logStep("Calculate mode - returning proration preview");
       
-      // Use Stripe's upcoming invoice preview to get exact proration
+      // Calculate proration manually to avoid complexity with subscription schedules
+      // This is more reliable than Stripe's invoice preview when schedules are involved
+      const periodEnd = new Date(mainSubscription.current_period_end * 1000);
+      const now = new Date();
+      const totalDaysInPeriod = mainInterval === "year" ? 365 : 30;
+      const msRemaining = periodEnd.getTime() - now.getTime();
+      const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+      
+      // Device slot prices
+      const deviceSlotPriceCents = mainInterval === "year" ? 5000 : 500; // €50/year or €5/month
+      
+      // Calculate prorated amount for the quantity being added
+      const dailyRate = deviceSlotPriceCents / totalDaysInPeriod;
+      const proratedAmountPerDevice = Math.round(dailyRate * daysRemaining);
+      const totalProratedAmount = proratedAmountPerDevice * quantity;
+      
+      logStep("Manual proration calculation", {
+        periodEnd: periodEnd.toISOString(),
+        daysRemaining,
+        totalDaysInPeriod,
+        deviceSlotPriceCents,
+        dailyRate,
+        proratedAmountPerDevice,
+        quantity,
+        totalProratedAmount,
+      });
+      
+      // Now get tax rate from a Stripe preview (for accurate VAT calculation)
+      let taxRatePercent = 0;
       try {
         // Check if there's already a device slot item on this subscription
         const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
@@ -324,8 +352,6 @@ serve(async (req) => {
           ? [{ id: existingDeviceSlotItem.id, quantity: (existingDeviceSlotItem.quantity || 0) + quantity }]
           : [...mainSubscription.items.data.map((item: any) => ({ id: item.id })), { price: deviceSlotPriceId, quantity }];
 
-        // Use createPreview (Stripe SDK v18+) instead of deprecated retrieveUpcoming
-        // Ensure automatic tax is enabled so VAT/tax amounts are returned when applicable.
         const upcomingInvoice = await stripe.invoices.createPreview({
           customer: customerId,
           subscription: mainSubscription.id,
@@ -336,154 +362,50 @@ serve(async (req) => {
           },
         });
 
-        // Log all line items to understand structure
         const invoiceAny = upcomingInvoice as any;
-        logStep("Invoice preview response", {
-          total: invoiceAny.total,
-          subtotal: invoiceAny.subtotal,
-          tax: invoiceAny.tax,
-          total_tax_amounts: invoiceAny.total_tax_amounts,
-          total_excluding_tax: invoiceAny.total_excluding_tax,
-          automatic_tax: invoiceAny.automatic_tax,
-          lineItemCount: upcomingInvoice.lines.data.length,
-          lineItems: upcomingInvoice.lines.data.map((line: any) => ({
-            description: line.description,
-            amount: line.amount,
-            amount_excluding_tax: line.amount_excluding_tax,
-            tax_amounts: line.tax_amounts,
-            proration: line.proration,
-            type: line.type,
-          })),
-        });
-
-        // Find the proration line items - these are typically:
-        // 1. Items with proration=true, OR
-        // 2. Items that are NOT the standard recurring charges (identified by description patterns)
-        // The proration items have descriptions like "Remaining time for..." or "Jäljellä oleva aika..."
         
-        // Standard recurring items have descriptions like "1 × Product Name (at €X / period)"
-        // They must have the pattern "(at €X / period)" at the end to be considered recurring
-        const isRecurringCharge = (description: string) => {
-          if (!description) return false;
-          // Recurring charges end with "(at €X / period)" or similar localized versions
-          // e.g., "1 × Ambian Music (at €89.00 / year)"
-          // e.g., "2 × Extra Device Slot Yearly (at €50.00 / year)"
-          return /\(at\s+[€$£]\d+[\d.,]*\s*\/\s*(year|month|day|week)\)$/i.test(description) ||
-            /\([€$£]\d+[\d.,]*\s*\/\s*(vuosi|kuukausi|päivä|viikko)\)$/i.test(description) || // Finnish
-            /\(à\s+[€$£]\d+[\d.,]*\s*\/\s*(an|mois|jour|semaine)\)$/i.test(description); // French
-        };
-        
-        const prorationItems = upcomingInvoice.lines.data.filter((line: any) => 
-          line.proration === true || 
-          (line.amount > 0 && !isRecurringCharge(line.description || ''))
-        );
-
-        logStep("Filtered proration items", {
-          prorationItemsCount: prorationItems.length,
-          prorationItems: prorationItems.map((l: any) => ({ 
-            amount: l.amount, 
-            description: l.description,
-            proration: l.proration,
-            tax_amounts: l.tax_amounts,
-          })),
-        });
-        
-        // For proration calculation: sum positive proration items
-        let proratedAmountCents = 0;
-        let proratedTaxCents = 0;
-
-        // Sum up only the positive amounts (charges for new service)
-        proratedAmountCents = prorationItems.reduce((sum: number, item: any) => {
-          return item.amount > 0 ? sum + item.amount : sum;
-        }, 0);
-
-        // Try to get tax from line items first
-        proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
-          if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
-            return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
-          }
-          return sum;
-        }, 0);
-
-        // If no tax on line items, calculate proportional tax from invoice totals.
-        // Stripe provides tax in different ways:
-        // 1. `tax` field (direct tax amount)
-        // 2. `total_tax_amounts` array
-        // 3. `total - total_excluding_tax` (when automatic_tax is enabled)
-        if (proratedTaxCents === 0 && invoiceAny.subtotal > 0) {
-          let invoiceTaxCents = 0;
-          
-          // Method 1: Direct tax field
-          if (typeof invoiceAny.tax === "number" && invoiceAny.tax > 0) {
-            invoiceTaxCents = invoiceAny.tax;
-            logStep("Tax from direct tax field", { invoiceTaxCents });
-          }
-          // Method 2: total_tax_amounts array
-          else if (Array.isArray(invoiceAny.total_tax_amounts) && invoiceAny.total_tax_amounts.length > 0) {
-            invoiceTaxCents = invoiceAny.total_tax_amounts.reduce((sum: number, t: any) => sum + (t?.amount || 0), 0);
-            logStep("Tax from total_tax_amounts", { invoiceTaxCents, total_tax_amounts: invoiceAny.total_tax_amounts });
-          }
-          // Method 3: Calculate from total - total_excluding_tax (when automatic_tax is enabled)
-          else if (typeof invoiceAny.total === "number" && typeof invoiceAny.total_excluding_tax === "number") {
-            invoiceTaxCents = invoiceAny.total - invoiceAny.total_excluding_tax;
-            logStep("Tax calculated from total difference", { 
-              total: invoiceAny.total, 
-              total_excluding_tax: invoiceAny.total_excluding_tax,
-              invoiceTaxCents 
-            });
-          }
-
-          if (invoiceTaxCents > 0) {
-            // Calculate proportional tax based on proration amount vs subtotal
-            const taxRate = invoiceTaxCents / invoiceAny.subtotal;
-            proratedTaxCents = Math.round(proratedAmountCents * taxRate);
-            logStep("Calculated proportional tax for proration", {
-              invoiceTaxCents,
-              invoiceSubtotalCents: invoiceAny.subtotal,
-              proratedAmountCents,
-              taxRate: (taxRate * 100).toFixed(2) + "%",
-              proratedTaxCents,
-            });
-          }
+        // Calculate tax rate from invoice totals
+        if (typeof invoiceAny.total === "number" && typeof invoiceAny.total_excluding_tax === "number" && invoiceAny.total_excluding_tax > 0) {
+          const invoiceTax = invoiceAny.total - invoiceAny.total_excluding_tax;
+          taxRatePercent = (invoiceTax / invoiceAny.total_excluding_tax) * 100;
+          logStep("Tax rate from invoice preview", { 
+            total: invoiceAny.total,
+            total_excluding_tax: invoiceAny.total_excluding_tax,
+            taxRatePercent: taxRatePercent.toFixed(2) + "%",
+          });
         }
-
-        // Get period info
-        const periodEnd = mainItem?.current_period_end 
-          ? new Date(mainItem.current_period_end * 1000) 
-          : new Date(mainSubscription.current_period_end * 1000);
-        
-        const now = new Date();
-        const remainingMs = periodEnd.getTime() - now.getTime();
-        const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-
-        logStep("Proration calculated", { 
-          proratedAmountCents, 
-          proratedTaxCents,
-          totalWithTax: proratedAmountCents + proratedTaxCents
-        });
-
-        return new Response(JSON.stringify({
-          success: true,
-          mode: "calculate",
-          proratedPrice: proratedAmountCents / 100, // Convert to euros (excl. tax)
-          proratedTax: proratedTaxCents / 100, // Tax amount in euros
-          proratedTotal: (proratedAmountCents + proratedTaxCents) / 100, // Total incl. tax
-          fullPrice: fullPrice * quantity,
-          remainingDays,
-          periodEnd: periodEnd.toISOString(),
-          quantity,
-          interval: mainInterval,
-          currency: upcomingInvoice.currency || "eur",
-          isSendInvoice,
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
-      } catch (prorationError: any) {
-        logStep("Failed to calculate proration", { error: prorationError.message });
-        // Throw error - we need exact amounts from Stripe, not estimates
-        throw new Error("Unable to calculate exact proration. Please try again.");
+      } catch (taxError) {
+        logStep("Failed to get tax rate from preview, using 0%", { error: String(taxError) });
       }
+      
+      // Apply tax rate to our manually calculated proration
+      const proratedTaxCents = Math.round(totalProratedAmount * (taxRatePercent / 100));
+      const proratedAmountCents = totalProratedAmount;
+
+      
+      logStep("Proration calculated", { 
+        proratedAmountCents, 
+        proratedTaxCents,
+        totalWithTax: proratedAmountCents + proratedTaxCents
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        mode: "calculate",
+        proratedPrice: proratedAmountCents / 100, // Convert to euros (excl. tax)
+        proratedTax: proratedTaxCents / 100, // Tax amount in euros
+        proratedTotal: (proratedAmountCents + proratedTaxCents) / 100, // Total incl. tax
+        fullPrice: fullPrice * quantity,
+        remainingDays: daysRemaining,
+        periodEnd: periodEnd.toISOString(),
+        quantity,
+        interval: mainInterval,
+        currency: "eur",
+        isSendInvoice,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     // Check if there's already a device slot item on this subscription
