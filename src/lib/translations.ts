@@ -25,6 +25,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Loading...",
     "common.error": "Error",
     "common.success": "Success",
+    "common.estimated": "estimated",
     
     // Toast messages
     "toast.profileUpdated": "Profile updated",
@@ -239,9 +240,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addLocation": "Add another device",
     "devices.add": "Add",
     "devices.proratedUntil": "prorated until",
-    "devices.daysRemaining": "days",
+    "devices.daysRemaining": "days until",
     "devices.proratedPricing": "Prorated for remaining subscription period",
     "devices.prepaidNotice": "This is a one-time purchase. You'll need to renew when your subscription expires.",
+    "devices.chargeNow": "Charge now",
+    "devices.proratedFor": "Prorated for",
+    "devices.thenRegular": "Then",
+    "devices.invoiceNote": "An invoice will be sent for payment",
     
     // Payment History (formerly Invoices)
     "invoices.title": "Payment History",
@@ -761,6 +766,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Laddar...",
     "common.error": "Fel",
     "common.success": "Lyckades",
+    "common.estimated": "uppskattat",
     
     // Toast messages
     "toast.profileUpdated": "Profil uppdaterad",
@@ -971,9 +977,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addLocation": "Lägg till en enhet till",
     "devices.add": "Lägg till",
     "devices.proratedUntil": "proportionellt till",
-    "devices.daysRemaining": "dagar",
+    "devices.daysRemaining": "dagar till",
     "devices.proratedPricing": "Proportionellt för återstående prenumerationsperiod",
     "devices.prepaidNotice": "Detta är ett engångsköp. Du behöver förnya när din prenumeration går ut.",
+    "devices.chargeNow": "Debitering nu",
+    "devices.proratedFor": "Proportionellt för",
+    "devices.thenRegular": "Sedan",
+    "devices.invoiceNote": "En faktura skickas för betalning",
     
     // Payment History
     "invoices.title": "Betalningshistorik",
@@ -1493,6 +1503,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Ladataan...",
     "common.error": "Virhe",
     "common.success": "Onnistui",
+    "common.estimated": "arvioitu",
     
     // Toast messages
     "toast.profileUpdated": "Profiili päivitetty",
@@ -1702,9 +1713,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addLocation": "Lisää toinen laite",
     "devices.add": "Lisää",
     "devices.proratedUntil": "suhteellinen hinta",
-    "devices.daysRemaining": "päivää",
+    "devices.daysRemaining": "päivää, kunnes",
     "devices.proratedPricing": "Suhteellinen hinta jäljellä olevalle tilausjaksolle",
     "devices.prepaidNotice": "Tämä on kertaostos. Sinun tulee uusia, kun tilauksesi päättyy.",
+    "devices.chargeNow": "Veloitus nyt",
+    "devices.proratedFor": "Suhteellinen hinta",
+    "devices.thenRegular": "Sitten",
+    "devices.invoiceNote": "Lasku lähetetään maksua varten",
     
     // Payment History
     "invoices.title": "Maksuhistoria",
@@ -2225,6 +2240,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Laden...",
     "common.error": "Fehler",
     "common.success": "Erfolg",
+    "common.estimated": "geschätzt",
     
     // Toast messages
     "toast.profileUpdated": "Profil aktualisiert",
@@ -2434,9 +2450,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addLocation": "Ein weiteres Gerät hinzufügen",
     "devices.add": "Hinzufügen",
     "devices.proratedUntil": "anteilig bis",
-    "devices.daysRemaining": "Tage",
+    "devices.daysRemaining": "Tage bis",
     "devices.proratedPricing": "Anteilig für verbleibende Abonnementperiode",
     "devices.prepaidNotice": "Dies ist ein Einmalkauf. Sie müssen verlängern, wenn Ihr Abonnement abläuft.",
+    "devices.chargeNow": "Jetzt belasten",
+    "devices.proratedFor": "Anteilig für",
+    "devices.thenRegular": "Danach",
+    "devices.invoiceNote": "Eine Rechnung wird zur Zahlung gesendet",
     
     // Payment History
     "invoices.title": "Zahlungsverlauf",
@@ -2956,6 +2976,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.loading": "Chargement...",
     "common.error": "Erreur",
     "common.success": "Succès",
+    "common.estimated": "estimé",
     
     // Toast messages
     "toast.profileUpdated": "Profil mis à jour",
@@ -3165,9 +3186,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.addLocation": "Ajouter un autre appareil",
     "devices.add": "Ajouter",
     "devices.proratedUntil": "au prorata jusqu'au",
-    "devices.daysRemaining": "jours",
+    "devices.daysRemaining": "jours jusqu'au",
     "devices.proratedPricing": "Au prorata pour la période d'abonnement restante",
     "devices.prepaidNotice": "Ceci est un achat unique. Vous devrez renouveler à l'expiration de votre abonnement.",
+    "devices.chargeNow": "Facturer maintenant",
+    "devices.proratedFor": "Au prorata pour",
+    "devices.thenRegular": "Ensuite",
+    "devices.invoiceNote": "Une facture sera envoyée pour le paiement",
     
     // Payment History
     "invoices.title": "Historique des paiements",
