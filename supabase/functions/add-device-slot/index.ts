@@ -362,12 +362,15 @@ serve(async (req) => {
         // The proration items have descriptions like "Remaining time for..." or "Jäljellä oleva aika..."
         
         // Standard recurring items have descriptions like "1 × Product Name (at €X / period)"
+        // They must have the pattern "(at €X / period)" at the end to be considered recurring
         const isRecurringCharge = (description: string) => {
-          return description && (
-            description.includes(' × ') || 
-            description.includes(' x ') ||
-            /^\d+\s*[×x]\s*.+\(at\s/.test(description)
-          );
+          if (!description) return false;
+          // Recurring charges end with "(at €X / period)" or similar localized versions
+          // e.g., "1 × Ambian Music (at €89.00 / year)"
+          // e.g., "2 × Extra Device Slot Yearly (at €50.00 / year)"
+          return /\(at\s+[€$£]\d+[\d.,]*\s*\/\s*(year|month|day|week)\)$/i.test(description) ||
+            /\([€$£]\d+[\d.,]*\s*\/\s*(vuosi|kuukausi|päivä|viikko)\)$/i.test(description) || // Finnish
+            /\(à\s+[€$£]\d+[\d.,]*\s*\/\s*(an|mois|jour|semaine)\)$/i.test(description); // French
         };
         
         const prorationItems = upcomingInvoice.lines.data.filter((line: any) => 
