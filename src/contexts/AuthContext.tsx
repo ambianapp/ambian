@@ -618,25 +618,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const isNewOAuthUser = now - createdAt < 2 * 60 * 1000; // 2 minutes
         
         // For new OAuth users, always show loading screen regardless of cache
-        // For returning users WITH cache, skip loading screen entirely
+        // For returning users WITH cache, use cache values but still wait for fresh data
         const hasValidCache = !!validCache;
-        const shouldShowLoading = isNewOAuthUser || (!hasValidCache && !hasShownInitialLoading());
         
         if (isNewOAuthUser) {
           sessionStorage.removeItem(SHOWN_LOADING_KEY);
         }
         
-        // If we have a valid cache, stop loading immediately (don't wait for API)
+        // CRITICAL FIX: Always keep isLoading true during initial load until Promise.all completes
+        // The cache only pre-fills the subscription state to avoid flash of wrong content,
+        // but we still need to wait for fresh data before rendering the main app.
+        // Only skip the subscription loading spinner if we have a valid cache (to avoid double loading UI)
         if (hasValidCache && !isNewOAuthUser) {
-          setIsLoading(false);
           setIsSubscriptionLoading(false);
         } else {
-          setIsSubscriptionLoading(shouldShowLoading);
-          // Only show main loading if we need to show subscription loading
-          if (!shouldShowLoading) {
-            setIsLoading(false);
-          }
+          setIsSubscriptionLoading(true);
         }
+        // Keep isLoading = true until Promise.all below finishes
         
         // Run all async operations in parallel for speed
         Promise.all([
