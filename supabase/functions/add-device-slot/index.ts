@@ -283,11 +283,18 @@ serve(async (req) => {
       }
     }
 
+    // Re-fetch the main subscription to ensure we have all fields including current_period_end
+    const fullMainSubscription = await stripe.subscriptions.retrieve(mainSubscription.id);
+    
     logStep("Main subscription found", { 
-      subscriptionId: mainSubscription.id, 
-      status: mainSubscription.status,
-      itemCount: mainSubscription.items.data.length 
+      subscriptionId: fullMainSubscription.id, 
+      status: fullMainSubscription.status,
+      itemCount: fullMainSubscription.items.data.length,
+      currentPeriodEnd: fullMainSubscription.current_period_end,
     });
+    
+    // Use the fully retrieved subscription from now on
+    mainSubscription = fullMainSubscription as any;
 
     // Check if this is a send_invoice subscription - if so, check for abuse
     const isSendInvoice = (mainSubscription as any).collection_method === "send_invoice";
