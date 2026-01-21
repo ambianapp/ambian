@@ -313,88 +313,151 @@ serve(async (req) => {
     if (mode === "calculate") {
       logStep("Calculate mode - returning proration preview");
       
-      // Calculate proration manually to avoid complexity with subscription schedules
-      // This is more reliable than Stripe's invoice preview when schedules are involved
-      const periodEnd = new Date(mainSubscription.current_period_end * 1000);
+      // Get period end for display
+      const periodEndTimestamp = mainSubscription.current_period_end;
+      const periodEnd = periodEndTimestamp ? new Date(periodEndTimestamp * 1000) : new Date();
       const now = new Date();
-      const totalDaysInPeriod = mainInterval === "year" ? 365 : 30;
       const msRemaining = periodEnd.getTime() - now.getTime();
       const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
       
-      // Device slot prices
-      const deviceSlotPriceCents = mainInterval === "year" ? 5000 : 500; // €50/year or €5/month
+      // Use Stripe's invoice preview to get accurate proration with tax
+      // Check if there's already a device slot item on this subscription
+      const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
+        item.price.id === deviceSlotPriceId
+      );
       
-      // Calculate prorated amount for the quantity being added
-      const dailyRate = deviceSlotPriceCents / totalDaysInPeriod;
-      const proratedAmountPerDevice = Math.round(dailyRate * daysRemaining);
-      const totalProratedAmount = proratedAmountPerDevice * quantity;
+      const currentDeviceQuantity = existingDeviceSlotItem?.quantity || 0;
+      const newTotalQuantity = currentDeviceQuantity + quantity;
       
-      logStep("Manual proration calculation", {
-        periodEnd: periodEnd.toISOString(),
-        daysRemaining,
-        totalDaysInPeriod,
-        deviceSlotPriceCents,
-        dailyRate,
-        proratedAmountPerDevice,
-        quantity,
-        totalProratedAmount,
+      const subscriptionItems = existingDeviceSlotItem
+        ? [{ id: existingDeviceSlotItem.id, quantity: newTotalQuantity }]
+        : [...mainSubscription.items.data.map((item: any) => ({ id: item.id })), { price: deviceSlotPriceId, quantity }];
+
+      const upcomingInvoice = await stripe.invoices.createPreview({
+        customer: customerId,
+        subscription: mainSubscription.id,
+        automatic_tax: { enabled: true },
+        subscription_details: {
+          items: subscriptionItems,
+          proration_behavior: "create_prorations",
+        },
+      });
+
+      const invoiceAny = upcomingInvoice as any;
+      
+      logStep("Invoice preview response", {
+        total: invoiceAny.total,
+        subtotal: invoiceAny.subtotal,
+        total_excluding_tax: invoiceAny.total_excluding_tax,
+        automatic_tax: invoiceAny.automatic_tax,
+        lineItemCount: invoiceAny.lines?.data?.length || 0,
+        lineItems: invoiceAny.lines?.data?.map((item: any) => ({
+          description: item.description,
+          amount: item.amount,
+        })) || [],
       });
       
-      // Now get tax rate from a Stripe preview (for accurate VAT calculation)
-      let taxRatePercent = 0;
-      try {
-        // Check if there's already a device slot item on this subscription
-        const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
-          item.price.id === deviceSlotPriceId
-        );
-
-        const subscriptionItems = existingDeviceSlotItem
-          ? [{ id: existingDeviceSlotItem.id, quantity: (existingDeviceSlotItem.quantity || 0) + quantity }]
-          : [...mainSubscription.items.data.map((item: any) => ({ id: item.id })), { price: deviceSlotPriceId, quantity }];
-
-        const upcomingInvoice = await stripe.invoices.createPreview({
-          customer: customerId,
-          subscription: mainSubscription.id,
-          automatic_tax: { enabled: true },
-          subscription_details: {
-            items: subscriptionItems,
-            proration_behavior: "create_prorations",
-          },
-        });
-
-        const invoiceAny = upcomingInvoice as any;
+      // Filter for only proration line items for the NEW quantity being added
+      // Proration items have descriptions like "Remaining time for X × Extra Device Slot"
+      // or Finnish: "Jäljellä oleva aika kohteelle X × Extra Device Slot"
+      // We need to find the one that corresponds to the NEW total quantity
+      const prorationItems = invoiceAny.lines?.data?.filter((item: any) => {
+        const desc = (item.description || '').toLowerCase();
         
-        // Calculate tax rate from invoice totals
-        if (typeof invoiceAny.total === "number" && typeof invoiceAny.total_excluding_tax === "number" && invoiceAny.total_excluding_tax > 0) {
-          const invoiceTax = invoiceAny.total - invoiceAny.total_excluding_tax;
-          taxRatePercent = (invoiceTax / invoiceAny.total_excluding_tax) * 100;
-          logStep("Tax rate from invoice preview", { 
-            total: invoiceAny.total,
-            total_excluding_tax: invoiceAny.total_excluding_tax,
-            taxRatePercent: taxRatePercent.toFixed(2) + "%",
-          });
+        // Check if it's a proration item (positive amount, contains "remaining time" or equivalent)
+        if (item.amount <= 0) return false;
+        
+        // Match patterns for remaining time prorations in various languages
+        const isRemainingTime = 
+          desc.includes('remaining time for') ||
+          desc.includes('jäljellä oleva aika') ||
+          desc.includes('temps restant pour') ||
+          desc.includes('resterende tijd voor');
+        
+        if (!isRemainingTime) return false;
+        
+        // Check if it's for device slots
+        const isDeviceSlot = 
+          desc.includes('device slot') ||
+          desc.includes('extra device') ||
+          desc.includes('location') ||
+          desc.includes('device');
+        
+        if (!isDeviceSlot) return false;
+        
+        // Check if it's for the NEW total quantity (e.g., "2 × Extra Device Slot" when going from 1 to 2)
+        const quantityMatch = desc.match(/(\d+)\s*[×x]/);
+        if (quantityMatch) {
+          const descQuantity = parseInt(quantityMatch[1], 10);
+          // This should be the new total quantity
+          return descQuantity === newTotalQuantity;
         }
-      } catch (taxError) {
-        logStep("Failed to get tax rate from preview, using 0%", { error: String(taxError) });
+        
+        return true;
+      }) || [];
+      
+      // Also need to account for credit items for unused time on existing slots
+      const creditItems = invoiceAny.lines?.data?.filter((item: any) => {
+        const desc = (item.description || '').toLowerCase();
+        if (item.amount >= 0) return false;
+        
+        // Match patterns for unused time in various languages
+        const isUnusedTime = 
+          desc.includes('unused time') ||
+          desc.includes('käyttämätön aika') ||
+          desc.includes('temps non utilisé');
+        
+        if (!isUnusedTime) return false;
+        
+        // Check if it's for device slots
+        return desc.includes('device slot') || desc.includes('extra device') || desc.includes('device');
+      }) || [];
+      
+      logStep("Filtered proration items", { 
+        prorationItemsCount: prorationItems.length, 
+        creditItemsCount: creditItems.length,
+        prorationItems: prorationItems.map((i: any) => ({ amount: i.amount, description: i.description })),
+        creditItems: creditItems.map((i: any) => ({ amount: i.amount, description: i.description })),
+      });
+      
+      // Calculate net proration (new slots minus credit for existing)
+      // For adding to an existing item: new total proration - credit for old = delta for new slot
+      const prorationSum = prorationItems.reduce((sum: number, item: any) => sum + item.amount, 0);
+      const creditSum = creditItems.reduce((sum: number, item: any) => sum + item.amount, 0);
+      const netProrationCents = prorationSum + creditSum; // creditSum is negative
+      
+      // Calculate tax proportionally from the invoice totals
+      let proratedTaxCents = 0;
+      if (typeof invoiceAny.total === "number" && typeof invoiceAny.total_excluding_tax === "number" && invoiceAny.subtotal > 0) {
+        const invoiceTaxCents = invoiceAny.total - invoiceAny.total_excluding_tax;
+        // Tax rate as a proportion
+        const taxRate = invoiceAny.total_excluding_tax > 0 ? invoiceTaxCents / invoiceAny.total_excluding_tax : 0;
+        proratedTaxCents = Math.round(netProrationCents * taxRate);
+        
+        logStep("Tax calculated", { 
+          invoiceTaxCents,
+          invoiceTotalExclTax: invoiceAny.total_excluding_tax,
+          taxRate: (taxRate * 100).toFixed(2) + "%",
+          netProrationCents,
+          proratedTaxCents,
+        });
       }
       
-      // Apply tax rate to our manually calculated proration
-      const proratedTaxCents = Math.round(totalProratedAmount * (taxRatePercent / 100));
-      const proratedAmountCents = totalProratedAmount;
-
+      const proratedAmountCents = Math.max(0, netProrationCents);
+      const proratedTax = Math.max(0, proratedTaxCents);
       
       logStep("Proration calculated", { 
         proratedAmountCents, 
-        proratedTaxCents,
-        totalWithTax: proratedAmountCents + proratedTaxCents
+        proratedTaxCents: proratedTax,
+        totalWithTax: proratedAmountCents + proratedTax,
       });
 
       return new Response(JSON.stringify({
         success: true,
         mode: "calculate",
         proratedPrice: proratedAmountCents / 100, // Convert to euros (excl. tax)
-        proratedTax: proratedTaxCents / 100, // Tax amount in euros
-        proratedTotal: (proratedAmountCents + proratedTaxCents) / 100, // Total incl. tax
+        proratedTax: proratedTax / 100, // Tax amount in euros
+        proratedTotal: (proratedAmountCents + proratedTax) / 100, // Total incl. tax
         fullPrice: fullPrice * quantity,
         remainingDays: daysRemaining,
         periodEnd: periodEnd.toISOString(),
