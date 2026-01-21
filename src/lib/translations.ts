@@ -1723,7 +1723,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddBtn": "Vahvista ja lisää",
     "devices.includedInSubscription": "Sisältyy tilaukseen",
     "devices.included": "Sisältyy",
-    "devices.addLocation": "Lisää toinen laite",
+    "devices.addLocation": "Lisää uusi laite",
     "devices.add": "Lisää",
     "devices.proratedUntil": "suhteellinen hinta",
     "devices.daysRemaining": "päivää, kunnes",
