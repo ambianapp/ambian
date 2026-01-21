@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.complete-partner-connect]
 verify_jwt = true
+
+[functions.get-signed-audio-url]
+verify_jwt = false
