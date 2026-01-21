@@ -63,6 +63,10 @@ const PlayerBar = () => {
   const { user, getDeviceId } = useAuth();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
+
+  // iOS/Safari autoplay can fail if play() isn't triggered from a user gesture.
+  // We surface a clear CTA instead of failing silently.
+  const lastAutoplayToastAtRef = useRef(0);
   
   const isLiked = currentTrack ? checkIsLiked(currentTrack.id) : false;
 
@@ -715,7 +719,21 @@ const PlayerBar = () => {
           });
           activeAudio.play().catch((err) => {
             console.error("Play failed:", err);
-            dbg("play/pause effect: play() failed", { error: err.message });
+            dbg("play/pause effect: play() failed", { error: err?.message });
+
+            // iOS/Safari often throws NotAllowedError when autoplay is blocked.
+            // Throttle the toast to avoid spam during retries.
+            const name = (err as any)?.name;
+            if (name === "NotAllowedError") {
+              const now = Date.now();
+              if (now - lastAutoplayToastAtRef.current > 3000) {
+                lastAutoplayToastAtRef.current = now;
+                toast({
+                  title: "Tap Play to start",
+                  description: "iPhone/iPad requires a tap to start audio after reconnecting.",
+                });
+              }
+            }
           });
         }
       } else if (!isPlaying) {
@@ -772,6 +790,38 @@ const PlayerBar = () => {
       }
     }
   }, [initWebAudio]);
+
+  const handleUserPlayPause = useCallback(async () => {
+    await ensureAudioContextRunning();
+
+    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    if (activeAudio) {
+      try {
+        if (isPlaying) {
+          // Pause directly in the gesture handler for immediate feedback.
+          activeAudio.pause();
+        } else {
+          // Play directly in the gesture handler to satisfy iOS/Safari autoplay rules.
+          if (activeAudio.paused && activeAudio.src) {
+            await activeAudio.play();
+          }
+        }
+      } catch (err: any) {
+        const name = err?.name;
+        if (name === "NotAllowedError") {
+          toast({
+            title: "Tap again to start audio",
+            description: "Audio is ready, but iOS/Safari blocked autoplay. One more tap should start playback.",
+          });
+        } else {
+          console.error("Direct play/pause failed:", err);
+        }
+      }
+    }
+
+    // Keep app state in sync (PlayerContext).
+    handlePlayPause();
+  }, [ensureAudioContextRunning, isCrossfadeActive, isPlaying, handlePlayPause, toast]);
 
   // Initialize Web Audio on first user interaction (required by browsers)
   useEffect(() => {
@@ -1504,7 +1554,7 @@ const PlayerBar = () => {
           </div>
           
           {/* Center play button */}
-          <Button variant="player" size="icon" onClick={handlePlayPause} className="h-12 w-12 flex-shrink-0 mx-2">
+          <Button variant="player" size="icon" onClick={handleUserPlayPause} className="h-12 w-12 flex-shrink-0 mx-2">
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
           </Button>
           
@@ -1609,7 +1659,7 @@ const PlayerBar = () => {
             >
               <SkipBack className="w-5 h-5" />
             </Button>
-            <Button variant="player" size="iconLg" onClick={handlePlayPause} className="h-12 w-12">
+            <Button variant="player" size="iconLg" onClick={handleUserPlayPause} className="h-12 w-12">
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </Button>
             <Button
