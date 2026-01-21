@@ -214,42 +214,161 @@ serve(async (req) => {
     const newQuantity = currentQuantity - quantityToRemove;
 
     if (newQuantity <= 0) {
-      // Remove the item entirely from the subscription
-      logStep("Removing device slot item entirely");
+      // Set cancel_at_period_end for the ENTIRE subscription won't work here
+      // We need to mark the item for removal at period end
+      // Stripe doesn't support cancel_at_period_end per line item, so we use a workaround:
+      // We schedule a cancellation by updating the subscription's cancel behavior
+      // BUT that affects the whole subscription. Instead, we should update metadata
+      // and handle this differently OR use a scheduled update.
       
-      await stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: itemId,
-          deleted: true,
-        }],
-        proration_behavior: "create_prorations",
+      // For now, let's use subscription schedules to schedule the removal at period end
+      logStep("Scheduling device slot item removal at period end");
+      
+      // First check if there's already a schedule for this subscription
+      const existingSchedules = await stripe.subscriptionSchedules.list({
+        customer: customerId,
+        limit: 100,
       });
+      
+      const activeSchedule = existingSchedules.data.find(
+        (s: any) => s.subscription === subscriptionId && s.status === "active"
+      );
+      
+      if (activeSchedule) {
+        // Update existing schedule to remove the item in the next phase
+        logStep("Updating existing subscription schedule", { scheduleId: activeSchedule.id });
+        
+        // Get items for the next phase (excluding this device slot item)
+        const nextPhaseItems = subscription.items.data
+          .filter((item: any) => item.id !== itemId)
+          .map((item: any) => ({
+            price: item.price.id,
+            quantity: item.quantity,
+          }));
+        
+        await stripe.subscriptionSchedules.update(activeSchedule.id, {
+          phases: [
+            {
+              items: subscription.items.data.map((item: any) => ({
+                price: item.price.id,
+                quantity: item.quantity,
+              })),
+              start_date: activeSchedule.phases[0].start_date,
+              end_date: subscription.current_period_end,
+            },
+            {
+              items: nextPhaseItems,
+              start_date: subscription.current_period_end,
+            },
+          ],
+        });
+      } else {
+        // Create a schedule from the existing subscription
+        logStep("Creating subscription schedule for deferred cancellation");
+        
+        const schedule = await stripe.subscriptionSchedules.create({
+          from_subscription: subscriptionId,
+        });
+        
+        // Get items for the next phase (excluding this device slot item)
+        const nextPhaseItems = subscription.items.data
+          .filter((item: any) => item.id !== itemId)
+          .map((item: any) => ({
+            price: item.price.id,
+            quantity: item.quantity,
+          }));
+        
+        // Update the schedule to remove the item at the end of the current period
+        await stripe.subscriptionSchedules.update(schedule.id, {
+          phases: [
+            {
+              items: subscription.items.data.map((item: any) => ({
+                price: item.price.id,
+                quantity: item.quantity,
+              })),
+              start_date: schedule.phases[0].start_date,
+              end_date: subscription.current_period_end,
+            },
+            {
+              items: nextPhaseItems,
+              start_date: subscription.current_period_end,
+            },
+          ],
+        });
+      }
 
-      logStep("Device slot item removed from subscription");
+      logStep("Device slot item scheduled for removal at period end");
     } else {
-      // Reduce the quantity
-      logStep("Reducing device slot quantity", { from: currentQuantity, to: newQuantity });
+      // Reduce the quantity at period end using subscription schedules
+      logStep("Scheduling device slot quantity reduction", { from: currentQuantity, to: newQuantity });
       
-      await stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: itemId,
-          quantity: newQuantity,
-        }],
-        proration_behavior: "create_prorations",
+      const existingSchedules = await stripe.subscriptionSchedules.list({
+        customer: customerId,
+        limit: 100,
       });
+      
+      const activeSchedule = existingSchedules.data.find(
+        (s: any) => s.subscription === subscriptionId && s.status === "active"
+      );
+      
+      if (activeSchedule) {
+        // Update existing schedule
+        const nextPhaseItems = subscription.items.data.map((item: any) => ({
+          price: item.price.id,
+          quantity: item.id === itemId ? newQuantity : item.quantity,
+        }));
+        
+        await stripe.subscriptionSchedules.update(activeSchedule.id, {
+          phases: [
+            {
+              items: subscription.items.data.map((item: any) => ({
+                price: item.price.id,
+                quantity: item.quantity,
+              })),
+              start_date: activeSchedule.phases[0].start_date,
+              end_date: subscription.current_period_end,
+            },
+            {
+              items: nextPhaseItems,
+              start_date: subscription.current_period_end,
+            },
+          ],
+        });
+      } else {
+        // Create a schedule from the existing subscription
+        const schedule = await stripe.subscriptionSchedules.create({
+          from_subscription: subscriptionId,
+        });
+        
+        const nextPhaseItems = subscription.items.data.map((item: any) => ({
+          price: item.price.id,
+          quantity: item.id === itemId ? newQuantity : item.quantity,
+        }));
+        
+        await stripe.subscriptionSchedules.update(schedule.id, {
+          phases: [
+            {
+              items: subscription.items.data.map((item: any) => ({
+                price: item.price.id,
+                quantity: item.quantity,
+              })),
+              start_date: schedule.phases[0].start_date,
+              end_date: subscription.current_period_end,
+            },
+            {
+              items: nextPhaseItems,
+              start_date: subscription.current_period_end,
+            },
+          ],
+        });
+      }
 
-      logStep("Device slot quantity reduced");
+      logStep("Device slot quantity reduction scheduled");
     }
 
-    // Update local database
-    const remainingSlots = newQuantity > 0 ? newQuantity : 0;
-    await adminClient
-      .from("subscriptions")
-      .update({ 
-        device_slots: 1 + remainingSlots, // 1 base + remaining additional
-        updated_at: new Date().toISOString() 
-      })
-      .eq("user_id", user.id);
+    // Note: Don't update the database yet - the slot is still active until period end
+    // The webhook will handle updating the device_slots when the subscription actually changes
+    logStep("Device slot scheduled for removal - will be updated at period end");
 
     // Send cancellation confirmation email (don't await to speed up response)
     EdgeRuntime.waitUntil(
@@ -259,14 +378,15 @@ serve(async (req) => {
         quantityToRemove,
         period,
         endDate,
-        true // Prorated removal is immediate
+        false // Scheduled for period end, not immediate
       )
     );
 
     return new Response(JSON.stringify({ 
       success: true,
-      message: `Removed ${quantityToRemove} location(s). A prorated credit will be applied to your account.`,
-      remainingSlots: remainingSlots,
+      message: `${quantityToRemove} device(s) will be removed at the end of your billing period on ${endDate.toLocaleDateString()}.`,
+      scheduledForRemoval: true,
+      removalDate: endDate.toISOString(),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

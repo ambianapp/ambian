@@ -95,6 +95,53 @@ serve(async (req) => {
       limit: 100,
     });
 
+    // Also check for subscription schedules to detect scheduled cancellations
+    const schedules = await stripe.subscriptionSchedules.list({
+      customer: customerId,
+      limit: 100,
+    });
+    
+    // Build a map of items scheduled for removal/reduction
+    const scheduledChanges: Map<string, { willBeRemoved: boolean; newQuantity?: number }> = new Map();
+    
+    for (const schedule of schedules.data) {
+      if (schedule.status !== "active" || !schedule.subscription) continue;
+      
+      // Check if there are multiple phases (meaning changes are scheduled)
+      if (schedule.phases.length >= 2) {
+        const currentPhase = schedule.phases[0];
+        const nextPhase = schedule.phases[1];
+        
+        // Find items in current phase that are device slots
+        const currentItems = currentPhase.items || [];
+        const nextItems = nextPhase.items || [];
+        
+        for (const currentItem of currentItems) {
+          const priceId = typeof currentItem.price === 'string' ? currentItem.price : currentItem.price;
+          if (DEVICE_SLOT_PRICES.includes(priceId as string)) {
+            // Check if this item is reduced or removed in next phase
+            const nextItem = nextItems.find((ni: any) => {
+              const nextPriceId = typeof ni.price === 'string' ? ni.price : ni.price;
+              return nextPriceId === priceId;
+            });
+            
+            if (!nextItem) {
+              // Item will be removed entirely
+              scheduledChanges.set(`${schedule.subscription}-${priceId}`, { willBeRemoved: true });
+            } else if (nextItem.quantity < currentItem.quantity) {
+              // Quantity will be reduced
+              scheduledChanges.set(`${schedule.subscription}-${priceId}`, { 
+                willBeRemoved: false, 
+                newQuantity: nextItem.quantity 
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    logStep("Scheduled changes detected", { count: scheduledChanges.size });
+
     // Find device slot items within subscriptions (now they're line items on main subscription)
     const deviceSlots: any[] = [];
     let totalAdditionalSlots = 0;
@@ -107,6 +154,12 @@ serve(async (req) => {
           const quantity = item.quantity || 1;
           totalAdditionalSlots += quantity;
           
+          // Check if this item is scheduled for cancellation/reduction
+          const scheduleKey = `${sub.id}-${item.price.id}`;
+          const scheduledChange = scheduledChanges.get(scheduleKey);
+          const cancelAtPeriodEnd = scheduledChange?.willBeRemoved || false;
+          const scheduledQuantityReduction = scheduledChange?.newQuantity;
+          
           deviceSlots.push({
             id: item.id, // Use item ID for cancellation
             subscriptionId: sub.id,
@@ -115,7 +168,8 @@ serve(async (req) => {
             amount: item.price.unit_amount ? item.price.unit_amount / 100 : 0,
             currency: item.price.currency,
             currentPeriodEnd: new Date((item as any).current_period_end * 1000).toISOString(),
-            cancelAtPeriodEnd: sub.cancel_at_period_end,
+            cancelAtPeriodEnd: cancelAtPeriodEnd,
+            scheduledQuantityReduction: scheduledQuantityReduction,
             // New field: indicates this is a line item on main subscription
             isLineItem: true,
           });
@@ -124,7 +178,9 @@ serve(async (req) => {
             itemId: item.id, 
             subscriptionId: sub.id,
             quantity, 
-            period: isYearly ? "yearly" : "monthly" 
+            period: isYearly ? "yearly" : "monthly",
+            cancelAtPeriodEnd,
+            scheduledQuantityReduction,
           });
         }
       }
