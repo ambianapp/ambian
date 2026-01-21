@@ -387,13 +387,26 @@ serve(async (req) => {
           return item.amount > 0 ? sum + item.amount : sum;
         }, 0);
 
-        // Get tax amount from the proration items
+        // Try to get tax from line items first
         proratedTaxCents = prorationItems.reduce((sum: number, item: any) => {
           if (item.amount > 0 && item.tax_amounts && item.tax_amounts.length > 0) {
             return sum + item.tax_amounts.reduce((taxSum: number, tax: any) => taxSum + tax.amount, 0);
           }
           return sum;
         }, 0);
+
+        // If no tax on line items, calculate proportional tax from invoice totals
+        // Stripe calculates tax at invoice level, so we need to get proportional tax for proration
+        if (proratedTaxCents === 0 && upcomingInvoice.tax && upcomingInvoice.subtotal > 0) {
+          const taxRate = upcomingInvoice.tax / upcomingInvoice.subtotal;
+          proratedTaxCents = Math.round(proratedAmountCents * taxRate);
+          logStep("Calculated proportional tax", {
+            invoiceTax: upcomingInvoice.tax,
+            invoiceSubtotal: upcomingInvoice.subtotal,
+            taxRate: (taxRate * 100).toFixed(2) + '%',
+            proratedTaxCents,
+          });
+        }
 
         // Get period info
         const periodEnd = mainItem?.current_period_end 
