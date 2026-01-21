@@ -759,32 +759,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Real-time subscription for session changes - immediately notify when this device is disconnected
   useEffect(() => {
     if (!session?.user?.id || !isSessionRegistered) return;
-    
-    const deviceId = getDeviceId();
-    
-    // Subscribe to DELETE events on active_sessions for this user
+
+    // Subscribe to changes on active_sessions for this user.
+    // IMPORTANT: We don't rely on payload.old.session_id because DELETE payloads can omit non-PK
+    // columns depending on replica identity settings. Instead, on any relevant change we
+    // re-validate whether THIS device is still present in active_sessions.
     const channel = supabase
       .channel(`sessions-${session.user.id}`)
       .on(
         'postgres_changes',
         {
-          event: 'DELETE',
+          event: '*',
           schema: 'public',
           table: 'active_sessions',
           filter: `user_id=eq.${session.user.id}`,
         },
         async (payload) => {
-          console.log("Session deleted:", payload);
-          
-          // Check if THIS device's session was deleted
-          const deletedSession = payload.old as { session_id?: string };
-          if (deletedSession?.session_id === deviceId) {
-            console.log("This device was disconnected remotely!");
-            
-            // Don't trigger multiple sign-outs
-            if (isSigningOut.current) return;
-            
-            toast.error("You've been disconnected from another device. Need more locations? Add extra device slots in your Profile settings.", { duration: Infinity, closeButton: true });
+          console.log("Session table changed:", payload.eventType);
+
+          // Don't do anything while the user is in the device-limit dialog (read-only mode)
+          if (isDeviceLimitReached) return;
+          if (isSigningOut.current) return;
+
+          const latestSession = (await supabase.auth.getSession()).data.session;
+          if (!latestSession?.user) return;
+
+          const result = await validateSession(latestSession);
+          if (result === 'kicked') {
+            toast.error(
+              "You've been disconnected from another device. Need more locations? Add extra device slots in your Profile settings.",
+              { duration: Infinity, closeButton: true }
+            );
             await signOut();
           }
         }
@@ -794,7 +799,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.user?.id, isSessionRegistered, getDeviceId]);
+  }, [session?.user?.id, isSessionRegistered, isDeviceLimitReached, validateSession, signOut]);
 
   // Auto-refresh subscription every minute
   useEffect(() => {
