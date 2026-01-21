@@ -355,21 +355,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const deviceInfo = navigator.userAgent;
 
       // First disconnect the target device
-      const { error: disconnectError } = await supabase.functions.invoke("register-session", {
+      const { data, error: disconnectError } = await supabase.functions.invoke("register-session", {
         body: { sessionId, deviceInfo, disconnectSessionId: sessionIdToDisconnect },
       });
 
       if (disconnectError) {
+        console.error("Disconnect error:", disconnectError);
         toast.error("Failed to disconnect device");
         return;
       }
 
-      // Now try to register this session
-      const registered = await registerSession(user?.id || "", false);
+      if (!data?.success) {
+        console.error("Disconnect failed:", data);
+        toast.error("Failed to disconnect device");
+        return;
+      }
+
+      // Update local state immediately - remove the disconnected device from the list
+      setActiveDevices(prev => prev.filter(d => d.sessionId !== sessionIdToDisconnect));
+
+      // Now try to register this session with force to claim the slot
+      // Use a small delay to ensure the DELETE has propagated
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      const registered = await registerSession(user?.id || "", true);
       
       if (registered) {
         setShowDeviceLimitDialog(false);
+        setIsDeviceLimitReached(false);
         toast.success("Device disconnected. You can now play music.");
+      } else {
+        // If still can't register, refresh the device list
+        toast.info("Device disconnected. Refreshing device list...");
       }
     } catch (error) {
       console.error("Error disconnecting device:", error);
@@ -737,7 +754,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [session, validateSession, registerSession, isDeviceLimitReached]);
+  }, [session, validateSession, registerSession, isDeviceLimitReached, isSessionRegistered]);
+
+  // Real-time subscription for session changes - immediately notify when this device is disconnected
+  useEffect(() => {
+    if (!session?.user?.id || !isSessionRegistered) return;
+    
+    const deviceId = getDeviceId();
+    
+    // Subscribe to DELETE events on active_sessions for this user
+    const channel = supabase
+      .channel(`sessions-${session.user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'active_sessions',
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        async (payload) => {
+          console.log("Session deleted:", payload);
+          
+          // Check if THIS device's session was deleted
+          const deletedSession = payload.old as { session_id?: string };
+          if (deletedSession?.session_id === deviceId) {
+            console.log("This device was disconnected remotely!");
+            
+            // Don't trigger multiple sign-outs
+            if (isSigningOut.current) return;
+            
+            toast.error("You've been disconnected from another device. Need more locations? Add extra device slots in your Profile settings.", { duration: Infinity, closeButton: true });
+            await signOut();
+          }
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, isSessionRegistered, getDeviceId]);
 
   // Auto-refresh subscription every minute
   useEffect(() => {
