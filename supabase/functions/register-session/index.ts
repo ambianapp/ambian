@@ -170,13 +170,19 @@ serve(async (req) => {
       });
     }
 
-    // Clean up stale sessions (not updated in 10 minutes = likely closed/inactive)
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    // Clean up stale sessions.
+    // IMPORTANT: This must be very conservative.
+    // Aggressive cleanup (e.g. 10 minutes) can incorrectly delete “idle but valid” devices
+    // (e.g. iPad on a stand, or a phone not currently playing) and causes cascading logouts
+    // when those devices next interact with the app.
+    //
+    // We only remove sessions that haven't been seen for 7 days.
+    const staleCutoffIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleRemoved } = await adminClient
       .from("active_sessions")
       .delete()
       .eq("user_id", user.id)
-      .lt("updated_at", tenMinutesAgo)
+      .lt("updated_at", staleCutoffIso)
       .select("session_id");
     
     if (staleRemoved && staleRemoved.length > 0) {
