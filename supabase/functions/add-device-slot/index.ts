@@ -367,34 +367,8 @@ serve(async (req) => {
         });
       } catch (prorationError: any) {
         logStep("Failed to calculate proration", { error: prorationError.message });
-        
-        // Fallback to simple calculation if Stripe preview fails
-        const periodEnd = mainItem?.current_period_end 
-          ? new Date(mainItem.current_period_end * 1000) 
-          : new Date(mainSubscription.current_period_end * 1000);
-        
-        const now = new Date();
-        const remainingMs = periodEnd.getTime() - now.getTime();
-        const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-        const totalDays = mainInterval === "year" ? 365 : 30;
-        const proratedPrice = (fullPrice * quantity * remainingDays) / totalDays;
-
-        return new Response(JSON.stringify({
-          success: true,
-          mode: "calculate",
-          proratedPrice: Math.round(proratedPrice * 100) / 100,
-          fullPrice: fullPrice * quantity,
-          remainingDays,
-          periodEnd: periodEnd.toISOString(),
-          quantity,
-          interval: mainInterval,
-          currency: "eur",
-          isSendInvoice,
-          estimated: true, // Flag that this is estimated, not exact
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
+        // Throw error - we need exact amounts from Stripe, not estimates
+        throw new Error("Unable to calculate exact proration. Please try again.");
       }
     }
 
