@@ -60,7 +60,7 @@ const PlayerBar = () => {
     }
   }, []);
   const [isMuted, setIsMuted] = useState(false);
-  const { user, getDeviceId } = useAuth();
+  const { user, getDeviceId, canPlayMusic } = useAuth();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
 
@@ -709,6 +709,15 @@ const PlayerBar = () => {
     
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (activeAudio) {
+      // Block playback if device limit is reached - always pause in this state
+      if (!canPlayMusic) {
+        if (!activeAudio.paused) {
+          dbg("play/pause effect: pausing (device limit reached)");
+          activeAudio.pause();
+        }
+        return;
+      }
+      
       if (isPlaying && (currentTrack?.audioUrl || isCrossfadeActive)) {
         // Only call play if audio is actually paused to avoid interrupting playback
         if (activeAudio.paused) {
@@ -740,7 +749,7 @@ const PlayerBar = () => {
         activeAudio.pause();
       }
     }
-  }, [isPlaying, currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, dbg]);
+  }, [isPlaying, currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, dbg, canPlayMusic]);
 
   // Initialize Web Audio API for iOS volume control
   const initWebAudio = useCallback(() => {
