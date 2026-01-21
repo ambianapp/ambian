@@ -88,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const lastValidationResultRef = useRef<{ result: 'valid' | 'kicked' | 'error'; timestamp: number } | null>(null);
   const consecutiveKicksRef = useRef(0);
   const isDisconnectingRef = useRef(false);
+  const lastSelfHealAttemptRef = useRef<number>(0);
 
   const loadSubscriptionCache = (userId?: string): SubscriptionInfo | null => {
     try {
@@ -608,8 +609,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (isDeviceLimitReached) {
           result = 'valid'; // Don't kick out - user knows they're in read-only mode
         } else {
-          console.log("Session not found in active_sessions - may have been disconnected");
-          result = 'kicked';
+          // Self-heal: on iOS/Safari especially, we can temporarily miss our own row
+          // right after a device disconnect or wake event. Before treating this as a kick,
+          // try to force re-register once, then let the next validation decide.
+          const SELF_HEAL_COOLDOWN_MS = 15_000;
+          const nowMs = Date.now();
+          if (nowMs - lastSelfHealAttemptRef.current > SELF_HEAL_COOLDOWN_MS) {
+            lastSelfHealAttemptRef.current = nowMs;
+            console.warn('[SessionValidation] Missing session row; attempting self-heal register');
+            try {
+              await registerSession(currentSession.user.id, true);
+              // Return 'error' to avoid incrementing kick counters; next pass will confirm.
+              result = 'error';
+            } catch (e) {
+              console.warn('[SessionValidation] Self-heal register failed:', e);
+              result = 'error';
+            }
+          } else {
+            console.log("Session not found in active_sessions - may have been disconnected");
+            result = 'kicked';
+          }
         }
       } else {
         result = 'valid';
@@ -622,7 +641,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn("Error validating session (will retry):", error);
       return 'error';
     }
-  }, [getDeviceId, isDeviceLimitReached]);
+  }, [getDeviceId, isDeviceLimitReached, registerSession]);
 
   const signOut = async () => {
     isSigningOut.current = true;
