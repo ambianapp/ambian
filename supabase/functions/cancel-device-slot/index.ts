@@ -270,6 +270,13 @@ serve(async (req) => {
           from_subscription: subscriptionId,
         });
         
+        logStep("Schedule created from subscription", { 
+          scheduleId: schedule.id, 
+          phasesCount: schedule.phases.length,
+          currentPhaseStart: schedule.phases[0]?.start_date,
+          currentPhaseEnd: schedule.phases[0]?.end_date,
+        });
+        
         // Get items for the next phase (excluding this device slot item)
         const nextPhaseItems = subscription.items.data
           .filter((item: any) => item.id !== itemId)
@@ -278,20 +285,23 @@ serve(async (req) => {
             quantity: item.quantity,
           }));
         
-        // Update the schedule to remove the item at the end of the current period
+        // When creating from a subscription, the schedule already has the current phase set up
+        // We just need to add the next phase with reduced items
+        // The current phase keeps the same items, next phase removes the device slot
+        const currentPhaseItems = schedule.phases[0].items.map((item: any) => ({
+          price: typeof item.price === 'string' ? item.price : item.price.id,
+          quantity: item.quantity,
+        }));
+        
         await stripe.subscriptionSchedules.update(schedule.id, {
+          end_behavior: 'release',
           phases: [
             {
-              items: subscription.items.data.map((item: any) => ({
-                price: item.price.id,
-                quantity: item.quantity,
-              })),
-              start_date: schedule.phases[0].start_date,
+              items: currentPhaseItems,
               end_date: subscription.current_period_end,
             },
             {
               items: nextPhaseItems,
-              start_date: subscription.current_period_end,
             },
           ],
         });
@@ -340,24 +350,31 @@ serve(async (req) => {
           from_subscription: subscriptionId,
         });
         
+        logStep("Schedule created for quantity reduction", { 
+          scheduleId: schedule.id, 
+          phasesCount: schedule.phases.length,
+        });
+        
         const nextPhaseItems = subscription.items.data.map((item: any) => ({
           price: item.price.id,
           quantity: item.id === itemId ? newQuantity : item.quantity,
         }));
         
+        // Current phase keeps items as-is, next phase reduces quantity
+        const currentPhaseItems = schedule.phases[0].items.map((item: any) => ({
+          price: typeof item.price === 'string' ? item.price : item.price.id,
+          quantity: item.quantity,
+        }));
+        
         await stripe.subscriptionSchedules.update(schedule.id, {
+          end_behavior: 'release',
           phases: [
             {
-              items: subscription.items.data.map((item: any) => ({
-                price: item.price.id,
-                quantity: item.quantity,
-              })),
-              start_date: schedule.phases[0].start_date,
+              items: currentPhaseItems,
               end_date: subscription.current_period_end,
             },
             {
               items: nextPhaseItems,
-              start_date: subscription.current_period_end,
             },
           ],
         });
