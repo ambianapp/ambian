@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Smartphone, Monitor, Tablet, X, Loader2, Plus } from "lucide-react";
+import { Smartphone, Monitor, Tablet, X, Loader2, Plus, Play } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 interface ActiveDevice {
   sessionId: string;
@@ -17,7 +18,7 @@ interface DeviceLimitDialogProps {
   activeDevices: ActiveDevice[];
   deviceSlots: number;
   currentSessionId: string;
-  onDisconnect: (sessionId: string) => Promise<void>;
+  onDisconnect: (sessionId: string) => Promise<{ success: boolean; needsUserGesture: boolean }>;
   onClose: () => void;
 }
 
@@ -97,8 +98,10 @@ export const DeviceLimitDialog = ({
   onClose,
 }: DeviceLimitDialogProps) => {
   const navigate = useNavigate();
+  const { handlePlayPause, currentTrack, isPlaying } = usePlayer();
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState<{ sessionId: string; deviceName: string } | null>(null);
+  const [showPlayButton, setShowPlayButton] = useState(false);
 
   const handleDisconnectClick = (sessionId: string, deviceName: string) => {
     setConfirmDisconnect({ sessionId, deviceName });
@@ -110,10 +113,23 @@ export const DeviceLimitDialog = ({
     setDisconnecting(confirmDisconnect.sessionId);
     setConfirmDisconnect(null);
     try {
-      await onDisconnect(confirmDisconnect.sessionId);
+      const result = await onDisconnect(confirmDisconnect.sessionId);
+      // If on iOS, show a play button instead of auto-closing
+      if (result.success && result.needsUserGesture && currentTrack) {
+        setShowPlayButton(true);
+      }
     } finally {
       setDisconnecting(null);
     }
+  };
+
+  const handlePlayNow = () => {
+    // This is a direct user gesture - will work on iOS
+    if (!isPlaying && currentTrack) {
+      handlePlayPause();
+    }
+    setShowPlayButton(false);
+    onClose();
   };
 
   const handleAddDevice = () => {
@@ -125,85 +141,110 @@ export const DeviceLimitDialog = ({
     <>
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Device Limit Reached</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              You're using {activeDevices.length} of {deviceSlots} allowed device{deviceSlots !== 1 ? "s" : ""}. 
-              Disconnect a device to play music here, or continue in read-only mode.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-4 space-y-3">
-            {activeDevices.map((device) => {
-              const { type, name } = parseDeviceInfo(device.deviceInfo);
-              const isCurrentDevice = device.sessionId === currentSessionId;
-
-              return (
-                <div
-                  key={device.sessionId}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${
-                    isCurrentDevice ? "border-primary/50 bg-primary/5" : "border-border bg-card"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${isCurrentDevice ? "bg-primary/20" : "bg-muted"}`}>
-                      <DeviceIcon type={type} />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">
-                        {name}
-                        {isCurrentDevice && (
-                          <span className="ml-2 text-xs text-primary">(This device)</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Last active: {formatLastActive(device.updatedAt)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {!isCurrentDevice && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDisconnectClick(device.sessionId, name)}
-                      disabled={disconnecting !== null}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      {disconnecting === device.sessionId ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <X className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Add more devices upsell */}
-          <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Need more devices?</p>
-                <p className="text-xs text-muted-foreground">Add extra device slots for €5/month each</p>
+          {showPlayButton ? (
+            // Success state - iOS needs user gesture to play
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl text-center">Device Disconnected!</DialogTitle>
+                <DialogDescription className="text-muted-foreground text-center">
+                  You can now play music on this device. Tap the button below to start.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="mt-6 flex flex-col items-center gap-4">
+                <Button size="lg" onClick={handlePlayNow} className="w-full max-w-xs">
+                  <Play className="h-5 w-5 mr-2" />
+                  Play Music
+                </Button>
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  Maybe later
+                </Button>
               </div>
-              <Button size="sm" variant="default" onClick={handleAddDevice}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add
-              </Button>
-            </div>
-          </div>
+            </>
+          ) : (
+            // Normal device list view
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl">Device Limit Reached</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  You're using {activeDevices.length} of {deviceSlots} allowed device{deviceSlots !== 1 ? "s" : ""}. 
+                  Disconnect a device to play music here, or continue in read-only mode.
+                </DialogDescription>
+              </DialogHeader>
 
-          <div className="mt-4 pt-4 border-t space-y-2">
-            <Button variant="outline" className="w-full" onClick={onClose}>
-              Continue in Read-Only Mode
-            </Button>
-            <p className="text-xs text-center text-muted-foreground">
-              You can browse playlists but can't play music until you disconnect a device.
-            </p>
-          </div>
+              <div className="mt-4 space-y-3">
+                {activeDevices.map((device) => {
+                  const { type, name } = parseDeviceInfo(device.deviceInfo);
+                  const isCurrentDevice = device.sessionId === currentSessionId;
+
+                  return (
+                    <div
+                      key={device.sessionId}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        isCurrentDevice ? "border-primary/50 bg-primary/5" : "border-border bg-card"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${isCurrentDevice ? "bg-primary/20" : "bg-muted"}`}>
+                          <DeviceIcon type={type} />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            {name}
+                            {isCurrentDevice && (
+                              <span className="ml-2 text-xs text-primary">(This device)</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Last active: {formatLastActive(device.updatedAt)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {!isCurrentDevice && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDisconnectClick(device.sessionId, name)}
+                          disabled={disconnecting !== null}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {disconnecting === device.sessionId ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add more devices upsell */}
+              <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Need more devices?</p>
+                    <p className="text-xs text-muted-foreground">Add extra device slots for €5/month each</p>
+                  </div>
+                  <Button size="sm" variant="default" onClick={handleAddDevice}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t space-y-2">
+                <Button variant="outline" className="w-full" onClick={onClose}>
+                  Continue in Read-Only Mode
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  You can browse playlists but can't play music until you disconnect a device.
+                </p>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 

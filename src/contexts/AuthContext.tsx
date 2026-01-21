@@ -57,7 +57,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   checkSubscription: () => Promise<void>;
   syncDeviceSlots: () => Promise<void>;
-  disconnectDevice: (sessionId: string) => Promise<void>;
+  disconnectDevice: (sessionId: string) => Promise<{ success: boolean; needsUserGesture: boolean }>;
   dismissDeviceLimitDialog: () => void;
   openDeviceLimitDialog: () => void;
   getDeviceId: () => string;
@@ -391,31 +391,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [getDeviceId]);
 
   // Disconnect a specific device
-  const disconnectDevice = useCallback(async (sessionIdToDisconnect: string) => {
+  // Returns: { success: boolean, needsUserGesture: boolean }
+  const disconnectDevice = useCallback(async (sessionIdToDisconnect: string): Promise<{ success: boolean; needsUserGesture: boolean }> => {
     try {
       // Set flag to prevent realtime validation from triggering during disconnect
       isDisconnectingRef.current = true;
       
-      const sessionId = getDeviceId();
+      // Capture the current device ID BEFORE any async operations
+      // This is critical on iOS where storage can become unreliable
+      const currentDeviceId = getDeviceId();
+      console.log("[disconnectDevice] Current device:", currentDeviceId, "Disconnecting:", sessionIdToDisconnect);
+      
+      // Safety check: don't disconnect ourselves!
+      if (sessionIdToDisconnect === currentDeviceId) {
+        console.error("[disconnectDevice] Attempted to disconnect self - aborting");
+        toast.error("Cannot disconnect the current device");
+        isDisconnectingRef.current = false;
+        return { success: false, needsUserGesture: false };
+      }
+      
       const deviceInfo = navigator.userAgent;
 
       // First disconnect the target device
       const { data, error: disconnectError } = await supabase.functions.invoke("register-session", {
-        body: { sessionId, deviceInfo, disconnectSessionId: sessionIdToDisconnect },
+        body: { sessionId: currentDeviceId, deviceInfo, disconnectSessionId: sessionIdToDisconnect },
       });
 
       if (disconnectError) {
         console.error("Disconnect error:", disconnectError);
         toast.error("Failed to disconnect device");
         isDisconnectingRef.current = false;
-        return;
+        return { success: false, needsUserGesture: false };
       }
 
       if (!data?.success) {
         console.error("Disconnect failed:", data);
         toast.error("Failed to disconnect device");
         isDisconnectingRef.current = false;
-        return;
+        return { success: false, needsUserGesture: false };
       }
 
       // Update local state immediately - remove the disconnected device from the list
@@ -431,6 +444,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Now try to register this session with force to claim the slot
+      // Use the same deviceId we captured at the start
       const registered = await registerSession(user?.id || "", true);
       
       if (registered) {
@@ -442,17 +456,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         setShowDeviceLimitDialog(false);
-        toast.success("Device disconnected. You can now play music.");
+        
+        // Check if we're on iOS/Safari - needs user gesture to play
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
+        if (isIOS) {
+          toast.success("Device disconnected. Tap Play to start music.", { duration: 5000 });
+        } else {
+          toast.success("Device disconnected. You can now play music.");
+        }
         
         // Reset consecutive kicks counter
         consecutiveKicksRef.current = 0;
+        
+        return { success: true, needsUserGesture: isIOS };
       } else {
         // If still can't register, refresh the device list
         toast.info("Device disconnected. Refreshing device list...");
+        return { success: false, needsUserGesture: false };
       }
     } catch (error) {
       console.error("Error disconnecting device:", error);
       toast.error("Failed to disconnect device");
+      return { success: false, needsUserGesture: false };
     } finally {
       // Re-enable realtime validation after a delay to let state settle
       setTimeout(() => {
