@@ -77,7 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isDeviceLimitReached, setIsDeviceLimitReached] = useState(false);
   const [activeDevices, setActiveDevices] = useState<ActiveDevice[]>([]);
   const [showDeviceLimitDialog, setShowDeviceLimitDialog] = useState(false);
-  const [isSessionRegistered, setIsSessionRegistered] = useState(false);
+  // Default to true to avoid blocking media during initial load.
+  // Will be set to false only if device limit is actually reached.
+  const [isSessionRegistered, setIsSessionRegistered] = useState(true);
   
   // Deduplication refs to prevent rapid duplicate API calls
   const lastRegisterCallRef = useRef<number>(0);
@@ -149,8 +151,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // device as "kicked" which leads to sign-out and broken media/cover loading.
   const deviceIdRef = useRef<string | null>(null);
 
-  // Can play music only if session is registered (not in device limit state)
-  const canPlayMusic = isSessionRegistered && !isDeviceLimitReached;
+  // Can play music: allow unless device limit is explicitly reached.
+  // isSessionRegistered starts true and only becomes false when limit is hit,
+  // preventing blocking of media during initial load/auth flow.
+  const canPlayMusic = !isDeviceLimitReached;
 
   const checkSubscription = async (overrideSession?: Session | null, isInitialLoad = false) => {
     // Only show blocking loading if we have no cache to fall back to AND haven't shown loading this session
@@ -590,7 +594,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, hasUnpaidInvoice: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
       setIsDeviceLimitReached(false);
       setActiveDevices([]);
-      setIsSessionRegistered(false);
+      // Reset to true (the default) so next login isn't blocked
+      setIsSessionRegistered(true);
       isSigningOut.current = false;
     }
   };
@@ -705,7 +710,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSubscription({ subscribed: false, planType: null, subscriptionEnd: null, isTrial: false, trialDaysRemaining: 0, trialEnd: null, isRecurring: false, isPendingPayment: false, hasUnpaidInvoice: false, deviceSlots: 1, collectionMethod: null, cancelAtPeriodEnd: false });
           setIsDeviceLimitReached(false);
           setActiveDevices([]);
-          setIsSessionRegistered(false);
+          // Reset to true (the default) so next login isn't blocked
+          setIsSessionRegistered(true);
         }
       }
     );
