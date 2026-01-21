@@ -92,7 +92,6 @@ const Profile = () => {
     interval: string;
     currency: string;
     isSendInvoice: boolean;
-    estimated?: boolean;
   } | null>(null);
   const [isLoadingProration, setIsLoadingProration] = useState(false);
   const navigate = useNavigate();
@@ -517,7 +516,6 @@ const Profile = () => {
             interval: data.interval,
             currency: data.currency,
             isSendInvoice: data.isSendInvoice,
-            estimated: data.estimated,
           });
         }
       } catch (error: any) {
@@ -1477,21 +1475,15 @@ const Profile = () => {
                 
                 {/* Show prorated amount for recurring subscriptions */}
                 {subscription.isRecurring && recurringProration ? (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">{t("devices.chargeNow") || "Charge now"}: </span>
-                      <span className="font-semibold text-foreground">
-                        €{recurringProration.proratedPrice.toFixed(2)}
-                      </span>
-                      {recurringProration.estimated && (
-                        <span className="text-xs text-muted-foreground ml-1">({t("common.estimated") || "estimated"})</span>
-                      )}
+                  <div className="mt-2 space-y-1.5">
+                    <div className="text-sm font-medium text-foreground">
+                      {t("devices.chargedNow") || "Charged now"}: €{recurringProration.proratedPrice.toFixed(2)}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {t("devices.proratedFor") || "Prorated for"} {recurringProration.remainingDays} {t("devices.daysRemaining") || "days until"} {new Date(recurringProration.periodEnd).toLocaleDateString()}
+                    <div className="text-sm text-muted-foreground">
+                      {t("devices.validUntil") || "Valid until subscription renewal"} {new Date(recurringProration.periodEnd).toLocaleDateString(language === "fi" ? "fi-FI" : language === "sv" ? "sv-SE" : "en-GB", { day: 'numeric', month: 'numeric', year: 'numeric' })}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {t("devices.thenRegular") || "Then"} €{recurringProration.fullPrice}/{recurringProration.interval === "year" ? t("subscription.year") : t("subscription.month")} {t("pricing.exclVat") || "(excl. VAT)"}
+                    <div className="text-sm text-muted-foreground">
+                      {t("devices.thenRegular") || "Then"} €{recurringProration.fullPrice}/{recurringProration.interval === "year" ? t("subscription.year") : t("subscription.month")} {t("pricing.exclVat") || "excl. VAT"}
                     </div>
                     {recurringProration.isSendInvoice && (
                       <div className="text-xs text-primary/80 mt-1">
