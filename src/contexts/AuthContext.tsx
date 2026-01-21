@@ -84,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pendingRegisterRef = useRef<Promise<boolean> | null>(null);
   const lastValidationCallRef = useRef<number>(0);
   const lastValidationResultRef = useRef<{ result: 'valid' | 'kicked' | 'error'; timestamp: number } | null>(null);
+  const consecutiveKicksRef = useRef(0);
+  const isDisconnectingRef = useRef(false);
 
   const loadSubscriptionCache = (userId?: string): SubscriptionInfo | null => {
     try {
@@ -351,6 +353,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Disconnect a specific device
   const disconnectDevice = useCallback(async (sessionIdToDisconnect: string) => {
     try {
+      // Set flag to prevent realtime validation from triggering during disconnect
+      isDisconnectingRef.current = true;
+      
       const sessionId = getDeviceId();
       const deviceInfo = navigator.userAgent;
 
@@ -362,28 +367,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (disconnectError) {
         console.error("Disconnect error:", disconnectError);
         toast.error("Failed to disconnect device");
+        isDisconnectingRef.current = false;
         return;
       }
 
       if (!data?.success) {
         console.error("Disconnect failed:", data);
         toast.error("Failed to disconnect device");
+        isDisconnectingRef.current = false;
         return;
       }
 
       // Update local state immediately - remove the disconnected device from the list
       setActiveDevices(prev => prev.filter(d => d.sessionId !== sessionIdToDisconnect));
 
-      // Now try to register this session with force to claim the slot
-      // Use a small delay to ensure the DELETE has propagated
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Reset the validation cache so next validation is fresh
+      lastValidationResultRef.current = null;
+      lastValidationCallRef.current = 0;
+      lastRegisterCallRef.current = 0;
+      pendingRegisterRef.current = null;
       
+      // Wait for DB propagation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Now try to register this session with force to claim the slot
       const registered = await registerSession(user?.id || "", true);
       
       if (registered) {
-        setShowDeviceLimitDialog(false);
+        // Important: Set these BEFORE closing dialog to ensure state is ready
         setIsDeviceLimitReached(false);
+        setIsSessionRegistered(true);
+        
+        // Small delay to let state propagate before closing dialog
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        setShowDeviceLimitDialog(false);
         toast.success("Device disconnected. You can now play music.");
+        
+        // Reset consecutive kicks counter
+        consecutiveKicksRef.current = 0;
       } else {
         // If still can't register, refresh the device list
         toast.info("Device disconnected. Refreshing device list...");
@@ -391,6 +413,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Error disconnecting device:", error);
       toast.error("Failed to disconnect device");
+    } finally {
+      // Re-enable realtime validation after a delay to let state settle
+      setTimeout(() => {
+        isDisconnectingRef.current = false;
+      }, 2000);
     }
   }, [getDeviceId, registerSession, user?.id]);
 
@@ -680,13 +707,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [registerSession]);
 
   // Session validation interval - check periodically to enforce device limits
-  const consecutiveKicksRef = useRef(0);
   const MAX_CONSECUTIVE_KICKS = 3; // Require 3 consecutive failures before kicking (was 1)
   
   useEffect(() => {
     if (!session) return;
 
     const validateAndKickIfNeeded = async () => {
+      // Skip validation during active disconnect flow
+      if (isDisconnectingRef.current) {
+        console.log("Skipping validation - disconnect in progress");
+        return;
+      }
+      
       // If in device limit mode, don't validate (user is in read-only mode)
       if (isDeviceLimitReached) return;
       
@@ -777,6 +809,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         async (payload) => {
           console.log("Session table changed:", payload.eventType);
 
+          // Don't do anything during disconnect flow - we're actively managing state
+          if (isDisconnectingRef.current) {
+            console.log("Skipping realtime validation - disconnect in progress");
+            return;
+          }
+          
           // Don't do anything while the user is in the device-limit dialog (read-only mode)
           if (isDeviceLimitReached) return;
           if (isSigningOut.current) return;
