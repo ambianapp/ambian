@@ -1598,58 +1598,114 @@ serve(async (req) => {
       const invoice = event.data.object as Stripe.Invoice;
       logStep("Invoice paid", { invoiceId: invoice.id, customerId: invoice.customer });
 
-      // Check if this is a device slot payment (supports both old 'device_slot' and new 'device_slot_addon' types)
-      const isDeviceSlot = invoice.metadata?.type === "device_slot" || 
+      // Check if this is a device slot payment:
+      // 1. Check metadata (for manually created invoices via send_invoice flow)
+      // 2. Check line item metadata
+      // 3. Check line item price IDs (for always_invoice prorations - Stripe creates these automatically)
+      const hasDeviceSlotMetadata = invoice.metadata?.type === "device_slot" || 
         invoice.metadata?.type === "device_slot_addon" ||
         invoice.lines?.data?.some((line: any) => line.metadata?.type === "device_slot" || line.metadata?.type === "device_slot_addon");
+      
+      const hasDeviceSlotPriceId = invoice.lines?.data?.some((line: any) => 
+        DEVICE_SLOT_PRICES.includes(line.price?.id)
+      );
+      
+      const isDeviceSlot = hasDeviceSlotMetadata || hasDeviceSlotPriceId;
+      
+      logStep("Device slot detection", { 
+        hasDeviceSlotMetadata, 
+        hasDeviceSlotPriceId, 
+        isDeviceSlot,
+        lineItems: invoice.lines?.data?.map((l: any) => ({ priceId: l.price?.id, description: l.description }))
+      });
 
       if (isDeviceSlot) {
         logStep("Device slot payment detected");
-        // Handle device slot - sync device slots for this user
-        const userId = invoice.metadata?.user_id;
-        if (userId) {
-          await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, invoice.customer as string);
-          logStep("Device slots synced after payment", { userId });
+        
+        // Get user_id from metadata OR look up by customer email
+        let userId = invoice.metadata?.user_id;
+        const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+        
+        // If no user_id in metadata, try to look up from subscriptions table by stripe_customer_id
+        if (!userId && customerId) {
+          const { data: subData } = await supabaseAdmin
+            .from("subscriptions")
+            .select("user_id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
           
-          // Send device slot confirmation email
-          const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
-          if (customerId) {
-            try {
-              const customer = await stripe.customers.retrieve(customerId);
-              const customerEmail = (customer as any).email;
-              const customerName = (customer as any).name;
+          if (subData?.user_id) {
+            userId = subData.user_id;
+            logStep("Found user_id from subscriptions table", { userId });
+          }
+        }
+        
+        // Handle device slot - sync device slots for this user
+        if (userId) {
+          await syncDeviceSlotsForUser(supabaseAdmin, userId, stripe, customerId);
+          logStep("Device slots synced after payment", { userId });
+        }
+        
+        // Send device slot confirmation email
+        if (customerId) {
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const customerEmail = (customer as any).email;
+            const customerName = (customer as any).name;
+            
+            if (customerEmail) {
+              // Get quantity from metadata or count from line items
+              let quantity = parseInt(invoice.metadata?.quantity || '0', 10);
               
-              if (customerEmail) {
-                // Get quantity and period from invoice metadata or line items
-                const quantity = parseInt(invoice.metadata?.quantity || '1', 10);
-                const period = invoice.metadata?.period || 'monthly';
-                const amount = invoice.amount_paid || 0;
-                const currency = invoice.currency || 'eur';
-                
-                await sendDeviceSlotConfirmationEmail(
-                  customerEmail,
-                  customerName,
-                  quantity,
-                  period,
-                  amount,
-                  currency
-                );
-                
-                // Send owner notification for device slot purchase
-                await sendOwnerPurchaseNotificationEmail(
-                  customerEmail,
-                  customerName,
-                  period,
-                  amount,
-                  currency,
-                  false,
-                  true,
-                  quantity
-                );
+              // Determine period from price ID if not in metadata
+              let period = invoice.metadata?.period;
+              
+              // If no metadata, derive from line items
+              if (!quantity || !period) {
+                for (const line of (invoice.lines?.data || [])) {
+                  if (DEVICE_SLOT_PRICES.includes(line.price?.id)) {
+                    quantity = line.quantity || 1;
+                    // Yearly price ID
+                    if (line.price?.id === "price_1Sj2PMJrU52a7SNLzhpFYfJd") {
+                      period = "yearly";
+                    } else {
+                      period = "monthly";
+                    }
+                    break;
+                  }
+                }
               }
-            } catch (e) {
-              logStep("Could not send device slot confirmation email", { error: String(e) });
+              
+              // Default to 1 and monthly if still not set
+              quantity = quantity || 1;
+              period = period || "monthly";
+              
+              const amount = invoice.amount_paid || 0;
+              const currency = invoice.currency || 'eur';
+              
+              await sendDeviceSlotConfirmationEmail(
+                customerEmail,
+                customerName,
+                quantity,
+                period,
+                amount,
+                currency
+              );
+              
+              // Send owner notification for device slot purchase
+              await sendOwnerPurchaseNotificationEmail(
+                customerEmail,
+                customerName,
+                period,
+                amount,
+                currency,
+                false,
+                true,
+                quantity
+              );
             }
+          } catch (e) {
+            logStep("Could not send device slot confirmation email", { error: String(e) });
           }
         }
         return new Response(JSON.stringify({ received: true }), {
