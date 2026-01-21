@@ -86,6 +86,43 @@ serve(async (req) => {
       }
 
       console.log(`Disconnected session: ${disconnectSessionId}`);
+
+    // IMPORTANT: Keep the CURRENT device session alive.
+    // On iOS/Safari, the client may not immediately re-register after a disconnect.
+    // If the current device doesn't have an active_sessions row at this moment,
+    // realtime/interval validation can interpret that as being "kicked" and sign the
+    // user out on the next interaction. We defensively (re)register the caller session.
+    try {
+      if (sessionId) {
+        const { data: existingCallerSession, error: existingCallerErr } = await adminClient
+          .from("active_sessions")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("session_id", sessionId)
+          .maybeSingle();
+
+        if (existingCallerErr) {
+          console.warn("Failed to check caller session during disconnect:", existingCallerErr);
+        } else if (existingCallerSession?.id) {
+          await adminClient
+            .from("active_sessions")
+            .update({ device_info: deviceInfo, updated_at: new Date().toISOString() })
+            .eq("id", existingCallerSession.id);
+        } else {
+          await adminClient
+            .from("active_sessions")
+            .insert({
+              user_id: user.id,
+              session_id: sessionId,
+              device_info: deviceInfo,
+            });
+        }
+      }
+    } catch (e) {
+      // Non-fatal; disconnect should still succeed.
+      console.warn("Failed to keep caller session alive during disconnect:", e);
+    }
+
       return new Response(JSON.stringify({ success: true, message: "Session disconnected" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

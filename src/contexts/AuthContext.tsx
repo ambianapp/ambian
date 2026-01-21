@@ -488,7 +488,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Re-enable realtime validation after a delay to let state settle
       setTimeout(() => {
         isDisconnectingRef.current = false;
-      }, 2000);
+      }, 6000);
     }
   }, [getDeviceId, registerSession, user?.id]);
 
