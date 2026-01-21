@@ -156,6 +156,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // preventing blocking of media during initial load/auth flow.
   const canPlayMusic = !isDeviceLimitReached;
 
+  // (Defined later, after registerSession)
+  const autoExitLimitModeRef = useRef(false);
+
   const checkSubscription = async (overrideSession?: Session | null, isInitialLoad = false) => {
     // Only show blocking loading if we have no cache to fall back to AND haven't shown loading this session
     const hasCachedData = cachedSubscriptionRef.current !== null;
@@ -352,11 +355,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Check if device limit was reached
         if (data?.limitReached) {
-          console.log("Device limit reached:", data.currentDevices, "/", data.deviceSlots);
+          const deviceSlotsFromServer = Number(data.deviceSlots ?? 1) || 1;
+          const activeDevicesFromServer: ActiveDevice[] = Array.isArray(data.activeDevices)
+            ? data.activeDevices
+            : [];
+          const currentDevicesFromServer =
+            typeof data.currentDevices === "number" ? data.currentDevices : activeDevicesFromServer.length;
+
+          // Keep local subscription in sync with the authoritative server value to avoid
+          // confusing UI like "1 of 2" while still being blocked.
+          setSubscription((prev) => ({ ...prev, deviceSlots: deviceSlotsFromServer }));
+
+          console.log("Device limit reached:", currentDevicesFromServer, "/", deviceSlotsFromServer);
           setIsDeviceLimitReached(true);
-          setActiveDevices(data.activeDevices || []);
+          setActiveDevices(activeDevicesFromServer);
           setIsSessionRegistered(false);
           setShowDeviceLimitDialog(true);
+
+          // Defensive: if the server sent an inconsistent state (e.g. active < slots),
+          // immediately exit read-only mode and retry registration.
+          if (activeDevicesFromServer.length < deviceSlotsFromServer) {
+            console.warn("[DeviceLimit] Inconsistent limitReached payload; auto-recovering", {
+              active: activeDevicesFromServer.length,
+              slots: deviceSlotsFromServer,
+            });
+            setIsDeviceLimitReached(false);
+            setShowDeviceLimitDialog(false);
+            setIsSessionRegistered(true);
+            setTimeout(() => registerSession(userId, true), 0);
+          }
           
           // Log device limit event
           const currentUser = (await supabase.auth.getUser()).data.user;
@@ -393,6 +420,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     return pendingRegisterRef.current;
   }, [getDeviceId]);
+
+  // If device slots increased (or our active devices list shrank) while we were in
+  // device-limit mode, automatically exit read-only mode.
+  // This fixes cases where the backend briefly returns limitReached with stale slot
+  // counts, leaving the UI stuck even though e.g. "1 of 2" are in use.
+  useEffect(() => {
+    if (!isDeviceLimitReached) return;
+    if (!session?.user?.id) return;
+
+    const slots = subscription.deviceSlots || 1;
+    const used = activeDevices.length;
+    if (used >= slots) return;
+
+    // Prevent loops if multiple state updates fire at once.
+    if (autoExitLimitModeRef.current) return;
+    autoExitLimitModeRef.current = true;
+
+    console.log("[DeviceLimit] Auto-exit: used < slots", { used, slots });
+    setIsDeviceLimitReached(false);
+    setShowDeviceLimitDialog(false);
+    setIsSessionRegistered(true);
+
+    // Clear validation caches so we don't immediately re-enter a stale state.
+    lastValidationResultRef.current = null;
+    lastValidationCallRef.current = 0;
+    lastRegisterCallRef.current = 0;
+    pendingRegisterRef.current = null;
+
+    // Force re-register to claim a slot if needed.
+    setTimeout(() => {
+      registerSession(session.user.id, true).finally(() => {
+        autoExitLimitModeRef.current = false;
+      });
+    }, 0);
+  }, [isDeviceLimitReached, activeDevices.length, subscription.deviceSlots, session?.user?.id, registerSession]);
 
   // Disconnect a specific device
   // Returns: { success: boolean, needsUserGesture: boolean }
