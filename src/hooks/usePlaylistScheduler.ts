@@ -43,7 +43,8 @@ export const usePlaylistScheduler = () => {
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
   const [isEnabled, setIsEnabled] = useState(() => {
     const saved = localStorage.getItem(SCHEDULER_ENABLED_KEY);
-    return saved === null ? true : saved === "true";
+    // Default to OFF - user must explicitly enable scheduler
+    return saved === "true";
   });
 
   const toggleScheduler = useCallback((enabled: boolean) => {
