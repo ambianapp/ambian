@@ -337,20 +337,22 @@ serve(async (req) => {
         });
 
         // Log all line items to understand structure
+        const invoiceAny = upcomingInvoice as any;
         logStep("Invoice preview response", {
-          total: upcomingInvoice.total,
-          subtotal: upcomingInvoice.subtotal,
-          tax: (upcomingInvoice as any).tax,
-          total_tax_amounts: (upcomingInvoice as any).total_tax_amounts,
-          total_excluding_tax: (upcomingInvoice as any).total_excluding_tax,
-          total_including_tax: (upcomingInvoice as any).total_including_tax,
+          total: invoiceAny.total,
+          subtotal: invoiceAny.subtotal,
+          tax: invoiceAny.tax,
+          total_tax_amounts: invoiceAny.total_tax_amounts,
+          total_excluding_tax: invoiceAny.total_excluding_tax,
+          automatic_tax: invoiceAny.automatic_tax,
           lineItemCount: upcomingInvoice.lines.data.length,
           lineItems: upcomingInvoice.lines.data.map((line: any) => ({
             description: line.description,
             amount: line.amount,
+            amount_excluding_tax: line.amount_excluding_tax,
+            tax_amounts: line.tax_amounts,
             proration: line.proration,
             type: line.type,
-            price_id: line.price?.id,
           })),
         });
 
@@ -401,21 +403,41 @@ serve(async (req) => {
         }, 0);
 
         // If no tax on line items, calculate proportional tax from invoice totals.
-        // Stripe may provide tax at invoice level (tax/total_tax_amounts), not per line item.
-        if (proratedTaxCents === 0 && (upcomingInvoice as any).subtotal > 0) {
-          const invoiceTaxCents =
-            typeof (upcomingInvoice as any).tax === "number"
-              ? (upcomingInvoice as any).tax
-              : Array.isArray((upcomingInvoice as any).total_tax_amounts)
-                ? (upcomingInvoice as any).total_tax_amounts.reduce((sum: number, t: any) => sum + (t?.amount || 0), 0)
-                : 0;
+        // Stripe provides tax in different ways:
+        // 1. `tax` field (direct tax amount)
+        // 2. `total_tax_amounts` array
+        // 3. `total - total_excluding_tax` (when automatic_tax is enabled)
+        if (proratedTaxCents === 0 && invoiceAny.subtotal > 0) {
+          let invoiceTaxCents = 0;
+          
+          // Method 1: Direct tax field
+          if (typeof invoiceAny.tax === "number" && invoiceAny.tax > 0) {
+            invoiceTaxCents = invoiceAny.tax;
+            logStep("Tax from direct tax field", { invoiceTaxCents });
+          }
+          // Method 2: total_tax_amounts array
+          else if (Array.isArray(invoiceAny.total_tax_amounts) && invoiceAny.total_tax_amounts.length > 0) {
+            invoiceTaxCents = invoiceAny.total_tax_amounts.reduce((sum: number, t: any) => sum + (t?.amount || 0), 0);
+            logStep("Tax from total_tax_amounts", { invoiceTaxCents, total_tax_amounts: invoiceAny.total_tax_amounts });
+          }
+          // Method 3: Calculate from total - total_excluding_tax (when automatic_tax is enabled)
+          else if (typeof invoiceAny.total === "number" && typeof invoiceAny.total_excluding_tax === "number") {
+            invoiceTaxCents = invoiceAny.total - invoiceAny.total_excluding_tax;
+            logStep("Tax calculated from total difference", { 
+              total: invoiceAny.total, 
+              total_excluding_tax: invoiceAny.total_excluding_tax,
+              invoiceTaxCents 
+            });
+          }
 
           if (invoiceTaxCents > 0) {
-            const taxRate = invoiceTaxCents / (upcomingInvoice as any).subtotal;
+            // Calculate proportional tax based on proration amount vs subtotal
+            const taxRate = invoiceTaxCents / invoiceAny.subtotal;
             proratedTaxCents = Math.round(proratedAmountCents * taxRate);
-            logStep("Calculated proportional tax", {
+            logStep("Calculated proportional tax for proration", {
               invoiceTaxCents,
-              invoiceSubtotalCents: (upcomingInvoice as any).subtotal,
+              invoiceSubtotalCents: invoiceAny.subtotal,
+              proratedAmountCents,
               taxRate: (taxRate * 100).toFixed(2) + "%",
               proratedTaxCents,
             });
