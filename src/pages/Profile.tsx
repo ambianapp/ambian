@@ -34,6 +34,7 @@ interface DeviceSlotItem {
   currency: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  scheduledQuantityReduction?: number; // If only some slots are being cancelled
   isLineItem: boolean;
 }
 
@@ -610,15 +611,27 @@ const Profile = () => {
     setSlotToCancel(null);
     setCancellingSlotId(itemId);
     try {
-      const { error } = await supabase.functions.invoke("cancel-device-slot", {
+      const { data, error } = await supabase.functions.invoke("cancel-device-slot", {
         body: { itemId, subscriptionId, quantityToRemove: 1 },
       });
       if (error) throw error;
       
-      toast({
-        title: t("devices.cancelSuccess") || "Location removed",
-        description: t("devices.cancelSuccessDesc") || "The location has been removed. A prorated credit will be applied.",
-      });
+      // Show appropriate message based on whether it's scheduled or immediate
+      if (data?.scheduledForRemoval) {
+        const removalDate = data.removalDate 
+          ? new Date(data.removalDate).toLocaleDateString()
+          : "";
+        toast({
+          title: t("devices.cancelScheduled") || "Device scheduled for removal",
+          description: t("devices.cancelScheduledDesc")?.replace("{date}", removalDate) || 
+            `The device will be removed on ${removalDate}. You can continue using it until then.`,
+        });
+      } else {
+        toast({
+          title: t("devices.cancelSuccess") || "Device removed",
+          description: t("devices.cancelSuccessDesc") || "The device has been removed. A prorated credit will be applied.",
+        });
+      }
       
       // Reload device slots
       await Promise.all([
@@ -994,18 +1007,30 @@ const Profile = () => {
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                deviceSlotSubs.flatMap((slot) => 
-                  Array.from({ length: slot.quantity }, (_, idx) => ({
-                    id: slot.id,
-                    subscriptionId: slot.subscriptionId,
-                    index: idx,
-                    period: slot.period,
-                    amount: slot.amount,
-                    currency: slot.currency,
-                    currentPeriodEnd: slot.currentPeriodEnd,
-                    cancelAtPeriodEnd: slot.cancelAtPeriodEnd,
-                  } as ExpandedDeviceSlot))
-                ).map((expandedSlot, rowIndex) => (
+                deviceSlotSubs.flatMap((slot) => {
+                  // Calculate how many slots are cancelled vs active
+                  const scheduledReduction = slot.scheduledQuantityReduction;
+                  const cancelledCount = slot.cancelAtPeriodEnd 
+                    ? slot.quantity // All cancelled
+                    : scheduledReduction !== undefined 
+                      ? slot.quantity - scheduledReduction // Some cancelled
+                      : 0; // None cancelled
+                  
+                  return Array.from({ length: slot.quantity }, (_, idx) => {
+                    // Later indices are cancelled first (most recently added)
+                    const isCancelled = idx >= (slot.quantity - cancelledCount);
+                    return {
+                      id: slot.id,
+                      subscriptionId: slot.subscriptionId,
+                      index: idx,
+                      period: slot.period,
+                      amount: slot.amount,
+                      currency: slot.currency,
+                      currentPeriodEnd: slot.currentPeriodEnd,
+                      cancelAtPeriodEnd: isCancelled,
+                    } as ExpandedDeviceSlot;
+                  });
+                }).map((expandedSlot, rowIndex) => (
                   <div
                     key={`${expandedSlot.id}-${expandedSlot.index}`}
                     className={`p-3 rounded-lg border ${
