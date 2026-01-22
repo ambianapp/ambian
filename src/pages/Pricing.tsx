@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, Loader2, Music2, Clock, CreditCard, FileText, Calendar, RefreshCw, HelpCircle, Mail, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, Clock, CreditCard, FileText, Calendar, RefreshCw, Mail, ExternalLink } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
 import LanguageSelector from "@/components/LanguageSelector";
 import {
@@ -73,13 +73,6 @@ const Pricing = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  const features = [
-    t("features.unlimited"),
-    t("features.playlists"),
-    t("features.noLicense"),
-    t("features.newSongs"),
-    t("features.business"),
-  ];
 
   // Handle payment verification on return from Stripe
   useEffect(() => {
@@ -589,35 +582,6 @@ const Pricing = () => {
           )}
         </div>
 
-        {/* Features */}
-        <Card className="bg-card/50 border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music2 className="w-5 h-5 text-primary" />
-              {t("pricing.whatsIncluded")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid md:grid-cols-2 gap-3">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-primary" />
-                  </div>
-                  <span className="text-foreground">{feature}</span>
-                </li>
-              ))}
-              <li className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-primary" />
-                </div>
-                <span className="text-foreground">
-                  {paymentType === "subscription" ? t("pricing.cancelAnytime") : t("pricing.noAutoRenewal")}
-                </span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
 
 
         {/* Invoice Request Dialog */}
