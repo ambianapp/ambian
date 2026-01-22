@@ -41,6 +41,17 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
 
+    // Parse optional flow parameter from request body
+    let flowType: string | null = null;
+    try {
+      const body = await req.json();
+      flowType = body?.flow || null;
+      logStep("Parsed request body", { flowType });
+    } catch {
+      // No body or invalid JSON, continue without flow
+      logStep("No flow type specified, using default portal");
+    }
+
     // Use anon key with user's token for authentication
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -64,10 +75,8 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
-    // Release any attached subscription schedules so the portal can show cancellation option.
-    // When a subscription has a pending schedule (e.g., from device slot cancellation), 
-    // Stripe's portal hides the cancel button. Releasing the schedule detaches it while
-    // preserving the scheduled changes via cancel_at on the subscription itself.
+    // Get the main active subscription for flow_data
+    let mainSubscriptionId: string | null = null;
     try {
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
@@ -75,54 +84,103 @@ serve(async (req) => {
         limit: 10,
       });
       
+      // Find the main subscription (not device slot subscription)
+      // Device slot prices typically have specific IDs - filter them out
+      const DEVICE_SLOT_PRICES = [
+        "price_1SsJl5JrU52a7SNLIz1Hqxfa", // Live device slot price
+        "price_1Sq8wQJrU52a7SNLBfNi7BW0", // Test device slot price
+      ];
+      
       for (const sub of subscriptions.data) {
-        if (sub.schedule) {
-          logStep("Found subscription with attached schedule", { 
-            subscriptionId: sub.id, 
-            scheduleId: sub.schedule 
-          });
+        const isDeviceSlotOnly = sub.items.data.every((item: { price: { id: string } }) => 
+          DEVICE_SLOT_PRICES.includes(item.price.id)
+        );
+        
+        if (!isDeviceSlotOnly) {
+          mainSubscriptionId = sub.id;
+          logStep("Found main subscription", { subscriptionId: mainSubscriptionId });
           
-          // Release the schedule - this detaches it from the subscription
-          // but preserves any pending changes by setting cancel_at on the subscription
-          await stripe.subscriptionSchedules.release(sub.schedule as string, {
-            preserve_cancel_date: true,
-          });
-          logStep("Released subscription schedule", { scheduleId: sub.schedule });
+          // Release any attached schedule so portal can show cancel option
+          if (sub.schedule) {
+            logStep("Releasing subscription schedule", { scheduleId: sub.schedule });
+            try {
+              await stripe.subscriptionSchedules.release(sub.schedule as string, {
+                preserve_cancel_date: true,
+              });
+              logStep("Released subscription schedule successfully");
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : String(e);
+              logStep("Failed to release schedule (continuing)", { message: msg });
+            }
+          }
+          break;
         }
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      logStep("Error checking/releasing subscription schedules (continuing anyway)", { message: msg });
+      logStep("Error finding subscriptions (continuing)", { message: msg });
     }
 
     const returnOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
 
-    // Use the active Billing Portal configuration explicitly.
-    // This avoids cases where the Dashboard has multiple portal configurations and the default
-    // one (used implicitly) doesn't have cancellation enabled.
-    let configurationId: string | undefined;
-    try {
-      const configs = await stripe.billingPortal.configurations.list({
-        active: true,
-        limit: 1,
-      });
-      configurationId = configs.data?.[0]?.id;
-      if (configurationId) {
-        logStep("Using billing portal configuration", { configurationId });
-      } else {
-        logStep("No active billing portal configuration found; using Stripe default");
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      logStep("Failed to load billing portal configuration; using Stripe default", { message: msg });
-    }
-
-    const portalSession = await stripe.billingPortal.sessions.create({
+    // Build portal session options
+    const portalOptions: Stripe.BillingPortal.SessionCreateParams = {
       customer: customerId,
       return_url: `${returnOrigin}/profile`,
-      ...(configurationId ? { configuration: configurationId } : {}),
-    });
+    };
 
+    // Use flow_data for deep-linking to specific actions
+    // This bypasses portal configuration restrictions
+    if (flowType && mainSubscriptionId) {
+      if (flowType === "cancel") {
+        portalOptions.flow_data = {
+          type: "subscription_cancel",
+          subscription_cancel: {
+            subscription: mainSubscriptionId,
+          },
+          after_completion: {
+            type: "redirect",
+            redirect: {
+              return_url: `${returnOrigin}/profile?cancelled=true`,
+            },
+          },
+        };
+        logStep("Using subscription_cancel flow", { subscriptionId: mainSubscriptionId });
+      } else if (flowType === "update") {
+        portalOptions.flow_data = {
+          type: "subscription_update",
+          subscription_update: {
+            subscription: mainSubscriptionId,
+          },
+          after_completion: {
+            type: "redirect",
+            redirect: {
+              return_url: `${returnOrigin}/profile?updated=true`,
+            },
+          },
+        };
+        logStep("Using subscription_update flow", { subscriptionId: mainSubscriptionId });
+      }
+    }
+
+    // If no flow_data, try to use active billing portal configuration
+    if (!portalOptions.flow_data) {
+      try {
+        const configs = await stripe.billingPortal.configurations.list({
+          active: true,
+          limit: 1,
+        });
+        if (configs.data?.[0]?.id) {
+          portalOptions.configuration = configs.data[0].id;
+          logStep("Using billing portal configuration", { configurationId: configs.data[0].id });
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logStep("Failed to load billing portal configuration", { message: msg });
+      }
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
     logStep("Portal session created", { url: portalSession.url });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {
