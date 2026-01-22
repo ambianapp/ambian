@@ -318,9 +318,9 @@ const Pricing = () => {
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32 relative overflow-hidden">
       {/* Background Gradients (static) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[70%] h-[70%] bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-primary/8 rounded-full blur-[100px]" />
-        <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-primary/6 rounded-full blur-[80px]" />
+        <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[5%] right-[-10%] w-[55%] h-[55%] bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-primary/6 rounded-full blur-[80px]" />
       </div>
       
       <div className="max-w-4xl mx-auto space-y-8 relative z-10">
