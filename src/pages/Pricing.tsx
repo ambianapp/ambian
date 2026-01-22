@@ -538,18 +538,18 @@ const Pricing = () => {
                           </Button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            className="flex-1 text-xs md:text-sm h-9 md:h-10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!subscription.isPendingPayment) {
-                                setShowInvoiceDialog(true);
-                              }
-                            }}
-                            disabled={subscription.isPendingPayment || isCheckingInvoices}
-                          >
+                        <Button
+                          variant="outline"
+                          className="w-full text-xs md:text-sm h-9 md:h-10 justify-between"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!subscription.isPendingPayment) {
+                              setShowInvoiceDialog(true);
+                            }
+                          }}
+                          disabled={subscription.isPendingPayment || isCheckingInvoices}
+                        >
+                          <span className="flex items-center">
                             {isCheckingInvoices ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-2" />
                             ) : (
@@ -557,12 +557,12 @@ const Pricing = () => {
                             )}
                             <span className="hidden md:inline">{t("pricing.payByInvoice")}</span>
                             <span className="md:hidden">{t("pricing.invoice")}</span>
-                          </Button>
+                          </span>
                           <Popover>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0 -ml-2">
+                            <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <span className="p-1 hover:bg-muted rounded">
                                 <Info className="w-4 h-4 text-muted-foreground" />
-                              </Button>
+                              </span>
                             </PopoverTrigger>
                             <PopoverContent className="w-72 text-sm" align="end">
                               <div className="space-y-2">
@@ -575,7 +575,7 @@ const Pricing = () => {
                               </div>
                             </PopoverContent>
                           </Popover>
-                        </div>
+                        </Button>
                       )}
                     </>
                   )}
