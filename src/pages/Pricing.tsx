@@ -336,7 +336,9 @@ const Pricing = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("common.back")}
             </Button>
-            <LanguageSelector />
+            <div className="mr-12 md:mr-0">
+              <LanguageSelector />
+            </div>
           </div>
           <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
         </div>
