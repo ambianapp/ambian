@@ -336,7 +336,7 @@ const Pricing = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-            {t("pricing.titlePrefix")} <span className="text-[#E91E8C]">Ambian</span>
+            {t("pricing.titlePrefix")} <span className="text-white">Ambian</span>
           </h1>
         </div>
 
