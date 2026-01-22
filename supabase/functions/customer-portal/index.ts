@@ -65,9 +65,31 @@ serve(async (req) => {
     logStep("Found customer", { customerId });
 
     const returnOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
+
+    // Use the active Billing Portal configuration explicitly.
+    // This avoids cases where the Dashboard has multiple portal configurations and the default
+    // one (used implicitly) doesn't have cancellation enabled.
+    let configurationId: string | undefined;
+    try {
+      const configs = await stripe.billingPortal.configurations.list({
+        active: true,
+        limit: 1,
+      });
+      configurationId = configs.data?.[0]?.id;
+      if (configurationId) {
+        logStep("Using billing portal configuration", { configurationId });
+      } else {
+        logStep("No active billing portal configuration found; using Stripe default");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      logStep("Failed to load billing portal configuration; using Stripe default", { message: msg });
+    }
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${returnOrigin}/profile`,
+      ...(configurationId ? { configuration: configurationId } : {}),
     });
 
     logStep("Portal session created", { url: portalSession.url });
