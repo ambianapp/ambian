@@ -64,6 +64,37 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
+    // Release any attached subscription schedules so the portal can show cancellation option.
+    // When a subscription has a pending schedule (e.g., from device slot cancellation), 
+    // Stripe's portal hides the cancel button. Releasing the schedule detaches it while
+    // preserving the scheduled changes via cancel_at on the subscription itself.
+    try {
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 10,
+      });
+      
+      for (const sub of subscriptions.data) {
+        if (sub.schedule) {
+          logStep("Found subscription with attached schedule", { 
+            subscriptionId: sub.id, 
+            scheduleId: sub.schedule 
+          });
+          
+          // Release the schedule - this detaches it from the subscription
+          // but preserves any pending changes by setting cancel_at on the subscription
+          await stripe.subscriptionSchedules.release(sub.schedule as string, {
+            preserve_cancel_date: true,
+          });
+          logStep("Released subscription schedule", { scheduleId: sub.schedule });
+        }
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      logStep("Error checking/releasing subscription schedules (continuing anyway)", { message: msg });
+    }
+
     const returnOrigin = ALLOWED_ORIGINS.includes(origin || "") ? origin : ALLOWED_ORIGINS[0];
 
     // Use the active Billing Portal configuration explicitly.
