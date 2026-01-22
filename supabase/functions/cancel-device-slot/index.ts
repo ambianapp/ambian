@@ -300,12 +300,24 @@ serve(async (req) => {
           quantity: item.quantity,
         }));
         
+        // Get the current phase start and end dates from the schedule
+        const currentPhaseStart = schedule.phases[0].start_date;
+        const currentPhaseEnd = schedule.phases[0].end_date || subscription.current_period_end;
+        
+        logStep("Updating schedule with phases", { 
+          currentPhaseStart, 
+          currentPhaseEnd,
+          currentPhaseItemsCount: currentPhaseItems.length,
+          nextPhaseItemsCount: nextPhaseItems.length,
+        });
+        
         await stripe.subscriptionSchedules.update(schedule.id, {
           end_behavior: 'release',
           phases: [
             {
               items: currentPhaseItems,
-              end_date: subscription.current_period_end,
+              start_date: currentPhaseStart,
+              end_date: currentPhaseEnd,
             },
             {
               items: nextPhaseItems,
@@ -380,12 +392,22 @@ serve(async (req) => {
           quantity: item.quantity,
         }));
         
+        // Get the current phase start and end dates from the schedule
+        const currentPhaseStart = schedule.phases[0].start_date;
+        const currentPhaseEnd = schedule.phases[0].end_date || subscription.current_period_end;
+        
+        logStep("Updating schedule for quantity reduction", { 
+          currentPhaseStart, 
+          currentPhaseEnd,
+        });
+        
         await stripe.subscriptionSchedules.update(schedule.id, {
           end_behavior: 'release',
           phases: [
             {
               items: currentPhaseItems,
-              end_date: subscription.current_period_end,
+              start_date: currentPhaseStart,
+              end_date: currentPhaseEnd,
             },
             {
               items: nextPhaseItems,
