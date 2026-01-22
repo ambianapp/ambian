@@ -344,9 +344,6 @@ const Pricing = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">{t("pricing.title")}</h1>
-          <p className="text-muted-foreground mt-2">
-            {t("pricing.subtitle")}
-          </p>
         </div>
 
         {/* Trial active message */}
@@ -412,7 +409,7 @@ const Pricing = () => {
             </TabsTrigger>
             <TabsTrigger value="prepaid" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              {t("pricing.oneTime")}
+              {t("pricing.oneTimeOrInvoice")}
             </TabsTrigger>
           </TabsList>
           
@@ -501,19 +498,65 @@ const Pricing = () => {
                 <p className="text-sm text-muted-foreground whitespace-nowrap">≈ €7.40/{t("subscription.month")} · {t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "yearly" && user && (
-                <Button
-                  className="w-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCheckout();
-                  }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : null}
-                  {t("pricing.payNow")}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCheckout();
+                    }}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <CreditCard className="w-4 h-4 mr-2" />
+                    )}
+                    {t("pricing.payNow")}
+                  </Button>
+                  {paymentType === "prepaid" && (
+                    <>
+                      {hasOpenInvoices ? (
+                        <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center space-y-2">
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            {t("pricing.unpaidInvoiceWarning") || "You have an unpaid invoice. Please pay it first."}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate("/profile?tab=billing");
+                            }}
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            {t("pricing.viewUnpaidInvoice") || "View & Pay Invoice"}
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!subscription.isPendingPayment) {
+                              setShowInvoiceDialog(true);
+                            }
+                          }}
+                          disabled={subscription.isPendingPayment || isCheckingInvoices}
+                        >
+                          {isCheckingInvoices ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <FileText className="w-4 h-4 mr-2" />
+                          )}
+                          {t("pricing.payByInvoice")}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -521,7 +564,7 @@ const Pricing = () => {
 
         {/* Payment Options */}
         <div className="space-y-6">
-          {!user ? (
+          {!user && (
             <div className="text-center">
               <Button
                 size="lg"
@@ -534,70 +577,11 @@ const Pricing = () => {
                 {t("auth.trialInfo")}
               </p>
             </div>
-          ) : (
-            <>
-              {/* Invoice Option - Only for yearly prepaid */}
-              <Card className={`border-border ${(selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices) ? "opacity-70" : ""}`}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileText className="w-5 h-5 text-primary" />
-                    {t("pricing.payByInvoice")}
-                    <div className="relative group">
-                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg text-sm text-popover-foreground w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                        <p className="font-normal">{t("pricing.payByInvoiceDesc")}</p>
-                      </div>
-                    </div>
-                  </CardTitle>
-                  <CardDescription>
-                    {t("pricing.payByInvoiceDesc")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {hasOpenInvoices && (
-                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center space-y-2">
-                      <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                        {t("pricing.unpaidInvoiceWarning") || "You have an unpaid invoice. Please pay it first before requesting a new one."}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
-                        onClick={() => navigate("/profile?tab=billing")}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        {t("pricing.viewUnpaidInvoice") || "View & Pay Invoice"}
-                      </Button>
-                    </div>
-                  )}
-                  {!hasOpenInvoices && (selectedPlan === "monthly" || paymentType === "subscription") && (
-                    <p className="text-sm text-amber-500 text-center">
-                      {t("pricing.invoiceYearlyOnly")}
-                    </p>
-                  )}
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      if (selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices || subscription.isPendingPayment) {
-                        return;
-                      }
-                      setShowInvoiceDialog(true);
-                    }}
-                    disabled={selectedPlan === "monthly" || paymentType === "subscription" || hasOpenInvoices || subscription.isPendingPayment || isCheckingInvoices}
-                  >
-                    {isCheckingInvoices ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : null}
-                    {t("pricing.requestInvoice")}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <p className="text-sm text-muted-foreground text-center">
-                {t("pricing.vatExcluded")}
-              </p>
-            </>
+          )}
+          {user && (
+            <p className="text-sm text-muted-foreground text-center">
+              {t("pricing.vatExcluded")}
+            </p>
           )}
         </div>
 
