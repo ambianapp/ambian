@@ -444,10 +444,12 @@ const Profile = () => {
     }
   };
 
-  const handleManageSubscription = async () => {
+  const handleManageSubscription = async (flow?: "cancel" | "update") => {
     setIsLoadingPortal(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        body: flow ? { flow } : undefined,
+      });
       if (error) throw error;
       
       if (data?.url) {
@@ -924,12 +926,12 @@ const Profile = () => {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               {/* Manage Subscription - show for any user with an active or cancelled subscription */}
               {(subscription.subscribed || subscription.cancelAtPeriodEnd) && (
                 <Button
                   variant="outline"
-                  onClick={handleManageSubscription}
+                  onClick={() => handleManageSubscription()}
                   disabled={isLoadingPortal}
                   className="w-full sm:w-auto"
                 >
@@ -939,6 +941,30 @@ const Profile = () => {
                     <ExternalLink className="w-4 h-4 mr-2" />
                   )}
                   {t("subscription.manageBtn")}
+                </Button>
+              )}
+              {/* Change Plan button for subscribed users */}
+              {subscription.subscribed && !subscription.cancelAtPeriodEnd && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleManageSubscription("update")}
+                  disabled={isLoadingPortal}
+                  className="w-full sm:w-auto"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("subscription.changePlan")}
+                </Button>
+              )}
+              {/* Cancel Subscription button for subscribed users */}
+              {subscription.subscribed && !subscription.cancelAtPeriodEnd && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleManageSubscription("cancel")}
+                  disabled={isLoadingPortal}
+                  className="w-full sm:w-auto text-destructive hover:text-destructive"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  {t("subscription.cancelBtn")}
                 </Button>
               )}
               {/* Subscribe Now - show for users without any subscription */}

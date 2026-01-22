@@ -193,6 +193,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.validUntil": "Valid until",
     "subscription.paymentDeadline": "Payment deadline",
     "subscription.reactivate": "Reactivate Subscription",
+    "subscription.cancelBtn": "Cancel Subscription",
 
     // Device slots
     "devices.title": "Multiple devices",
@@ -935,6 +936,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.validUntil": "Giltig till",
     "subscription.paymentDeadline": "Betalningsfrist",
     "subscription.reactivate": "Återaktivera prenumeration",
+    "subscription.cancelBtn": "Avsluta prenumeration",
     
     // Device slots
     "devices.title": "Flera enheter",
@@ -1676,6 +1678,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.validUntil": "Voimassa asti",
     "subscription.paymentDeadline": "Maksun määräpäivä",
     "subscription.reactivate": "Aktivoi tilaus uudelleen",
+    "subscription.cancelBtn": "Peruuta tilaus",
     
     // Device slots
     "devices.title": "Lisää laitteita",
@@ -2418,6 +2421,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.validUntil": "Gültig bis",
     "subscription.paymentDeadline": "Zahlungsfrist",
     "subscription.reactivate": "Abonnement reaktivieren",
+    "subscription.cancelBtn": "Abonnement kündigen",
     
     // Device slots
     "devices.title": "Mehrere Geräte",
@@ -3159,6 +3163,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "subscription.validUntil": "Valide jusqu'au",
     "subscription.paymentDeadline": "Date limite de paiement",
     "subscription.reactivate": "Réactiver l'abonnement",
+    "subscription.cancelBtn": "Annuler l'abonnement",
     
     // Device slots
     "devices.title": "Appareils multiples",
