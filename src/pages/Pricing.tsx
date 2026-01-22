@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Clock, CreditCard, FileText, Calendar, RefreshCw, Mail, ExternalLink } from "lucide-react";
-import ambianLogo from "@/assets/ambian-logo-new.png";
+
 import LanguageSelector from "@/components/LanguageSelector";
 import {
   Dialog,
@@ -317,28 +317,27 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Back button and Logo */}
-        <div className="flex flex-col items-center pt-4 space-y-4">
-          <div className="w-full flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t("common.back")}
-            </Button>
-            <div className="mr-12 md:mr-0">
-              <LanguageSelector />
-            </div>
+        {/* Back button */}
+        <div className="flex items-center justify-between pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t("common.back")}
+          </Button>
+          <div className="mr-12 md:mr-0">
+            <LanguageSelector />
           </div>
-          <img src={ambianLogo} alt="Ambian" className="h-16 md:h-20" />
         </div>
 
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">{t("pricing.title")}</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("pricing.titlePrefix")} <span className="text-primary">Ambian</span> {t("pricing.titleSuffix")}
+          </h1>
         </div>
 
         {/* Trial active message */}

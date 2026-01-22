@@ -267,7 +267,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.download": "Download",
     
     // Pricing
-    "pricing.title": "Subscribe to Listen",
+    "pricing.title": "Subscribe to Ambian",
+    "pricing.titlePrefix": "Subscribe to",
+    "pricing.titleSuffix": "",
     "pricing.subtitle": "Get unlimited access to our entire music library for your business.",
     "pricing.trialActive": "Free Trial Active",
     "pricing.daysRemaining": "{days} day(s) remaining. Subscribe now to continue after your trial ends.",
@@ -1014,7 +1016,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.download": "Ladda ner",
     
     // Pricing
-    "pricing.title": "Prenumerera för att lyssna",
+    "pricing.title": "Tilaa Ambian",
+    "pricing.titlePrefix": "Tilaa",
+    "pricing.titleSuffix": "",
     "pricing.subtitle": "Få obegränsad tillgång till hela vårt musikbibliotek för ditt företag.",
     "pricing.trialActive": "Gratis provperiod aktiv",
     "pricing.daysRemaining": "{days} dag(ar) kvar. Prenumerera nu för att fortsätta efter provperioden.",
@@ -1760,7 +1764,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.download": "Lataa",
     
     // Pricing
-    "pricing.title": "Tilaa kuunnellaksesi",
+    "pricing.title": "Tilaa Ambian",
+    "pricing.titlePrefix": "Tilaa",
+    "pricing.titleSuffix": "",
     "pricing.subtitle": "Saat rajattoman pääsyn Ambianin musiikkikirjastoon ja sen ominaisuuksiin.",
     "pricing.trialActive": "Ilmainen kokeilu käynnissä",
     "pricing.daysRemaining": "{days} päivää jäljellä. Tilaa nyt jatkaaksesi kokeilun jälkeen.",
@@ -2507,7 +2513,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.download": "Herunterladen",
     
     // Pricing
-    "pricing.title": "Abonnieren zum Hören",
+    "pricing.title": "Abonniere Ambian",
+    "pricing.titlePrefix": "Abonniere",
+    "pricing.titleSuffix": "",
     "pricing.subtitle": "Erhalte unbegrenzten Zugang zu unserer gesamten Musikbibliothek für dein Unternehmen.",
     "pricing.trialActive": "Kostenlose Testversion aktiv",
     "pricing.daysRemaining": "{days} Tag(e) verbleibend. Abonniere jetzt, um nach der Testversion fortzufahren.",
@@ -3253,7 +3261,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "invoices.download": "Télécharger",
     
     // Pricing
-    "pricing.title": "Abonnez-vous pour écouter",
+    "pricing.title": "Abonnez-vous à Ambian",
+    "pricing.titlePrefix": "Abonnez-vous à",
+    "pricing.titleSuffix": "",
     "pricing.subtitle": "Accédez à toute notre bibliothèque musicale pour votre entreprise.",
     "pricing.trialActive": "Essai gratuit actif",
     "pricing.daysRemaining": "{days} jour(s) restant(s). Abonnez-vous maintenant pour continuer après l'essai.",
