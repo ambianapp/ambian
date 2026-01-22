@@ -595,14 +595,11 @@ const Pricing = () => {
           <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("pricing.requestInvoice")}</DialogTitle>
-              <DialogDescription>
-                {t("pricing.payByInvoiceDesc")}
-              </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-2">
               {/* Show selected yearly plan info */}
               <div className="p-2.5 rounded-lg border border-primary bg-primary/10">
-                <div className="font-medium text-foreground text-sm">{t("pricing.yearly")}</div>
+                <div className="font-medium text-foreground text-sm">{t("pricing.yearAccess")}</div>
                 <div className="text-xs text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")} {t("pricing.plusVat")}</div>
               </div>
 
