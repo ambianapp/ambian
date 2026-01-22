@@ -239,6 +239,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "You are about to add the following device(s):",
     
     "devices.confirmAddBtn": "Confirm & Add",
+    "devices.confirmAndPay": "Confirm and pay",
     "devices.includedInSubscription": "Included in subscription",
     "devices.included": "Included",
     "devices.addLocation": "Add another device",
@@ -982,6 +983,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Du är på väg att lägga till följande enhet(er):",
     
     "devices.confirmAddBtn": "Bekräfta & lägg till",
+    "devices.confirmAndPay": "Bekräfta och betala",
     "devices.includedInSubscription": "Ingår i prenumerationen",
     "devices.included": "Ingår",
     "devices.addLocation": "Lägg till en enhet till",
@@ -1724,6 +1726,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Olet lisäämässä seuraavat laitteet:",
     
     "devices.confirmAddBtn": "Vahvista ja lisää",
+    "devices.confirmAndPay": "Vahvista ja maksa",
     "devices.includedInSubscription": "Sisältyy tilaukseen",
     "devices.included": "Sisältyy",
     "devices.addLocation": "Lisää uusi laite",
@@ -2467,6 +2470,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Du bist dabei, die folgenden Geräte hinzuzufügen:",
     
     "devices.confirmAddBtn": "Bestätigen & hinzufügen",
+    "devices.confirmAndPay": "Bestätigen und bezahlen",
     "devices.includedInSubscription": "Im Abonnement enthalten",
     "devices.included": "Enthalten",
     "devices.addLocation": "Ein weiteres Gerät hinzufügen",
@@ -3209,6 +3213,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "devices.confirmAddDesc": "Vous êtes sur le point d'ajouter les appareils suivants :",
     
     "devices.confirmAddBtn": "Confirmer et ajouter",
+    "devices.confirmAndPay": "Confirmer et payer",
     "devices.includedInSubscription": "Inclus dans l'abonnement",
     "devices.included": "Inclus",
     "devices.addLocation": "Ajouter un autre appareil",
