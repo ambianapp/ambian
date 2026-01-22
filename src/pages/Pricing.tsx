@@ -604,7 +604,6 @@ const Pricing = () => {
               <div className="p-2.5 rounded-lg border border-primary bg-primary/10">
                 <div className="font-medium text-foreground text-sm">{t("pricing.yearly")}</div>
                 <div className="text-xs text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")}</div>
-                <div className="text-xs text-primary mt-0.5">{t(currentPlans.yearly.savingsKey)}</div>
               </div>
 
               <div className="space-y-1.5">
