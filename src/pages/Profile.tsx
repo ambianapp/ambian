@@ -1490,9 +1490,11 @@ const Profile = () => {
               {isLoadingDevice ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : (
-                <Plus className="w-4 h-4 mr-2" />
+                <CreditCard className="w-4 h-4 mr-2" />
               )}
-              {t("devices.confirmAddBtn")}
+              {subscription.isRecurring && recurringProration 
+                ? `${t("devices.confirmAndPay") || "Confirm and pay"} €${recurringProration.proratedTotal.toFixed(2)}`
+                : t("devices.confirmAddBtn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
