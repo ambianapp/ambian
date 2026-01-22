@@ -560,7 +560,7 @@ const Pricing = () => {
                           </span>
                           <Popover>
                             <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <span className="p-1 hover:bg-muted rounded mr-1">
+                              <span className="p-1 hover:bg-muted rounded ml-auto md:ml-2">
                                 <Info className="w-4 h-4 text-muted-foreground" />
                               </span>
                             </PopoverTrigger>
