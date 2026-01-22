@@ -560,7 +560,7 @@ const Pricing = () => {
                           </Button>
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0">
+                              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0 -ml-2">
                                 <Info className="w-4 h-4 text-muted-foreground" />
                               </Button>
                             </PopoverTrigger>
