@@ -869,48 +869,6 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Plan Change Options - only show for recurring subscriptions */}
-            {subscription.subscribed && !subscription.isTrial && !subscription.cancelAtPeriodEnd && subscription.isRecurring && (
-              <div className="p-4 rounded-lg border border-border">
-                <p className="font-medium text-foreground mb-3">{t("subscription.changePlan")}</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {subscription.planType === "monthly" ? (
-                    <Button
-                      variant="default"
-                      onClick={() => handleChangePlan("yearly")}
-                      disabled={isChangingPlan}
-                      className="w-full sm:w-auto flex-wrap h-auto py-2"
-                    >
-                      <span className="flex items-center">
-                        {isChangingPlan ? (
-                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        ) : (
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                        )}
-                        {t("subscription.switchToYearly")}
-                      </span>
-                      <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded ml-2">
-                        {t("subscription.yearlySave")}
-                      </span>
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      onClick={() => handleChangePlan("monthly")}
-                      disabled={isChangingPlan}
-                      className="w-full sm:w-auto"
-                    >
-                      {isChangingPlan ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                      )}
-                      {t("subscription.switchToMonthly")}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Subscribe Now for Trial Users */}
             {subscription.isTrial && (
@@ -943,41 +901,12 @@ const Profile = () => {
                   {t("subscription.manageBtn")}
                 </Button>
               )}
-              {/* Cancel Subscription button for subscribed users */}
-              {subscription.subscribed && !subscription.cancelAtPeriodEnd && (
-                <Button
-                  variant="outline"
-                  onClick={() => handleManageSubscription("cancel")}
-                  disabled={isLoadingPortal}
-                  className="w-full sm:w-auto text-destructive hover:text-destructive"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  {t("subscription.cancelBtn")}
-                </Button>
-              )}
               {/* Subscribe Now - show for users without any subscription */}
               {!subscription.subscribed && !subscription.cancelAtPeriodEnd && (
                 <Button onClick={() => navigate("/pricing")} className="w-full sm:w-auto">
                   {t("subscription.subscribeNow")}
                 </Button>
               )}
-              <Button 
-                variant="ghost" 
-                onClick={async () => {
-                  setIsRefreshing(true);
-                  await checkSubscription();
-                  setIsRefreshing(false);
-                }} 
-                disabled={isRefreshing}
-                className="w-full sm:w-auto"
-              >
-                {isRefreshing ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                )}
-                {t("subscription.refreshStatus")}
-              </Button>
             </div>
           </CardContent>
         </Card>
