@@ -415,13 +415,13 @@ const Pricing = () => {
           </TabsList>
           
           <TabsContent value="subscription" className="mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-4 text-center">
               {t("pricing.autoRenews")}
             </p>
           </TabsContent>
           
           <TabsContent value="prepaid" className="mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-4 text-center">
               {t("pricing.payOnce")}
             </p>
           </TabsContent>
