@@ -429,7 +429,7 @@ const Pricing = () => {
         </Tabs>
 
         {/* Plan Selection */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 md:gap-6">
           {/* Monthly Plan */}
           <Card
             className={`cursor-pointer transition-all ${
@@ -439,25 +439,25 @@ const Pricing = () => {
             }`}
             onClick={() => setSelectedPlan("monthly")}
           >
-            <CardHeader>
-              <CardTitle>{paymentType === "subscription" ? t("pricing.monthly") : t("pricing.monthAccess")}</CardTitle>
-              <CardDescription>
+            <CardHeader className="p-3 md:p-6 pb-2 md:pb-2">
+              <CardTitle className="text-sm md:text-xl">{paymentType === "subscription" ? t("pricing.monthly") : t("pricing.monthAccess")}</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 {paymentType === "subscription" ? t("pricing.billedMonthly") : t("pricing.billedYearly")}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="min-h-[88px]">
-                <div className="text-4xl font-bold text-foreground mb-1">
+            <CardContent className="p-3 md:p-6 pt-2 md:pt-4 space-y-3 md:space-y-4">
+              <div className="min-h-[60px] md:min-h-[88px]">
+                <div className="text-2xl md:text-4xl font-bold text-foreground mb-1">
                   {currentPlans.monthly.price}
                   {paymentType === "subscription" && (
-                    <span className="text-lg font-normal text-muted-foreground">/{t("subscription.month")}</span>
+                    <span className="text-xs md:text-lg font-normal text-muted-foreground">/{t("subscription.month")}</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">{t("pricing.exclVat")}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">{t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "monthly" && user && (
                 <Button
-                  className="w-full"
+                  className="w-full text-xs md:text-sm h-9 md:h-10"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCheckout();
@@ -482,27 +482,27 @@ const Pricing = () => {
             }`}
             onClick={() => setSelectedPlan("yearly")}
           >
-            <div className="absolute -top-3 right-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
+            <div className="absolute -top-2.5 md:-top-3 right-2 md:right-4 px-2 md:px-3 py-0.5 md:py-1 bg-primary text-primary-foreground text-[10px] md:text-xs font-semibold rounded-full">
               {t("pricing.bestValue")}
             </div>
-            <CardHeader>
-              <CardTitle>{paymentType === "subscription" ? t("pricing.yearly") : t("pricing.yearAccess")}</CardTitle>
-              <CardDescription>{t(currentPlans.yearly.savingsKey)}</CardDescription>
+            <CardHeader className="p-3 md:p-6 pb-2 md:pb-2">
+              <CardTitle className="text-sm md:text-xl">{paymentType === "subscription" ? t("pricing.yearly") : t("pricing.yearAccess")}</CardTitle>
+              <CardDescription className="text-xs md:text-sm">{t(currentPlans.yearly.savingsKey)}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="min-h-[88px]">
-                <div className="text-4xl font-bold text-foreground mb-1">
+            <CardContent className="p-3 md:p-6 pt-2 md:pt-4 space-y-3 md:space-y-4">
+              <div className="min-h-[60px] md:min-h-[88px]">
+                <div className="text-2xl md:text-4xl font-bold text-foreground mb-1">
                   {currentPlans.yearly.price}
                   {paymentType === "subscription" && (
-                    <span className="text-lg font-normal text-muted-foreground">/{t("subscription.year")}</span>
+                    <span className="text-xs md:text-lg font-normal text-muted-foreground">/{t("subscription.year")}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground whitespace-nowrap">≈ €7.40/{t("subscription.month")} · {t("pricing.exclVat")}</p>
+                <p className="text-[10px] md:text-sm text-muted-foreground whitespace-nowrap">≈ €7.40/{t("subscription.month")} · {t("pricing.exclVat")}</p>
               </div>
               {selectedPlan === "yearly" && user && (
                 <div className="space-y-2">
                   <Button
-                    className="w-full"
+                    className="w-full text-xs md:text-sm h-9 md:h-10"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCheckout();
@@ -514,7 +514,8 @@ const Pricing = () => {
                     ) : (
                       <CreditCard className="w-4 h-4 mr-2" />
                     )}
-                    {t("pricing.payNow")}
+                    <span className="hidden md:inline">{t("pricing.payNow")}</span>
+                    <span className="md:hidden">{t("pricing.pay")}</span>
                   </Button>
                   {paymentType === "prepaid" && (
                     <>
@@ -539,7 +540,7 @@ const Pricing = () => {
                       ) : (
                         <Button
                           variant="outline"
-                          className="w-full"
+                          className="w-full text-xs md:text-sm h-9 md:h-10"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!subscription.isPendingPayment) {
@@ -553,7 +554,8 @@ const Pricing = () => {
                           ) : (
                             <FileText className="w-4 h-4 mr-2" />
                           )}
-                          {t("pricing.payByInvoice")}
+                          <span className="hidden md:inline">{t("pricing.payByInvoice")}</span>
+                          <span className="md:hidden">{t("pricing.invoice")}</span>
                         </Button>
                       )}
                     </>
