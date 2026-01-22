@@ -943,18 +943,6 @@ const Profile = () => {
                   {t("subscription.manageBtn")}
                 </Button>
               )}
-              {/* Change Plan button for subscribed users */}
-              {subscription.subscribed && !subscription.cancelAtPeriodEnd && (
-                <Button
-                  variant="outline"
-                  onClick={() => handleManageSubscription("update")}
-                  disabled={isLoadingPortal}
-                  className="w-full sm:w-auto"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  {t("subscription.changePlan")}
-                </Button>
-              )}
               {/* Cancel Subscription button for subscribed users */}
               {subscription.subscribed && !subscription.cancelAtPeriodEnd && (
                 <Button
