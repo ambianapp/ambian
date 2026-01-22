@@ -925,7 +925,8 @@ const Profile = () => {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">
-              {subscription.subscribed ? (
+              {/* Manage Subscription - show for any user with an active or cancelled subscription */}
+              {(subscription.subscribed || subscription.cancelAtPeriodEnd) && (
                 <Button
                   variant="outline"
                   onClick={handleManageSubscription}
@@ -939,7 +940,9 @@ const Profile = () => {
                   )}
                   {t("subscription.manageBtn")}
                 </Button>
-              ) : (
+              )}
+              {/* Subscribe Now - show for users without any subscription */}
+              {!subscription.subscribed && !subscription.cancelAtPeriodEnd && (
                 <Button onClick={() => navigate("/pricing")} className="w-full sm:w-auto">
                   {t("subscription.subscribeNow")}
                 </Button>
