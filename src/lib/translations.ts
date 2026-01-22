@@ -311,6 +311,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceYearlyOnly": "Invoice payment works only on yearly one-time payment",
     "pricing.unpaidInvoiceWarning": "You have an unpaid invoice. Please pay it first before requesting a new one.",
     "pricing.viewUnpaidInvoice": "View & Pay Invoice",
+    "pricing.invoiceInfoTitle": "How invoice payment works",
+    "pricing.invoiceInfo1": "Invoice is sent to your email",
+    "pricing.invoiceInfo2": "7 days to pay by card or bank transfer (IBAN)",
+    "pricing.invoiceInfo3": "Access is granted immediately while payment is pending",
     
     // Billing
     "billing.companyName": "Company Name",
@@ -1060,6 +1064,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceYearlyOnly": "Fakturabetalning fungerar endast för årlig engångsbetalning",
     "pricing.unpaidInvoiceWarning": "Du har en obetald faktura. Vänligen betala den först innan du begär en ny.",
     "pricing.viewUnpaidInvoice": "Visa & Betala Faktura",
+    "pricing.invoiceInfoTitle": "Så fungerar fakturabetalning",
+    "pricing.invoiceInfo1": "Fakturan skickas till din e-post",
+    "pricing.invoiceInfo2": "7 dagar att betala med kort eller banköverföring (IBAN)",
+    "pricing.invoiceInfo3": "Åtkomst ges omedelbart medan betalningen väntar",
     
     // Billing
     "billing.companyName": "Företagsnamn",
@@ -1808,6 +1816,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceYearlyOnly": "Maksaminen laskulla toimii vain vuosittaisessa kertamaksussa",
     "pricing.unpaidInvoiceWarning": "Sinulla on maksamaton lasku. Ole hyvä ja maksa se ensin ennen kuin pyydät uutta.",
     "pricing.viewUnpaidInvoice": "Näytä & Maksa Lasku",
+    "pricing.invoiceInfoTitle": "Miten laskulla maksaminen toimii",
+    "pricing.invoiceInfo1": "Lasku lähetetään sähköpostiisi",
+    "pricing.invoiceInfo2": "7 päivää aikaa maksaa kortilla tai tilisiirrolla (IBAN)",
+    "pricing.invoiceInfo3": "Pääsy myönnetään heti maksun ollessa kesken",
     
     // Billing
     "billing.companyName": "Yrityksen nimi",
@@ -2557,6 +2569,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceYearlyOnly": "Rechnungszahlung funktioniert nur bei jährlicher Einmalzahlung",
     "pricing.unpaidInvoiceWarning": "Sie haben eine unbezahlte Rechnung. Bitte bezahlen Sie diese zuerst, bevor Sie eine neue anfordern.",
     "pricing.viewUnpaidInvoice": "Rechnung Anzeigen & Bezahlen",
+    "pricing.invoiceInfoTitle": "So funktioniert die Rechnungszahlung",
+    "pricing.invoiceInfo1": "Rechnung wird an Ihre E-Mail gesendet",
+    "pricing.invoiceInfo2": "7 Tage Zeit für Zahlung per Karte oder Überweisung (IBAN)",
+    "pricing.invoiceInfo3": "Zugang wird sofort gewährt, während die Zahlung aussteht",
     
     // Billing
     "billing.companyName": "Firmenname",
@@ -3305,6 +3321,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceYearlyOnly": "Le paiement par facture fonctionne uniquement pour le paiement annuel unique",
     "pricing.unpaidInvoiceWarning": "Vous avez une facture impayée. Veuillez d'abord la régler avant d'en demander une nouvelle.",
     "pricing.viewUnpaidInvoice": "Voir & Payer la Facture",
+    "pricing.invoiceInfoTitle": "Comment fonctionne le paiement par facture",
+    "pricing.invoiceInfo1": "La facture est envoyée à votre email",
+    "pricing.invoiceInfo2": "7 jours pour payer par carte ou virement bancaire (IBAN)",
+    "pricing.invoiceInfo3": "L'accès est accordé immédiatement en attendant le paiement",
     
     // Billing
     "billing.companyName": "Nom de l'entreprise",

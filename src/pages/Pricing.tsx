@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Clock, CreditCard, FileText, Calendar, RefreshCw, Mail, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, Clock, CreditCard, FileText, Calendar, RefreshCw, Mail, ExternalLink, Info } from "lucide-react";
 
 import LanguageSelector from "@/components/LanguageSelector";
 import {
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Subscription prices (recurring)
 const SUBSCRIPTION_PLANS = {
@@ -537,25 +538,44 @@ const Pricing = () => {
                           </Button>
                         </div>
                       ) : (
-                        <Button
-                          variant="outline"
-                          className="w-full text-xs md:text-sm h-9 md:h-10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!subscription.isPendingPayment) {
-                              setShowInvoiceDialog(true);
-                            }
-                          }}
-                          disabled={subscription.isPendingPayment || isCheckingInvoices}
-                        >
-                          {isCheckingInvoices ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          ) : (
-                            <FileText className="w-4 h-4 mr-2" />
-                          )}
-                          <span className="hidden md:inline">{t("pricing.payByInvoice")}</span>
-                          <span className="md:hidden">{t("pricing.invoice")}</span>
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            className="flex-1 text-xs md:text-sm h-9 md:h-10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!subscription.isPendingPayment) {
+                                setShowInvoiceDialog(true);
+                              }
+                            }}
+                            disabled={subscription.isPendingPayment || isCheckingInvoices}
+                          >
+                            {isCheckingInvoices ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                              <FileText className="w-4 h-4 mr-2" />
+                            )}
+                            <span className="hidden md:inline">{t("pricing.payByInvoice")}</span>
+                            <span className="md:hidden">{t("pricing.invoice")}</span>
+                          </Button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 shrink-0">
+                                <Info className="w-4 h-4 text-muted-foreground" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 text-sm" align="end">
+                              <div className="space-y-2">
+                                <h4 className="font-medium">{t("pricing.invoiceInfoTitle")}</h4>
+                                <ul className="text-muted-foreground space-y-1 text-xs">
+                                  <li>• {t("pricing.invoiceInfo1")}</li>
+                                  <li>• {t("pricing.invoiceInfo2")}</li>
+                                  <li>• {t("pricing.invoiceInfo3")}</li>
+                                </ul>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       )}
                     </>
                   )}
