@@ -315,8 +315,15 @@ const Pricing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32 relative overflow-hidden">
+      {/* Animated Background Gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-5%] w-[70%] h-[70%] bg-primary/20 rounded-full blur-[120px] animate-drift" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-primary/15 rounded-full blur-[100px] animate-drift-slow" />
+        <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-primary/12 rounded-full blur-[80px] animate-drift-delayed" />
+      </div>
+      
+      <div className="max-w-4xl mx-auto space-y-8 relative z-10">
         {/* Back button */}
         <div className="flex items-center justify-between pt-4">
           <Button
