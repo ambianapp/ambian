@@ -700,7 +700,7 @@ const Pricing = () => {
                 {isInvoiceLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                {t("pricing.payNow")} ({currentPlans[selectedPlan].price})
+                {t("pricing.requestInvoice")}
               </Button>
             </div>
           </DialogContent>
