@@ -815,6 +815,13 @@ const Profile = () => {
                     )}
                   </p>
                 )}
+                {/* Renews on - show for active non-cancelled subscriptions */}
+                {subscription.subscriptionEnd && !subscription.cancelAtPeriodEnd && !subscription.isTrial && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {t("subscription.renewsOn")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
+                  </p>
+                )}
                 {/* Show valid until for cancelled subscriptions */}
                 {subscription.cancelAtPeriodEnd && subscription.subscriptionEnd && (
                   <p className="text-sm text-muted-foreground">
@@ -860,14 +867,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {subscription.subscriptionEnd && !subscription.cancelAtPeriodEnd && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>
-                  {t("subscription.renewsOn")} {new Date(subscription.subscriptionEnd).toLocaleDateString()}
-                </span>
-              </div>
-            )}
 
 
             {/* Subscribe Now for Trial Users */}
