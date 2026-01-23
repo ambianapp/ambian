@@ -314,7 +314,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceInfoTitle": "How invoice payment works",
     "pricing.invoiceInfo1": "Invoice is sent to your email",
     "pricing.invoiceInfo2": "7 days to pay by card or bank transfer (IBAN)",
-    "pricing.invoiceInfo3": "Access is granted immediately while payment is pending",
+    "pricing.invoiceInfo3": "Start using the service right away",
     
     // Billing
     "billing.companyName": "Company Name",
@@ -1067,7 +1067,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceInfoTitle": "Så fungerar fakturabetalning",
     "pricing.invoiceInfo1": "Fakturan skickas till din e-post",
     "pricing.invoiceInfo2": "7 dagar att betala med kort eller banköverföring (IBAN)",
-    "pricing.invoiceInfo3": "Åtkomst ges omedelbart medan betalningen väntar",
+    "pricing.invoiceInfo3": "Börja använda tjänsten direkt",
     
     // Billing
     "billing.companyName": "Företagsnamn",
@@ -1819,7 +1819,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceInfoTitle": "Miten laskulla maksaminen toimii",
     "pricing.invoiceInfo1": "Lasku lähetetään sähköpostiisi",
     "pricing.invoiceInfo2": "7 päivää aikaa maksaa kortilla tai tilisiirrolla (IBAN)",
-    "pricing.invoiceInfo3": "Pääsy myönnetään heti maksun ollessa kesken",
+    "pricing.invoiceInfo3": "Aloita palvelun käyttö heti",
     
     // Billing
     "billing.companyName": "Yrityksen nimi",
@@ -2572,7 +2572,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceInfoTitle": "So funktioniert die Rechnungszahlung",
     "pricing.invoiceInfo1": "Rechnung wird an Ihre E-Mail gesendet",
     "pricing.invoiceInfo2": "7 Tage Zeit für Zahlung per Karte oder Überweisung (IBAN)",
-    "pricing.invoiceInfo3": "Zugang wird sofort gewährt, während die Zahlung aussteht",
+    "pricing.invoiceInfo3": "Beginnen Sie sofort mit der Nutzung",
     
     // Billing
     "billing.companyName": "Firmenname",
@@ -3324,7 +3324,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.invoiceInfoTitle": "Comment fonctionne le paiement par facture",
     "pricing.invoiceInfo1": "La facture est envoyée à votre email",
     "pricing.invoiceInfo2": "7 jours pour payer par carte ou virement bancaire (IBAN)",
-    "pricing.invoiceInfo3": "L'accès est accordé immédiatement en attendant le paiement",
+    "pricing.invoiceInfo3": "Commencez à utiliser le service immédiatement",
     
     // Billing
     "billing.companyName": "Nom de l'entreprise",
