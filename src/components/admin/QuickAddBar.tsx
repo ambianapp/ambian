@@ -20,7 +20,7 @@ interface Playlist {
 
 const QuickAddBar = () => {
   const { isAdmin } = useAuth();
-  const { targetPlaylist, setTargetPlaylist, isQuickAddMode, recentlyAdded } = useQuickAdd();
+  const { targetPlaylist, setTargetPlaylist, isQuickAddMode, recentlyAdded, isQuickAddEnabled } = useQuickAdd();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -40,7 +40,7 @@ const QuickAddBar = () => {
     fetchPlaylists();
   }, [isAdmin]);
 
-  if (!isAdmin) return null;
+  if (!isAdmin || !isQuickAddEnabled) return null;
 
   return (
     <div className={cn(

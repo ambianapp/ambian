@@ -2,8 +2,12 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useQuickAdd } from "@/contexts/QuickAddContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ArrowLeft, ListMusic, Users, Settings, BarChart3, Building2, ScrollText, UserPlus } from "lucide-react";
 import AdminPlaylistManager from "@/components/admin/AdminPlaylistManager";
 import IndustryCollectionManager from "@/components/admin/IndustryCollectionManager";
@@ -18,6 +22,7 @@ import { DeletedTracksManager } from "@/components/admin/DeletedTracksManager";
 const Admin = () => {
   const { isAdmin } = useAuth();
   const { t } = useLanguage();
+  const { isQuickAddEnabled, setQuickAddEnabled } = useQuickAdd();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -110,7 +115,27 @@ const Admin = () => {
           </TabsContent>
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="mt-6">
+          <TabsContent value="settings" className="mt-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Add Mode</CardTitle>
+                <CardDescription>
+                  Enable to show the Quick Add bar for quickly adding tracks to playlists
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    id="quick-add-mode"
+                    checked={isQuickAddEnabled}
+                    onCheckedChange={setQuickAddEnabled}
+                  />
+                  <Label htmlFor="quick-add-mode">
+                    {isQuickAddEnabled ? "Enabled" : "Disabled"}
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
             <PriceMigration />
           </TabsContent>
         </Tabs>
