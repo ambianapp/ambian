@@ -7,7 +7,7 @@ import SignedImage from "@/components/SignedImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { getSignedAudioUrl } from "@/lib/storage";
+import { getSignedAudioUrl, prefetchSignedUrls } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   DropdownMenu,
@@ -152,6 +152,11 @@ const PlaylistDetailView = ({
       }
       
       setTracks(trackList);
+      
+      // Prefetch all cover image signed URLs in one batch call
+      // This makes images appear immediately instead of loading one by one
+      const coverUrls = trackList.map((t: DbTrack) => t.cover_url);
+      prefetchSignedUrls(coverUrls);
     }
 
     setIsLoading(false);

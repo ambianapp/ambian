@@ -39,6 +39,60 @@ const CDN_BASE_URL = "https://ambian-audio.b-cdn.net";
 const SUPABASE_STORAGE_URL = "https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1";
 
 /**
+ * Check if a URL is from the private audio bucket
+ */
+function isAudioBucketUrl(url: string): boolean {
+  return url.includes("/storage/v1/object/public/audio/") || 
+         url.includes("/storage/v1/object/audio/");
+}
+
+/**
+ * Batch prefetch and cache signed URLs for multiple audio bucket URLs
+ * Call this when loading a playlist to pre-cache all cover images
+ */
+export async function prefetchSignedUrls(urls: (string | null | undefined)[]): Promise<void> {
+  // Filter to only audio bucket URLs that aren't already cached
+  const urlsToSign = urls.filter((url): url is string => {
+    if (!url) return false;
+    if (!isAudioBucketUrl(url)) return false;
+    if (getCachedSignedUrl(url)) return false;
+    return true;
+  });
+
+  // Deduplicate
+  const uniqueUrls = [...new Set(urlsToSign)];
+  
+  if (uniqueUrls.length === 0) return;
+
+  console.log(`[storage] Batch prefetching ${uniqueUrls.length} signed URLs`);
+
+  try {
+    const { data, error } = await supabase.functions.invoke("get-signed-audio-url", {
+      body: { audioUrls: uniqueUrls },
+    });
+
+    if (error) {
+      console.error("[storage] Batch prefetch failed:", error);
+      return;
+    }
+
+    const signedUrls = (data as any)?.signedUrls as Record<string, string | null> | undefined;
+    if (!signedUrls) return;
+
+    // Cache all the signed URLs
+    for (const [originalUrl, signedUrl] of Object.entries(signedUrls)) {
+      if (signedUrl) {
+        cacheSignedUrl(originalUrl, signedUrl);
+      }
+    }
+
+    console.log(`[storage] Cached ${Object.keys(signedUrls).length} signed URLs`);
+  } catch (err) {
+    console.error("[storage] Batch prefetch error:", err);
+  }
+}
+
+/**
  * Generate a signed URL for audio file or cover image access
  * Routes through BunnyCDN for faster global delivery and caching
  * Since the audio bucket is private, we need signed URLs for authenticated access
@@ -50,42 +104,6 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
   const cachedUrl = getCachedSignedUrl(audioUrl);
   if (cachedUrl) {
     return cachedUrl;
-  }
-  
-  // Extract the path from the URL
-  // Handles both /storage/v1/object/public/audio/ and /storage/v1/object/audio/ formats
-  let filePath: string | undefined;
-  
-  // Try standard public URL format first
-  const publicUrlParts = audioUrl.split('/storage/v1/object/public/audio/');
-  if (publicUrlParts.length === 2) {
-    filePath = publicUrlParts[1];
-  } else {
-    // Try signed URL format
-    const signedUrlParts = audioUrl.split('/storage/v1/object/sign/audio/');
-    if (signedUrlParts.length === 2) {
-      // For signed URLs, extract path before the query params
-      filePath = signedUrlParts[1].split('?')[0];
-    } else {
-      // Try direct path format
-      const directParts = audioUrl.split('/storage/v1/object/audio/');
-      if (directParts.length === 2) {
-        filePath = directParts[1];
-      } else {
-        // Last resort: extract just the filename
-        const pathParts = audioUrl.split('/');
-        filePath = pathParts[pathParts.length - 1];
-      }
-    }
-  }
-  
-  if (!filePath) return undefined;
-  
-  // Decode URI components (handles %20, etc.)
-  try {
-    filePath = decodeURIComponent(filePath);
-  } catch {
-    // If decoding fails, use as-is
   }
   
   // Use backend function to validate access (trial / pending_payment) and generate signed URL.
@@ -116,3 +134,4 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
   
   return cdnUrl;
 }
+
