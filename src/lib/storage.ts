@@ -3,6 +3,36 @@ import { supabase } from "@/integrations/supabase/client";
 // 4 hours in seconds - longer expiry for 24/7 playback
 const SIGNED_URL_EXPIRY = 14400;
 
+// In-memory cache for signed URLs to avoid repeated edge function calls
+// Cache expires slightly before the actual signed URL (3.5 hours vs 4 hours)
+const CACHE_EXPIRY_MS = 3.5 * 60 * 60 * 1000; // 3.5 hours in milliseconds
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+/**
+ * Get cached signed URL or return undefined if not cached/expired
+ */
+function getCachedSignedUrl(originalUrl: string): string | undefined {
+  const cached = signedUrlCache.get(originalUrl);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.url;
+  }
+  // Remove expired entry
+  if (cached) {
+    signedUrlCache.delete(originalUrl);
+  }
+  return undefined;
+}
+
+/**
+ * Cache a signed URL
+ */
+function cacheSignedUrl(originalUrl: string, signedUrl: string): void {
+  signedUrlCache.set(originalUrl, {
+    url: signedUrl,
+    expiresAt: Date.now() + CACHE_EXPIRY_MS,
+  });
+}
+
 // CDN configuration for faster global audio delivery
 const CDN_ENABLED = false; // Temporarily disabled until BunnyCDN origin settings are correct
 const CDN_BASE_URL = "https://ambian-audio.b-cdn.net";
@@ -15,6 +45,12 @@ const SUPABASE_STORAGE_URL = "https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v
  */
 export async function getSignedAudioUrl(audioUrl: string | null): Promise<string | undefined> {
   if (!audioUrl) return undefined;
+  
+  // Check cache first
+  const cachedUrl = getCachedSignedUrl(audioUrl);
+  if (cachedUrl) {
+    return cachedUrl;
+  }
   
   // Extract the path from the URL
   // Handles both /storage/v1/object/public/audio/ and /storage/v1/object/audio/ formats
@@ -66,6 +102,9 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
   const signedUrl = (data as any)?.signedUrl as string | undefined;
   if (!signedUrl) return undefined;
   
+  // Cache the signed URL for future use
+  cacheSignedUrl(audioUrl, signedUrl);
+  
   if (!CDN_ENABLED) {
     return signedUrl;
   }
@@ -74,8 +113,6 @@ export async function getSignedAudioUrl(audioUrl: string | null): Promise<string
   // Replace the Supabase storage URL with CDN URL
   // CDN will forward to origin with the token for authentication
   const cdnUrl = signedUrl.replace(SUPABASE_STORAGE_URL, CDN_BASE_URL + "/storage/v1");
-  
-  console.log("Audio URL routing:", { original: signedUrl.substring(0, 80), cdn: cdnUrl.substring(0, 80) });
   
   return cdnUrl;
 }
