@@ -226,6 +226,9 @@ const Pricing = () => {
 
       if (error) throw error;
 
+      // Refresh subscription status to update UI (removes trial bar)
+      await checkSubscription();
+
       toast({
         title: t("common.success"),
         description: data.message || "Check your email for the invoice. You have 7 days to pay.",
