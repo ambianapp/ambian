@@ -7,10 +7,12 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LikedSongsProvider } from "@/contexts/LikedSongsContext";
+import { QuickAddProvider } from "@/contexts/QuickAddContext";
 import PlayerBar from "@/components/PlayerBar";
 import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import OfflineBanner from "@/components/OfflineBanner";
+import QuickAddBar from "@/components/admin/QuickAddBar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -142,6 +144,7 @@ const AppContent = () => {
       </div>
       {showGlobalMobileSidebar && <MobileSidebar activeView="" onViewChange={() => {}} />}
       {showPlayerBar && <PlayerBar />}
+      <QuickAddBar />
     </>
   );
 };
@@ -155,10 +158,12 @@ const App = () => (
         <AuthProvider>
           <LanguageProvider>
             <LikedSongsProvider>
-              <PlayerProvider>
-                <OfflineBanner />
-                <AppContent />
-              </PlayerProvider>
+              <QuickAddProvider>
+                <PlayerProvider>
+                  <OfflineBanner />
+                  <AppContent />
+                </PlayerProvider>
+              </QuickAddProvider>
             </LikedSongsProvider>
           </LanguageProvider>
         </AuthProvider>
