@@ -89,20 +89,39 @@ const Index = () => {
     }
   }, [activeView, selectedPlaylist]);
 
+  // Track previous state to avoid duplicate history entries
+  const prevStateRef = useRef<{ activeView: string; playlistId: string | null }>({ 
+    activeView: 'home', 
+    playlistId: null 
+  });
+
   // Push history state when navigating to playlist or non-home views (for back button support)
   useEffect(() => {
     // Skip if this change came from a popstate event (back/forward button)
     if (isPopstateRef.current) {
       isPopstateRef.current = false;
+      prevStateRef.current = { activeView, playlistId: selectedPlaylist?.id || null };
       return;
     }
 
-    // Push state when entering a playlist or non-home view
-    if (selectedPlaylist) {
+    const currentPlaylistId = selectedPlaylist?.id || null;
+    const prevState = prevStateRef.current;
+
+    // Only push state if there's an actual navigation change
+    const hasPlaylistChange = currentPlaylistId !== prevState.playlistId;
+    const hasViewChange = activeView !== prevState.activeView && !selectedPlaylist;
+
+    if (hasPlaylistChange && selectedPlaylist) {
+      // Navigating TO a playlist
       window.history.pushState({ type: 'playlist', playlist: selectedPlaylist }, '');
-    } else if (activeView !== 'home') {
+    } else if (hasPlaylistChange && !selectedPlaylist && prevState.playlistId) {
+      // Navigating FROM a playlist back (don't push, let back button work)
+    } else if (hasViewChange && activeView !== 'home') {
+      // Navigating to a non-home view
       window.history.pushState({ type: 'view', view: activeView }, '');
     }
+
+    prevStateRef.current = { activeView, playlistId: currentPlaylistId };
   }, [selectedPlaylist, activeView]);
 
   // Listen for browser back/forward navigation (popstate)
@@ -115,6 +134,7 @@ const Index = () => {
       if (state?.type === 'playlist' && state.playlist) {
         // Navigated back to a playlist
         setSelectedPlaylist(state.playlist);
+        setActiveView('home');
       } else if (state?.type === 'view' && state.view) {
         // Navigated back to a specific view
         setSelectedPlaylist(null);
