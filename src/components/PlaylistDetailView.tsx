@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart, ListMusic, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, Shuffle, Clock, MoreHorizontal, Heart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
@@ -207,10 +207,6 @@ const PlaylistDetailView = ({
     onTrackSelect(convertToTrack(firstTrack, signedAudioUrl), playlistTracks);
   };
 
-  const handleAddToQueue = () => {
-    toast.info("Add to queue coming soon");
-  };
-
   const handleDeletePlaylist = async () => {
     if (!playlistId || isSystemPlaylist) return;
     
@@ -321,10 +317,6 @@ const PlaylistDetailView = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuItem onClick={handleAddToQueue}>
-              <ListMusic className="w-4 h-4 mr-2" />
-              Add to queue
-            </DropdownMenuItem>
             {isUserPlaylist && (
               <DropdownMenuItem onClick={handleDeletePlaylist} className="text-destructive focus:text-destructive">
                 <Trash2 className="w-4 h-4 mr-2" />
