@@ -14,6 +14,8 @@ interface QuickAddContextType {
   isQuickAddMode: boolean;
   quickAddTrack: (trackId: string, trackTitle: string) => Promise<boolean>;
   recentlyAdded: Set<string>;
+  isQuickAddEnabled: boolean;
+  setQuickAddEnabled: (enabled: boolean) => void;
 }
 
 const QuickAddContext = createContext<QuickAddContextType | undefined>(undefined);
@@ -29,10 +31,23 @@ export const useQuickAdd = () => {
 export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
   const [targetPlaylist, setTargetPlaylist] = useState<TargetPlaylist | null>(null);
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
+  const [isQuickAddEnabled, setQuickAddEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('quickAddEnabled');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
 
-  const isQuickAddMode = isAdmin && targetPlaylist !== null;
+  const isQuickAddMode = isAdmin && isQuickAddEnabled && targetPlaylist !== null;
+  
+  const handleSetQuickAddEnabled = useCallback((enabled: boolean) => {
+    setQuickAddEnabled(enabled);
+    localStorage.setItem('quickAddEnabled', JSON.stringify(enabled));
+    if (!enabled) {
+      setTargetPlaylist(null);
+      setRecentlyAdded(new Set());
+    }
+  }, []);
 
   const quickAddTrack = useCallback(async (trackId: string, trackTitle: string): Promise<boolean> => {
     if (!targetPlaylist || !user) return false;
@@ -101,6 +116,8 @@ export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
       isQuickAddMode,
       quickAddTrack,
       recentlyAdded,
+      isQuickAddEnabled,
+      setQuickAddEnabled: handleSetQuickAddEnabled,
     }}>
       {children}
     </QuickAddContext.Provider>
