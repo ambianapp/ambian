@@ -1,4 +1,4 @@
-import { Home, Search, Library, Shield, User, Clock, HelpCircle, MoreHorizontal, LogOut } from "lucide-react";
+import { Music, Search, Library, Shield, User, Clock, HelpCircle, MoreHorizontal, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +28,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
 
   // Main nav items (always visible)
   const mainNavItems = [
-    { id: "home", label: t("nav.home"), icon: Home },
+    { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
     { id: "library", label: t("nav.library"), icon: Library },
   ];

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Home, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle, AlertCircle } from "lucide-react";
+import { Music, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -134,7 +134,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   }, [user?.id]);
 
   const navItems = [
-    { id: "home", label: t("nav.home"), icon: Home },
+    { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
     { id: "library", label: t("nav.library"), icon: Library },
     { id: "schedule", label: t("nav.schedule"), icon: Clock },

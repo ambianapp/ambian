@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Search, Library, Plus, Heart, User, Shield, Clock, HelpCircle, Menu, LogOut, AlertCircle } from "lucide-react";
+import { Music, Search, Library, Plus, Heart, User, Shield, Clock, HelpCircle, Menu, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -123,7 +123,7 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
   }, [user?.id]);
 
   const navItems = [
-    { id: "home", label: t("nav.home"), icon: Home },
+    { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
     { id: "library", label: t("nav.library"), icon: Library },
     { id: "schedule", label: t("nav.schedule"), icon: Clock },
