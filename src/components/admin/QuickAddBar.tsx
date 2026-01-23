@@ -44,7 +44,11 @@ const QuickAddBar = () => {
 
   return (
     <div className={cn(
-      "fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl border shadow-lg transition-all",
+      "fixed z-50 flex items-center gap-2 px-3 py-2 rounded-xl border shadow-lg transition-all",
+      // Mobile: bottom-left to avoid hamburger menu (top-right)
+      "bottom-36 left-4",
+      // Desktop: top-right
+      "md:bottom-auto md:top-4 md:left-auto md:right-4",
       isQuickAddMode 
         ? "bg-primary/20 border-primary/50 backdrop-blur-md" 
         : "bg-card/90 border-border backdrop-blur-sm"
