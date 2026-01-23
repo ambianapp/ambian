@@ -233,12 +233,12 @@ const PlayerBar = () => {
     isPreloadingRef.current = false;
   }, [currentTrack?.id]);
 
-  // Seek forward by 20 seconds
-  const seekForward = useCallback(() => {
+  // Seek by a given number of seconds (positive = forward, negative = backward)
+  const seekBy = useCallback((seconds: number) => {
     const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
     if (!activeAudio || !currentTrack) return;
     
-    const newTime = Math.min(activeAudio.currentTime + 20, activeAudio.duration || Infinity);
+    const newTime = Math.max(0, Math.min(activeAudio.currentTime + seconds, activeAudio.duration || Infinity));
     activeAudio.currentTime = newTime;
     setCurrentTime(newTime);
     
@@ -262,16 +262,35 @@ const PlayerBar = () => {
         handlePlayPause();
       }
       
-      // Right arrow: skip forward 20 seconds
+      // Arrow keys: skip by different amounts
+      // Right arrow: +10s forward
       if (e.code === 'ArrowRight' && currentTrack) {
         e.preventDefault();
-        seekForward();
+        seekBy(10);
+      }
+      
+      // Left arrow: -5s backward
+      if (e.code === 'ArrowLeft' && currentTrack) {
+        e.preventDefault();
+        seekBy(-5);
+      }
+      
+      // Up arrow: +15s forward
+      if (e.code === 'ArrowUp' && currentTrack) {
+        e.preventDefault();
+        seekBy(15);
+      }
+      
+      // Down arrow: -15s backward
+      if (e.code === 'ArrowDown' && currentTrack) {
+        e.preventDefault();
+        seekBy(-15);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTrack, handlePlayPause, seekForward]);
+  }, [currentTrack, handlePlayPause, seekBy]);
 
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
