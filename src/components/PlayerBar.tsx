@@ -1493,6 +1493,7 @@ const PlayerBar = () => {
             src={currentTrack.cover}
             alt={currentTrack.title}
             className="w-10 h-10 rounded-md object-cover shadow-lg flex-shrink-0"
+            fallbackSrc="/ambian-logo.png"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
@@ -1616,6 +1617,7 @@ const PlayerBar = () => {
             src={currentTrack.cover}
             alt={currentTrack.title}
             className="w-14 h-14 rounded-lg object-cover shadow-lg flex-shrink-0"
+            fallbackSrc="/ambian-logo.png"
           />
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-foreground truncate">{currentTrack.title}</p>
