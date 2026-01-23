@@ -1,5 +1,6 @@
 // Lovable Cloud backend function: get-signed-audio-url
 // Creates signed URLs for private audio objects after validating user access.
+// Supports both single URL and batch URL signing for better performance.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -116,22 +117,65 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    
+    // Check if this is a batch request
+    const audioUrls = body?.audioUrls as string[] | undefined;
     const audioUrl = typeof body?.audioUrl === "string" ? body.audioUrl : "";
     const path = typeof body?.path === "string" ? body.path : "";
-    const input = path || audioUrl;
-
-    const filePath = extractAudioPath(input);
-    if (!filePath) {
-      return new Response(JSON.stringify({ error: "invalid_path" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const ok = await userHasAccess(supabaseAdmin, user.id, user.created_at);
     if (!ok) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
         status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // BATCH MODE: sign multiple URLs at once
+    if (audioUrls && Array.isArray(audioUrls) && audioUrls.length > 0) {
+      console.log(`[get-signed-audio-url] Batch signing ${audioUrls.length} URLs`);
+      
+      const results: Record<string, string | null> = {};
+      
+      // Process all URLs in parallel
+      await Promise.all(
+        audioUrls.map(async (url) => {
+          if (typeof url !== "string" || !url) {
+            results[url] = null;
+            return;
+          }
+          
+          const filePath = extractAudioPath(url);
+          if (!filePath) {
+            results[url] = null;
+            return;
+          }
+          
+          const { data, error } = await supabaseAdmin.storage
+            .from("audio")
+            .createSignedUrl(filePath, SIGNED_URL_EXPIRY);
+          
+          if (error || !data?.signedUrl) {
+            console.error("[get-signed-audio-url] batch createSignedUrl failed", { error, filePath });
+            results[url] = null;
+          } else {
+            results[url] = data.signedUrl;
+          }
+        })
+      );
+      
+      return new Response(JSON.stringify({ signedUrls: results }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // SINGLE MODE: sign one URL (backwards compatible)
+    const input = path || audioUrl;
+    const filePath = extractAudioPath(input);
+    if (!filePath) {
+      return new Response(JSON.stringify({ error: "invalid_path" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

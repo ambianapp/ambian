@@ -5,7 +5,7 @@ import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSignedAudioUrl } from "@/lib/storage";
+import { getSignedAudioUrl, prefetchSignedUrls } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbTrack = Tables<"tracks">;
@@ -50,6 +50,10 @@ const LikedSongsView = ({
         .map((item: any) => item.tracks)
         .filter(Boolean);
       setTracks(trackList);
+      
+      // Prefetch all cover image signed URLs in one batch call
+      const coverUrls = trackList.map((t: DbTrack) => t.cover_url);
+      prefetchSignedUrls(coverUrls);
     }
 
     setIsLoading(false);
