@@ -3,7 +3,6 @@ import { Play, Pause, MoreHorizontal, Heart, ListPlus, Plus } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import { cn } from "@/lib/utils";
-import SignedImage from "@/components/SignedImage";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,19 +135,11 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
-        <SignedImage
-          src={track.cover}
-          alt={`${track.title} cover`}
-          className="w-9 h-9 md:w-10 md:h-10 rounded object-cover flex-shrink-0"
-          fallbackSrc="/placeholder.svg"
-        />
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <p className={cn("font-medium truncate text-sm md:text-base", isCurrentTrack ? "text-primary" : "text-foreground")}>
-            {track.title}
-          </p>
-          <p className="text-xs md:text-sm text-muted-foreground truncate">Ambian</p>
-        </div>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <p className={cn("font-medium truncate text-sm md:text-base", isCurrentTrack ? "text-primary" : "text-foreground")}>
+          {track.title}
+        </p>
+        <p className="text-xs md:text-sm text-muted-foreground truncate">Ambian</p>
       </div>
 
       {/* Like button - always visible on all devices */}
