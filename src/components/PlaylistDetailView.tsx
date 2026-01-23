@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Play, Pause, Clock, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
@@ -43,7 +43,7 @@ const PlaylistDetailView = ({
   const [isSystemPlaylist, setIsSystemPlaylist] = useState(false);
   const [playlistOwnerId, setPlaylistOwnerId] = useState<string | null>(null);
   const [resolvedPlaylistCover, setResolvedPlaylistCover] = useState<string | null>(playlistCover);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -182,6 +182,24 @@ const PlaylistDetailView = ({
     }
   };
 
+  const handleDeleteTrack = useCallback(async (trackId: string, trackTitle: string) => {
+    // Delete from playlist_tracks (not the track itself)
+    const { error } = await supabase
+      .from("playlist_tracks")
+      .delete()
+      .eq("playlist_id", playlistId)
+      .eq("track_id", trackId);
+
+    if (error) {
+      toast.error("Failed to remove track from playlist");
+      console.error("Error removing track:", error);
+    } else {
+      toast.success(`Removed "${trackTitle}" from playlist`);
+      // Update local state
+      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+    }
+  }, [playlistId]);
+
   const isUserPlaylist = !isSystemPlaylist && playlistOwnerId === user?.id;
 
   return (
@@ -289,6 +307,8 @@ const PlaylistDetailView = ({
                 isPlaying={isPlaying}
                 isCurrentTrack={currentTrack?.id === track.id}
                 onPlay={() => handleTrackSelect(track)}
+                showDelete={isAdmin}
+                onDelete={() => handleDeleteTrack(track.id, track.title)}
               />
             ))}
           </div>
