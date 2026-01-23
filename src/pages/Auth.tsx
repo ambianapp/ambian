@@ -388,7 +388,7 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-start pt-[12vh] md:pt-[10vh] lg:items-center lg:pt-0 justify-center p-4 md:p-6 overflow-hidden relative z-10">
+      <div className="w-full lg:w-1/2 flex items-start pt-[8vh] md:pt-[6vh] lg:items-center lg:pt-0 justify-center p-4 md:p-6 overflow-hidden relative z-10">
         <div className="w-full max-w-md space-y-2 md:space-y-3 animate-fade-in lg:[@media(max-height:820px)]:scale-[0.94] lg:[@media(max-height:820px)]:origin-center">
           {/* Mobile/Tablet Logo */}
           <div className="lg:hidden mb-4 md:mb-6">
