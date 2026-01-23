@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play, Pause, MoreHorizontal, Heart, ListPlus, Plus } from "lucide-react";
+import { Play, Pause, MoreHorizontal, Heart, ListPlus, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLikedSongs } from "@/contexts/LikedSongsContext";
+import { useQuickAdd } from "@/contexts/QuickAddContext";
 
 interface TrackRowProps {
   track: Track;
@@ -37,9 +38,12 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
   const { t } = useLanguage();
   const { toast } = useToast();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
+  const { isQuickAddMode, quickAddTrack, recentlyAdded } = useQuickAdd();
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
 
   const isLiked = checkIsLiked(track.id);
+  const isAlreadyAdded = recentlyAdded.has(track.id);
 
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -109,7 +113,10 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
   return (
     <div
       className={cn(
-        "group grid grid-cols-[auto_1fr_auto_auto] gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
+        "group grid gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
+        isQuickAddMode 
+          ? "grid-cols-[auto_1fr_auto_auto_auto]" 
+          : "grid-cols-[auto_1fr_auto_auto]",
         isCurrentTrack ? "bg-secondary" : "hover:bg-secondary/50"
       )}
       onClick={onPlay}
@@ -141,6 +148,34 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
         </p>
         <p className="text-xs md:text-sm text-muted-foreground truncate">Ambian</p>
       </div>
+
+      {/* Quick Add button - only visible in quick add mode */}
+      {isQuickAddMode && (
+        <Button
+          variant="ghost"
+          size="iconSm"
+          className={cn(
+            "h-7 w-7 md:h-8 md:w-8 transition-all",
+            isAlreadyAdded 
+              ? "text-primary bg-primary/20" 
+              : "text-muted-foreground hover:text-primary hover:bg-primary/20",
+            isAdding && "animate-pulse"
+          )}
+          disabled={isAdding || isAlreadyAdded}
+          onClick={async (e) => {
+            e.stopPropagation();
+            setIsAdding(true);
+            await quickAddTrack(track.id, track.title);
+            setIsAdding(false);
+          }}
+        >
+          {isAlreadyAdded ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </Button>
+      )}
 
       {/* Like button - always visible on all devices */}
       <div className="flex items-center">
