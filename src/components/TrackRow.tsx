@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play, Pause, MoreHorizontal, Heart, ListPlus, Plus, Check } from "lucide-react";
+import { Play, Pause, MoreHorizontal, Heart, ListPlus, Plus, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,8 @@ interface TrackRowProps {
   isPlaying: boolean;
   isCurrentTrack: boolean;
   onPlay: () => void;
+  onDelete?: () => void;
+  showDelete?: boolean;
 }
 
 interface UserPlaylist {
@@ -33,7 +35,7 @@ interface UserPlaylist {
   name: string;
 }
 
-const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowProps) => {
+const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay, onDelete, showDelete }: TrackRowProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -241,6 +243,22 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay }: TrackRowP
                 )}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            
+            {showDelete && onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remove from Playlist
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
