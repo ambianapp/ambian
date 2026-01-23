@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search, Receipt, FileText, Banknote, CalendarDays, MapPin, Scale } from "lucide-react";
+import { ArrowLeft, Music, Play, Volume2, Clock, Heart, ListMusic, AlertTriangle, Wifi, RefreshCw, HelpCircle, Mail, Shield, CreditCard, MessageCircle, Shuffle, Building2, SkipForward, Disc3, Repeat, Speaker, Search, Receipt, FileText, Banknote, CalendarDays, Smartphone, Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -365,7 +365,7 @@ const Help = () => {
               <AccordionItem value="locations">
                 <AccordionTrigger className="text-left">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                    <Smartphone className="w-4 h-4" />
                     {t("help.billingLocations")}
                   </div>
                 </AccordionTrigger>
