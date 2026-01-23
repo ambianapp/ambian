@@ -6,6 +6,7 @@ import TrackRow from "./TrackRow";
 import SignedImage from "@/components/SignedImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { cn } from "@/lib/utils";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
@@ -44,6 +45,7 @@ const PlaylistDetailView = ({
   const [playlistOwnerId, setPlaylistOwnerId] = useState<string | null>(null);
   const [resolvedPlaylistCover, setResolvedPlaylistCover] = useState<string | null>(playlistCover);
   const { user, isAdmin } = useAuth();
+  const { handleTrackSelect: playerHandleTrackSelect } = usePlayer();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -162,7 +164,7 @@ const PlaylistDetailView = ({
     audioUrl: signedAudioUrl,
   });
 
-  const handleTrackSelect = async (track: DbTrack) => {
+  const handleTrackSelectInternal = async (track: DbTrack) => {
     // Get signed URL for audio since bucket is private
     const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
     
@@ -173,12 +175,16 @@ const PlaylistDetailView = ({
     });
     const playlistTracks = await Promise.all(allTracksPromises);
     
+    // Use the player context directly with playlistId
+    playerHandleTrackSelect(convertToTrack(track, signedAudioUrl), playlistTracks, false, playlistId);
+    
+    // Also call the parent callback for any other handling
     onTrackSelect(convertToTrack(track, signedAudioUrl), playlistTracks);
   };
 
   const handlePlayAll = async () => {
     if (tracks.length > 0) {
-      handleTrackSelect(tracks[0]);
+      handleTrackSelectInternal(tracks[0]);
     }
   };
 
@@ -326,7 +332,7 @@ const PlaylistDetailView = ({
                 index={index + 1}
                 isPlaying={isPlaying}
                 isCurrentTrack={currentTrack?.id === track.id}
-                onPlay={() => handleTrackSelect(track)}
+                onPlay={() => handleTrackSelectInternal(track)}
                 showDelete={isAdmin}
                 onDelete={() => handleDeleteTrack(track, index + 1)}
               />

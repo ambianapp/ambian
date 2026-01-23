@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3, ListMusic } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3, ListMusic, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const CROSSFADE_DURATION = 5; // seconds
 const PlayerBar = () => {
   const {
     currentTrack,
+    currentPlaylistId,
     isPlaying,
     shuffle,
     repeat,
@@ -35,6 +36,7 @@ const PlayerBar = () => {
     clearScheduledTransition,
     playlistTracksRef,
     setCurrentTrackDirect,
+    removeCurrentTrackFromPlaylist,
   } = usePlayer();
   
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -60,7 +62,7 @@ const PlayerBar = () => {
     }
   }, []);
   const [isMuted, setIsMuted] = useState(false);
-  const { user, getDeviceId, canPlayMusic } = useAuth();
+  const { user, getDeviceId, canPlayMusic, isAdmin } = useAuth();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
 
@@ -1542,6 +1544,17 @@ const PlayerBar = () => {
           >
             <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
           </Button>
+          {isAdmin && currentPlaylistId && (
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={removeCurrentTrackFromPlaylist}
+              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/20"
+              title="Remove from playlist"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Progress Slider */}
@@ -1652,6 +1665,17 @@ const PlayerBar = () => {
           >
             <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
           </Button>
+          {isAdmin && currentPlaylistId && (
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={removeCurrentTrackFromPlaylist}
+              className="text-destructive hover:text-destructive hover:bg-destructive/20"
+              title="Remove from playlist"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Quick Mix Indicator - between track info and controls */}

@@ -20,13 +20,14 @@ interface ScheduledTransition {
 
 interface PlayerContextType {
   currentTrack: (Track & { audioUrl?: string }) | null;
+  currentPlaylistId: string | null;
   isPlaying: boolean;
   shuffle: boolean;
   repeat: "off" | "all" | "one";
   crossfade: boolean;
   isQuickMix: boolean;
   playlistTracksRef: React.MutableRefObject<Track[]>;
-  handleTrackSelect: (track: Track, playlistTracks?: Track[], isQuickMix?: boolean) => void;
+  handleTrackSelect: (track: Track, playlistTracks?: Track[], isQuickMix?: boolean, playlistId?: string) => void;
   handlePlayPause: () => void;
   handleNext: () => Promise<void>;
   handlePrevious: () => Promise<void>;
@@ -43,6 +44,7 @@ interface PlayerContextType {
   triggerScheduledCrossfade: (track: Track, playlist: Track[]) => Promise<void>;
   clearScheduledTransition: () => void;
   setCurrentTrackDirect: (track: Track & { audioUrl?: string }) => void;
+  removeCurrentTrackFromPlaylist: () => Promise<void>;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -71,6 +73,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return saved === null ? true : saved === "true";
   });
   const [isQuickMix, setIsQuickMix] = useState(false);
+  const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(null);
   const [originalDbUrl, setOriginalDbUrl] = useState<string | null>(null);
   const [seekPosition, setSeekPosition] = useState<number | null>(null);
   const [pendingScheduledTransition, setPendingScheduledTransition] = useState<ScheduledTransition | null>(null);
@@ -262,7 +265,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(restorePlayback, 500);
   }, []);
 
-  const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[], quickMix?: boolean) => {
+  const handleTrackSelect = useCallback(async (track: Track, playlistTracks?: Track[], quickMix?: boolean, playlistId?: string) => {
     // Block playback if device limit reached - show dialog instead of toast
     if (!canPlayMusic) {
       openDeviceLimitDialog();
@@ -274,6 +277,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
     if (playlistTracks) {
       playlistTracksRef.current = playlistTracks;
+    }
+    if (playlistId) {
+      setCurrentPlaylistId(playlistId);
     }
     setSeekPosition(null);
     setIsQuickMix(quickMix ?? false);
@@ -519,10 +525,86 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setSeekPosition(null);
   }, []);
 
+  // Remove current track from its playlist (for admin use)
+  const removeCurrentTrackFromPlaylist = useCallback(async () => {
+    if (!currentTrack || !currentPlaylistId) {
+      toast.error("No track or playlist selected");
+      return;
+    }
+
+    // Get the current position for logging
+    const tracks = playlistTracksRef.current;
+    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
+    const position = currentIndex >= 0 ? currentIndex + 1 : 1;
+
+    // Get playlist name for logging
+    const { data: playlistData } = await supabase
+      .from("playlists")
+      .select("name")
+      .eq("id", currentPlaylistId)
+      .maybeSingle();
+
+    // Log to deleted_playlist_tracks
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase
+      .from("deleted_playlist_tracks")
+      .insert({
+        playlist_id: currentPlaylistId,
+        track_id: currentTrack.id,
+        original_position: position,
+        deleted_by: user?.id,
+        playlist_name: playlistData?.name || "Unknown",
+        track_title: currentTrack.title,
+        track_artist: currentTrack.artist,
+      });
+
+    // Delete from playlist_tracks
+    const { error } = await supabase
+      .from("playlist_tracks")
+      .delete()
+      .eq("playlist_id", currentPlaylistId)
+      .eq("track_id", currentTrack.id);
+
+    if (error) {
+      toast.error("Failed to remove track");
+      console.error("Error removing track:", error);
+      return;
+    }
+
+    toast.success(`Removed "${currentTrack.title}"`);
+
+    // Update local playlist and skip to next
+    playlistTracksRef.current = tracks.filter(t => t.id !== currentTrack.id);
+    
+    // Skip to next track
+    if (playlistTracksRef.current.length > 0) {
+      const nextIndex = Math.min(currentIndex, playlistTracksRef.current.length - 1);
+      const nextTrack = playlistTracksRef.current[nextIndex];
+      
+      const { data } = await supabase
+        .from("tracks")
+        .select("audio_url")
+        .eq("id", nextTrack.id)
+        .single();
+      
+      if (data?.audio_url) {
+        setOriginalDbUrl(data.audio_url);
+        const signedUrl = await getSignedAudioUrl(data.audio_url);
+        setCurrentTrack({ ...nextTrack, audioUrl: signedUrl });
+      } else {
+        setCurrentTrack(nextTrack);
+      }
+    } else {
+      setCurrentTrack(null);
+      setIsPlaying(false);
+    }
+  }, [currentTrack, currentPlaylistId]);
+
   return (
     <PlayerContext.Provider
       value={{
         currentTrack,
+        currentPlaylistId,
         isPlaying,
         shuffle,
         repeat,
@@ -546,6 +628,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         triggerScheduledCrossfade,
         clearScheduledTransition,
         setCurrentTrackDirect,
+        removeCurrentTrackFromPlaylist,
       }}
     >
       {children}
