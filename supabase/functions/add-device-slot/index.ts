@@ -392,11 +392,13 @@ serve(async (req) => {
         if (item.amount <= 0) return false;
         
         // Match patterns for remaining time prorations in various languages
+        // Note: Stripe uses "Remaining time on X" not "Remaining time for X"
         const isRemainingTime = 
+          desc.includes('remaining time on') ||
           desc.includes('remaining time for') ||
           desc.includes('jäljellä oleva aika') ||
-          desc.includes('temps restant pour') ||
-          desc.includes('resterende tijd voor');
+          desc.includes('temps restant') ||
+          desc.includes('resterende tijd');
         
         if (!isRemainingTime) return false;
         
@@ -407,17 +409,7 @@ serve(async (req) => {
           desc.includes('location') ||
           desc.includes('device');
         
-        if (!isDeviceSlot) return false;
-        
-        // Check if it's for the NEW total quantity (e.g., "2 × Extra Device Slot" when going from 1 to 2)
-        const quantityMatch = desc.match(/(\d+)\s*[×x]/);
-        if (quantityMatch) {
-          const descQuantity = parseInt(quantityMatch[1], 10);
-          // This should be the new total quantity
-          return descQuantity === newTotalQuantity;
-        }
-        
-        return true;
+        return isDeviceSlot;
       }) || [];
       
       // Also need to account for credit items for unused time on existing slots
