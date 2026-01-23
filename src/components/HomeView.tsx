@@ -312,7 +312,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                 }
               />
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() => navigate("/playlists")}
                 className="shrink-0 gap-2"
@@ -335,7 +335,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               }
             />
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => navigate("/playlists")}
               className="shrink-0 gap-2"
