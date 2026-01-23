@@ -40,7 +40,7 @@ export const DeletedTracksManager = () => {
       .from("deleted_playlist_tracks")
       .select("*")
       .order("deleted_at", { ascending: false })
-      .limit(100);
+      .limit(1000);
 
     if (error) {
       console.error("Error loading deleted tracks:", error);
