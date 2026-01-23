@@ -11,7 +11,7 @@ export const languageNames: Record<Language, string> = {
 export const translations: Record<Language, Record<string, string>> = {
   en: {
     // Navigation
-    "nav.home": "Home",
+    "nav.home": "Playlists",
     "nav.search": "Search",
     "nav.library": "Your Library",
     "nav.schedule": "Schedule",
@@ -768,7 +768,7 @@ export const translations: Record<Language, Record<string, string>> = {
   
   sv: {
     // Navigation
-    "nav.home": "Hem",
+    "nav.home": "Spellistor",
     "nav.search": "Sök",
     "nav.library": "Ditt bibliotek",
     "nav.schedule": "Schema",
@@ -1521,7 +1521,7 @@ export const translations: Record<Language, Record<string, string>> = {
   
   fi: {
     // Navigation
-    "nav.home": "Koti",
+    "nav.home": "Soittolistat",
     "nav.search": "Haku",
     "nav.library": "Kirjastosi",
     "nav.schedule": "Aikataulutus",
@@ -2274,7 +2274,7 @@ export const translations: Record<Language, Record<string, string>> = {
   
   de: {
     // Navigation
-    "nav.home": "Startseite",
+    "nav.home": "Playlists",
     "nav.search": "Suche",
     "nav.library": "Deine Bibliothek",
     "nav.schedule": "Zeitplan",
@@ -3026,7 +3026,7 @@ export const translations: Record<Language, Record<string, string>> = {
   
   fr: {
     // Navigation
-    "nav.home": "Accueil",
+    "nav.home": "Playlists",
     "nav.search": "Recherche",
     "nav.library": "Votre Bibliothèque",
     "nav.schedule": "Programmation",
