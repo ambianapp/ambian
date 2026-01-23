@@ -263,22 +263,22 @@ const PlayerBar = () => {
       }
       
       // Arrow keys: skip by different amounts
-      // Right arrow: +10s forward
-      if (e.code === 'ArrowRight' && currentTrack) {
-        e.preventDefault();
-        seekBy(10);
-      }
-      
-      // Left arrow: -5s backward
+      // Left arrow: +5s forward
       if (e.code === 'ArrowLeft' && currentTrack) {
         e.preventDefault();
-        seekBy(-5);
+        seekBy(5);
       }
       
-      // Up arrow: +15s forward
-      if (e.code === 'ArrowUp' && currentTrack) {
+      // Right arrow: +15s forward
+      if (e.code === 'ArrowRight' && currentTrack) {
         e.preventDefault();
         seekBy(15);
+      }
+      
+      // Up arrow: +10s forward
+      if (e.code === 'ArrowUp' && currentTrack) {
+        e.preventDefault();
+        seekBy(10);
       }
       
       // Down arrow: -15s backward
