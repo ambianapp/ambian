@@ -231,7 +231,22 @@ const PlayerBar = () => {
     isPreloadingRef.current = false;
   }, [currentTrack?.id]);
 
-  // Global keyboard shortcut for space bar play/pause
+  // Seek forward by 20 seconds
+  const seekForward = useCallback(() => {
+    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+    if (!activeAudio || !currentTrack) return;
+    
+    const newTime = Math.min(activeAudio.currentTime + 20, activeAudio.duration || Infinity);
+    activeAudio.currentTime = newTime;
+    setCurrentTime(newTime);
+    
+    // Update progress slider
+    if (activeAudio.duration) {
+      setProgress([(newTime / activeAudio.duration) * 100]);
+    }
+  }, [isCrossfadeActive, currentTrack]);
+
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only trigger if not typing in an input/textarea
@@ -244,11 +259,17 @@ const PlayerBar = () => {
         e.preventDefault();
         handlePlayPause();
       }
+      
+      // Right arrow: skip forward 20 seconds
+      if (e.code === 'ArrowRight' && currentTrack) {
+        e.preventDefault();
+        seekForward();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTrack, handlePlayPause]);
+  }, [currentTrack, handlePlayPause, seekForward]);
 
   // Wake Lock API - prevents device from sleeping during playback
   useEffect(() => {
