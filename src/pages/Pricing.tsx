@@ -499,24 +499,26 @@ const Pricing = () => {
                 </div>
                 <p className="text-[10px] md:text-xs text-muted-foreground">{t("pricing.exclVat")}</p>
               </div>
-              {selectedPlan === "yearly" && user && (
+              {user && (
                 <div className="space-y-2">
-                  <Button
-                    className="w-full text-xs md:text-sm h-9 md:h-10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCheckout();
-                    }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <CreditCard className="w-4 h-4 mr-2" />
-                    )}
-                    <span className="hidden md:inline">{t("pricing.payNow")}</span>
-                    <span className="md:hidden">{t("pricing.pay")}</span>
-                  </Button>
+                  {selectedPlan === "yearly" && (
+                    <Button
+                      className="w-full text-xs md:text-sm h-9 md:h-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCheckout();
+                      }}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <CreditCard className="w-4 h-4 mr-2" />
+                      )}
+                      <span className="hidden md:inline">{t("pricing.payNow")}</span>
+                      <span className="md:hidden">{t("pricing.pay")}</span>
+                    </Button>
+                  )}
                   {paymentType === "prepaid" && (
                     <>
                       {hasOpenInvoices ? (
@@ -543,6 +545,7 @@ const Pricing = () => {
                           className="w-full text-xs md:text-sm h-9 md:h-10 justify-between"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setSelectedPlan("yearly");
                             if (!subscription.isPendingPayment) {
                               setShowInvoiceDialog(true);
                             }
