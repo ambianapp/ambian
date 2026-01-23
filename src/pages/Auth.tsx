@@ -96,26 +96,8 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        // Add user to Resend audiences
-        try {
-          await supabase.functions.invoke('add-to-audience', {
-            body: { 
-              email,
-              audienceType: acceptedMarketing ? "both" : "all"
-            }
-          });
-        } catch (audienceError) {
-          console.error('Failed to add to audience:', audienceError);
-        }
-        
-        // Send welcome email
-        try {
-          await supabase.functions.invoke('send-welcome-email', {
-            body: { email }
-          });
-        } catch (welcomeError) {
-          console.error('Failed to send welcome email:', welcomeError);
-        }
+        // Store marketing preference for AuthContext to use when handling the sign-in
+        localStorage.setItem('ambian_marketing_optin', acceptedMarketing ? 'true' : 'false');
         
         // Mark that this browser has an account for future visits
         localStorage.setItem('ambian_has_account', 'true');
