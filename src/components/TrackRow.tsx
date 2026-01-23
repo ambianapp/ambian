@@ -117,8 +117,10 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay, onDelete, s
       className={cn(
         "group grid gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
         isQuickAddMode 
-          ? "grid-cols-[auto_1fr_auto_auto_auto]" 
-          : "grid-cols-[auto_1fr_auto_auto]",
+          ? "grid-cols-[auto_1fr_auto_auto_auto_auto]" 
+          : showDelete
+            ? "grid-cols-[auto_1fr_auto_auto_auto]"
+            : "grid-cols-[auto_1fr_auto_auto]",
         isCurrentTrack ? "bg-secondary" : "hover:bg-secondary/50"
       )}
       onClick={onPlay}
@@ -193,6 +195,21 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay, onDelete, s
           <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
         </Button>
       </div>
+
+      {/* Admin delete button - red X */}
+      {showDelete && onDelete && (
+        <Button
+          variant="ghost"
+          size="iconSm"
+          className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive hover:bg-destructive/20"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      )}
 
       <div className="flex items-center gap-1 md:gap-4">
         <span className="text-xs md:text-sm text-muted-foreground w-10 md:w-12 text-right">{track.duration}</span>

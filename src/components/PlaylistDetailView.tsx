@@ -182,23 +182,43 @@ const PlaylistDetailView = ({
     }
   };
 
-  const handleDeleteTrack = useCallback(async (trackId: string, trackTitle: string) => {
+  const handleDeleteTrack = useCallback(async (track: DbTrack, position: number) => {
+    // First, get the playlist name for logging
+    const { data: playlistData } = await supabase
+      .from("playlists")
+      .select("name")
+      .eq("id", playlistId)
+      .maybeSingle();
+
+    // Log to deleted_playlist_tracks before deleting
+    await supabase
+      .from("deleted_playlist_tracks")
+      .insert({
+        playlist_id: playlistId,
+        track_id: track.id,
+        original_position: position,
+        deleted_by: user?.id,
+        playlist_name: playlistData?.name || playlistName,
+        track_title: track.title,
+        track_artist: track.artist,
+      });
+
     // Delete from playlist_tracks (not the track itself)
     const { error } = await supabase
       .from("playlist_tracks")
       .delete()
       .eq("playlist_id", playlistId)
-      .eq("track_id", trackId);
+      .eq("track_id", track.id);
 
     if (error) {
       toast.error("Failed to remove track from playlist");
       console.error("Error removing track:", error);
     } else {
-      toast.success(`Removed "${trackTitle}" from playlist`);
+      toast.success(`Removed "${track.title}" from playlist`);
       // Update local state
-      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+      setTracks((prev) => prev.filter((t) => t.id !== track.id));
     }
-  }, [playlistId]);
+  }, [playlistId, playlistName, user?.id]);
 
   const isUserPlaylist = !isSystemPlaylist && playlistOwnerId === user?.id;
 
@@ -308,7 +328,7 @@ const PlaylistDetailView = ({
                 isCurrentTrack={currentTrack?.id === track.id}
                 onPlay={() => handleTrackSelect(track)}
                 showDelete={isAdmin}
-                onDelete={() => handleDeleteTrack(track.id, track.title)}
+                onDelete={() => handleDeleteTrack(track, index + 1)}
               />
             ))}
           </div>
