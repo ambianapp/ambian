@@ -13,6 +13,7 @@ import { Analytics } from "@/components/admin/Analytics";
 import { ActivityLogs } from "@/components/admin/ActivityLogs";
 import { CrossfadeDebugPanel } from "@/components/admin/CrossfadeDebugPanel";
 import { ReferralPartnerManager } from "@/components/admin/ReferralPartnerManager";
+import { DeletedTracksManager } from "@/components/admin/DeletedTracksManager";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -88,7 +89,8 @@ const Admin = () => {
           </TabsContent>
 
           {/* Playlists Tab */}
-          <TabsContent value="playlists" className="mt-6">
+          <TabsContent value="playlists" className="mt-6 space-y-6">
+            <DeletedTracksManager />
             <AdminPlaylistManager />
           </TabsContent>
 

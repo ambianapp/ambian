@@ -71,6 +71,42 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_playlist_tracks: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          id: string
+          original_position: number
+          playlist_id: string
+          playlist_name: string | null
+          track_artist: string | null
+          track_id: string
+          track_title: string | null
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          original_position: number
+          playlist_id: string
+          playlist_name?: string | null
+          track_artist?: string | null
+          track_id: string
+          track_title?: string | null
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          original_position?: number
+          playlist_id?: string
+          playlist_name?: string | null
+          track_artist?: string | null
+          track_id?: string
+          track_title?: string | null
+        }
+        Relationships: []
+      }
       industry_collection_playlists: {
         Row: {
           collection_id: string
