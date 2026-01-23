@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Undo2, Trash2, Clock, Music } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Undo2, Trash2, Clock, Music, ChevronDown, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -17,9 +18,17 @@ interface DeletedTrack {
   track_artist: string | null;
 }
 
+interface GroupedTracks {
+  [playlistId: string]: {
+    playlistName: string;
+    tracks: DeletedTrack[];
+  };
+}
+
 export const DeletedTracksManager = () => {
   const [deletedTracks, setDeletedTracks] = useState<DeletedTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadDeletedTracks();
@@ -42,8 +51,34 @@ export const DeletedTracksManager = () => {
     setIsLoading(false);
   };
 
+  const groupedTracks = useMemo(() => {
+    const groups: GroupedTracks = {};
+    deletedTracks.forEach((track) => {
+      const key = track.playlist_id;
+      if (!groups[key]) {
+        groups[key] = {
+          playlistName: track.playlist_name || "Unknown Playlist",
+          tracks: [],
+        };
+      }
+      groups[key].tracks.push(track);
+    });
+    return groups;
+  }, [deletedTracks]);
+
+  const toggleFolder = (playlistId: string) => {
+    setOpenFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(playlistId)) {
+        next.delete(playlistId);
+      } else {
+        next.add(playlistId);
+      }
+      return next;
+    });
+  };
+
   const handleRestore = async (item: DeletedTrack) => {
-    // Insert back into playlist_tracks at original position
     const { error: insertError } = await supabase
       .from("playlist_tracks")
       .insert({
@@ -53,7 +88,6 @@ export const DeletedTracksManager = () => {
       });
 
     if (insertError) {
-      // Check if it's a duplicate
       if (insertError.code === "23505") {
         toast.error("Track already exists in playlist");
       } else {
@@ -63,7 +97,6 @@ export const DeletedTracksManager = () => {
       return;
     }
 
-    // Remove from deleted_playlist_tracks
     const { error: deleteError } = await supabase
       .from("deleted_playlist_tracks")
       .delete()
@@ -96,7 +129,7 @@ export const DeletedTracksManager = () => {
     const { error } = await supabase
       .from("deleted_playlist_tracks")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all
+      .neq("id", "00000000-0000-0000-0000-000000000000");
 
     if (error) {
       toast.error("Failed to clear log");
@@ -106,6 +139,8 @@ export const DeletedTracksManager = () => {
       setDeletedTracks([]);
     }
   };
+
+  const playlistIds = Object.keys(groupedTracks);
 
   return (
     <Card>
@@ -117,7 +152,7 @@ export const DeletedTracksManager = () => {
               Deleted Tracks Log
             </CardTitle>
             <CardDescription>
-              Recently deleted tracks that can be restored to their original position
+              Recently deleted tracks grouped by playlist
             </CardDescription>
           </div>
           {deletedTracks.length > 0 && (
@@ -130,49 +165,84 @@ export const DeletedTracksManager = () => {
       <CardContent>
         {isLoading ? (
           <div className="py-8 text-center text-muted-foreground">Loading...</div>
-        ) : deletedTracks.length === 0 ? (
+        ) : playlistIds.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             <Music className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p>No deleted tracks</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {deletedTracks.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.track_title || "Unknown Track"}</p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {item.playlist_name || "Unknown Playlist"} • Position #{item.original_position}
-                  </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                    <Clock className="w-3 h-3" />
-                    {format(new Date(item.deleted_at), "MMM d, yyyy HH:mm")}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRestore(item)}
-                    className="text-primary hover:text-primary"
-                  >
-                    <Undo2 className="w-4 h-4 mr-1" />
-                    Restore
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePermanentDelete(item)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+            {playlistIds.map((playlistId) => {
+              const group = groupedTracks[playlistId];
+              const isOpen = openFolders.has(playlistId);
+
+              return (
+                <Collapsible
+                  key={playlistId}
+                  open={isOpen}
+                  onOpenChange={() => toggleFolder(playlistId)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left">
+                      <div className="flex items-center gap-3">
+                        <FolderOpen className="w-5 h-5 text-primary" />
+                        <span className="font-medium">{group.playlistName}</span>
+                        <span className="text-sm text-muted-foreground">
+                          ({group.tracks.length} {group.tracks.length === 1 ? "track" : "tracks"})
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={`w-4 h-4 text-muted-foreground transition-transform ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="pl-4 mt-1 space-y-1">
+                      {group.tracks.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">
+                              {item.track_title || "Unknown Track"}
+                            </p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {item.track_artist || "Unknown Artist"} • Position #{item.original_position}
+                            </p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <Clock className="w-3 h-3" />
+                              {format(new Date(item.deleted_at), "MMM d, yyyy HH:mm")}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRestore(item)}
+                              className="text-primary hover:text-primary"
+                            >
+                              <Undo2 className="w-4 h-4 mr-1" />
+                              Restore
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePermanentDelete(item)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </div>
         )}
       </CardContent>
