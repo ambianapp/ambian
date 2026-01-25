@@ -73,6 +73,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "welcome.feature3": "No music licenses needed - we handle it all",
     "welcome.getStarted": "Let's Get Started",
     
+    // Thank you dialog (subscription success)
+    "thankyou.title": "Thank You!",
+    "thankyou.subtitle": "Your subscription is now active",
+    "thankyou.accessUntil": "Access valid until",
+    "thankyou.benefit1": "Unlimited access to all music",
+    "thankyou.benefit2": "Premium audio quality for your business",
+    "thankyou.benefit3": "No music licenses needed - we handle it all",
+    "thankyou.startListening": "Start Listening",
+    
     // Auth
     "auth.signIn": "Sign In",
     "auth.signUp": "Sign Up",
@@ -829,6 +838,14 @@ export const translations: Record<Language, Record<string, string>> = {
     "welcome.feature3": "Inga musiklicenser behövs - vi ordnar allt",
     "welcome.getStarted": "Kom igång",
     
+    // Thank you dialog (subscription success)
+    "thankyou.title": "Tack!",
+    "thankyou.subtitle": "Din prenumeration är nu aktiv",
+    "thankyou.accessUntil": "Giltig till",
+    "thankyou.benefit1": "Obegränsad tillgång till all musik",
+    "thankyou.benefit2": "Premiumljudkvalitet för ditt företag",
+    "thankyou.benefit3": "Inga musiklicenser behövs - vi ordnar allt",
+    "thankyou.startListening": "Börja lyssna",
     
     // Auth
     "auth.signIn": "Logga in",
@@ -1581,6 +1598,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "welcome.feature2": "Älykäs aikataulutus - aseta ja unohda",
     "welcome.feature3": "Ei musiikin lisenssejä tarvita - hoidamme kaiken",
     "welcome.getStarted": "Aloitetaan",
+    
+    // Thank you dialog (subscription success)
+    "thankyou.title": "Kiitos!",
+    "thankyou.subtitle": "Tilauksesi on nyt aktiivinen",
+    "thankyou.accessUntil": "Käyttöoikeus voimassa",
+    "thankyou.benefit1": "Rajoittamaton pääsy kaikkeen musiikkiin",
+    "thankyou.benefit2": "Laadukas ääni yrityksellesi",
+    "thankyou.benefit3": "Ei musiikin lisenssejä tarvita - hoidamme kaiken",
+    "thankyou.startListening": "Aloita kuuntelu",
     
     // Auth
     "auth.signIn": "Kirjaudu sisään",
@@ -2335,6 +2361,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "welcome.feature3": "Keine Musiklizenzen nötig - wir kümmern uns um alles",
     "welcome.getStarted": "Los geht's",
     
+    // Thank you dialog (subscription success)
+    "thankyou.title": "Vielen Dank!",
+    "thankyou.subtitle": "Ihr Abonnement ist jetzt aktiv",
+    "thankyou.accessUntil": "Zugang gültig bis",
+    "thankyou.benefit1": "Unbegrenzter Zugang zu aller Musik",
+    "thankyou.benefit2": "Premium-Audioqualität für Ihr Unternehmen",
+    "thankyou.benefit3": "Keine Musiklizenzen nötig - wir kümmern uns um alles",
+    "thankyou.startListening": "Musik starten",
+    
     // Auth
     "auth.signIn": "Anmelden",
     "auth.signUp": "Registrieren",
@@ -3086,6 +3121,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "welcome.feature2": "Programmation intelligente - configurez et oubliez",
     "welcome.feature3": "Pas de licences musicales nécessaires - nous gérons tout",
     "welcome.getStarted": "C'est parti",
+    
+    // Thank you dialog (subscription success)
+    "thankyou.title": "Merci !",
+    "thankyou.subtitle": "Votre abonnement est maintenant actif",
+    "thankyou.accessUntil": "Accès valide jusqu'au",
+    "thankyou.benefit1": "Accès illimité à toute la musique",
+    "thankyou.benefit2": "Qualité audio premium pour votre entreprise",
+    "thankyou.benefit3": "Pas de licences musicales nécessaires - nous gérons tout",
+    "thankyou.startListening": "Commencer à écouter",
     
     // Auth
     "auth.signIn": "Connexion",
