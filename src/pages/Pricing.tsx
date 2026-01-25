@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Clock, CreditCard, FileText, Calendar, RefreshCw, Mail, ExternalLink, Info } from "lucide-react";
 
 import LanguageSelector from "@/components/LanguageSelector";
+import ThankYouDialog from "@/components/ThankYouDialog";
 import {
   Dialog,
   DialogContent,
@@ -70,6 +71,10 @@ const Pricing = () => {
   const [hasOpenInvoices, setHasOpenInvoices] = useState(false);
   const [isCheckingInvoices, setIsCheckingInvoices] = useState(false);
   
+  // Thank you dialog state
+  const [showThankYouDialog, setShowThankYouDialog] = useState(false);
+  const [accessUntilDate, setAccessUntilDate] = useState<string | undefined>();
+  
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -93,37 +98,31 @@ const Pricing = () => {
 
             if (error) throw error;
 
-            toast({
-              title: t("common.success"),
-              description: `Your access has been activated until ${new Date(data.access_until).toLocaleDateString()}.`,
-            });
+            // Set access date and show thank you dialog
+            setAccessUntilDate(data.access_until);
+            setShowThankYouDialog(true);
           } catch (error: any) {
             console.error("Payment verification error:", error);
-            toast({
-              title: t("common.success"),
-              description: "Payment received. Your access will be activated shortly.",
-            });
+            // Still show thank you dialog even if verification fails
+            setShowThankYouDialog(true);
           } finally {
             setIsVerifying(false);
           }
         } else {
-          // For subscriptions, just show success message
-          toast({
-            title: t("common.success"),
-            description: "Your subscription is now active. Enjoy unlimited music!",
-          });
+          // For subscriptions, show thank you dialog
+          setShowThankYouDialog(true);
         }
         
         // Refresh subscription status
         await checkSubscription();
         
-        // Clear URL params
-        navigate("/", { replace: true });
+        // Clear URL params but stay on page until dialog is closed
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
 
     verifyPayment();
-  }, [searchParams, user, checkSubscription, navigate, toast, t]);
+  }, [searchParams, user, checkSubscription]);
 
   // Check if user has open invoices (to block invoice requests upfront)
   useEffect(() => {
@@ -318,8 +317,23 @@ const Pricing = () => {
     );
   }
 
+  // Handle dialog close - navigate to home
+  const handleThankYouClose = () => {
+    setShowThankYouDialog(false);
+    navigate("/", { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32 relative overflow-hidden">
+      {/* Thank You Dialog */}
+      {user && (
+        <ThankYouDialog
+          userId={user.id}
+          accessUntil={accessUntilDate || subscription.subscriptionEnd || undefined}
+          trigger={showThankYouDialog}
+          onClose={handleThankYouClose}
+        />
+      )}
       {/* Background Gradients (static) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px]" />
