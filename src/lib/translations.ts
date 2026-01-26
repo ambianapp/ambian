@@ -1819,7 +1819,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "pricing.yearly": "Vuosittain",
     "pricing.monthAccess": "1 kuukauden pääsy",
     "pricing.yearAccess": "1 vuoden pääsy",
-    "pricing.billedMonthly": "Laskutetaan kuukausittain",
+    "pricing.billedMonthly": "Veloitetaan kuukausittain",
     "pricing.billedYearly": "Kertamaksu",
     "pricing.bestValue": "Paras arvo",
     "pricing.whatsIncluded": "Mitä sisältyy",
