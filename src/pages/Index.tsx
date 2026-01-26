@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
 import { usePlaylistScheduler } from "@/hooks/usePlaylistScheduler";
+import { usePlayPlaylist } from "@/hooks/usePlayPlaylist";
 import { useNavigate } from "react-router-dom";
 
 interface SelectedPlaylist {
@@ -58,6 +59,9 @@ const Index = () => {
 
   // Auto-play scheduled playlists
   const { isEnabled: schedulerEnabled, toggleScheduler } = usePlaylistScheduler();
+
+  // Play playlist by ID (for search results, etc.)
+  const { playPlaylist } = usePlayPlaylist(handleTrackSelect);
 
   const navigate = useNavigate();
   const { syncDeviceSlots } = useAuth();
@@ -283,6 +287,7 @@ const Index = () => {
             isPlaying={isPlaying}
             onTrackSelect={handleTrackSelect}
             onPlaylistSelect={handlePlaylistSelect}
+            onPlayPlaylist={playPlaylist}
             onBack={() => handleViewChange("home")}
           />
         );
