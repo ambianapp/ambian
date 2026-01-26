@@ -1641,7 +1641,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.beautySalons": "Kauneushoitolat",
     "auth.curatedPlaylists": "50+ kuratoitua soittolistaa jokaiseen tunnelmaan",
     "auth.smartScheduling": "Älykäs soittolistojen ajastus - aseta ja unohda",
-    "auth.signInToAccess": "Kirjaudu sisään päästäksesi musiikkiisi",
+    "auth.signInToAccess": "Kirjaudu sisään jatkaaksesi kuuntelua",
     "auth.startFreeTrial": "Aloita ilmainen kokeilu",
     "auth.welcomeToast": "Tervetuloa takaisin!",
     "auth.signInSuccess": "Olet kirjautunut sisään.",
