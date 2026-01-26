@@ -331,6 +331,30 @@ export function UserManager() {
     });
   };
 
+  // Calculate days remaining for trial or until period end
+  const getTrialDaysRemaining = (user: UserWithDetails): number | null => {
+    if (user.subscription?.status !== "trialing") return null;
+    if (!user.subscription.current_period_end) return null;
+    
+    const endDate = new Date(user.subscription.current_period_end);
+    const now = new Date();
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  // Calculate days until invoice is due (for pending_payment status)
+  const getInvoiceDueDays = (user: UserWithDetails): number | null => {
+    if (user.subscription?.status !== "pending_payment") return null;
+    if (!user.subscription.current_period_end) return null;
+    
+    const dueDate = new Date(user.subscription.current_period_end);
+    const now = new Date();
+    const diffTime = dueDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -445,6 +469,7 @@ export function UserManager() {
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Subscription</TableHead>
+              <TableHead>Days Left</TableHead>
               <TableHead>Joined</TableHead>
               <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
@@ -482,6 +507,32 @@ export function UserManager() {
                   </div>
                 </TableCell>
                 <TableCell>{getSubscriptionBadge(user.subscription)}</TableCell>
+                <TableCell>
+                  {(() => {
+                    const trialDays = getTrialDaysRemaining(user);
+                    const invoiceDays = getInvoiceDueDays(user);
+                    
+                    if (trialDays !== null) {
+                      return (
+                        <Badge className={`${trialDays <= 1 ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'}`}>
+                          <Clock className="w-3 h-3 mr-1" />
+                          {trialDays}d trial
+                        </Badge>
+                      );
+                    }
+                    
+                    if (invoiceDays !== null) {
+                      return (
+                        <Badge className={`${invoiceDays <= 2 ? 'bg-red-500/20 text-red-400 border-red-500/30' : invoiceDays <= 5 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30'}`}>
+                          <FileText className="w-3 h-3 mr-1" />
+                          {invoiceDays}d due
+                        </Badge>
+                      );
+                    }
+                    
+                    return <span className="text-muted-foreground">—</span>;
+                  })()}
+                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatDate(user.created_at)}
                 </TableCell>
