@@ -1790,8 +1790,20 @@ serve(async (req) => {
               invoiceNumber: invoice.number,
               renewal: isRenewal,
               firstSubscription: isFirstSubscription,
+              subscriptionId: invoice.subscription || null,
             },
           });
+          
+          // Also mark subscription email as sent to prevent duplicates from subscription.created
+          if (invoice.subscription && (isFirstSubscription && !isRenewal)) {
+            await supabaseAdmin.from("activity_logs").insert({
+              user_id: targetUserId,
+              user_email: customerEmail,
+              event_type: "subscription_email_sent",
+              event_message: "Subscription confirmation email sent (via invoice.paid)",
+              event_details: { subscriptionId: invoice.subscription },
+            });
+          }
         }
         
         // Send owner notification email
@@ -2462,6 +2474,132 @@ serve(async (req) => {
             event_message: 'Trial converted to active subscription',
             event_details: { subscriptionId: subscription.id },
           });
+        }
+      }
+    }
+
+    // Handle new subscription creation - especially for 0-amount subscriptions (100% coupons)
+    // When amount is 0, no invoice.paid event is triggered, so we handle it here
+    if (event.type === "customer.subscription.created") {
+      const subscription = event.data.object as Stripe.Subscription;
+      
+      logStep("Subscription created", { 
+        subscriptionId: subscription.id, 
+        status: subscription.status 
+      });
+
+      // Only process if subscription is active (not trialing)
+      // Trialing subscriptions will be handled when they convert to active
+      if (subscription.status === "active") {
+        const userId = subscription.metadata?.user_id;
+        const customerId = typeof subscription.customer === 'string' 
+          ? subscription.customer 
+          : (subscription.customer as any)?.id;
+
+        // Skip device slot subscriptions - they're handled separately
+        const DEVICE_SLOT_PRICES = [
+          "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+          "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+        ];
+        const priceId = subscription.items?.data?.[0]?.price?.id;
+        const isDeviceSlot = DEVICE_SLOT_PRICES.includes(priceId || '');
+
+        if (!isDeviceSlot && customerId) {
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const customerEmail = (customer as any).email;
+            const customerName = (customer as any).name;
+
+            if (customerEmail) {
+              // Check if this is a first subscription by looking at local database
+              let isFirstSubscription = true;
+              if (userId) {
+                const { data: existingSub } = await supabaseAdmin
+                  .from("subscriptions")
+                  .select("status")
+                  .eq("user_id", userId)
+                  .maybeSingle();
+                
+                // If user already has an active subscription, this is not the first
+                isFirstSubscription = !existingSub || existingSub.status === "trialing";
+              }
+
+              // Check if an email was already sent via invoice.paid
+              // We use a flag in activity_logs to prevent duplicate emails
+              const emailLockType = "subscription_email_sent";
+              const { data: alreadySent } = await supabaseAdmin
+                .from("activity_logs")
+                .select("id")
+                .eq("event_type", emailLockType)
+                .contains("event_details", { subscriptionId: subscription.id })
+                .maybeSingle();
+
+              if (!alreadySent) {
+                const planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+                const periodEnd = new Date(subscription.current_period_end * 1000);
+
+                // Send subscription confirmation email
+                await sendSubscriptionConfirmationEmail(
+                  customerEmail,
+                  customerName,
+                  planType,
+                  periodEnd
+                );
+                logStep("Subscription confirmation email sent (from subscription.created)", { email: customerEmail });
+
+                // Send owner notification
+                const amount = subscription.items?.data?.[0]?.price?.unit_amount || 0;
+                const currency = subscription.items?.data?.[0]?.price?.currency || 'eur';
+                await sendOwnerPurchaseNotificationEmail(
+                  customerEmail,
+                  customerName,
+                  planType,
+                  amount, // Could be 0 for 100% discount
+                  currency,
+                  isFirstSubscription,
+                  false,
+                  0
+                );
+
+                // Mark email as sent to prevent duplicates
+                if (userId) {
+                  await supabaseAdmin.from("activity_logs").insert({
+                    user_id: userId,
+                    user_email: customerEmail,
+                    event_type: emailLockType,
+                    event_message: "Subscription confirmation email sent",
+                    event_details: { subscriptionId: subscription.id },
+                  });
+                }
+
+                // Update local subscription if we have userId
+                if (userId) {
+                  const { error: upsertError } = await supabaseAdmin
+                    .from("subscriptions")
+                    .upsert({
+                      user_id: userId,
+                      stripe_customer_id: customerId,
+                      stripe_subscription_id: subscription.id,
+                      status: "active",
+                      plan_type: planType,
+                      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                      current_period_end: periodEnd.toISOString(),
+                      updated_at: new Date().toISOString(),
+                    }, { onConflict: "user_id" });
+
+                  if (upsertError) {
+                    logStep("Error updating subscription from subscription.created", { error: upsertError.message });
+                  } else {
+                    logStep("Subscription activated from subscription.created", { userId, planType });
+                  }
+                }
+              } else {
+                logStep("Skipping duplicate email - already sent via invoice.paid", { subscriptionId: subscription.id });
+              }
+            }
+          } catch (e) {
+            logStep("Error handling subscription.created", { error: String(e) });
+          }
         }
       }
     }
