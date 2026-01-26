@@ -10,11 +10,12 @@ const THANKYOU_OPEN_KEY = "ambian_thankyou_open";
 interface ThankYouDialogProps {
   userId: string;
   accessUntil?: string; // ISO date string for when access expires
+  paymentType?: "subscription" | "prepaid" | "invoice"; // Type of payment
   trigger?: boolean; // External trigger to show the dialog
   onClose?: () => void;
 }
 
-const ThankYouDialog = ({ userId, accessUntil, trigger, onClose }: ThankYouDialogProps) => {
+const ThankYouDialog = ({ userId, accessUntil, paymentType = "subscription", trigger, onClose }: ThankYouDialogProps) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const hasChecked = useRef(false);
@@ -86,7 +87,9 @@ const ThankYouDialog = ({ userId, accessUntil, trigger, onClose }: ThankYouDialo
           {/* Access info */}
           {accessUntil && (
             <div className="bg-primary/10 rounded-xl p-4 text-center">
-              <p className="text-sm text-muted-foreground mb-1">{t("thankyou.accessUntil")}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                {paymentType === "subscription" ? t("thankyou.renewsOn") : t("thankyou.accessUntil")}
+              </p>
               <p className="text-lg font-bold text-primary">{formatDate(accessUntil)}</p>
             </div>
           )}
