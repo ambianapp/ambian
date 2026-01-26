@@ -1124,10 +1124,10 @@ const Profile = () => {
                       setDeviceSlotQuantity(1);
                       handleAddDeviceSlotClick();
                     }}
-                    disabled={isLoadingDevice}
+                    disabled={isLoadingDevice || isLoadingProration}
                     size="sm"
                   >
-                    {isLoadingDevice ? (
+                    {isLoadingDevice || isLoadingProration ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
