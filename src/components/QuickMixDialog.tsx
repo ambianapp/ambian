@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shuffle, Search, Check, Play, X } from "lucide-react";
+import { Shuffle, Search, Check, Play, X, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -58,6 +58,15 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
   const loadPlaylists = async () => {
     setIsLoading(true);
     
+    // Create a virtual "Liked Songs" playlist option
+    const likedSongsPlaylist: DbPlaylist = {
+      id: "liked-songs",
+      name: t("library.likedSongs"),
+      description: t("library.likedSongsDesc"),
+      cover_url: null,
+      category: null,
+    };
+    
     if (likedOnly && user) {
       // Fetch only the user's liked playlists
       const { data: likedData } = await supabase
@@ -70,8 +79,10 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
         ?.map((item: any) => item.playlists)
         .filter(Boolean) || [];
       
-      setAllPlaylists(playlists);
-      setFilteredPlaylists(playlists);
+      // Add Liked Songs at the top
+      const allWithLiked = [likedSongsPlaylist, ...playlists];
+      setAllPlaylists(allWithLiked);
+      setFilteredPlaylists(allWithLiked);
     } else {
       // Fetch all system/public playlists
       const { data } = await supabase
@@ -80,8 +91,10 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
         .or("is_system.eq.true,is_public.eq.true")
         .order("name", { ascending: true });
 
-      setAllPlaylists(data || []);
-      setFilteredPlaylists(data || []);
+      // Add Liked Songs at the top
+      const allWithLiked = [likedSongsPlaylist, ...(data || [])];
+      setAllPlaylists(allWithLiked);
+      setFilteredPlaylists(allWithLiked);
     }
     
     setIsLoading(false);
@@ -112,30 +125,63 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
     setIsPlaying(true);
 
     try {
-      // Fetch all tracks from selected playlists
-      const { data: allTracksData } = await supabase
-        .from("playlist_tracks")
-        .select("tracks(*), playlist_id")
-        .in("playlist_id", Array.from(selectedIds));
+      const allTracks: Track[] = [];
+      const selectedArray = Array.from(selectedIds);
+      const hasLikedSongs = selectedArray.includes("liked-songs");
+      const playlistIds = selectedArray.filter(id => id !== "liked-songs");
 
-      if (!allTracksData || allTracksData.length === 0) {
+      // Fetch tracks from liked_songs if selected
+      if (hasLikedSongs && user) {
+        const { data: likedTracksData } = await supabase
+          .from("liked_songs")
+          .select("tracks(*)")
+          .eq("user_id", user.id);
+
+        if (likedTracksData) {
+          const likedTracks = likedTracksData
+            .map((item: any) => item.tracks)
+            .filter(Boolean)
+            .map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              artist: t.artist,
+              album: t.album || "",
+              duration: t.duration || "",
+              cover: t.cover_url || "/placeholder.svg",
+              genre: t.genre || "",
+            }));
+          allTracks.push(...likedTracks);
+        }
+      }
+
+      // Fetch tracks from regular playlists
+      if (playlistIds.length > 0) {
+        const { data: playlistTracksData } = await supabase
+          .from("playlist_tracks")
+          .select("tracks(*), playlist_id")
+          .in("playlist_id", playlistIds);
+
+        if (playlistTracksData) {
+          const playlistTracks = playlistTracksData
+            .map((item: any) => item.tracks)
+            .filter(Boolean)
+            .map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              artist: t.artist,
+              album: t.album || "",
+              duration: t.duration || "",
+              cover: t.cover_url || "/placeholder.svg",
+              genre: t.genre || "",
+            }));
+          allTracks.push(...playlistTracks);
+        }
+      }
+
+      if (allTracks.length === 0) {
         setIsPlaying(false);
         return;
       }
-
-      // Convert to Track format
-      const allTracks: Track[] = allTracksData
-        .map((item: any) => item.tracks)
-        .filter(Boolean)
-        .map((t: any) => ({
-          id: t.id,
-          title: t.title,
-          artist: t.artist,
-          album: t.album || "",
-          duration: t.duration || "",
-          cover: t.cover_url || "/placeholder.svg",
-          genre: t.genre || "",
-        }));
 
       // Remove duplicates
       const uniqueTracks = allTracks.filter((track, index, self) => 
@@ -162,9 +208,9 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
         ? await getSignedAudioUrl(trackData.audio_url)
         : undefined;
 
-      // Log play history
+      // Log play history (skip liked-songs virtual ID)
       if (user) {
-        for (const playlistId of Array.from(selectedIds)) {
+        for (const playlistId of playlistIds) {
           await supabase.from("play_history").insert({
             user_id: user.id,
             playlist_id: playlistId,
@@ -255,11 +301,17 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
                   }`}
                 >
                   <Checkbox checked={selectedIds.has(playlist.id)} className="pointer-events-none" />
-                  <img
-                    src={playlist.cover_url || "/placeholder.svg"}
-                    alt={playlist.name}
-                    className="w-10 h-10 rounded object-cover"
-                  />
+                  {playlist.id === "liked-songs" ? (
+                    <div className="w-10 h-10 rounded bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
+                      <Heart className="w-5 h-5 text-primary-foreground fill-primary-foreground" />
+                    </div>
+                  ) : (
+                    <img
+                      src={playlist.cover_url || "/placeholder.svg"}
+                      alt={playlist.name}
+                      className="w-10 h-10 rounded object-cover"
+                    />
+                  )}
                   <div className="flex-1 text-left min-w-0">
                     <p className="font-medium text-foreground truncate">{playlist.name}</p>
                     {playlist.category && (

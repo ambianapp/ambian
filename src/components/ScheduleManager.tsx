@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Plus, Trash2, Calendar, Music, Play, ArrowLeft, Power } from "lucide-react";
+import { Clock, Plus, Trash2, Calendar, Music, Play, ArrowLeft, Power, Heart } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -98,7 +98,13 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
     if (playlistsError) {
       toast({ title: t("toast.errorLoadingPlaylists"), description: playlistsError.message, variant: "destructive" });
     } else {
-      setPlaylists(playlistsData || []);
+      // Add "Liked Songs" as a virtual playlist option
+      const likedSongsPlaylist: Playlist = {
+        id: "liked-songs",
+        name: t("library.likedSongs"),
+        cover_url: null,
+      };
+      setPlaylists([likedSongsPlaylist, ...(playlistsData || [])]);
     }
 
     setIsLoading(false);
@@ -472,7 +478,12 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
                 <SelectContent>
                   {playlists.map(playlist => (
                     <SelectItem key={playlist.id} value={playlist.id}>
-                      {playlist.name}
+                      <span className="flex items-center gap-2">
+                        {playlist.id === "liked-songs" && (
+                          <Heart className="w-4 h-4 text-primary fill-primary" />
+                        )}
+                        {playlist.name}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

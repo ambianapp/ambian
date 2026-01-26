@@ -116,31 +116,61 @@ export const usePlaylistScheduler = () => {
   const loadAndPlayPlaylist = useCallback(async (schedule: Schedule) => {
     console.log("[Scheduler] Loading playlist for schedule:", schedule.name, "playlist_id:", schedule.playlist_id);
     
-    // Fetch playlist tracks
-    const { data: playlistTracks, error } = await supabase
-      .from("playlist_tracks")
-      .select("tracks(*)")
-      .eq("playlist_id", schedule.playlist_id)
-      .order("position");
+    let tracks: Track[] = [];
+    
+    // Check if this is the special "liked-songs" virtual playlist
+    if (schedule.playlist_id === "liked-songs") {
+      const { data: likedTracks, error } = await supabase
+        .from("liked_songs")
+        .select("tracks(*)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
 
-    if (error || !playlistTracks || playlistTracks.length === 0) {
-      console.log("[Scheduler] No tracks found for scheduled playlist, error:", error);
-      return;
+      if (error || !likedTracks || likedTracks.length === 0) {
+        console.log("[Scheduler] No liked tracks found, error:", error);
+        return;
+      }
+
+      tracks = likedTracks
+        .map((lt: any) => lt.tracks as PlaylistTrack)
+        .filter(Boolean)
+        .map((t: PlaylistTrack) => ({
+          id: t.id,
+          title: t.title,
+          artist: t.artist,
+          album: t.album || "",
+          duration: t.duration || "0:00",
+          cover: t.cover_url || "/placeholder.svg",
+          genre: t.genre || "",
+          audioUrl: t.audio_url || undefined,
+        }));
+    } else {
+      // Fetch regular playlist tracks
+      const { data: playlistTracks, error } = await supabase
+        .from("playlist_tracks")
+        .select("tracks(*)")
+        .eq("playlist_id", schedule.playlist_id)
+        .order("position");
+
+      if (error || !playlistTracks || playlistTracks.length === 0) {
+        console.log("[Scheduler] No tracks found for scheduled playlist, error:", error);
+        return;
+      }
+
+      tracks = playlistTracks
+        .map((pt: any) => pt.tracks as PlaylistTrack)
+        .filter(Boolean)
+        .map((t: PlaylistTrack) => ({
+          id: t.id,
+          title: t.title,
+          artist: t.artist,
+          album: t.album || "",
+          duration: t.duration || "0:00",
+          cover: t.cover_url || "/placeholder.svg",
+          genre: t.genre || "",
+          audioUrl: t.audio_url || undefined,
+        }));
     }
-
-    const tracks: Track[] = playlistTracks
-      .map((pt: any) => pt.tracks as PlaylistTrack)
-      .filter(Boolean)
-      .map((t: PlaylistTrack) => ({
-        id: t.id,
-        title: t.title,
-        artist: t.artist,
-        album: t.album || "",
-        duration: t.duration || "0:00",
-        cover: t.cover_url || "/placeholder.svg",
-        genre: t.genre || "",
-        audioUrl: t.audio_url || undefined,
-      }));
 
     if (tracks.length > 0) {
       console.log("[Scheduler] Starting scheduled playlist with", tracks.length, "tracks, first track:", tracks[0].title);
@@ -161,7 +191,7 @@ export const usePlaylistScheduler = () => {
         console.error("[Scheduler] triggerScheduledCrossfade failed:", err);
       }
     }
-  }, [triggerScheduledCrossfade, toast]);
+  }, [user, triggerScheduledCrossfade, toast]);
 
   const checkSchedule = useCallback(async (force = false) => {
     if (!user || !isEnabled || !hasAccess) return;
