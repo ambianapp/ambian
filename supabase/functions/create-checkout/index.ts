@@ -107,10 +107,10 @@ serve(async (req) => {
 
     const returnOrigin = origin || "https://ambian.lovable.app";
     
-    // Build success URL based on mode
+    // Build success URL based on mode - redirect to pricing page for thank you dialog
     const successUrl = mode === "payment" 
-      ? `${returnOrigin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}&mode=prepaid`
-      : `${returnOrigin}/?checkout=success`;
+      ? `${returnOrigin}/pricing?checkout=success&session_id={CHECKOUT_SESSION_ID}&mode=prepaid`
+      : `${returnOrigin}/pricing?checkout=success`;
 
     // Build checkout session options - always use customer ID since we create one
     const sessionOptions: any = {
