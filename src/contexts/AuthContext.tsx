@@ -673,9 +673,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Handle adding OAuth users to Resend audience and sending welcome email after sign-in
+  // Also records referral signups if user came from a referral link
   // Only sends for users created within the last 2 minutes (truly new signups)
-  const handleOAuthAudienceSignup = useCallback(async (userEmail: string, userName?: string, userCreatedAt?: string) => {
+  const handleOAuthAudienceSignup = useCallback(async (userEmail: string, userName?: string, userCreatedAt?: string, userId?: string) => {
     const marketingOptIn = localStorage.getItem('ambian_marketing_optin');
+    const referralCode = localStorage.getItem('ambian_referral_code');
     
     // Check if user was JUST created (within last 2 minutes) - this indicates a truly new signup
     const createdAt = userCreatedAt ? new Date(userCreatedAt).getTime() : 0;
@@ -684,7 +686,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Only add to audience and send welcome email for truly new users
     if (isNewUser) {
-      console.log('New OAuth user detected, sending welcome email and adding to audience');
+      console.log('New user detected, sending welcome email and adding to audience');
+      
+      // Record referral signup if user came from a referral link
+      if (referralCode && userId) {
+        try {
+          // Find the partner with this referral code
+          const { data: partner, error: partnerError } = await supabase
+            .from('referral_partners')
+            .select('id, commission_duration_months')
+            .eq('referral_code', referralCode.toUpperCase())
+            .eq('is_active', true)
+            .maybeSingle();
+          
+          if (partnerError) {
+            console.error('Error finding referral partner:', partnerError);
+          } else if (partner) {
+            // Record the referral signup
+            const { error: signupError } = await supabase
+              .from('referral_signups')
+              .insert({
+                partner_id: partner.id,
+                user_id: userId,
+                referral_code: referralCode.toUpperCase(),
+                free_months_granted: 0, // No free months by default
+              });
+            
+            if (signupError) {
+              console.error('Error recording referral signup:', signupError);
+            } else {
+              console.log('Recorded referral signup for code:', referralCode);
+              logActivity({
+                userId,
+                userEmail,
+                eventType: 'referral_signup',
+                eventMessage: `User signed up with referral code: ${referralCode}`,
+                eventDetails: { referral_code: referralCode, partner_id: partner.id },
+              });
+            }
+          } else {
+            console.log('Referral code not found or inactive:', referralCode);
+          }
+        } catch (error) {
+          console.error('Failed to record referral signup:', error);
+        } finally {
+          // Clean up the referral code
+          localStorage.removeItem('ambian_referral_code');
+        }
+      }
+      
       try {
         const audienceType = marketingOptIn === 'true' ? 'both' : 'all';
         
@@ -704,15 +754,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         });
         
-        console.log('Added new OAuth user to Resend audience and sent welcome email');
+        console.log('Added new user to Resend audience and sent welcome email');
       } catch (error) {
-        console.error('Failed to add OAuth user to audience or send welcome email:', error);
+        console.error('Failed to add user to audience or send welcome email:', error);
       } finally {
         // Clean up the marketing opt-in flag
         localStorage.removeItem('ambian_marketing_optin');
       }
     } else {
       console.log('Existing user login, skipping welcome email (created:', userCreatedAt, ')');
+      // Clean up referral code for existing users too
+      if (referralCode) {
+        localStorage.removeItem('ambian_referral_code');
+      }
     }
   }, []);
 
@@ -773,7 +827,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const isRecentSignIn = Date.now() - lastSignInAt < 5000;
             if (event === "SIGNED_IN" && session.user.email && isRecentSignIn) {
               const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
-              handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at);
+              handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at, session.user.id);
             }
           }, 0);
         } else {
@@ -839,7 +893,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // This handles the case where OAuth redirects back and onAuthStateChange is blocked
         if (isNewOAuthUser && session.user.email) {
           const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
-          handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at);
+          handleOAuthAudienceSignup(session.user.email, userName, session.user.created_at, session.user.id);
         }
       } else {
         setIsLoading(false);

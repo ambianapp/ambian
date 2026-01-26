@@ -170,6 +170,17 @@ const Index = () => {
     }
   }, [location.state, navigate]);
 
+  // Capture referral code from URL and store in localStorage
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      localStorage.setItem('ambian_referral_code', refCode.toUpperCase());
+      console.log('Captured referral code:', refCode.toUpperCase());
+      // Remove the ref param from URL to keep it clean
+      navigate("/", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   // Handle checkout callback and device added
   useEffect(() => {
     const checkoutStatus = searchParams.get("checkout");
