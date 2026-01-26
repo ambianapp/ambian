@@ -139,9 +139,9 @@ serve(async (req) => {
       custom_fields: [
         {
           key: "company_name",
-          label: { type: "custom", custom: "Company Name" },
+          label: { type: "custom", custom: "Company Name (optional)" },
           type: "text",
-          optional: false,
+          optional: true,
         },
       ],
       allow_promotion_codes: !promoCode, // Allow manual entry if no code provided
