@@ -58,6 +58,15 @@ interface ReferralSignup {
   created_at: string;
 }
 
+interface EnrichedReferralSignup extends ReferralSignup {
+  user_email: string | null;
+  user_name: string | null;
+  subscription_status: string | null;
+  plan_type: string | null;
+  partner_name: string | null;
+  total_revenue: number;
+}
+
 interface ReferralCommission {
   id: string;
   partner_id: string;
@@ -83,6 +92,7 @@ interface PartnerStats {
 export function ReferralPartnerManager() {
   const [partners, setPartners] = useState<ReferralPartner[]>([]);
   const [signups, setSignups] = useState<ReferralSignup[]>([]);
+  const [enrichedSignups, setEnrichedSignups] = useState<EnrichedReferralSignup[]>([]);
   const [commissions, setCommissions] = useState<ReferralCommission[]>([]);
   const [partnerStats, setPartnerStats] = useState<Map<string, PartnerStats>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -135,6 +145,46 @@ export function ReferralPartnerManager() {
       setPartners(partnersRes.data || []);
       setSignups(signupsRes.data || []);
       setCommissions(commissionsRes.data || []);
+
+      // Enrich signups with user and subscription data
+      const enrichedData: EnrichedReferralSignup[] = await Promise.all(
+        (signupsRes.data || []).map(async (signup) => {
+          const partner = (partnersRes.data || []).find(p => p.id === signup.partner_id);
+          
+          // Fetch user profile
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("user_id", signup.user_id)
+            .maybeSingle();
+          
+          // Fetch subscription
+          const { data: subData } = await supabase
+            .from("subscriptions")
+            .select("status, plan_type")
+            .eq("user_id", signup.user_id)
+            .maybeSingle();
+          
+          // Calculate total revenue from commissions for this signup
+          const signupCommissions = (commissionsRes.data || []).filter(
+            c => c.referral_signup_id === signup.id
+          );
+          const totalRevenue = signupCommissions.reduce(
+            (sum, c) => sum + Number(c.subscription_amount), 0
+          );
+
+          return {
+            ...signup,
+            user_email: profileData?.email || null,
+            user_name: profileData?.full_name || null,
+            subscription_status: subData?.status || null,
+            plan_type: subData?.plan_type || null,
+            partner_name: partner?.name || null,
+            total_revenue: totalRevenue,
+          };
+        })
+      );
+      setEnrichedSignups(enrichedData);
 
       // Calculate stats per partner
       const stats = new Map<string, PartnerStats>();
@@ -584,47 +634,68 @@ export function ReferralPartnerManager() {
         </TabsContent>
 
         <TabsContent value="signups" className="space-y-4">
-          <h3 className="text-lg font-medium">Referral Signups</h3>
+          <h3 className="text-lg font-medium">Referred Users & Revenue</h3>
           <Card>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>Referral Code</TableHead>
-                  <TableHead>Free Months</TableHead>
-                  <TableHead>Subscription Started</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Partner / Code</TableHead>
+                  <TableHead>Subscription</TableHead>
+                  <TableHead>Revenue Generated</TableHead>
+                  <TableHead>Signed Up</TableHead>
                   <TableHead>Commission Ends</TableHead>
-                  <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {signups.length === 0 ? (
+                {enrichedSignups.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      No referral signups yet.
+                      No referral signups yet. Users who sign up with a referral code will appear here.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  signups.map((signup) => (
+                  enrichedSignups.map((signup) => (
                     <TableRow key={signup.id}>
-                      <TableCell className="font-mono text-sm">{signup.user_id.slice(0, 8)}...</TableCell>
                       <TableCell>
-                        <code className="bg-muted px-2 py-1 rounded text-sm">{signup.referral_code}</code>
+                        <div>
+                          <div className="font-medium">{signup.user_name || 'Unknown'}</div>
+                          <div className="text-sm text-muted-foreground">{signup.user_email || signup.user_id.slice(0, 8) + '...'}</div>
+                        </div>
                       </TableCell>
-                      <TableCell>{signup.free_months_granted}</TableCell>
                       <TableCell>
-                        {signup.subscription_start_date 
-                          ? format(new Date(signup.subscription_start_date), 'MMM d, yyyy')
-                          : '-'
-                        }
+                        <div>
+                          <div className="text-sm font-medium">{signup.partner_name || 'Unknown'}</div>
+                          <code className="bg-muted px-2 py-0.5 rounded text-xs">{signup.referral_code}</code>
+                        </div>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {signup.subscription_status ? (
+                            <Badge 
+                              variant={signup.subscription_status === 'active' ? 'default' : 'secondary'}
+                              className={signup.subscription_status === 'active' ? 'bg-primary text-primary-foreground' : ''}
+                            >
+                              {signup.subscription_status}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">No subscription</Badge>
+                          )}
+                          {signup.plan_type && (
+                            <span className="text-xs text-muted-foreground capitalize">{signup.plan_type}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">€{signup.total_revenue.toFixed(2)}</div>
+                      </TableCell>
+                      <TableCell>{format(new Date(signup.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell>
                         {signup.commission_end_date 
                           ? format(new Date(signup.commission_end_date), 'MMM d, yyyy')
                           : '-'
                         }
                       </TableCell>
-                      <TableCell>{format(new Date(signup.created_at), 'MMM d, yyyy')}</TableCell>
                     </TableRow>
                   ))
                 )}
