@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,9 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Plus, Copy, ExternalLink, Users, DollarSign, TrendingUp, RefreshCw, Link2 } from "lucide-react";
+import { Plus, Copy, Users, DollarSign, TrendingUp, RefreshCw, Link2, ChevronDown, Ticket } from "lucide-react";
 import { format } from "date-fns";
 
 interface ReferralPartner {
@@ -89,6 +90,14 @@ interface PartnerStats {
   paidCommissions: number;
 }
 
+interface GroupedSignups {
+  [code: string]: {
+    partnerName: string;
+    signups: EnrichedReferralSignup[];
+    totalRevenue: number;
+  };
+}
+
 export function ReferralPartnerManager() {
   const [partners, setPartners] = useState<ReferralPartner[]>([]);
   const [signups, setSignups] = useState<ReferralSignup[]>([]);
@@ -99,6 +108,37 @@ export function ReferralPartnerManager() {
   const [connectingPartnerId, setConnectingPartnerId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<ReferralPartner | null>(null);
+  const [openCoupons, setOpenCoupons] = useState<Set<string>>(new Set());
+
+  // Group signups by coupon code
+  const groupedSignups = useMemo(() => {
+    const groups: GroupedSignups = {};
+    enrichedSignups.forEach((signup) => {
+      const code = signup.referral_code;
+      if (!groups[code]) {
+        groups[code] = {
+          partnerName: signup.partner_name || "Unknown Partner",
+          signups: [],
+          totalRevenue: 0,
+        };
+      }
+      groups[code].signups.push(signup);
+      groups[code].totalRevenue += signup.total_revenue;
+    });
+    return groups;
+  }, [enrichedSignups]);
+
+  const toggleCoupon = (code: string) => {
+    setOpenCoupons((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return next;
+    });
+  };
   
   // Form state
   const [formName, setFormName] = useState("");
@@ -634,73 +674,114 @@ export function ReferralPartnerManager() {
         </TabsContent>
 
         <TabsContent value="signups" className="space-y-4">
-          <h3 className="text-lg font-medium">Referred Users & Revenue</h3>
+          <h3 className="text-lg font-medium">Referred Users by Coupon Code</h3>
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Partner / Code</TableHead>
-                  <TableHead>Subscription</TableHead>
-                  <TableHead>Revenue Generated</TableHead>
-                  <TableHead>Signed Up</TableHead>
-                  <TableHead>Commission Ends</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {enrichedSignups.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      No referral signups yet. Users who sign up with a referral code will appear here.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  enrichedSignups.map((signup) => (
-                    <TableRow key={signup.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{signup.user_name || 'Unknown'}</div>
-                          <div className="text-sm text-muted-foreground">{signup.user_email || signup.user_id.slice(0, 8) + '...'}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="text-sm font-medium">{signup.partner_name || 'Unknown'}</div>
-                          <code className="bg-muted px-2 py-0.5 rounded text-xs">{signup.referral_code}</code>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {signup.subscription_status ? (
-                            <Badge 
-                              variant={signup.subscription_status === 'active' ? 'default' : 'secondary'}
-                              className={signup.subscription_status === 'active' ? 'bg-primary text-primary-foreground' : ''}
-                            >
-                              {signup.subscription_status}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">No subscription</Badge>
-                          )}
-                          {signup.plan_type && (
-                            <span className="text-xs text-muted-foreground capitalize">{signup.plan_type}</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">€{signup.total_revenue.toFixed(2)}</div>
-                      </TableCell>
-                      <TableCell>{format(new Date(signup.created_at), 'MMM d, yyyy')}</TableCell>
-                      <TableCell>
-                        {signup.commission_end_date 
-                          ? format(new Date(signup.commission_end_date), 'MMM d, yyyy')
-                          : '-'
-                        }
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <CardContent className="p-4">
+              {Object.keys(groupedSignups).length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  <Ticket className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>No referral signups yet. Users who sign up with a referral code will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                  {Object.entries(groupedSignups).map(([code, group]) => {
+                    const isOpen = openCoupons.has(code);
+                    const activeCount = group.signups.filter(s => s.subscription_status === 'active').length;
+
+                    return (
+                      <Collapsible
+                        key={code}
+                        open={isOpen}
+                        onOpenChange={() => toggleCoupon(code)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <button className="flex items-center justify-between w-full p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left">
+                            <div className="flex items-center gap-3">
+                              <Ticket className="w-5 h-5 text-primary" />
+                              <div>
+                                <code className="font-mono font-bold text-base">{code}</code>
+                                <span className="text-sm text-muted-foreground ml-3">{group.partnerName}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="text-sm font-medium">
+                                  {group.signups.length} {group.signups.length === 1 ? "user" : "users"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {activeCount} active • €{group.totalRevenue.toFixed(2)} revenue
+                                </div>
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 text-muted-foreground transition-transform ${
+                                  isOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="mt-2 border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>User</TableHead>
+                                  <TableHead>Subscription</TableHead>
+                                  <TableHead>Revenue</TableHead>
+                                  <TableHead>Signed Up</TableHead>
+                                  <TableHead>Commission Ends</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {group.signups.map((signup) => (
+                                  <TableRow key={signup.id}>
+                                    <TableCell>
+                                      <div>
+                                        <div className="font-medium">{signup.user_name || 'Unknown'}</div>
+                                        <div className="text-sm text-muted-foreground">
+                                          {signup.user_email || signup.user_id.slice(0, 8) + '...'}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex flex-col gap-1">
+                                        {signup.subscription_status ? (
+                                          <Badge 
+                                            variant={signup.subscription_status === 'active' ? 'default' : 'secondary'}
+                                            className={signup.subscription_status === 'active' ? 'bg-primary text-primary-foreground' : ''}
+                                          >
+                                            {signup.subscription_status}
+                                          </Badge>
+                                        ) : (
+                                          <Badge variant="outline">No subscription</Badge>
+                                        )}
+                                        {signup.plan_type && (
+                                          <span className="text-xs text-muted-foreground capitalize">{signup.plan_type}</span>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="font-medium">€{signup.total_revenue.toFixed(2)}</div>
+                                    </TableCell>
+                                    <TableCell>{format(new Date(signup.created_at), 'MMM d, yyyy')}</TableCell>
+                                    <TableCell>
+                                      {signup.commission_end_date 
+                                        ? format(new Date(signup.commission_end_date), 'MMM d, yyyy')
+                                        : '-'
+                                      }
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
