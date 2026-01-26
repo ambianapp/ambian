@@ -50,12 +50,17 @@ interface EnrichedReferralSignup {
   user_id: string;
   referral_code: string;
   created_at: string;
+  subscription_start_date: string | null;
+  commission_end_date: string | null;
+  free_months_granted: number;
   user_email: string | null;
   user_name: string | null;
   subscription_status: string | null;
   plan_type: string | null;
   monthly_amount: number;
   is_yearly: boolean;
+  daysRemaining: number | null;
+  isExpired: boolean;
 }
 
 interface CouponGroup {
@@ -63,11 +68,14 @@ interface CouponGroup {
   partnerName: string;
   partnerEmail: string;
   isActive: boolean;
+  commissionRate: number;
+  commissionDurationMonths: number;
   signups: EnrichedReferralSignup[];
   monthlyRevenue: number;
   yearlyRevenue: number;
   totalRevenue: number;
   activeUsers: number;
+  activeCommissionUsers: number;
 }
 
 export function ReferralPartnerManager() {
@@ -82,6 +90,9 @@ export function ReferralPartnerManager() {
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formCode, setFormCode] = useState("");
+  const [formCommissionRate, setFormCommissionRate] = useState(50);
+  const [formCommissionMonths, setFormCommissionMonths] = useState(12);
+  const [formFreeMonths, setFormFreeMonths] = useState(2);
 
   const toggleCoupon = (code: string) => {
     setOpenCoupons((prev) => {
@@ -141,18 +152,34 @@ export function ReferralPartnerManager() {
             monthlyAmount = isYearly ? 349 / 12 : 34.90;
           }
 
+          // Calculate days remaining in commission period
+          let daysRemaining: number | null = null;
+          let isExpired = false;
+          if (signup.commission_end_date) {
+            const endDate = new Date(signup.commission_end_date);
+            const now = new Date();
+            const diffTime = endDate.getTime() - now.getTime();
+            daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            isExpired = daysRemaining <= 0;
+          }
+
           return {
             id: signup.id,
             partner_id: signup.partner_id,
             user_id: signup.user_id,
             referral_code: signup.referral_code,
             created_at: signup.created_at,
+            subscription_start_date: signup.subscription_start_date,
+            commission_end_date: signup.commission_end_date,
+            free_months_granted: signup.free_months_granted,
             user_email: profileData?.email || null,
             user_name: profileData?.full_name || null,
             subscription_status: subData?.status || null,
             plan_type: subData?.plan_type || null,
             monthly_amount: monthlyAmount,
             is_yearly: isYearly,
+            daysRemaining,
+            isExpired,
           };
         })
       );
@@ -166,11 +193,14 @@ export function ReferralPartnerManager() {
           partnerName: partner.name,
           partnerEmail: partner.email,
           isActive: partner.is_active,
+          commissionRate: partner.commission_rate,
+          commissionDurationMonths: partner.commission_duration_months,
           signups: [],
           monthlyRevenue: 0,
           yearlyRevenue: 0,
           totalRevenue: 0,
           activeUsers: 0,
+          activeCommissionUsers: 0,
         });
       });
 
@@ -180,10 +210,14 @@ export function ReferralPartnerManager() {
           group.signups.push(signup);
           if (signup.subscription_status === "active") {
             group.activeUsers++;
+            // Only count revenue if commission is still active
+            if (!signup.isExpired) {
+              group.activeCommissionUsers++;
+            }
             if (signup.is_yearly) {
-              group.yearlyRevenue += 349; // Yearly payment
+              group.yearlyRevenue += 349;
             } else {
-              group.monthlyRevenue += 34.90; // Monthly payment
+              group.monthlyRevenue += 34.90;
             }
           }
         }
@@ -221,6 +255,9 @@ export function ReferralPartnerManager() {
     setFormName("");
     setFormEmail("");
     setFormCode("");
+    setFormCommissionRate(50);
+    setFormCommissionMonths(12);
+    setFormFreeMonths(2);
     setEditingPartner(null);
   };
 
@@ -229,6 +266,8 @@ export function ReferralPartnerManager() {
     setFormName(partner.name);
     setFormEmail(partner.email);
     setFormCode(partner.referral_code);
+    setFormCommissionRate(partner.commission_rate);
+    setFormCommissionMonths(partner.commission_duration_months);
     setDialogOpen(true);
   };
 
@@ -246,6 +285,8 @@ export function ReferralPartnerManager() {
             name: formName,
             email: formEmail,
             referral_code: formCode.toUpperCase(),
+            commission_rate: formCommissionRate,
+            commission_duration_months: formCommissionMonths,
           })
           .eq("id", editingPartner.id);
 
@@ -258,8 +299,8 @@ export function ReferralPartnerManager() {
             name: formName,
             email: formEmail || "",
             referral_code: formCode.toUpperCase(),
-            commission_rate: 50,
-            commission_duration_months: 12,
+            commission_rate: formCommissionRate,
+            commission_duration_months: formCommissionMonths,
           });
 
         if (error) throw error;
@@ -417,6 +458,33 @@ export function ReferralPartnerManager() {
                     </Button>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="commission">Commission %</Label>
+                    <Input
+                      id="commission"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formCommissionRate}
+                      onChange={(e) => setFormCommissionRate(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="duration">Duration (months)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      max="36"
+                      value={formCommissionMonths}
+                      onChange={(e) => setFormCommissionMonths(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Partner earns {formCommissionRate}% commission for {formCommissionMonths} months from each user's subscription start.
+                </p>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -460,10 +528,10 @@ export function ReferralPartnerManager() {
                           <div className="flex items-center gap-6">
                             <div className="text-right">
                               <div className="text-sm font-medium">
-                                {group.signups.length} users • {group.activeUsers} paying
+                                {group.signups.length} users • {group.activeUsers} paying • {group.activeCommissionUsers} in period
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                €{group.monthlyRevenue.toFixed(0)}/mo + €{group.yearlyRevenue.toFixed(0)}/yr
+                                {group.commissionRate}% for {group.commissionDurationMonths}mo • €{group.monthlyRevenue.toFixed(0)}/mo + €{group.yearlyRevenue.toFixed(0)}/yr
                               </div>
                             </div>
                             <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -495,12 +563,13 @@ export function ReferralPartnerManager() {
                                 <TableHead>Status</TableHead>
                                 <TableHead>Plan</TableHead>
                                 <TableHead>Monthly Value</TableHead>
+                                <TableHead>Commission Period</TableHead>
                                 <TableHead>Signed Up</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               {group.signups.map((signup) => (
-                                <TableRow key={signup.id}>
+                                <TableRow key={signup.id} className={signup.isExpired ? "opacity-50" : ""}>
                                   <TableCell>
                                     <div>
                                       <div className="font-medium">{signup.user_name || "Unknown"}</div>
@@ -511,9 +580,9 @@ export function ReferralPartnerManager() {
                                   </TableCell>
                                   <TableCell>
                                     {signup.subscription_status === "active" ? (
-                                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Active</Badge>
+                                      <Badge className="bg-primary/20 text-primary border-primary/30">Active</Badge>
                                     ) : signup.subscription_status === "trialing" ? (
-                                      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Trial</Badge>
+                                      <Badge className="bg-accent/20 text-accent-foreground border-accent/30">Trial</Badge>
                                     ) : (
                                       <Badge variant="outline">{signup.subscription_status || "None"}</Badge>
                                     )}
@@ -526,6 +595,24 @@ export function ReferralPartnerManager() {
                                       <span className="font-medium">€{signup.monthly_amount.toFixed(2)}</span>
                                     ) : (
                                       <span className="text-muted-foreground">—</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {signup.commission_end_date ? (
+                                      signup.isExpired ? (
+                                        <Badge variant="outline" className="text-muted-foreground">Expired</Badge>
+                                      ) : (
+                                        <div className="text-sm">
+                                          <span className="font-medium text-primary">{signup.daysRemaining}d</span>
+                                          <span className="text-muted-foreground ml-1">left</span>
+                                        </div>
+                                      )
+                                    ) : signup.subscription_start_date ? (
+                                      <span className="text-xs text-muted-foreground">
+                                        Ends {format(new Date(new Date(signup.subscription_start_date).getTime() + group.commissionDurationMonths * 30 * 24 * 60 * 60 * 1000), "MMM yyyy")}
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted-foreground text-sm">Not started</span>
                                     )}
                                   </TableCell>
                                   <TableCell className="text-muted-foreground">
