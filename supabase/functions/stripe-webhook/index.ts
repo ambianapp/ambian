@@ -618,7 +618,100 @@ async function sendDeviceSlotConfirmationEmail(
   }
 }
 
-async function sendSubscriptionCanceledEmail(
+// Email sent when user initiates cancellation (still has access until period end)
+async function sendCancellationConfirmationEmail(
+  email: string,
+  customerName: string | null,
+  planType: string,
+  accessUntil: Date
+) {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+  const formattedDate = accessUntil.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const html = emailWrapper(`
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
+                Cancellation Confirmed
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Hi${customerName ? ` ${customerName}` : ''},
+              </p>
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                We've received your request to cancel your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription.
+              </p>
+              
+              <!-- Access Info Box -->
+              <div style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <h3 style="color: #10b981; font-size: 16px; margin: 0 0 12px;">✓ You still have access!</h3>
+                <p style="color: #e0e0e0; font-size: 14px; line-height: 1.6; margin: 0;">
+                  Your subscription remains active until <strong style="color: #ffffff;">${formattedDate}</strong>. You can continue enjoying all Ambian features until then.
+                </p>
+              </div>
+              
+              <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Changed your mind? You can reactivate your subscription anytime before the end date from your profile settings.
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0 30px;">
+                    <a href="https://ambianmusic.com/profile" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Manage Subscription
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+              <p style="color: #888888; font-size: 14px; margin: 0;">
+                If you have any questions, just reply to this email.
+              </p>
+            </td>
+          </tr>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "Ambian <noreply@ambianmusic.com>",
+      to: [email],
+      subject: `Your Ambian subscription will end on ${formattedDate}`,
+      html,
+    });
+
+    if (error) {
+      logStep("Error sending cancellation confirmation email", { error });
+      return false;
+    }
+
+    logStep("Cancellation confirmation email sent", { emailId: data?.id, to: email });
+    return true;
+  } catch (error) {
+    logStep("Failed to send cancellation confirmation email", { error: String(error) });
+    return false;
+  }
+}
+
+// Email sent when subscription period actually ends (user loses access)
+async function sendSubscriptionEndedEmail(
   email: string,
   customerName: string | null,
   planType: string
@@ -631,7 +724,7 @@ async function sendSubscriptionCanceledEmail(
             <td style="padding: 40px 40px 20px; text-align: center;">
               <img src="https://ambianmusic.com/ambian-logo.png" alt="Ambian" width="120" style="display: block; margin: 0 auto 20px;" />
               <h1 style="color: #ffffff; font-size: 28px; font-weight: 600; margin: 0;">
-                We're sorry to see you go
+                Your subscription has ended
               </h1>
             </td>
           </tr>
@@ -643,12 +736,12 @@ async function sendSubscriptionCanceledEmail(
                 Hi${customerName ? ` ${customerName}` : ''},
               </p>
               <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                Your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription has been canceled. We hope you enjoyed our service!
+                Your Ambian ${planType === 'yearly' ? 'yearly' : 'monthly'} subscription has now ended. We hope you enjoyed our service!
               </p>
               
               <!-- Offer Box -->
               <div style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(139, 92, 246, 0.3);">
-                <h3 style="color: #8b5cf6; font-size: 16px; margin: 0 0 12px;">💡 Did you know?</h3>
+                <h3 style="color: #8b5cf6; font-size: 16px; margin: 0 0 12px;">💡 Miss the music?</h3>
                 <p style="color: #e0e0e0; font-size: 14px; line-height: 1.6; margin: 0;">
                   You can resubscribe anytime and get instant access to all your favorite playlists again. Your preferences and settings are saved!
                 </p>
@@ -685,19 +778,19 @@ async function sendSubscriptionCanceledEmail(
     const { data, error } = await resend.emails.send({
       from: "Ambian <noreply@ambianmusic.com>",
       to: [email],
-      subject: "Your Ambian subscription has been canceled",
+      subject: "Your Ambian subscription has ended",
       html,
     });
 
     if (error) {
-      logStep("Error sending subscription canceled email", { error });
+      logStep("Error sending subscription ended email", { error });
       return false;
     }
 
-    logStep("Subscription canceled email sent", { emailId: data?.id, to: email });
+    logStep("Subscription ended email sent", { emailId: data?.id, to: email });
     return true;
   } catch (error) {
-    logStep("Failed to send subscription canceled email", { error: String(error) });
+    logStep("Failed to send subscription ended email", { error: String(error) });
     return false;
   }
 }
@@ -2476,6 +2569,64 @@ serve(async (req) => {
           });
         }
       }
+
+      // Check if user initiated cancellation (cancel_at_period_end changed to true)
+      if (previousAttributes?.cancel_at_period_end === false && subscription.cancel_at_period_end === true) {
+        logStep("User initiated subscription cancellation", { 
+          subscriptionId: subscription.id, 
+          cancelAt: subscription.cancel_at 
+        });
+
+        // Skip device slot subscriptions - they have their own email handler
+        const DEVICE_SLOT_PRICES = [
+          "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
+          "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
+        ];
+        const priceId = subscription.items?.data?.[0]?.price?.id;
+        const isDeviceSlot = DEVICE_SLOT_PRICES.includes(priceId || '');
+
+        if (!isDeviceSlot && customerId) {
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const customerEmail = (customer as any).email;
+            const customerName = (customer as any).name;
+
+            if (customerEmail) {
+              const planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+              const accessUntil = new Date(subscription.current_period_end * 1000);
+
+              await sendCancellationConfirmationEmail(
+                customerEmail,
+                customerName,
+                planType,
+                accessUntil
+              );
+
+              logStep("Cancellation confirmation email sent", { email: customerEmail, accessUntil: accessUntil.toISOString() });
+            }
+          } catch (e) {
+            logStep("Error sending cancellation confirmation email", { error: String(e) });
+          }
+        }
+
+        // Log the cancellation initiation activity
+        if (userId) {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("email")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          const accessUntil = new Date(subscription.current_period_end * 1000);
+          await supabaseAdmin.from('activity_logs').insert({
+            user_id: userId,
+            user_email: profile?.email || null,
+            event_type: 'subscription_cancellation_initiated',
+            event_message: `Subscription set to cancel on ${accessUntil.toISOString().split('T')[0]}`,
+            event_details: { subscriptionId: subscription.id, cancelAt: subscription.cancel_at },
+          });
+        }
+      }
     }
 
     // Handle new subscription creation - especially for 0-amount subscriptions (100% coupons)
@@ -2668,7 +2819,7 @@ serve(async (req) => {
           }
           
           const planType = subscription.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
-          await sendSubscriptionCanceledEmail(profile.email, customerName, planType);
+          await sendSubscriptionEndedEmail(profile.email, customerName, planType);
           
           // Send owner notification about the cancellation
           await sendOwnerCancellationNotificationEmail(profile.email, customerName, planType, false, 0);
