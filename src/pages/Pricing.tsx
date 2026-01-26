@@ -74,6 +74,7 @@ const Pricing = () => {
   // Thank you dialog state
   const [showThankYouDialog, setShowThankYouDialog] = useState(false);
   const [accessUntilDate, setAccessUntilDate] = useState<string | undefined>();
+  const [checkoutPaymentType, setCheckoutPaymentType] = useState<"subscription" | "prepaid" | "invoice">("subscription");
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -91,6 +92,7 @@ const Pricing = () => {
         // For prepaid payments, verify and activate access
         if (mode === "prepaid" && sessionId) {
           setIsVerifying(true);
+          setCheckoutPaymentType("prepaid");
           try {
             const { data, error } = await supabase.functions.invoke("verify-payment", {
               body: { sessionId },
@@ -110,6 +112,7 @@ const Pricing = () => {
           }
         } else {
           // For subscriptions, show thank you dialog
+          setCheckoutPaymentType("subscription");
           setShowThankYouDialog(true);
         }
         
@@ -330,6 +333,7 @@ const Pricing = () => {
         <ThankYouDialog
           userId={user.id}
           accessUntil={accessUntilDate || subscription.subscriptionEnd || undefined}
+          paymentType={checkoutPaymentType}
           trigger={showThankYouDialog}
           onClose={handleThankYouClose}
         />
