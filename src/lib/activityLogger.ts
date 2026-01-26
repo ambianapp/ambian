@@ -14,6 +14,7 @@ export type ActivityEventType =
   | "device_disconnected"
   | "user_deleted"
   | "subscription_canceled_by_admin"
+  | "referral_signup"
   | "error";
 
 interface LogActivityParams {
