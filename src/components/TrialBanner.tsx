@@ -68,7 +68,7 @@ const TrialBanner = () => {
           {" "}remaining
         </span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mr-12 md:mr-0">
         <Button size="sm" variant="default" onClick={() => navigate("/pricing")} className="h-7 text-xs">
           Subscribe Now
         </Button>
