@@ -63,7 +63,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
   const [formDays, setFormDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri default
   const [formStartTime, setFormStartTime] = useState("09:00");
   const [formEndTime, setFormEndTime] = useState("17:00");
-  const [formPriority, setFormPriority] = useState(0);
+  
 
   useEffect(() => {
     if (user?.id) {
@@ -116,7 +116,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
     setFormDays([1, 2, 3, 4, 5]);
     setFormStartTime("09:00");
     setFormEndTime("17:00");
-    setFormPriority(0);
+    
     setEditingSchedule(null);
   };
 
@@ -132,7 +132,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
     setFormDays(schedule.days_of_week);
     setFormStartTime(schedule.start_time.slice(0, 5)); // HH:MM
     setFormEndTime(schedule.end_time.slice(0, 5));
-    setFormPriority(schedule.priority);
+    
     setIsDialogOpen(true);
   };
 
@@ -154,7 +154,7 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
       days_of_week: formDays,
       start_time: formStartTime,
       end_time: formEndTime,
-      priority: formPriority,
+      priority: 0,
       is_active: true,
     };
 
@@ -555,20 +555,6 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
               </div>
             </div>
 
-            {/* Priority */}
-            <div className="space-y-2">
-              <Label>{t("schedule.priority")}</Label>
-              <Select value={formPriority.toString()} onValueChange={v => setFormPriority(parseInt(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Normal (0)</SelectItem>
-                  <SelectItem value="1">High (1)</SelectItem>
-                  <SelectItem value="2">Highest (2)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <DialogFooter>
