@@ -7,6 +7,7 @@ import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
 import MobilePlaylistBrowser from "./MobilePlaylistBrowser";
 import CategoryPlaylistsView from "./CategoryPlaylistsView";
+import ContinueListeningView from "./ContinueListeningView";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +47,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const [isLoading, setIsLoading] = useState(true);
   const [showAllMoods, setShowAllMoods] = useState(false);
   const [showAllGenres, setShowAllGenres] = useState(false);
-  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre">("browser");
+  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue">("browser");
+  const [hasRecentlyPlayed, setHasRecentlyPlayed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -65,8 +67,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return () => window.removeEventListener('popstate', handlePopstate);
   }, [isMobile, mobileView]);
 
-  // Push history when entering mood/genre view
-  const handleMobileViewChange = (view: "mood" | "genre") => {
+  // Push history when entering mood/genre/continue view
+  const handleMobileViewChange = (view: "mood" | "genre" | "continue") => {
     window.history.pushState({ type: 'mobile-category', view }, '');
     setMobileView(view);
   };
@@ -129,8 +131,13 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             .map(id => playlistData.find(p => p.id === id))
             .filter((p): p is DbPlaylist => p !== undefined);
           setRecentlyPlayed(sortedPlaylists);
+          setHasRecentlyPlayed(sortedPlaylists.length > 0);
         }
+      } else {
+        setHasRecentlyPlayed(false);
       }
+    } else {
+      setHasRecentlyPlayed(false);
     }
 
     // Load mood playlists (alphabetically)
@@ -339,6 +346,19 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     );
   };
 
+  // Mobile view - show continue listening view
+  if (isMobile && mobileView === "continue") {
+    return (
+      <ContinueListeningView
+        onBack={() => {
+          window.history.back();
+        }}
+        onPlaylistSelect={onPlaylistSelect}
+        onTrackSelect={onTrackSelect}
+      />
+    );
+  }
+
   // Mobile view - show category playlists view when mood/genre selected
   if (isMobile && mobileView === "mood") {
     return (
@@ -380,37 +400,16 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           onViewChange={handleMobileViewChange}
         />
         
-        {/* Recently Played - below the browser on mobile */}
-        {recentlyPlayed.length > 0 && (
+        {/* Continue Listening Link - below the browser on mobile */}
+        {hasRecentlyPlayed && (
           <section className="px-4 pb-6 animate-fade-in">
-            <div className="flex items-center gap-2 mb-3">
-              <History className="w-4 h-4 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">{t("home.continue")}</h2>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {recentlyPlayed.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={{
-                    id: playlist.id,
-                    name: playlist.name,
-                    description: playlist.description || "",
-                    cover: playlist.cover_url || "/placeholder.svg",
-                    trackCount: 0,
-                    tracks: [],
-                  }}
-                  onClick={() => handlePlaylistClick({
-                    id: playlist.id,
-                    name: playlist.name,
-                    cover: playlist.cover_url,
-                    description: playlist.description,
-                  })}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  onUpdate={handlePlaylistUpdate}
-                  compact
-                />
-              ))}
-            </div>
+            <button
+              onClick={() => handleMobileViewChange("continue")}
+              className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+            >
+              <History className="w-4 h-4" />
+              <span className="text-sm font-medium">{t("home.continueLink")}</span>
+            </button>
           </section>
         )}
       </div>
