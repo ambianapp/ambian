@@ -488,11 +488,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Curated music for your business",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Show Playlists By",
-    "mobile.mood": "Mood",
-    "mobile.moodSuffix": "",
-    "mobile.genre": "Genre",
-    "mobile.genreSuffix": "",
+    "mobile.showAllPlaylists": "Show All Playlists",
+    "mobile.showByMood": "Show playlists by mood",
+    "mobile.showByGenre": "Show playlists by genre",
     "mobile.orChooseIndustry": "Or choose your industry",
     "mobile.selectIndustry": "Select Industry",
     "industry.playAllShuffled": "Play All Shuffled",
@@ -1267,11 +1265,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Kurerad musik för ditt företag",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Visa spellistor efter",
-    "mobile.mood": "Stämning",
-    "mobile.moodSuffix": "",
-    "mobile.genre": "Genre",
-    "mobile.genreSuffix": "",
+    "mobile.showAllPlaylists": "Visa alla spellistor",
+    "mobile.showByMood": "Visa spellistor efter stämning",
+    "mobile.showByGenre": "Visa spellistor efter genre",
     "mobile.orChooseIndustry": "Eller välj din bransch",
     "mobile.selectIndustry": "Välj bransch",
     "industry.playAllShuffled": "Spela alla blandade",
@@ -2046,11 +2042,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Kuratoitua musiikkia yrityksellesi",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Näytä soittolistat",
-    "mobile.mood": "Tunnelman",
-    "mobile.moodSuffix": "mukaan",
-    "mobile.genre": "Genren",
-    "mobile.genreSuffix": "mukaan",
+    "mobile.showAllPlaylists": "Näytä kaikki soittolistat",
+    "mobile.showByMood": "Näytä soittolistat tunnelman mukaan",
+    "mobile.showByGenre": "Näytä soittolistat genren mukaan",
     "mobile.orChooseIndustry": "Tai valitse toimialasi",
     "mobile.selectIndustry": "Valitse toimiala",
     "industry.playAllShuffled": "Toista kaikki sekoitettuna",
@@ -2826,11 +2820,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Kuratierte Musik für Ihr Unternehmen",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Playlists anzeigen nach",
-    "mobile.mood": "Stimmung",
-    "mobile.moodSuffix": "",
-    "mobile.genre": "Genre",
-    "mobile.genreSuffix": "",
+    "mobile.showAllPlaylists": "Alle Playlists anzeigen",
+    "mobile.showByMood": "Playlists nach Stimmung",
+    "mobile.showByGenre": "Playlists nach Genre",
     "mobile.orChooseIndustry": "Oder wählen Sie Ihre Branche",
     "mobile.selectIndustry": "Branche auswählen",
     "industry.playAllShuffled": "Alle zufällig abspielen",
@@ -3605,11 +3597,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Musique sélectionnée pour votre entreprise",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Afficher les playlists par",
-    "mobile.mood": "Ambiance",
-    "mobile.moodSuffix": "",
-    "mobile.genre": "Genre",
-    "mobile.genreSuffix": "",
+    "mobile.showAllPlaylists": "Afficher toutes les playlists",
+    "mobile.showByMood": "Playlists par ambiance",
+    "mobile.showByGenre": "Playlists par genre",
     "mobile.orChooseIndustry": "Ou choisissez votre secteur",
     "mobile.selectIndustry": "Sélectionner le secteur",
     "industry.playAllShuffled": "Tout lire en aléatoire",

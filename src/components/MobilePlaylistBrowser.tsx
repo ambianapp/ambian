@@ -320,12 +320,20 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
       </div>
 
-      {/* Header */}
-      <h2 className="text-lg font-bold text-foreground text-center mb-1">
-        {t("mobile.playlistsBy")}
-      </h2>
+      {/* All Playlists Button - Top */}
+      <button
+        onClick={() => navigate("/playlists")}
+        className="w-full h-16 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
+      >
+        <div className="flex items-center justify-center gap-3">
+          <Music className="w-5 h-5 text-primary" />
+          <span className="text-sm font-bold text-foreground">
+            {t("mobile.showAllPlaylists")}
+          </span>
+        </div>
+      </button>
 
-      {/* Mood & Genre Row - Larger buttons */}
+      {/* Mood & Genre Row */}
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={handleMoodOpen}
@@ -337,14 +345,9 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
                 <Heart className="w-6 h-6 text-primary" />
               </div>
-              <span className="text-base font-bold text-foreground">
-                {t("mobile.mood")}
+              <span className="text-sm font-bold text-foreground">
+                {t("mobile.showByMood")}
               </span>
-              {t("mobile.moodSuffix") !== "" && t("mobile.moodSuffix") !== "mobile.moodSuffix" && (
-                <span className="text-sm font-medium text-muted-foreground -mt-1">
-                  {t("mobile.moodSuffix")}
-                </span>
-              )}
             </div>
           </div>
         </button>
@@ -359,31 +362,13 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mb-1">
                 <Palette className="w-6 h-6 text-primary" />
               </div>
-              <span className="text-base font-bold text-foreground">
-                {t("mobile.genre")}
+              <span className="text-sm font-bold text-foreground">
+                {t("mobile.showByGenre")}
               </span>
-              {t("mobile.genreSuffix") !== "" && t("mobile.genreSuffix") !== "mobile.genreSuffix" && (
-                <span className="text-sm font-medium text-muted-foreground -mt-1">
-                  {t("mobile.genreSuffix")}
-                </span>
-              )}
             </div>
           </div>
         </button>
       </div>
-
-      {/* All Playlists Button */}
-      <button
-        onClick={() => navigate("/playlists")}
-        className="w-full h-16 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
-      >
-        <div className="flex items-center justify-center gap-3">
-          <Music className="w-5 h-5 text-primary" />
-          <span className="text-sm font-bold text-foreground">
-            {t("home.allPlaylists")}
-          </span>
-        </div>
-      </button>
 
       {/* Industry Dropdown - More prominent */}
       <div className="space-y-3 pt-1">
