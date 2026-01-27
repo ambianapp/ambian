@@ -373,7 +373,7 @@ const Auth = () => {
           </div>
           
           {/* Header */}
-          <div className="text-center lg:text-left mb-6">
+          <div className="text-center lg:text-left mb-8">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">
               {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
