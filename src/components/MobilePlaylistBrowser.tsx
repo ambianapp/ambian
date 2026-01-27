@@ -320,16 +320,20 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
       </div>
 
-      {/* All Playlists Button - Top */}
+      {/* All Playlists Button - Spotify-style */}
       <button
         onClick={() => navigate("/playlists")}
-        className="w-full h-16 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
+        className="relative w-full h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98] group"
       >
-        <div className="flex items-center justify-center gap-3">
-          <Music className="w-5 h-5 text-primary" />
-          <span className="text-sm font-bold text-foreground">
-            {t("mobile.showAllPlaylists")}
-          </span>
+        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+        <div className="absolute inset-0 flex items-center justify-between px-5">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🎵</span>
+            <span className="text-xl font-bold text-white">
+              {t("mobile.showAllPlaylists")}
+            </span>
+          </div>
+          <Music className="w-6 h-6 text-white/70" />
         </div>
       </button>
 
