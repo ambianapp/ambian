@@ -489,8 +489,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Show All Playlists",
-    "mobile.showByMood": "Show playlists by mood",
-    "mobile.showByGenre": "Show playlists by genre",
+    "mobile.byMoodLine1": "By",
+    "mobile.byMoodLine2": "Mood",
+    "mobile.byGenreLine1": "By",
+    "mobile.byGenreLine2": "Genre",
     "mobile.orChooseIndustry": "Or choose your industry",
     "mobile.selectIndustry": "Select Industry",
     "industry.playAllShuffled": "Play All Shuffled",
@@ -1266,8 +1268,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Visa alla spellistor",
-    "mobile.showByMood": "Visa spellistor efter stämning",
-    "mobile.showByGenre": "Visa spellistor efter genre",
+    "mobile.byMoodLine1": "Efter",
+    "mobile.byMoodLine2": "Stämning",
+    "mobile.byGenreLine1": "Efter",
+    "mobile.byGenreLine2": "Genre",
     "mobile.orChooseIndustry": "Eller välj din bransch",
     "mobile.selectIndustry": "Välj bransch",
     "industry.playAllShuffled": "Spela alla blandade",
@@ -2043,8 +2047,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Näytä kaikki soittolistat",
-    "mobile.showByMood": "Näytä soittolistat tunnelman mukaan",
-    "mobile.showByGenre": "Näytä soittolistat genren mukaan",
+    "mobile.byMoodLine1": "Tunnelman",
+    "mobile.byMoodLine2": "mukaan",
+    "mobile.byGenreLine1": "Genren",
+    "mobile.byGenreLine2": "mukaan",
     "mobile.orChooseIndustry": "Tai valitse toimialasi",
     "mobile.selectIndustry": "Valitse toimiala",
     "industry.playAllShuffled": "Toista kaikki sekoitettuna",
@@ -2821,8 +2827,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Alle Playlists anzeigen",
-    "mobile.showByMood": "Playlists nach Stimmung",
-    "mobile.showByGenre": "Playlists nach Genre",
+    "mobile.byMoodLine1": "Nach",
+    "mobile.byMoodLine2": "Stimmung",
+    "mobile.byGenreLine1": "Nach",
+    "mobile.byGenreLine2": "Genre",
     "mobile.orChooseIndustry": "Oder wählen Sie Ihre Branche",
     "mobile.selectIndustry": "Branche auswählen",
     "industry.playAllShuffled": "Alle zufällig abspielen",
@@ -3598,8 +3606,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Afficher toutes les playlists",
-    "mobile.showByMood": "Playlists par ambiance",
-    "mobile.showByGenre": "Playlists par genre",
+    "mobile.byMoodLine1": "Par",
+    "mobile.byMoodLine2": "Ambiance",
+    "mobile.byGenreLine1": "Par",
+    "mobile.byGenreLine2": "Genre",
     "mobile.orChooseIndustry": "Ou choisissez votre secteur",
     "mobile.selectIndustry": "Sélectionner le secteur",
     "industry.playAllShuffled": "Tout lire en aléatoire",
