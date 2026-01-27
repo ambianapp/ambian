@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Music, Play, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
+import QuickMixDialog from "@/components/QuickMixDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -252,16 +253,32 @@ const AllPlaylists = () => {
             </div>
           </div>
           {allPlaylists.length > 0 && !isLoading && (
-            <Button
-              onClick={handlePlayAllShuffled}
-              size="sm"
-              className="gap-2 shrink-0"
-            >
-              <Shuffle className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("industry.playAllShuffled")}</span>
-            </Button>
+            <QuickMixDialog
+              onTrackSelect={handleTrackSelect}
+              trigger={
+                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                  <Shuffle className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("quickMix.button")}</span>
+                </Button>
+              }
+            />
           )}
         </div>
+      </div>
+
+      {/* Quick Mix Button - full width on mobile, under header */}
+      <div className="px-4 md:px-6 pb-4 md:hidden">
+        {allPlaylists.length > 0 && !isLoading && (
+          <QuickMixDialog
+            onTrackSelect={handleTrackSelect}
+            trigger={
+              <Button variant="outline" className="w-full gap-2">
+                <Shuffle className="w-4 h-4" />
+                {t("quickMix.button")}
+              </Button>
+            }
+          />
+        )}
       </div>
 
       {/* Content */}
