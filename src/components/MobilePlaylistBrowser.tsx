@@ -347,8 +347,9 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               {t("mobile.byMoodLine1")}
             </span>
             <span className="text-xl font-bold text-white leading-tight">
-              {t("mobile.byMoodLine2")} 💖
+              {t("mobile.byMoodLine2")}
             </span>
+            <span className="text-2xl mt-1">💖</span>
           </div>
         </button>
 
@@ -363,8 +364,9 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               {t("mobile.byGenreLine1")}
             </span>
             <span className="text-xl font-bold text-white leading-tight">
-              {t("mobile.byGenreLine2")} 🎸
+              {t("mobile.byGenreLine2")}
             </span>
+            <span className="text-2xl mt-1">🎸</span>
           </div>
         </button>
       </div>
