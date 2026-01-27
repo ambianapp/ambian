@@ -503,7 +503,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full h-11 md:h-11 mt-6"
+              className="w-full h-11 md:h-11 mt-8"
               disabled={isLoading}
             >
               {isLoading ? (
