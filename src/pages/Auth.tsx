@@ -388,12 +388,12 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-start pt-[8vh] md:pt-[6vh] lg:items-center lg:pt-0 justify-center p-4 md:p-6 overflow-hidden relative z-10 lg:bg-background">
+      <div className="w-full lg:w-1/2 flex items-start pt-[4vh] md:pt-[6vh] lg:items-center lg:pt-0 justify-center p-4 md:p-6 overflow-hidden relative z-10 lg:bg-background">
         <div className="w-full max-w-md space-y-2 md:space-y-3 animate-fade-in lg:[@media(max-height:820px)]:scale-[0.94] lg:[@media(max-height:820px)]:origin-center">
           {/* Mobile/Tablet Logo */}
-          <div className="lg:hidden mb-12 md:mb-14">
-            <img src={ambianLogo} alt="Ambian" className="h-10 md:h-12 mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground text-center">
+          <div className="lg:hidden mb-8 md:mb-14">
+            <img src={ambianLogo} alt="Ambian" className="h-14 md:h-12 mx-auto mb-3" />
+            <p className="text-sm md:text-xs text-muted-foreground text-center">
               {t("auth.noLicensesShort")}
             </p>
           </div>
