@@ -36,6 +36,7 @@ interface DbPlaylist {
 interface MobilePlaylistBrowserProps {
   onPlaylistSelect: (playlist: SelectedPlaylist) => void;
   onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
+  onViewChange: (view: "mood" | "genre") => void;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -47,7 +48,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Building2,
 };
 
-const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect }: MobilePlaylistBrowserProps) => {
+const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }: MobilePlaylistBrowserProps) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -57,12 +58,6 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect }: MobilePlayli
   const [collectionPlaylists, setCollectionPlaylists] = useState<DbPlaylist[]>([]);
   const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set());
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
-  
-  // Mood and Genre dialog states
-  const [moodDialogOpen, setMoodDialogOpen] = useState(false);
-  const [genreDialogOpen, setGenreDialogOpen] = useState(false);
-  const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
-  const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
 
   // Translation key mapping for collection names
   const collectionTranslationKeys: Record<string, { name: string; desc: string }> = {
@@ -106,36 +101,12 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect }: MobilePlayli
     setCollections(data || []);
   };
 
-  const loadMoodPlaylists = async () => {
-    const { data } = await supabase
-      .from("playlists")
-      .select("id, name, description, cover_url")
-      .eq("is_system", true)
-      .eq("category", "mood")
-      .order("name", { ascending: true });
-
-    setMoodPlaylists(data || []);
-  };
-
-  const loadGenrePlaylists = async () => {
-    const { data } = await supabase
-      .from("playlists")
-      .select("id, name, description, cover_url")
-      .eq("is_system", true)
-      .eq("category", "genre")
-      .order("name", { ascending: true });
-
-    setGenrePlaylists(data || []);
-  };
-
   const handleMoodOpen = () => {
-    setMoodDialogOpen(true);
-    loadMoodPlaylists();
+    onViewChange("mood");
   };
 
   const handleGenreOpen = () => {
-    setGenreDialogOpen(true);
-    loadGenrePlaylists();
+    onViewChange("genre");
   };
 
   const loadCollectionPlaylists = async (collectionId: string) => {
@@ -574,115 +545,6 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect }: MobilePlayli
         </DialogContent>
       </Dialog>
 
-      {/* Mood Playlists Dialog */}
-      <Dialog open={moodDialogOpen} onOpenChange={setMoodDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <Heart className="w-6 h-6 text-primary" />
-              <span>{t("mobile.mood")}</span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="flex flex-col gap-1 mt-4">
-            {moodPlaylists.length > 0 ? (
-              moodPlaylists.map((playlist) => (
-                <div 
-                  key={playlist.id} 
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group"
-                  onClick={() => {
-                    setMoodDialogOpen(false);
-                    handlePlaylistClick(playlist);
-                  }}
-                >
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-secondary shrink-0">
-                    <img
-                      src={playlist.cover_url || "/placeholder.svg"}
-                      alt={playlist.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMoodDialogOpen(false);
-                        handlePlayPlaylist(playlist.id);
-                      }}
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Play className="w-5 h-5 text-white fill-white" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{playlist.name}</p>
-                    {playlist.description && (
-                      <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground py-8">
-                {t("industry.noPlaylists")}
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Genre Playlists Dialog */}
-      <Dialog open={genreDialogOpen} onOpenChange={setGenreDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <Palette className="w-6 h-6 text-primary" />
-              <span>{t("mobile.genre")}</span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="flex flex-col gap-1 mt-4">
-            {genrePlaylists.length > 0 ? (
-              genrePlaylists.map((playlist) => (
-                <div 
-                  key={playlist.id} 
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group"
-                  onClick={() => {
-                    setGenreDialogOpen(false);
-                    handlePlaylistClick(playlist);
-                  }}
-                >
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-secondary shrink-0">
-                    <img
-                      src={playlist.cover_url || "/placeholder.svg"}
-                      alt={playlist.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setGenreDialogOpen(false);
-                        handlePlayPlaylist(playlist.id);
-                      }}
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Play className="w-5 h-5 text-white fill-white" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{playlist.name}</p>
-                    {playlist.description && (
-                      <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground py-8">
-                {t("industry.noPlaylists")}
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

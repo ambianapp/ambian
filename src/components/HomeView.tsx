@@ -352,6 +352,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         <MobilePlaylistBrowser
           onPlaylistSelect={onPlaylistSelect}
           onTrackSelect={onTrackSelect}
+          onViewChange={(view) => setMobileView(view)}
         />
         
         {/* Recently Played - below the browser on mobile */}
