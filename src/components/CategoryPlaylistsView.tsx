@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Track } from "@/data/musicData";
 import type { Tables } from "@/integrations/supabase/types";
+import QuickMixDialog from "@/components/QuickMixDialog";
 
 type DbPlaylist = Tables<"playlists">;
 
@@ -191,29 +192,31 @@ const CategoryPlaylistsView = ({
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-4 sm:p-6 space-y-4">
         {/* Header with Back Button */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
-          </div>
-          {playlists.length > 0 && !isLoading && (
-            <Button
-              onClick={handlePlayAllShuffled}
-              size="sm"
-              className="gap-2 shrink-0"
-            >
-              <Shuffle className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("industry.playAllShuffled")}</span>
-            </Button>
-          )}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
         </div>
+
+        {/* Quick Mix Button - under header, before playlists */}
+        {playlists.length > 0 && !isLoading && (
+          <QuickMixDialog
+            onTrackSelect={onTrackSelect}
+            trigger={
+              <Button variant="outline" className="w-full gap-2">
+                <Shuffle className="w-4 h-4" />
+                {t("quickMix.button")}
+              </Button>
+            }
+            category={category}
+          />
+        )}
 
         {/* Playlists List */}
         {isLoading ? (

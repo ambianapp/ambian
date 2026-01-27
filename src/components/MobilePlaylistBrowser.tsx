@@ -10,7 +10,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Track } from "@/data/musicData";
-import QuickMixDialog from "@/components/QuickMixDialog";
 
 interface SelectedPlaylist {
   id: string;
@@ -327,92 +326,51 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
 
       {/* Mood & Genre Row */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <button
-            onClick={handleMoodOpen}
-            className="relative group w-full h-20 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/30 border border-primary/30 hover:border-primary/60 transition-all duration-300 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-colors" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-1">
-                <Heart className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold text-foreground">
-                  {t("mobile.mood")}
-                </span>
-              </div>
+        <button
+          onClick={handleMoodOpen}
+          className="relative group h-20 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/30 border border-primary/30 hover:border-primary/60 transition-all duration-300 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-colors" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-1">
+              <Heart className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold text-foreground">
+                {t("mobile.mood")}
+              </span>
             </div>
-            <div className="absolute inset-0 border border-primary/0 group-hover:border-primary/40 rounded-xl transition-colors" />
-          </button>
-          <QuickMixDialog
-            onTrackSelect={(track, tracks, isQuickMix) => {
-              onTrackSelect(track, tracks);
-            }}
-            trigger={
-              <Button variant="outline" size="sm" className="w-full gap-2 h-9">
-                <Shuffle className="w-3.5 h-3.5" />
-                <span className="text-xs">{t("quickMix.button")}</span>
-              </Button>
-            }
-            category="mood"
-          />
-        </div>
+          </div>
+          <div className="absolute inset-0 border border-primary/0 group-hover:border-primary/40 rounded-xl transition-colors" />
+        </button>
 
-        <div className="space-y-2">
-          <button
-            onClick={handleGenreOpen}
-            className="relative group w-full h-20 rounded-xl bg-gradient-to-br from-accent/20 via-muted/30 to-accent/30 border border-accent/30 hover:border-accent/60 transition-all duration-300 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent group-hover:from-accent/10 transition-colors" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-1">
-                <Palette className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold text-foreground">
-                  {t("mobile.genre")}
-                </span>
-              </div>
+        <button
+          onClick={handleGenreOpen}
+          className="relative group h-20 rounded-xl bg-gradient-to-br from-accent/20 via-muted/30 to-accent/30 border border-accent/30 hover:border-accent/60 transition-all duration-300 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent group-hover:from-accent/10 transition-colors" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-1">
+              <Palette className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold text-foreground">
+                {t("mobile.genre")}
+              </span>
             </div>
-            <div className="absolute inset-0 border border-accent/0 group-hover:border-accent/40 rounded-xl transition-colors" />
-          </button>
-          <QuickMixDialog
-            onTrackSelect={(track, tracks, isQuickMix) => {
-              onTrackSelect(track, tracks);
-            }}
-            trigger={
-              <Button variant="outline" size="sm" className="w-full gap-2 h-9">
-                <Shuffle className="w-3.5 h-3.5" />
-                <span className="text-xs">{t("quickMix.button")}</span>
-              </Button>
-            }
-            category="genre"
-          />
-        </div>
+          </div>
+          <div className="absolute inset-0 border border-accent/0 group-hover:border-accent/40 rounded-xl transition-colors" />
+        </button>
       </div>
 
       {/* All Playlists Button */}
-      <div className="space-y-2">
-        <button
-          onClick={() => navigate("/playlists")}
-          className="w-full h-16 rounded-xl bg-gradient-to-r from-primary/20 via-secondary to-primary/20 border border-border hover:border-primary/50 transition-all duration-300 group"
-        >
-          <div className="flex items-center justify-center gap-2">
-            <Music className="w-5 h-5 text-primary" />
-            <span className="text-sm font-semibold text-foreground">
-              {t("home.allPlaylists")}
-            </span>
-          </div>
-        </button>
-        <QuickMixDialog
-          onTrackSelect={(track, tracks, isQuickMix) => {
-            onTrackSelect(track, tracks);
-          }}
-          trigger={
-            <Button variant="outline" size="sm" className="w-full gap-2 h-9">
-              <Shuffle className="w-3.5 h-3.5" />
-              <span className="text-xs">{t("quickMix.button")}</span>
-            </Button>
-          }
-        />
-      </div>
+      <button
+        onClick={() => navigate("/playlists")}
+        className="w-full h-16 rounded-xl bg-gradient-to-r from-primary/20 via-secondary to-primary/20 border border-border hover:border-primary/50 transition-all duration-300 group"
+      >
+        <div className="flex items-center justify-center gap-2">
+          <Music className="w-5 h-5 text-primary" />
+          <span className="text-sm font-semibold text-foreground">
+            {t("home.allPlaylists")}
+          </span>
+        </div>
+      </button>
 
       {/* Industry Dropdown */}
       <div className="space-y-3 pt-2">
