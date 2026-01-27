@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PlaylistCard from "./PlaylistCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -32,8 +31,6 @@ const CategoryPlaylistsView = ({
   onBack,
   onPlaylistSelect,
   onTrackSelect,
-  currentTrack,
-  isPlaying,
 }: CategoryPlaylistsViewProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -57,14 +54,19 @@ const CategoryPlaylistsView = ({
     setIsLoading(false);
   };
 
-  const handlePlaylistClick = async (playlist: SelectedPlaylist) => {
+  const handlePlaylistClick = async (playlist: DbPlaylist) => {
     if (user) {
       await supabase.from("play_history").insert({
         user_id: user.id,
         playlist_id: playlist.id,
       });
     }
-    onPlaylistSelect(playlist);
+    onPlaylistSelect({
+      id: playlist.id,
+      name: playlist.name,
+      cover: playlist.cover_url,
+      description: playlist.description,
+    });
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
@@ -120,10 +122,6 @@ const CategoryPlaylistsView = ({
     }
   };
 
-  const handlePlaylistUpdate = async (id: string, data: { name: string; description: string; cover: string }) => {
-    // Admin-only functionality - kept for compatibility
-  };
-
   const title = category === "mood" ? t("home.byMood") : t("home.byGenre");
 
   return (
@@ -142,36 +140,50 @@ const CategoryPlaylistsView = ({
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
         </div>
 
-        {/* Playlists Grid */}
+        {/* Playlists List */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="flex flex-col gap-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-square bg-secondary/50 rounded-xl animate-pulse" />
+              <div key={i} className="flex items-center gap-4 p-3 bg-secondary/50 rounded-lg animate-pulse">
+                <div className="w-12 h-12 bg-secondary rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-secondary rounded w-1/3" />
+                  <div className="h-3 bg-secondary rounded w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="flex flex-col gap-1">
             {playlists.map((playlist) => (
-              <PlaylistCard
+              <div
                 key={playlist.id}
-                playlist={{
-                  id: playlist.id,
-                  name: playlist.name,
-                  description: playlist.description || "",
-                  cover: playlist.cover_url || "/placeholder.svg",
-                  trackCount: 0,
-                  tracks: [],
-                }}
-                onClick={() => handlePlaylistClick({
-                  id: playlist.id,
-                  name: playlist.name,
-                  cover: playlist.cover_url,
-                  description: playlist.description,
-                })}
-                onPlay={() => handlePlayPlaylist(playlist.id)}
-                onUpdate={handlePlaylistUpdate}
-                compact
-              />
+                className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group"
+                onClick={() => handlePlaylistClick(playlist)}
+              >
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-secondary shrink-0">
+                  <img
+                    src={playlist.cover_url || "/placeholder.svg"}
+                    alt={playlist.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayPlaylist(playlist.id);
+                    }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Play className="w-5 h-5 text-white fill-white" />
+                  </button>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground truncate">{playlist.name}</p>
+                  {playlist.description && (
+                    <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}
