@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Music, Play, Shuffle } from "lucide-react";
+import { ArrowLeft, Music, Play, Pause, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
 import QuickMixDialog from "@/components/QuickMixDialog";
@@ -26,11 +26,12 @@ const AllPlaylists = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentTrack, isPlaying, handleTrackSelect } = usePlayer();
+  const { currentTrack, isPlaying, handleTrackSelect, currentPlaylistId } = usePlayer();
   
   const [allPlaylists, setAllPlaylists] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
+  const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPlaylists();
@@ -87,58 +88,67 @@ const AllPlaylists = () => {
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
-    const { data } = await supabase
-      .from("playlist_tracks")
-      .select("track_id, tracks(*)")
-      .eq("playlist_id", playlistId)
-      .order("position", { ascending: true })
-      .limit(1);
+    // Set loading state immediately for instant feedback
+    setLoadingPlaylistId(playlistId);
+    
+    try {
+      const { data } = await supabase
+        .from("playlist_tracks")
+        .select("track_id, tracks(*)")
+        .eq("playlist_id", playlistId)
+        .order("position", { ascending: true })
+        .limit(1);
 
-    if (data && data.length > 0) {
-      const track = (data[0] as any).tracks;
-      if (track) {
-        const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
+      if (data && data.length > 0) {
+        const track = (data[0] as any).tracks;
+        if (track) {
+          const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
 
-        const { data: allTracksData } = await supabase
-          .from("playlist_tracks")
-          .select("tracks(*)")
-          .eq("playlist_id", playlistId)
-          .order("position", { ascending: true });
+          const { data: allTracksData } = await supabase
+            .from("playlist_tracks")
+            .select("tracks(*)")
+            .eq("playlist_id", playlistId)
+            .order("position", { ascending: true });
 
-        const playlistTracks: Track[] = (allTracksData || [])
-          .map((item: any) => item.tracks)
-          .filter(Boolean)
-          .map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            artist: t.artist,
-            album: t.album || "",
-            duration: t.duration || "",
-            cover: t.cover_url || "/placeholder.svg",
-            genre: t.genre || "",
-          }));
+          const playlistTracks: Track[] = (allTracksData || [])
+            .map((item: any) => item.tracks)
+            .filter(Boolean)
+            .map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              artist: t.artist,
+              album: t.album || "",
+              duration: t.duration || "",
+              cover: t.cover_url || "/placeholder.svg",
+              genre: t.genre || "",
+            }));
 
-        if (user) {
-          await supabase.from("play_history").insert({
-            user_id: user.id,
-            playlist_id: playlistId,
-          });
+          if (user) {
+            await supabase.from("play_history").insert({
+              user_id: user.id,
+              playlist_id: playlistId,
+            });
+          }
+
+          handleTrackSelect(
+            {
+              id: track.id,
+              title: track.title,
+              artist: track.artist,
+              album: track.album || "",
+              duration: track.duration || "",
+              cover: track.cover_url || "/placeholder.svg",
+              genre: track.genre || "",
+              audioUrl: signedAudioUrl,
+            },
+            playlistTracks,
+            false, // isQuickMix
+            playlistId
+          );
         }
-
-        handleTrackSelect(
-          {
-            id: track.id,
-            title: track.title,
-            artist: track.artist,
-            album: track.album || "",
-            duration: track.duration || "",
-            cover: track.cover_url || "/placeholder.svg",
-            genre: track.genre || "",
-            audioUrl: signedAudioUrl,
-          },
-          playlistTracks
-        );
       }
+    } finally {
+      setLoadingPlaylistId(null);
     }
   };
 
@@ -306,15 +316,24 @@ const AllPlaylists = () => {
                     alt={playlist.name}
                     className="w-full h-full object-cover"
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayPlaylist(playlist.id);
-                    }}
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Play className="w-5 h-5 text-white fill-white" />
-                  </button>
+                  {(() => {
+                    const isThisPlaylistPlaying = (currentPlaylistId === playlist.id && isPlaying) || loadingPlaylistId === playlist.id;
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayPlaylist(playlist.id);
+                        }}
+                        className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        {isThisPlaylistPlaying ? (
+                          <Pause className="w-5 h-5 text-white fill-white" />
+                        ) : (
+                          <Play className="w-5 h-5 text-white fill-white" />
+                        )}
+                      </button>
+                    );
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-foreground truncate">{playlist.name}</h3>
