@@ -333,8 +333,21 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect }: MobilePlayli
     return iconMap[iconName];
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t("home.greeting.morning") + " ☀️";
+    if (hour < 18) return t("home.greeting.afternoon") + " 🌤️";
+    return t("home.greeting.evening") + " 🌙";
+  };
+
   return (
     <div className="px-4 py-6 space-y-6 animate-fade-in">
+      {/* Greeting */}
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-foreground">{getGreeting()}</h1>
+        <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
+      </div>
+
       {/* Header */}
       <h2 className="text-lg font-bold text-foreground text-center uppercase tracking-wider">
         {t("mobile.playlistsBy")}
