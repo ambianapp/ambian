@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Music, Play } from "lucide-react";
+import { ArrowLeft, Music, Play, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistDetailView from "@/components/PlaylistDetailView";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,6 +141,69 @@ const AllPlaylists = () => {
     }
   };
 
+  const handlePlayAllShuffled = async () => {
+    if (allPlaylists.length === 0) return;
+
+    const playlistIds = allPlaylists.map(p => p.id);
+
+    const { data: allTracksData } = await supabase
+      .from("playlist_tracks")
+      .select("tracks(*), playlist_id")
+      .in("playlist_id", playlistIds)
+      .limit(10000);
+
+    if (!allTracksData || allTracksData.length === 0) return;
+
+    const allTracks: Track[] = allTracksData
+      .map((item: any) => item.tracks)
+      .filter(Boolean)
+      .map((t: any) => ({
+        id: t.id,
+        title: t.title,
+        artist: t.artist,
+        album: t.album || "",
+        duration: t.duration || "",
+        cover: t.cover_url || "/placeholder.svg",
+        genre: t.genre || "",
+      }));
+
+    // Remove duplicates
+    const uniqueTracks = allTracks.filter((track, index, self) =>
+      index === self.findIndex(t => t.id === track.id)
+    );
+
+    if (uniqueTracks.length === 0) return;
+
+    // Shuffle
+    const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
+
+    const firstTrack = shuffledTracks[0];
+    const { data: trackData } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", firstTrack.id)
+      .single();
+
+    const signedAudioUrl = trackData?.audio_url
+      ? await getSignedAudioUrl(trackData.audio_url)
+      : undefined;
+
+    // Record play history
+    if (user) {
+      for (const playlistId of playlistIds.slice(0, 5)) {
+        await supabase.from("play_history").insert({
+          user_id: user.id,
+          playlist_id: playlistId,
+        });
+      }
+    }
+
+    handleTrackSelect({
+      ...firstTrack,
+      audioUrl: signedAudioUrl,
+    }, shuffledTracks);
+  };
+
   // Show playlist detail view when a playlist is selected
   if (selectedPlaylist) {
     return (
@@ -164,28 +227,40 @@ const AllPlaylists = () => {
     <div className="min-h-screen bg-background pb-40 md:pb-32">
       {/* Header */}
       <div className="sticky top-0 z-40 glass border-b border-border">
-        <div className="flex items-center gap-4 p-4 md:p-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex w-10 h-10 rounded-xl bg-primary/20 items-center justify-center">
-              <Music className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">
-                {t("home.allPlaylists") || "All Playlists"}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {allPlaylists.length} {t("library.playlists") || "playlists"}
-              </p>
+        <div className="flex items-center justify-between gap-4 p-4 md:p-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex w-10 h-10 rounded-xl bg-primary/20 items-center justify-center">
+                <Music className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">
+                  {t("home.allPlaylists") || "All Playlists"}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {allPlaylists.length} {t("library.playlists") || "playlists"}
+                </p>
+              </div>
             </div>
           </div>
+          {allPlaylists.length > 0 && !isLoading && (
+            <Button
+              onClick={handlePlayAllShuffled}
+              size="sm"
+              className="gap-2 shrink-0"
+            >
+              <Shuffle className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("industry.playAllShuffled")}</span>
+            </Button>
+          )}
         </div>
       </div>
 
