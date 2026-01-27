@@ -476,13 +476,13 @@ const Auth = () => {
 
             {/* Terms Checkbox - Only show for signup */}
             {!isLogin && (
-              <div className="space-y-2 md:space-y-2">
-                <div className="flex items-start gap-3">
+              <div className="space-y-2 md:space-y-2 pl-1">
+                <div className="flex items-start gap-2">
                   <Checkbox
                     id="terms"
                     checked={acceptedTerms}
                     onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-                    className="mt-1"
+                    className="mt-0.5"
                   />
                   <Label htmlFor="terms" className="text-xs xl:text-sm text-muted-foreground leading-snug cursor-pointer">
                     {t("auth.iAccept")}{" "}
@@ -496,7 +496,7 @@ const Auth = () => {
                   </Label>
                 </div>
                 {errors.terms && (
-                  <p className="text-sm text-destructive">{errors.terms}</p>
+                  <p className="text-sm text-destructive pl-5">{errors.terms}</p>
                 )}
               </div>
             )}
