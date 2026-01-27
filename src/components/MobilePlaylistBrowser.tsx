@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, Music, Palette, ChevronDown, Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -388,8 +388,8 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
           {t("mobile.orChooseIndustry")}
         </p>
         
-        <Popover open={industryOpen} onOpenChange={setIndustryOpen}>
-          <PopoverTrigger asChild>
+        <Drawer open={industryOpen} onOpenChange={setIndustryOpen}>
+          <DrawerTrigger asChild>
             <Button
               variant="outline"
               className="w-full justify-between h-12 border-border hover:border-primary/50"
@@ -400,34 +400,39 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               </div>
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[calc(100vw-2rem)] p-2" align="center">
-            <div className="grid grid-cols-1 gap-1">
-              {collections.map((collection) => {
-                const Icon = getIcon(collection.icon);
-                return (
-                  <button
-                    key={collection.id}
-                    onClick={() => handleCollectionSelect(collection)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors text-left"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {getTranslatedName(collection.name)}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {getTranslatedDescription(collection.name, collection.description)}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[85dvh]">
+            <div className="p-4 pb-8">
+              <h3 className="text-lg font-semibold text-foreground mb-4 text-center">
+                {t("mobile.selectIndustry")}
+              </h3>
+              <div className="grid grid-cols-1 gap-1">
+                {collections.map((collection) => {
+                  const Icon = getIcon(collection.icon);
+                  return (
+                    <button
+                      key={collection.id}
+                      onClick={() => handleCollectionSelect(collection)}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground truncate">
+                          {getTranslatedName(collection.name)}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {getTranslatedDescription(collection.name, collection.description)}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </PopoverContent>
-        </Popover>
+          </DrawerContent>
+        </Drawer>
       </div>
 
       {/* Collection Playlists Dialog */}
