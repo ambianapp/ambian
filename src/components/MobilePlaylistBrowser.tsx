@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, Music, Palette, ChevronDown, Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
+import { Music, ChevronDown, Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
 import QuickMixDialog from "./QuickMixDialog";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
@@ -333,39 +333,37 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         </div>
       </button>
 
-      {/* Mood & Genre Row */}
+      {/* Mood & Genre Row - Spotify-style colored cards */}
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={handleMoodOpen}
-          className="relative group h-28 rounded-2xl bg-gradient-to-br from-primary/30 via-primary/15 to-primary/40 border-2 border-primary/40 hover:border-primary/70 transition-all duration-300 overflow-hidden shadow-lg shadow-primary/10 active:scale-[0.98]"
+          className="relative group h-32 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent group-hover:from-primary/20 transition-colors" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
-                <Heart className="w-6 h-6 text-primary" />
-              </div>
-              <span className="text-sm font-bold text-foreground">
-                {t("mobile.showByMood")}
-              </span>
-            </div>
+          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+          <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
+            <span className="text-3xl mb-1">💖</span>
+            <span className="text-xl font-bold text-white leading-tight">
+              {t("mobile.byMoodLine1")}
+            </span>
+            <span className="text-xl font-bold text-white leading-tight">
+              {t("mobile.byMoodLine2")}
+            </span>
           </div>
         </button>
 
         <button
           onClick={handleGenreOpen}
-          className="relative group h-28 rounded-2xl bg-gradient-to-br from-accent/30 via-muted/40 to-accent/40 border-2 border-accent/40 hover:border-accent/70 transition-all duration-300 overflow-hidden shadow-lg shadow-accent/10 active:scale-[0.98]"
+          className="relative group h-32 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent group-hover:from-accent/20 transition-colors" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mb-1">
-                <Palette className="w-6 h-6 text-primary" />
-              </div>
-              <span className="text-sm font-bold text-foreground">
-                {t("mobile.showByGenre")}
-              </span>
-            </div>
+          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+          <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
+            <span className="text-3xl mb-1">🎸</span>
+            <span className="text-xl font-bold text-white leading-tight">
+              {t("mobile.byGenreLine1")}
+            </span>
+            <span className="text-xl font-bold text-white leading-tight">
+              {t("mobile.byGenreLine2")}
+            </span>
           </div>
         </button>
       </div>
