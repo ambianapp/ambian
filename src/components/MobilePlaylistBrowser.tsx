@@ -343,12 +343,11 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
           <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
-            <span className="text-3xl mb-1">💖</span>
             <span className="text-xl font-bold text-white leading-tight">
               {t("mobile.byMoodLine1")}
             </span>
             <span className="text-xl font-bold text-white leading-tight">
-              {t("mobile.byMoodLine2")}
+              {t("mobile.byMoodLine2")} 💖
             </span>
           </div>
         </button>
@@ -360,12 +359,11 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
           <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
-            <span className="text-3xl mb-1">🎸</span>
             <span className="text-xl font-bold text-white leading-tight">
               {t("mobile.byGenreLine1")}
             </span>
             <span className="text-xl font-bold text-white leading-tight">
-              {t("mobile.byGenreLine2")}
+              {t("mobile.byGenreLine2")} 🎸
             </span>
           </div>
         </button>
