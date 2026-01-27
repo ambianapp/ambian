@@ -488,7 +488,9 @@ export const translations: Record<Language, Record<string, string>> = {
     // Mobile playlist browser
     "mobile.playlistsBy": "Show Playlists By",
     "mobile.mood": "Mood",
+    "mobile.moodSuffix": "",
     "mobile.genre": "Genre",
+    "mobile.genreSuffix": "",
     "mobile.orChooseIndustry": "Or choose your industry",
     "mobile.selectIndustry": "Select Industry",
     "industry.playAllShuffled": "Play All Shuffled",
@@ -1261,7 +1263,9 @@ export const translations: Record<Language, Record<string, string>> = {
     // Mobile playlist browser
     "mobile.playlistsBy": "Visa spellistor efter",
     "mobile.mood": "Stämning",
+    "mobile.moodSuffix": "",
     "mobile.genre": "Genre",
+    "mobile.genreSuffix": "",
     "mobile.orChooseIndustry": "Eller välj din bransch",
     "mobile.selectIndustry": "Välj bransch",
     "industry.playAllShuffled": "Spela alla blandade",
@@ -2033,8 +2037,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.playlistsBy": "Näytä soittolistat",
-    "mobile.mood": "Tunnelma",
-    "mobile.genre": "Genre",
+    "mobile.mood": "Tunnelman",
+    "mobile.moodSuffix": "mukaan",
+    "mobile.genre": "Genren",
+    "mobile.genreSuffix": "mukaan",
     "mobile.orChooseIndustry": "Tai valitse toimialasi",
     "mobile.selectIndustry": "Valitse toimiala",
     "industry.playAllShuffled": "Toista kaikki sekoitettuna",
@@ -2808,7 +2814,9 @@ export const translations: Record<Language, Record<string, string>> = {
     // Mobile playlist browser
     "mobile.playlistsBy": "Playlists anzeigen nach",
     "mobile.mood": "Stimmung",
+    "mobile.moodSuffix": "",
     "mobile.genre": "Genre",
+    "mobile.genreSuffix": "",
     "mobile.orChooseIndustry": "Oder wählen Sie Ihre Branche",
     "mobile.selectIndustry": "Branche auswählen",
     "industry.playAllShuffled": "Alle zufällig abspielen",
@@ -3581,7 +3589,9 @@ export const translations: Record<Language, Record<string, string>> = {
     // Mobile playlist browser
     "mobile.playlistsBy": "Afficher les playlists par",
     "mobile.mood": "Ambiance",
+    "mobile.moodSuffix": "",
     "mobile.genre": "Genre",
+    "mobile.genreSuffix": "",
     "mobile.orChooseIndustry": "Ou choisissez votre secteur",
     "mobile.selectIndustry": "Sélectionner le secteur",
     "industry.playAllShuffled": "Tout lire en aléatoire",
