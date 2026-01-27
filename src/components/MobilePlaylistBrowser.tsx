@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Music, ChevronDown, Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
+import { ChevronDown, Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
 import QuickMixDialog from "./QuickMixDialog";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
@@ -327,14 +327,10 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         style={{ background: 'linear-gradient(135deg, #f725bd 0%, #9b48ce 100%)' }}
       >
         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
-        <div className="absolute inset-0 flex items-center justify-between px-5">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🎵</span>
-            <span className="text-xl font-bold text-white">
-              {t("mobile.showAllPlaylists")}
-            </span>
-          </div>
-          <Music className="w-6 h-6 text-white/70" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xl font-bold text-white">
+            {t("mobile.showAllPlaylists")}
+          </span>
         </div>
       </button>
 
