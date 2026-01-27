@@ -320,10 +320,11 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
       </div>
 
-      {/* All Playlists Button - Spotify-style */}
+      {/* All Playlists Button - Brand styled */}
       <button
         onClick={() => navigate("/playlists")}
-        className="relative w-full h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98] group"
+        className="relative w-full h-20 rounded-2xl transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98] group"
+        style={{ background: 'linear-gradient(135deg, #f725bd 0%, #9b48ce 100%)' }}
       >
         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
         <div className="absolute inset-0 flex items-center justify-between px-5">
@@ -337,11 +338,12 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         </div>
       </button>
 
-      {/* Mood & Genre Row - Spotify-style colored cards */}
+      {/* Mood & Genre Row - Brand colored cards */}
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={handleMoodOpen}
-          className="relative group h-32 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
+          className="relative group h-32 rounded-2xl transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #f725bd 0%, #d41f9e 100%)' }}
         >
           <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
           <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
@@ -357,7 +359,8 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
 
         <button
           onClick={handleGenreOpen}
-          className="relative group h-32 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
+          className="relative group h-32 rounded-2xl transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #9b48ce 0%, #7b35a8 100%)' }}
         >
           <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
           <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
