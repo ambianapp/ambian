@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { X, Bell } from "lucide-react";
@@ -10,14 +10,62 @@ interface Notification {
   created_at: string;
 }
 
+const DISMISSED_KEY = "ambian_dismissed_notifications";
+const NOTIFICATION_MAX_AGE_HOURS = 24;
+
+const getDismissedIds = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(DISMISSED_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const saveDismissedId = (id: string) => {
+  try {
+    const dismissed = getDismissedIds();
+    dismissed.add(id);
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissed]));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
+
 export const AdminNotificationBanner = () => {
   const { user } = useAuth();
   const [notification, setNotification] = useState<Notification | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(getDismissedIds);
+
+  const showNotification = useCallback((notif: Notification) => {
+    if (!dismissedIds.has(notif.id)) {
+      setNotification(notif);
+      setIsVisible(true);
+    }
+  }, [dismissedIds]);
 
   useEffect(() => {
     if (!user) return;
+
+    // Fetch recent notifications on login (last 24 hours)
+    const fetchRecent = async () => {
+      const cutoff = new Date();
+      cutoff.setHours(cutoff.getHours() - NOTIFICATION_MAX_AGE_HOURS);
+      
+      const { data } = await supabase
+        .from("admin_notifications")
+        .select("*")
+        .gte("created_at", cutoff.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (data?.[0]) {
+        showNotification(data[0] as Notification);
+      }
+    };
+
+    fetchRecent();
 
     // Subscribe to realtime notifications
     const channel = supabase
@@ -30,11 +78,7 @@ export const AdminNotificationBanner = () => {
           table: "admin_notifications",
         },
         (payload) => {
-          const newNotification = payload.new as Notification;
-          if (!dismissedIds.has(newNotification.id)) {
-            setNotification(newNotification);
-            setIsVisible(true);
-          }
+          showNotification(payload.new as Notification);
         }
       )
       .subscribe();
@@ -42,14 +86,14 @@ export const AdminNotificationBanner = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, dismissedIds]);
+  }, [user, showNotification]);
 
   const handleDismiss = () => {
     if (notification) {
+      saveDismissedId(notification.id);
       setDismissedIds((prev) => new Set(prev).add(notification.id));
     }
     setIsVisible(false);
-    // Clear notification after animation
     setTimeout(() => setNotification(null), 300);
   };
 
