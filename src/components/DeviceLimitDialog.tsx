@@ -22,7 +22,7 @@ interface DeviceLimitDialogProps {
   onClose: () => void;
 }
 
-const parseDeviceInfo = (userAgent: string): { type: "phone" | "tablet" | "desktop"; name: string } => {
+const parseDeviceInfo = (userAgent: string, sessionId?: string): { type: "phone" | "tablet" | "desktop"; name: string; browser: string } => {
   const ua = userAgent.toLowerCase();
   
   // Detect device type
@@ -34,34 +34,49 @@ const parseDeviceInfo = (userAgent: string): { type: "phone" | "tablet" | "deskt
   }
 
   // Try to extract meaningful device name
-  let name = "Unknown Device";
+  let deviceName = "Unknown Device";
   
   if (/iphone/i.test(ua)) {
-    name = "iPhone";
+    deviceName = "iPhone";
   } else if (/ipad/i.test(ua)) {
-    name = "iPad";
+    deviceName = "iPad";
   } else if (/macintosh|mac os/i.test(ua)) {
-    name = "Mac";
+    deviceName = "Mac";
   } else if (/windows/i.test(ua)) {
-    name = "Windows PC";
+    deviceName = "Windows PC";
   } else if (/android/i.test(ua)) {
-    name = type === "phone" ? "Android Phone" : "Android Tablet";
+    deviceName = type === "phone" ? "Android Phone" : "Android Tablet";
   } else if (/linux/i.test(ua)) {
-    name = "Linux";
+    deviceName = "Linux";
   }
 
-  // Add browser info
+  // Detect browser
+  let browser = "";
   if (/chrome|crios/i.test(ua) && !/edge|edg/i.test(ua)) {
-    name += " (Chrome)";
+    browser = "Chrome";
   } else if (/safari/i.test(ua) && !/chrome|crios/i.test(ua)) {
-    name += " (Safari)";
+    browser = "Safari";
   } else if (/firefox|fxios/i.test(ua)) {
-    name += " (Firefox)";
+    browser = "Firefox";
   } else if (/edge|edg/i.test(ua)) {
-    name += " (Edge)";
+    browser = "Edge";
   }
 
-  return { type, name };
+  const name = browser ? `${deviceName} (${browser})` : deviceName;
+
+  return { type, name, browser };
+};
+
+// Check if two sessions appear to be from the same physical device
+const isSameDevice = (sessionId1: string, sessionId2: string): boolean => {
+  // If both use fingerprint-based IDs, compare the fingerprint portion
+  if (sessionId1.startsWith('fp_') && sessionId2.startsWith('fp_')) {
+    // Extract fingerprint (first 8 characters after 'fp_' are the stable hash)
+    const fp1 = sessionId1.substring(3, 11);
+    const fp2 = sessionId2.substring(3, 11);
+    return fp1 === fp2;
+  }
+  return false;
 };
 
 const DeviceIcon = ({ type }: { type: "phone" | "tablet" | "desktop" }) => {
@@ -174,18 +189,27 @@ export const DeviceLimitDialog = ({
 
               <div className="mt-4 space-y-3">
                 {activeDevices.map((device) => {
-                  const { type, name } = parseDeviceInfo(device.deviceInfo);
+                  const { type, name } = parseDeviceInfo(device.deviceInfo, device.sessionId);
                   const isCurrentDevice = device.sessionId === currentSessionId;
+                  
+                  // Check if this device appears to be the same physical device as current
+                  const isSamePhysicalDevice = !isCurrentDevice && isSameDevice(device.sessionId, currentSessionId);
 
                   return (
                     <div
                       key={device.sessionId}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
-                        isCurrentDevice ? "border-primary/50 bg-primary/5" : "border-border bg-card"
+                        isCurrentDevice ? "border-primary/50 bg-primary/5" : 
+                        isSamePhysicalDevice ? "border-warning/50 bg-warning/5" : 
+                        "border-border bg-card"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${isCurrentDevice ? "bg-primary/20" : "bg-muted"}`}>
+                        <div className={`p-2 rounded-full ${
+                          isCurrentDevice ? "bg-primary/20" : 
+                          isSamePhysicalDevice ? "bg-warning/20" : 
+                          "bg-muted"
+                        }`}>
                           <DeviceIcon type={type} />
                         </div>
                         <div>
@@ -193,6 +217,9 @@ export const DeviceLimitDialog = ({
                             {name}
                             {isCurrentDevice && (
                               <span className="ml-2 text-xs text-primary">(This device)</span>
+                            )}
+                            {isSamePhysicalDevice && (
+                              <span className="ml-2 text-xs text-warning">(Same device, different browser)</span>
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground">

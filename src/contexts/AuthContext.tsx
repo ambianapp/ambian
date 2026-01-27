@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
+import { getStableDeviceId, generateDeviceFingerprint } from "@/lib/deviceFingerprint";
 
 // Deduplication helper - prevents multiple calls within a time window
 const createDedupedCall = <T,>(fn: () => Promise<T>, minInterval: number) => {
@@ -275,48 +276,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Get or create a persistent device ID (survives token refreshes)
+  // Now uses device fingerprinting for better cross-browser recognition
   const getDeviceId = useCallback(() => {
-    // 1) Prefer the in-memory ID for stability during the current session.
-    if (deviceIdRef.current) return deviceIdRef.current;
-
     const storageKey = "ambian_device_id";
     const sessionKey = "ambian_device_id_session";
-
-    // 2) Try localStorage first, then sessionStorage as a fallback.
-    let deviceId: string | null = null;
-    try {
-      deviceId = localStorage.getItem(storageKey);
-    } catch {
-      // ignore
-    }
-
-    if (!deviceId) {
-      try {
-        deviceId = sessionStorage.getItem(sessionKey);
-      } catch {
-        // ignore
-      }
-    }
-
-    // 3) Generate if missing.
-    if (!deviceId) {
-      deviceId = crypto.randomUUID();
-    }
-
-    // 4) Persist best-effort (don’t crash if storage is blocked).
-    try {
-      localStorage.setItem(storageKey, deviceId);
-    } catch {
-      // ignore
-    }
-    try {
-      sessionStorage.setItem(sessionKey, deviceId);
-    } catch {
-      // ignore
-    }
-
-    deviceIdRef.current = deviceId;
-    return deviceId;
+    
+    return getStableDeviceId(deviceIdRef, storageKey, sessionKey);
   }, []);
 
   // Register session via edge function - now handles device limit gracefully
@@ -343,9 +308,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const sessionId = getDeviceId();
         const deviceInfo = navigator.userAgent;
+        const deviceFingerprint = generateDeviceFingerprint();
 
         const { data, error } = await supabase.functions.invoke("register-session", {
-          body: { sessionId, deviceInfo, forceRegister },
+          body: { sessionId, deviceInfo, forceRegister, deviceFingerprint },
         });
 
         if (error) {
