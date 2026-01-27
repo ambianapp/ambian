@@ -588,8 +588,8 @@ const PlayerBar = () => {
   useEffect(() => {
     if (!('mediaSession' in navigator) || !currentTrack) return;
 
-    // Always use Ambian logo for lock screen artwork (with cache buster)
-    const artworkUrl = `${window.location.origin}/ambian-logo.png?v=2`;
+    // Always use Ambian pink A logo for lock screen artwork (with cache buster)
+    const artworkUrl = `${window.location.origin}/ambian-logo-lockscreen.png?v=3`;
     
     // Set metadata with Ambian branding
     navigator.mediaSession.metadata = new MediaMetadata({
