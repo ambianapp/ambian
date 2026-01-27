@@ -22,9 +22,10 @@ interface QuickMixDialogProps {
   onTrackSelect: (track: Track, playlistTracks?: Track[], isQuickMix?: boolean) => void;
   trigger?: React.ReactNode;
   likedOnly?: boolean; // When true, only show user's liked playlists
+  category?: "mood" | "genre"; // When set, filter playlists by category
 }
 
-const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixDialogProps) => {
+const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }: QuickMixDialogProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -84,15 +85,20 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false }: QuickMixD
       setAllPlaylists(allWithLiked);
       setFilteredPlaylists(allWithLiked);
     } else {
-      // Fetch all system/public playlists
-      const { data } = await supabase
+      // Fetch all system/public playlists, optionally filtered by category
+      let query = supabase
         .from("playlists")
         .select("id, name, description, cover_url, category")
-        .or("is_system.eq.true,is_public.eq.true")
-        .order("name", { ascending: true });
+        .or("is_system.eq.true,is_public.eq.true");
+      
+      if (category) {
+        query = query.eq("category", category);
+      }
+      
+      const { data } = await query.order("name", { ascending: true });
 
-      // Add Liked Songs at the top
-      const allWithLiked = [likedSongsPlaylist, ...(data || [])];
+      // Add Liked Songs at the top only if not filtering by category
+      const allWithLiked = category ? (data || []) : [likedSongsPlaylist, ...(data || [])];
       setAllPlaylists(allWithLiked);
       setFilteredPlaylists(allWithLiked);
     }
