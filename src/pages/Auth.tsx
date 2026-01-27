@@ -477,12 +477,12 @@ const Auth = () => {
             {/* Terms Checkbox - Only show for signup */}
             {!isLogin && (
               <div className="space-y-2 md:space-y-2 pl-1">
-                <div className="flex items-start gap-2">
+                <div className="flex items-center justify-center gap-3 py-2">
                   <Checkbox
                     id="terms"
                     checked={acceptedTerms}
                     onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-                    className="mt-0.5"
+                    className="h-5 w-5 shrink-0"
                   />
                   <Label htmlFor="terms" className="text-xs xl:text-sm text-muted-foreground leading-snug cursor-pointer">
                     {t("auth.iAccept")}{" "}
@@ -503,7 +503,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full h-11 md:h-11 mt-8"
+              className="w-full h-11 md:h-11 mt-10"
               disabled={isLoading}
             >
               {isLoading ? (
