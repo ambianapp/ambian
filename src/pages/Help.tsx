@@ -582,7 +582,6 @@ const Help = () => {
                     <li>{t("help.iphoneBackgroundTip1")}</li>
                     <li>{t("help.iphoneBackgroundTip2")}</li>
                     <li>{t("help.iphoneBackgroundTip3")}</li>
-                    <li>{t("help.iphoneBackgroundTip4")}</li>
                   </ul>
                 </AccordionContent>
               </AccordionItem>
