@@ -340,7 +340,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               <span className="text-base font-bold text-foreground">
                 {t("mobile.mood")}
               </span>
-              {t("mobile.moodSuffix") && (
+              {t("mobile.moodSuffix") !== "" && t("mobile.moodSuffix") !== "mobile.moodSuffix" && (
                 <span className="text-sm font-medium text-muted-foreground -mt-1">
                   {t("mobile.moodSuffix")}
                 </span>
@@ -362,7 +362,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
               <span className="text-base font-bold text-foreground">
                 {t("mobile.genre")}
               </span>
-              {t("mobile.genreSuffix") && (
+              {t("mobile.genreSuffix") !== "" && t("mobile.genreSuffix") !== "mobile.genreSuffix" && (
                 <span className="text-sm font-medium text-muted-foreground -mt-1">
                   {t("mobile.genreSuffix")}
                 </span>
