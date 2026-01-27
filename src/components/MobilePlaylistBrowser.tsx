@@ -342,7 +342,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
           style={{ backgroundColor: '#f725bd' }}
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-          <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
+          <div className="absolute inset-0 flex flex-col items-start justify-start p-4 pt-5">
             <span className="text-xl font-bold text-white leading-tight">
               {t("mobile.byMoodLine1")}
             </span>
@@ -358,7 +358,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
           style={{ backgroundColor: '#1e90ff' }}
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-          <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
+          <div className="absolute inset-0 flex flex-col items-start justify-start p-4 pt-5">
             <span className="text-xl font-bold text-white leading-tight">
               {t("mobile.byGenreLine1")}
             </span>
