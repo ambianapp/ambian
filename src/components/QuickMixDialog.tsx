@@ -214,14 +214,20 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }:
         ? await getSignedAudioUrl(trackData.audio_url)
         : undefined;
 
-      // Log play history (skip liked-songs virtual ID)
-      if (user) {
-        for (const playlistId of playlistIds) {
-          await supabase.from("play_history").insert({
-            user_id: user.id,
-            playlist_id: playlistId,
-          });
-        }
+      // Save quick mix history with all selected playlist IDs
+      if (user && selectedArray.length > 0) {
+        // Get playlist names for the quick mix name
+        const selectedPlaylists = allPlaylists.filter(p => selectedArray.includes(p.id));
+        const mixName = selectedPlaylists
+          .slice(0, 3)
+          .map(p => p.name)
+          .join(", ") + (selectedPlaylists.length > 3 ? ` +${selectedPlaylists.length - 3}` : "");
+
+        await supabase.from("quick_mix_history").insert({
+          user_id: user.id,
+          playlist_ids: playlistIds.length > 0 ? playlistIds : [], // Only store real playlist IDs, not "liked-songs"
+          name: mixName,
+        });
       }
 
       setOpen(false);

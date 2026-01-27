@@ -676,6 +676,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.noPlaylists": "No playlists found",
     "quickMix.playMix": "Play Mix ({count} playlists)",
     "quickMix.loadingPlay": "Loading...",
+    "quickMix.badge": "Mix",
+    "quickMix.playlistCount": "playlists",
     
     // Terms
     "auth.bySigningUp": "By signing up, you agree to our",
@@ -1453,6 +1455,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.noPlaylists": "Inga spellistor hittades",
     "quickMix.playMix": "Spela mix ({count} spellistor)",
     "quickMix.loadingPlay": "Laddar...",
+    "quickMix.badge": "Mix",
+    "quickMix.playlistCount": "spellistor",
     
     // Terms
     "auth.bySigningUp": "Genom att registrera dig godkänner du våra",
@@ -2231,6 +2235,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.noPlaylists": "Soittolistoja ei löytynyt",
     "quickMix.playMix": "Toista mix ({count} soittolistaa)",
     "quickMix.loadingPlay": "Ladataan...",
+    "quickMix.badge": "Mix",
+    "quickMix.playlistCount": "soittolistaa",
     
     // Terms
     "auth.bySigningUp": "Rekisteröitymällä hyväksyt",
@@ -3008,6 +3014,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.noPlaylists": "Keine Playlists gefunden",
     "quickMix.playMix": "Mix abspielen ({count} Playlists)",
     "quickMix.loadingPlay": "Laden...",
+    "quickMix.badge": "Mix",
+    "quickMix.playlistCount": "Playlists",
     
     // Terms
     "auth.bySigningUp": "Mit der Anmeldung akzeptieren Sie unsere",
@@ -3785,6 +3793,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.noPlaylists": "Aucune playlist trouvée",
     "quickMix.playMix": "Lancer le mix ({count} playlists)",
     "quickMix.loadingPlay": "Chargement...",
+    "quickMix.badge": "Mix",
+    "quickMix.playlistCount": "playlists",
     
     // Terms
     "auth.bySigningUp": "En vous inscrivant, vous acceptez nos",
