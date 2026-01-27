@@ -636,7 +636,7 @@ const Pricing = () => {
 
         {/* Invoice Request Dialog */}
         <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
-          <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
+          <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>{t("pricing.requestInvoice")}</DialogTitle>
             </DialogHeader>
