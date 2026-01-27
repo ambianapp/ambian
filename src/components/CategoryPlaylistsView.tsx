@@ -192,12 +192,12 @@ const CategoryPlaylistsView = ({
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-4 sm:p-6 space-y-4">
         {/* Header with Back Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3 mr-12 md:mr-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="shrink-0"
+            className="shrink-0 mt-0.5"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
