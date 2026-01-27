@@ -320,7 +320,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
       </div>
 
       {/* Header */}
-      <h2 className="text-lg font-bold text-foreground text-center uppercase tracking-wider">
+      <h2 className="text-lg font-bold text-foreground text-center">
         {t("mobile.playlistsBy")}
       </h2>
 
@@ -334,7 +334,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-1">
               <Heart className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold text-foreground uppercase tracking-wide">
+              <span className="text-sm font-semibold text-foreground">
                 {t("mobile.mood")}
               </span>
             </div>
@@ -350,7 +350,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-1">
               <Palette className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold text-foreground uppercase tracking-wide">
+              <span className="text-sm font-semibold text-foreground">
                 {t("mobile.genre")}
               </span>
             </div>
@@ -366,7 +366,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
       >
         <div className="flex items-center justify-center gap-2">
           <Music className="w-5 h-5 text-primary" />
-          <span className="text-sm font-semibold text-foreground uppercase tracking-wide">
+          <span className="text-sm font-semibold text-foreground">
             {t("home.allPlaylists")}
           </span>
         </div>
@@ -374,7 +374,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
 
       {/* Industry Dropdown */}
       <div className="space-y-3 pt-2">
-        <p className="text-sm text-muted-foreground text-center uppercase tracking-wider">
+        <p className="text-sm text-muted-foreground text-center">
           {t("mobile.orChooseIndustry")}
         </p>
         

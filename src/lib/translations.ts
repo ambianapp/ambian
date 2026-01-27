@@ -486,10 +486,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Curated music for your business",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Playlists By",
+    "mobile.playlistsBy": "Show Playlists By",
     "mobile.mood": "Mood",
     "mobile.genre": "Genre",
-    "mobile.orChooseIndustry": "Or Choose Your Industry",
+    "mobile.orChooseIndustry": "Or choose your industry",
     "mobile.selectIndustry": "Select Industry",
     "industry.playAllShuffled": "Play All Shuffled",
     "industry.selectPlaylists": "Select Playlists",
@@ -1259,7 +1259,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Kurerad musik för ditt företag",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Spellistor efter",
+    "mobile.playlistsBy": "Visa spellistor efter",
     "mobile.mood": "Stämning",
     "mobile.genre": "Genre",
     "mobile.orChooseIndustry": "Eller välj din bransch",
@@ -2032,7 +2032,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Kuratoitua musiikkia yrityksellesi",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Soittolistat",
+    "mobile.playlistsBy": "Näytä soittolistat",
     "mobile.mood": "Tunnelma",
     "mobile.genre": "Genre",
     "mobile.orChooseIndustry": "Tai valitse toimialasi",
@@ -2806,7 +2806,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Kuratierte Musik für Ihr Unternehmen",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Playlists nach",
+    "mobile.playlistsBy": "Playlists anzeigen nach",
     "mobile.mood": "Stimmung",
     "mobile.genre": "Genre",
     "mobile.orChooseIndustry": "Oder wählen Sie Ihre Branche",
@@ -3579,7 +3579,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.industrySubtitle": "Musique sélectionnée pour votre entreprise",
     
     // Mobile playlist browser
-    "mobile.playlistsBy": "Playlists par",
+    "mobile.playlistsBy": "Afficher les playlists par",
     "mobile.mood": "Ambiance",
     "mobile.genre": "Genre",
     "mobile.orChooseIndustry": "Ou choisissez votre secteur",
