@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play } from "lucide-react";
+import { ArrowLeft, Play, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -122,22 +122,97 @@ const CategoryPlaylistsView = ({
     }
   };
 
+  const handlePlayAllShuffled = async () => {
+    if (playlists.length === 0) return;
+
+    const playlistIds = playlists.map(p => p.id);
+
+    const { data: allTracksData } = await supabase
+      .from("playlist_tracks")
+      .select("tracks(*), playlist_id")
+      .in("playlist_id", playlistIds)
+      .limit(10000);
+
+    if (!allTracksData || allTracksData.length === 0) return;
+
+    const allTracks: Track[] = allTracksData
+      .map((item: any) => item.tracks)
+      .filter(Boolean)
+      .map((t: any) => ({
+        id: t.id,
+        title: t.title,
+        artist: t.artist,
+        album: t.album || "",
+        duration: t.duration || "",
+        cover: t.cover_url || "/placeholder.svg",
+        genre: t.genre || "",
+      }));
+
+    // Remove duplicates
+    const uniqueTracks = allTracks.filter((track, index, self) =>
+      index === self.findIndex(t => t.id === track.id)
+    );
+
+    if (uniqueTracks.length === 0) return;
+
+    // Shuffle
+    const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
+
+    const firstTrack = shuffledTracks[0];
+    const { data: trackData } = await supabase
+      .from("tracks")
+      .select("audio_url")
+      .eq("id", firstTrack.id)
+      .single();
+
+    const signedAudioUrl = trackData?.audio_url
+      ? await getSignedAudioUrl(trackData.audio_url)
+      : undefined;
+
+    // Record play history for all playlists
+    if (user) {
+      for (const playlistId of playlistIds) {
+        await supabase.from("play_history").insert({
+          user_id: user.id,
+          playlist_id: playlistId,
+        });
+      }
+    }
+
+    onTrackSelect({
+      ...firstTrack,
+      audioUrl: signedAudioUrl,
+    }, shuffledTracks);
+  };
+
   const title = category === "mood" ? t("home.byMood") : t("home.byGenre");
 
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-4 sm:p-6 space-y-4">
         {/* Header with Back Button */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
+          </div>
+          {playlists.length > 0 && !isLoading && (
+            <Button
+              onClick={handlePlayAllShuffled}
+              size="sm"
+              className="gap-2 shrink-0"
+            >
+              <Shuffle className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("industry.playAllShuffled")}</span>
+            </Button>
+          )}
         </div>
 
         {/* Playlists List */}
