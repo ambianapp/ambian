@@ -315,13 +315,13 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
   return (
     <div className="px-4 py-6 space-y-5 animate-fade-in">
       {/* Greeting */}
-      <div className="mb-2">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">{getGreeting()}</h1>
         <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
       </div>
 
       {/* Header */}
-      <h2 className="text-lg font-bold text-foreground text-center">
+      <h2 className="text-lg font-bold text-foreground text-center mb-1">
         {t("mobile.playlistsBy")}
       </h2>
 
