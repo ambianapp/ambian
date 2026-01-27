@@ -136,6 +136,42 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
     setIsDialogOpen(true);
   };
 
+  // Check if two time ranges overlap
+  const timeRangesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
+    // Convert to minutes for easier comparison
+    const toMinutes = (time: string) => {
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m;
+    };
+    
+    const s1 = toMinutes(start1);
+    const e1 = toMinutes(end1);
+    const s2 = toMinutes(start2);
+    const e2 = toMinutes(end2);
+    
+    // Handle overnight schedules (end < start means it crosses midnight)
+    // For simplicity, we'll assume schedules don't cross midnight for now
+    return s1 < e2 && s2 < e1;
+  };
+
+  // Check for overlapping schedules
+  const findOverlappingSchedule = (): Schedule | null => {
+    for (const schedule of schedules) {
+      // Skip the schedule being edited
+      if (editingSchedule && schedule.id === editingSchedule.id) continue;
+      
+      // Check if any days overlap
+      const hasOverlappingDays = formDays.some(day => schedule.days_of_week.includes(day));
+      if (!hasOverlappingDays) continue;
+      
+      // Check if time ranges overlap
+      if (timeRangesOverlap(formStartTime, formEndTime, schedule.start_time.slice(0, 5), schedule.end_time.slice(0, 5))) {
+        return schedule;
+      }
+    }
+    return null;
+  };
+
   const handleSave = async () => {
     if (!formPlaylistId) {
       toast({ title: t("toast.selectPlaylist"), variant: "destructive" });
@@ -144,6 +180,18 @@ const ScheduleManager = ({ onBack, schedulerEnabled = true, onToggleScheduler }:
 
     if (formDays.length === 0) {
       toast({ title: t("toast.selectDay"), variant: "destructive" });
+      return;
+    }
+
+    // Check for overlapping schedules
+    const overlappingSchedule = findOverlappingSchedule();
+    if (overlappingSchedule) {
+      const playlistName = playlists.find(p => p.id === overlappingSchedule.playlist_id)?.name || 'Unknown';
+      toast({ 
+        title: t("toast.scheduleOverlap"), 
+        description: t("toast.scheduleOverlapDesc").replace('{playlist}', playlistName),
+        variant: "destructive" 
+      });
       return;
     }
 
