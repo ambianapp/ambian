@@ -477,7 +477,7 @@ const Auth = () => {
             {/* Terms Checkbox - Only show for signup */}
             {!isLogin && (
               <div className="space-y-2 md:space-y-2 pl-1">
-                <div className="flex items-center justify-center gap-3 py-2">
+                <div className="flex items-center gap-3 py-2">
                   <Checkbox
                     id="terms"
                     checked={acceptedTerms}
