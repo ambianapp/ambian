@@ -451,6 +451,30 @@ export type Database = {
         }
         Relationships: []
       }
+      quick_mix_history: {
+        Row: {
+          id: string
+          name: string | null
+          played_at: string
+          playlist_ids: string[]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          name?: string | null
+          played_at?: string
+          playlist_ids: string[]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          played_at?: string
+          playlist_ids?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       referral_commissions: {
         Row: {
           commission_amount: number
