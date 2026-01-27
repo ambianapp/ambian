@@ -78,6 +78,32 @@ const Auth = () => {
             emailRedirectTo: redirectUrl,
           },
         });
+        
+        // If user already exists, try to sign them in instead
+        if (error?.message?.includes("User already registered")) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (signInError) {
+            // Wrong password - show helpful message
+            toast({
+              title: t("auth.emailRegistered"),
+              description: t("auth.trySigningIn"),
+              variant: "destructive",
+            });
+            setIsLogin(true); // Switch to login mode
+            return;
+          }
+          
+          // Successfully signed in
+          localStorage.setItem('ambian_has_account', 'true');
+          sessionStorage.removeItem('ambian_scroll:home');
+          navigate("/");
+          return;
+        }
+        
         if (error) throw error;
         
         // Store marketing preference for AuthContext to use when handling the sign-in
