@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Play, Shuffle } from "lucide-react";
+import { ArrowLeft, Play, Pause, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Track } from "@/data/musicData";
 import type { Tables } from "@/integrations/supabase/types";
@@ -22,7 +23,7 @@ interface CategoryPlaylistsViewProps {
   category: "mood" | "genre";
   onBack: () => void;
   onPlaylistSelect: (playlist: SelectedPlaylist) => void;
-  onTrackSelect: (track: Track, playlistTracks?: Track[]) => void;
+  onTrackSelect: (track: Track, playlistTracks?: Track[], isQuickMix?: boolean, playlistId?: string) => void;
   currentTrack: Track | null;
   isPlaying: boolean;
 }
@@ -35,8 +36,10 @@ const CategoryPlaylistsView = ({
 }: CategoryPlaylistsViewProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { isPlaying, currentPlaylistId } = usePlayer();
   const [playlists, setPlaylists] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPlaylists();
@@ -71,55 +74,62 @@ const CategoryPlaylistsView = ({
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
-    const { data } = await supabase
-      .from("playlist_tracks")
-      .select("track_id, tracks(*)")
-      .eq("playlist_id", playlistId)
-      .order("position", { ascending: true })
-      .limit(1);
+    // Set loading state immediately for instant feedback
+    setLoadingPlaylistId(playlistId);
+    
+    try {
+      const { data } = await supabase
+        .from("playlist_tracks")
+        .select("track_id, tracks(*)")
+        .eq("playlist_id", playlistId)
+        .order("position", { ascending: true })
+        .limit(1);
 
-    if (data && data.length > 0) {
-      const track = (data[0] as any).tracks;
-      if (track) {
-        const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
+      if (data && data.length > 0) {
+        const track = (data[0] as any).tracks;
+        if (track) {
+          const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
 
-        const { data: allTracksData } = await supabase
-          .from("playlist_tracks")
-          .select("tracks(*)")
-          .eq("playlist_id", playlistId)
-          .order("position", { ascending: true });
+          const { data: allTracksData } = await supabase
+            .from("playlist_tracks")
+            .select("tracks(*)")
+            .eq("playlist_id", playlistId)
+            .order("position", { ascending: true });
 
-        const playlistTracks: Track[] = (allTracksData || [])
-          .map((item: any) => item.tracks)
-          .filter(Boolean)
-          .map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            artist: t.artist,
-            album: t.album || "",
-            duration: t.duration || "",
-            cover: t.cover_url || "/placeholder.svg",
-            genre: t.genre || "",
-          }));
+          const playlistTracks: Track[] = (allTracksData || [])
+            .map((item: any) => item.tracks)
+            .filter(Boolean)
+            .map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              artist: t.artist,
+              album: t.album || "",
+              duration: t.duration || "",
+              cover: t.cover_url || "/placeholder.svg",
+              genre: t.genre || "",
+            }));
 
-        if (user) {
-          await supabase.from("play_history").insert({
-            user_id: user.id,
-            playlist_id: playlistId,
-          });
+          if (user) {
+            await supabase.from("play_history").insert({
+              user_id: user.id,
+              playlist_id: playlistId,
+            });
+          }
+
+          onTrackSelect({
+            id: track.id,
+            title: track.title,
+            artist: track.artist,
+            album: track.album || "",
+            duration: track.duration || "",
+            cover: track.cover_url || "/placeholder.svg",
+            genre: track.genre || "",
+            audioUrl: signedAudioUrl,
+          }, playlistTracks, false, playlistId);
         }
-
-        onTrackSelect({
-          id: track.id,
-          title: track.title,
-          artist: track.artist,
-          album: track.album || "",
-          duration: track.duration || "",
-          cover: track.cover_url || "/placeholder.svg",
-          genre: track.genre || "",
-          audioUrl: signedAudioUrl,
-        }, playlistTracks);
       }
+    } finally {
+      setLoadingPlaylistId(null);
     }
   };
 
@@ -245,15 +255,24 @@ const CategoryPlaylistsView = ({
                     alt={playlist.name}
                     className="w-full h-full object-cover"
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayPlaylist(playlist.id);
-                    }}
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Play className="w-5 h-5 text-white fill-white" />
-                  </button>
+                  {(() => {
+                    const isThisPlaylistPlaying = (currentPlaylistId === playlist.id && isPlaying) || loadingPlaylistId === playlist.id;
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayPlaylist(playlist.id);
+                        }}
+                        className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        {isThisPlaylistPlaying ? (
+                          <Pause className="w-5 h-5 text-white fill-white" />
+                        ) : (
+                          <Play className="w-5 h-5 text-white fill-white" />
+                        )}
+                      </button>
+                    );
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground truncate">{playlist.name}</p>
