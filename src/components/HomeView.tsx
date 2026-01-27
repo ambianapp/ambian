@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
+import MobilePlaylistBrowser from "./MobilePlaylistBrowser";
+import CategoryPlaylistsView from "./CategoryPlaylistsView";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +46,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const [isLoading, setIsLoading] = useState(true);
   const [showAllMoods, setShowAllMoods] = useState(false);
   const [showAllGenres, setShowAllGenres] = useState(false);
+  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre">("browser");
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -315,6 +318,81 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     );
   };
 
+  // Mobile view - show category playlists view when mood/genre selected
+  if (isMobile && mobileView === "mood") {
+    return (
+      <CategoryPlaylistsView
+        category="mood"
+        onBack={() => setMobileView("browser")}
+        onPlaylistSelect={onPlaylistSelect}
+        onTrackSelect={onTrackSelect}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+      />
+    );
+  }
+
+  if (isMobile && mobileView === "genre") {
+    return (
+      <CategoryPlaylistsView
+        category="genre"
+        onBack={() => setMobileView("browser")}
+        onPlaylistSelect={onPlaylistSelect}
+        onTrackSelect={onTrackSelect}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+      />
+    );
+  }
+
+  // Mobile browser view
+  if (isMobile) {
+    return (
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40">
+        <MobilePlaylistBrowser
+          onViewChange={(view) => setMobileView(view)}
+          onPlaylistSelect={onPlaylistSelect}
+          onTrackSelect={onTrackSelect}
+        />
+        
+        {/* Recently Played - below the browser on mobile */}
+        {recentlyPlayed.length > 0 && (
+          <section className="px-4 pb-6 animate-fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <History className="w-4 h-4 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">{t("home.continue")}</h2>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {recentlyPlayed.map((playlist) => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={{
+                    id: playlist.id,
+                    name: playlist.name,
+                    description: playlist.description || "",
+                    cover: playlist.cover_url || "/placeholder.svg",
+                    trackCount: 0,
+                    tracks: [],
+                  }}
+                  onClick={() => handlePlaylistClick({
+                    id: playlist.id,
+                    name: playlist.name,
+                    cover: playlist.cover_url,
+                    description: playlist.description,
+                  })}
+                  onPlay={() => handlePlayPlaylist(playlist.id)}
+                  onUpdate={handlePlaylistUpdate}
+                  compact
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop view - keep existing layout
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40 md:pb-32">
         <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 pt-2 md:pt-4">
@@ -326,7 +404,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               <p className="text-muted-foreground mt-1 text-sm sm:text-base">{t("home.subtitle")}</p>
             </div>
             {/* Desktop: buttons on the right */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <QuickMixDialog
                 onTrackSelect={onTrackSelect}
                 trigger={
@@ -346,28 +424,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                 <span>{t("home.allPlaylists")}</span>
               </Button>
             </div>
-          </div>
-          {/* Mobile/Tablet: buttons below */}
-          <div className="flex lg:hidden items-center gap-2">
-            <QuickMixDialog
-              onTrackSelect={onTrackSelect}
-              trigger={
-                <Button variant="default" size="sm" className="gap-2">
-                  <Shuffle className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("quickMix.button")}</span>
-                  <span className="sm:hidden">Mix</span>
-                </Button>
-              }
-            />
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate("/playlists")}
-              className="shrink-0 gap-2"
-            >
-              <Music className="w-4 h-4" />
-              <span>{t("home.allPlaylists")}</span>
-            </Button>
           </div>
         </div>
 
@@ -426,8 +482,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           moodPlaylists,
           showAllMoods,
           () => setShowAllMoods(!showAllMoods),
-          true,
-          4 // Show only 4 on mobile
+          true
         )}
 
         {/* Recently Updated & New Playlists - Side by Side */}
