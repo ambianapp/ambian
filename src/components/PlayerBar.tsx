@@ -788,7 +788,11 @@ const PlayerBar = () => {
           });
         }
       } else if (!isPlaying) {
-        activeAudio.pause();
+        // Only pause if not already paused to avoid iOS audio context issues
+        if (!activeAudio.paused) {
+          dbg("play/pause effect: pausing", { trackId: currentTrack?.id });
+          activeAudio.pause();
+        }
       }
     }
   }, [isPlaying, currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, dbg, canPlayMusic]);
@@ -842,36 +846,52 @@ const PlayerBar = () => {
     }
   }, [initWebAudio]);
 
+  // Track if we're in the middle of a user-initiated play/pause to avoid duplicate actions
+  const userPlayPauseInProgressRef = useRef(false);
+  
   const handleUserPlayPause = useCallback(async () => {
-    await ensureAudioContextRunning();
+    // Prevent re-entrancy (especially on iOS where touch events can double-fire)
+    if (userPlayPauseInProgressRef.current) return;
+    userPlayPauseInProgressRef.current = true;
+    
+    try {
+      await ensureAudioContextRunning();
 
-    const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
-    if (activeAudio) {
-      try {
-        if (isPlaying) {
-          // Pause directly in the gesture handler for immediate feedback.
-          activeAudio.pause();
-        } else {
-          // Play directly in the gesture handler to satisfy iOS/Safari autoplay rules.
-          if (activeAudio.paused && activeAudio.src) {
-            await activeAudio.play();
+      const activeAudio = isCrossfadeActive ? crossfadeAudioRef.current : audioRef.current;
+      if (activeAudio) {
+        try {
+          if (isPlaying) {
+            // Pause directly in the gesture handler for immediate feedback.
+            if (!activeAudio.paused) {
+              activeAudio.pause();
+            }
+          } else {
+            // Play directly in the gesture handler to satisfy iOS/Safari autoplay rules.
+            if (activeAudio.paused && activeAudio.src) {
+              await activeAudio.play();
+            }
+          }
+        } catch (err: any) {
+          const name = err?.name;
+          if (name === "NotAllowedError") {
+            toast({
+              title: "Tap again to start audio",
+              description: "Audio is ready, but iOS/Safari blocked autoplay. One more tap should start playback.",
+            });
+          } else {
+            console.error("Direct play/pause failed:", err);
           }
         }
-      } catch (err: any) {
-        const name = err?.name;
-        if (name === "NotAllowedError") {
-          toast({
-            title: "Tap again to start audio",
-            description: "Audio is ready, but iOS/Safari blocked autoplay. One more tap should start playback.",
-          });
-        } else {
-          console.error("Direct play/pause failed:", err);
-        }
       }
-    }
 
-    // Keep app state in sync (PlayerContext).
-    handlePlayPause();
+      // Keep app state in sync (PlayerContext).
+      handlePlayPause();
+    } finally {
+      // Release the lock after a short delay to debounce rapid taps
+      setTimeout(() => {
+        userPlayPauseInProgressRef.current = false;
+      }, 100);
+    }
   }, [ensureAudioContextRunning, isCrossfadeActive, isPlaying, handlePlayPause, toast]);
 
   // Initialize Web Audio on first user interaction (required by browsers)
