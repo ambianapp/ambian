@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, Music, Palette, ChevronDown, Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
+import QuickMixDialog from "./QuickMixDialog";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -312,9 +313,9 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
   };
 
   return (
-    <div className="px-4 py-6 space-y-6 animate-fade-in">
+    <div className="px-4 py-6 space-y-5 animate-fade-in">
       {/* Greeting */}
-      <div>
+      <div className="mb-2">
         <h1 className="text-2xl font-bold text-foreground">{getGreeting()}</h1>
         <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
       </div>
@@ -324,66 +325,86 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         {t("mobile.playlistsBy")}
       </h2>
 
-      {/* Mood & Genre Row */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Mood & Genre Row - Larger buttons */}
+      <div className="grid grid-cols-2 gap-4">
         <button
           onClick={handleMoodOpen}
-          className="relative group h-20 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/30 border border-primary/30 hover:border-primary/60 transition-all duration-300 overflow-hidden"
+          className="relative group h-28 rounded-2xl bg-gradient-to-br from-primary/30 via-primary/15 to-primary/40 border-2 border-primary/40 hover:border-primary/70 transition-all duration-300 overflow-hidden shadow-lg shadow-primary/10 active:scale-[0.98]"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-colors" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent group-hover:from-primary/20 transition-colors" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-0.5">
-              <Heart className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
+                <Heart className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-base font-bold text-foreground">
                 {t("mobile.mood")}
               </span>
               {t("mobile.moodSuffix") && (
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-medium text-muted-foreground -mt-1">
                   {t("mobile.moodSuffix")}
                 </span>
               )}
             </div>
           </div>
-          <div className="absolute inset-0 border border-primary/0 group-hover:border-primary/40 rounded-xl transition-colors" />
         </button>
 
         <button
           onClick={handleGenreOpen}
-          className="relative group h-20 rounded-xl bg-gradient-to-br from-accent/20 via-muted/30 to-accent/30 border border-accent/30 hover:border-accent/60 transition-all duration-300 overflow-hidden"
+          className="relative group h-28 rounded-2xl bg-gradient-to-br from-accent/30 via-muted/40 to-accent/40 border-2 border-accent/40 hover:border-accent/70 transition-all duration-300 overflow-hidden shadow-lg shadow-accent/10 active:scale-[0.98]"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent group-hover:from-accent/10 transition-colors" />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent group-hover:from-accent/20 transition-colors" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-0.5">
-              <Palette className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mb-1">
+                <Palette className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-base font-bold text-foreground">
                 {t("mobile.genre")}
               </span>
               {t("mobile.genreSuffix") && (
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-medium text-muted-foreground -mt-1">
                   {t("mobile.genreSuffix")}
                 </span>
               )}
             </div>
           </div>
-          <div className="absolute inset-0 border border-accent/0 group-hover:border-accent/40 rounded-xl transition-colors" />
         </button>
       </div>
 
-      {/* All Playlists Button */}
-      <button
-        onClick={() => navigate("/playlists")}
-        className="w-full h-16 rounded-xl bg-gradient-to-r from-primary/20 via-secondary to-primary/20 border border-border hover:border-primary/50 transition-all duration-300 group"
-      >
-        <div className="flex items-center justify-center gap-2">
-          <Music className="w-5 h-5 text-primary" />
-          <span className="text-sm font-semibold text-foreground">
-            {t("home.allPlaylists")}
-          </span>
-        </div>
-      </button>
+      {/* All Playlists & Quick Mix Row */}
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={() => navigate("/playlists")}
+          className="h-20 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
+        >
+          <div className="flex flex-col items-center justify-center gap-2">
+            <Music className="w-6 h-6 text-primary" />
+            <span className="text-sm font-bold text-foreground">
+              {t("home.allPlaylists")}
+            </span>
+          </div>
+        </button>
 
-      {/* Industry Dropdown */}
-      <div className="space-y-3 pt-2">
+        <QuickMixDialog
+          onTrackSelect={onTrackSelect}
+          trigger={
+            <button
+              className="h-20 rounded-2xl bg-gradient-to-br from-primary/40 via-primary/20 to-primary/50 border-2 border-primary/50 hover:border-primary transition-all duration-300 group shadow-lg shadow-primary/10 active:scale-[0.98]"
+            >
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Shuffle className="w-6 h-6 text-primary" />
+                <span className="text-sm font-bold text-foreground">
+                  {t("quickMix.button")}
+                </span>
+              </div>
+            </button>
+          }
+        />
+      </div>
+
+      {/* Industry Dropdown - More prominent */}
+      <div className="space-y-3 pt-1">
         <p className="text-sm text-muted-foreground text-center">
           {t("mobile.orChooseIndustry")}
         </p>
@@ -392,13 +413,15 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
           <DrawerTrigger asChild>
             <Button
               variant="outline"
-              className="w-full justify-between h-12 border-border hover:border-primary/50"
+              className="w-full justify-between h-14 rounded-2xl border-2 border-border hover:border-primary/50 transition-all shadow-sm"
             >
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-primary" />
-                <span>{t("mobile.selectIndustry")}</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-primary" />
+                </div>
+                <span className="font-medium">{t("mobile.selectIndustry")}</span>
               </div>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
             </Button>
           </DrawerTrigger>
           <DrawerContent className="max-h-[85dvh]">
