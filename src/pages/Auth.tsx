@@ -365,7 +365,7 @@ const Auth = () => {
       <div className="w-full lg:w-1/2 flex items-start pt-[4vh] md:pt-[6vh] lg:items-center lg:pt-0 justify-center p-4 md:p-6 overflow-hidden relative z-10 lg:bg-background">
         <div className="w-full max-w-md space-y-2 md:space-y-3 animate-fade-in lg:[@media(max-height:820px)]:scale-[0.94] lg:[@media(max-height:820px)]:origin-center">
           {/* Mobile/Tablet Logo */}
-          <div className="lg:hidden mb-14 md:mb-14">
+          <div className="lg:hidden mb-20 md:mb-14">
             <img src={ambianLogo} alt="Ambian" className="h-14 md:h-12 mx-auto mb-3" />
             <p className="text-sm md:text-xs text-muted-foreground text-center">
               {t("auth.noLicensesShort")}
@@ -373,7 +373,7 @@ const Auth = () => {
           </div>
           
           {/* Header */}
-          <div className="text-center lg:text-left">
+          <div className="text-center lg:text-left mb-5">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">
               {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
@@ -394,7 +394,7 @@ const Auth = () => {
           {/* Google Button First */}
           <Button
             variant="outline"
-            className="w-full h-11 md:h-11 bg-secondary hover:bg-secondary/80 text-foreground border-border"
+            className="w-full h-11 md:h-11 bg-card hover:bg-card/80 text-foreground border-muted-foreground/30"
             onClick={handleGoogleLogin}
             disabled={isLoading}
           >
