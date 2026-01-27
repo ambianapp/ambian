@@ -52,6 +52,31 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Only reload when user ID changes, not on every user object update
 
+  // Realtime subscription for playlists - updates appear live for all users
+  useEffect(() => {
+    const channel = supabase
+      .channel('playlists-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'playlists',
+        },
+        (payload) => {
+          console.log('Playlist change detected:', payload.eventType);
+          // Reload data when playlists are created, updated, or deleted
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loadData = async () => {
     setIsLoading(true);
     

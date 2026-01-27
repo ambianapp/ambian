@@ -52,6 +52,32 @@ const PlaylistDetailView = ({
     loadPlaylistTracks();
   }, [playlistId]);
 
+  // Realtime subscription for playlist tracks - songs appear/disappear live
+  useEffect(() => {
+    const channel = supabase
+      .channel(`playlist-tracks-${playlistId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'playlist_tracks',
+          filter: `playlist_id=eq.${playlistId}`,
+        },
+        (payload) => {
+          console.log('Playlist track change detected:', payload.eventType);
+          // Reload tracks when songs are added or removed
+          loadPlaylistTracks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playlistId]);
+
   useEffect(() => {
     checkIfLiked();
   }, [playlistId, user?.id]);
