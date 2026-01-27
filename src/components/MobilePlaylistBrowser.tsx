@@ -375,7 +375,7 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
       {/* All Playlists Button */}
       <button
         onClick={() => navigate("/playlists")}
-        className="h-16 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
+        className="w-full h-16 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
       >
         <div className="flex items-center justify-center gap-3">
           <Music className="w-5 h-5 text-primary" />
