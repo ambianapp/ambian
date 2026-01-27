@@ -67,6 +67,7 @@ const Help = () => {
       { id: "no-sound", section: "troubleshooting", title: t("help.noSound"), body: t("help.noSoundDesc") },
       { id: "buffering", section: "troubleshooting", title: t("help.buffering"), body: t("help.bufferingDesc") },
       { id: "not-playing", section: "troubleshooting", title: t("help.notPlaying"), body: t("help.notPlayingDesc") },
+      { id: "iphone-background", section: "troubleshooting", title: t("help.iphoneBackground"), body: t("help.iphoneBackgroundDesc") },
       { id: "skipping", section: "troubleshooting", title: t("help.skipping"), body: t("help.skippingDesc") },
 
       // FAQ
@@ -564,6 +565,24 @@ const Help = () => {
                   <ul className="list-disc list-inside space-y-1 ml-2">
                     <li>{t("help.skippingTip1")}</li>
                     <li>{t("help.skippingTip2")}</li>
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="iphone-background">
+                <AccordionTrigger className="text-left">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    {t("help.iphoneBackground")}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground space-y-2">
+                  <p>{t("help.iphoneBackgroundDesc")}</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>{t("help.iphoneBackgroundTip1")}</li>
+                    <li>{t("help.iphoneBackgroundTip2")}</li>
+                    <li>{t("help.iphoneBackgroundTip3")}</li>
+                    <li>{t("help.iphoneBackgroundTip4")}</li>
                   </ul>
                 </AccordionContent>
               </AccordionItem>
