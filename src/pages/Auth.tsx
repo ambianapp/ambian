@@ -410,8 +410,8 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* Mobile & Tablet compact trial + price line */}
-          <div className="flex lg:hidden items-center justify-center gap-2 text-xs text-foreground">
+          {/* Tablet (iPad) compact trial + price line */}
+          <div className="hidden md:flex lg:hidden items-center justify-center gap-2 text-xs text-foreground">
             <span>{t("auth.threeDaysFree")}</span>
             <span className="text-muted-foreground">•</span>
             <span>{t("auth.noCardRequired")}</span>
@@ -571,18 +571,10 @@ const Auth = () => {
           </div>
 
           {/* Mobile Pricing Info - Bottom */}
-          <div className="md:hidden mt-2 pt-2 border-t border-border/50">
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <div className="text-sm font-semibold text-primary">{t("auth.threeDaysFree")}</div>
-                <div className="text-xs text-muted-foreground">{t("auth.noCardNeeded")}</div>
-              </div>
-              <div className="h-8 w-px bg-border/50" />
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground">{t("auth.startingAt")}</div>
-                <div className="text-base font-bold text-foreground">€7.40<span className="text-xs font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
-              </div>
-            </div>
+          <div className="md:hidden mt-4 flex items-center justify-center gap-2 text-xs text-foreground">
+            <span>{t("auth.threeDaysFree")}</span>
+            <span className="text-muted-foreground">•</span>
+            <span>{t("auth.noCardRequired")}</span>
           </div>
           
         </div>
