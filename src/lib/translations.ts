@@ -2007,7 +2007,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.yourPlaylist": "Oma soittolista",
     "library.likedPlaylist": "Tykätty soittolista",
     "library.likedSongsDesc": "Suosikkikappaleesi",
-    "library.quickMix": "Pikamix",
+    "library.quickMix": "Sekoitus",
     "library.loading": "Ladataan...",
     "library.noLikedPlaylists": "Ei tykättyjä soittolistoja sekoitettavaksi",
     "library.noTracksInPlaylists": "Soittolistoista ei löytynyt kappaleita",
@@ -2071,7 +2071,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "help.favoritesDesc": "Tykkää kappaleista ja soittolistoista.",
     "help.scheduling": "Ajasta musiikkia",
     "help.schedulingDesc": "Aseta automaattiset soittolistat eri ajoille.",
-    "help.quickMix": "Pikamiksaus",
+    "help.quickMix": "Sekoitus",
     "help.quickMixDesc": "Valitse useita soittolistoja ja sekoita ne monipuolisempaan musiikkikokemukseen.",
     "help.industryCollections": "Soittolistat toimialoittain",
     "help.industryCollectionsDesc": "Löydä kuratoituja soittolistoja juuri sinun toimialallesi.",
@@ -2208,8 +2208,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "schedule.daySat": "La",
     
     // Quick Mix
-    "quickMix.title": "Pikamix",
-    "quickMix.button": "Pikamix",
+    "quickMix.title": "Sekoitus",
+    "quickMix.button": "Sekoitus",
     "quickMix.description": "Valitse useita soittolistoja sekoittaaksesi niiden kappaleet",
     "quickMix.searchPlaylists": "Hae soittolistoja...",
     "quickMix.selectAll": "Valitse kaikki",
