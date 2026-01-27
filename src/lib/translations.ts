@@ -489,10 +489,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Show All Playlists",
-    "mobile.byMoodLine1": "By",
-    "mobile.byMoodLine2": "Mood",
-    "mobile.byGenreLine1": "By",
-    "mobile.byGenreLine2": "Genre",
+    "mobile.byMoodLine1": "Mood",
+    "mobile.byMoodLine2": "Playlists",
+    "mobile.byGenreLine1": "Genre",
+    "mobile.byGenreLine2": "Playlists",
     "mobile.orChooseIndustry": "Or choose your industry",
     "mobile.selectIndustry": "Select Industry",
     "industry.playAllShuffled": "Play All Shuffled",
@@ -1268,10 +1268,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Visa alla spellistor",
-    "mobile.byMoodLine1": "Efter",
-    "mobile.byMoodLine2": "Stämning",
-    "mobile.byGenreLine1": "Efter",
-    "mobile.byGenreLine2": "Genre",
+    "mobile.byMoodLine1": "Stämnings-",
+    "mobile.byMoodLine2": "spellistor",
+    "mobile.byGenreLine1": "Genre-",
+    "mobile.byGenreLine2": "spellistor",
     "mobile.orChooseIndustry": "Eller välj din bransch",
     "mobile.selectIndustry": "Välj bransch",
     "industry.playAllShuffled": "Spela alla blandade",
@@ -2047,10 +2047,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Näytä kaikki soittolistat",
-    "mobile.byMoodLine1": "Tunnelman",
-    "mobile.byMoodLine2": "mukaan",
-    "mobile.byGenreLine1": "Genren",
-    "mobile.byGenreLine2": "mukaan",
+    "mobile.byMoodLine1": "Tunnelma-",
+    "mobile.byMoodLine2": "soittolistat",
+    "mobile.byGenreLine1": "Genre-",
+    "mobile.byGenreLine2": "soittolistat",
     "mobile.orChooseIndustry": "Tai valitse toimialasi",
     "mobile.selectIndustry": "Valitse toimiala",
     "industry.playAllShuffled": "Toista kaikki sekoitettuna",
@@ -2827,10 +2827,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Alle Playlists anzeigen",
-    "mobile.byMoodLine1": "Nach",
-    "mobile.byMoodLine2": "Stimmung",
-    "mobile.byGenreLine1": "Nach",
-    "mobile.byGenreLine2": "Genre",
+    "mobile.byMoodLine1": "Stimmungs-",
+    "mobile.byMoodLine2": "Playlists",
+    "mobile.byGenreLine1": "Genre-",
+    "mobile.byGenreLine2": "Playlists",
     "mobile.orChooseIndustry": "Oder wählen Sie Ihre Branche",
     "mobile.selectIndustry": "Branche auswählen",
     "industry.playAllShuffled": "Alle zufällig abspielen",
@@ -3606,9 +3606,9 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Mobile playlist browser
     "mobile.showAllPlaylists": "Afficher toutes les playlists",
-    "mobile.byMoodLine1": "Par",
+    "mobile.byMoodLine1": "Playlists",
     "mobile.byMoodLine2": "Ambiance",
-    "mobile.byGenreLine1": "Par",
+    "mobile.byGenreLine1": "Playlists",
     "mobile.byGenreLine2": "Genre",
     "mobile.orChooseIndustry": "Ou choisissez votre secteur",
     "mobile.selectIndustry": "Sélectionner le secteur",
