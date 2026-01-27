@@ -664,6 +664,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.loadingPlay": "Loading...",
     
     // Terms
+    "auth.bySigningUp": "By signing up, you agree to our",
     "auth.iAccept": "I accept the",
     "auth.termsAndConditions": "Terms and Conditions",
     "auth.and": "and",
@@ -1426,6 +1427,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.loadingPlay": "Laddar...",
     
     // Terms
+    "auth.bySigningUp": "Genom att registrera dig godkänner du våra",
     "auth.iAccept": "Jag accepterar",
     "auth.termsAndConditions": "villkoren",
     "auth.and": "och",
@@ -2189,6 +2191,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.loadingPlay": "Ladataan...",
     
     // Terms
+    "auth.bySigningUp": "Rekisteröitymällä hyväksyt",
     "auth.iAccept": "Hyväksyn",
     "auth.termsAndConditions": "käyttöehdot",
     "auth.and": "ja",
@@ -2951,6 +2954,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.loadingPlay": "Laden...",
     
     // Terms
+    "auth.bySigningUp": "Mit der Anmeldung akzeptieren Sie unsere",
     "auth.iAccept": "Ich akzeptiere die",
     "auth.termsAndConditions": "Nutzungsbedingungen",
     "auth.and": "und",
@@ -3713,6 +3717,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "quickMix.loadingPlay": "Chargement...",
     
     // Terms
+    "auth.bySigningUp": "En vous inscrivant, vous acceptez nos",
     "auth.iAccept": "J'accepte les",
     "auth.termsAndConditions": "conditions d'utilisation",
     "auth.and": "et la",
