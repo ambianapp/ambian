@@ -394,7 +394,7 @@ const Auth = () => {
           {/* Google Button First */}
           <Button
             variant="outline"
-            className="w-full h-11 md:h-11 bg-white hover:bg-gray-100 text-gray-800 border-white/20"
+            className="w-full h-11 md:h-11 bg-secondary hover:bg-secondary/80 text-foreground border-border"
             onClick={handleGoogleLogin}
             disabled={isLoading}
           >
