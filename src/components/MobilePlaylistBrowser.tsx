@@ -372,36 +372,18 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         </button>
       </div>
 
-      {/* All Playlists & Quick Mix Row */}
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => navigate("/playlists")}
-          className="h-20 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
-        >
-          <div className="flex flex-col items-center justify-center gap-2">
-            <Music className="w-6 h-6 text-primary" />
-            <span className="text-sm font-bold text-foreground">
-              {t("home.allPlaylists")}
-            </span>
-          </div>
-        </button>
-
-        <QuickMixDialog
-          onTrackSelect={onTrackSelect}
-          trigger={
-            <button
-              className="h-20 rounded-2xl bg-gradient-to-br from-primary/40 via-primary/20 to-primary/50 border-2 border-primary/50 hover:border-primary transition-all duration-300 group shadow-lg shadow-primary/10 active:scale-[0.98]"
-            >
-              <div className="flex flex-col items-center justify-center gap-2">
-                <Shuffle className="w-6 h-6 text-primary" />
-                <span className="text-sm font-bold text-foreground">
-                  {t("quickMix.button")}
-                </span>
-              </div>
-            </button>
-          }
-        />
-      </div>
+      {/* All Playlists Button */}
+      <button
+        onClick={() => navigate("/playlists")}
+        className="h-16 rounded-2xl bg-gradient-to-br from-secondary via-secondary/80 to-muted border-2 border-border hover:border-primary/50 transition-all duration-300 group shadow-lg shadow-black/5 active:scale-[0.98]"
+      >
+        <div className="flex items-center justify-center gap-3">
+          <Music className="w-5 h-5 text-primary" />
+          <span className="text-sm font-bold text-foreground">
+            {t("home.allPlaylists")}
+          </span>
+        </div>
+      </button>
 
       {/* Industry Dropdown - More prominent */}
       <div className="space-y-3 pt-1">
