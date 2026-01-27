@@ -410,13 +410,11 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* Tablet (iPad) compact trial + price line */}
-          <div className="hidden md:flex lg:hidden items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span className="font-semibold text-primary">{t("auth.threeDaysFree")}</span>
-            <span>•</span>
-            <span className="text-muted-foreground">{t("auth.startingAt")}</span>
-            <span className="font-semibold text-foreground">€7.40</span>
-            <span className="text-muted-foreground">{t("auth.perMonth")}</span>
+          {/* Mobile & Tablet compact trial + price line */}
+          <div className="flex lg:hidden items-center justify-center gap-2 text-xs text-foreground">
+            <span>{t("auth.threeDaysFree")}</span>
+            <span className="text-muted-foreground">•</span>
+            <span>{t("auth.noCardRequired")}</span>
           </div>
 
           {/* Form */}
