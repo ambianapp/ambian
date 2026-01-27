@@ -58,7 +58,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { sessionId, deviceInfo, forceRegister, disconnectSessionId } = await req.json();
+    const { sessionId, deviceInfo, forceRegister, disconnectSessionId, deviceFingerprint } = await req.json();
     if (!sessionId) {
       return new Response(JSON.stringify({ error: "Missing sessionId" }), {
         status: 400,
@@ -153,7 +153,7 @@ serve(async (req) => {
     // Check if this session already exists
     const { data: existingSession } = await adminClient
       .from("active_sessions")
-      .select("id")
+      .select("id, session_id")
       .eq("user_id", user.id)
       .eq("session_id", sessionId)
       .maybeSingle();
@@ -168,6 +168,47 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: "Session updated", isRegistered: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // DEVICE FINGERPRINT CONSOLIDATION:
+    // If a fingerprint is provided, check if another session from the same device exists.
+    // This handles the case where the same physical device is using different browsers.
+    if (deviceFingerprint && deviceFingerprint.length > 0) {
+      // Look for sessions that have the same fingerprint prefix in their session_id
+      // Session IDs with fingerprints start with "fp_"
+      const fingerprintPrefix = `fp_${deviceFingerprint}`;
+      
+      const { data: fingerprintSessions } = await adminClient
+        .from("active_sessions")
+        .select("id, session_id, device_info")
+        .eq("user_id", user.id)
+        .like("session_id", `fp_${deviceFingerprint.substring(0, 8)}%`);
+
+      if (fingerprintSessions && fingerprintSessions.length > 0) {
+        // Found an existing session from the same physical device
+        // Update it instead of creating a new one
+        const existingDeviceSession = fingerprintSessions[0];
+        
+        console.log(`Consolidating session: ${sessionId} with existing ${existingDeviceSession.session_id} (same device fingerprint)`);
+        
+        await adminClient
+          .from("active_sessions")
+          .update({ 
+            session_id: sessionId, // Update to new session ID
+            device_info: deviceInfo, 
+            updated_at: new Date().toISOString() 
+          })
+          .eq("id", existingDeviceSession.id);
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Session consolidated (same device)", 
+          isRegistered: true,
+          consolidated: true,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Clean up stale sessions.
