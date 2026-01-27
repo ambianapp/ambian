@@ -50,6 +50,27 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Handle browser back/forward for mobile category views
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handlePopstate = () => {
+      // When back is pressed, reset to browser view
+      if (mobileView !== "browser") {
+        setMobileView("browser");
+      }
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, [isMobile, mobileView]);
+
+  // Push history when entering mood/genre view
+  const handleMobileViewChange = (view: "mood" | "genre") => {
+    window.history.pushState({ type: 'mobile-category', view }, '');
+    setMobileView(view);
+  };
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -323,7 +344,9 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return (
       <CategoryPlaylistsView
         category="mood"
-        onBack={() => setMobileView("browser")}
+        onBack={() => {
+          window.history.back();
+        }}
         onPlaylistSelect={onPlaylistSelect}
         onTrackSelect={onTrackSelect}
         currentTrack={currentTrack}
@@ -336,7 +359,9 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return (
       <CategoryPlaylistsView
         category="genre"
-        onBack={() => setMobileView("browser")}
+        onBack={() => {
+          window.history.back();
+        }}
         onPlaylistSelect={onPlaylistSelect}
         onTrackSelect={onTrackSelect}
         currentTrack={currentTrack}
@@ -352,7 +377,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         <MobilePlaylistBrowser
           onPlaylistSelect={onPlaylistSelect}
           onTrackSelect={onTrackSelect}
-          onViewChange={(view) => setMobileView(view)}
+          onViewChange={handleMobileViewChange}
         />
         
         {/* Recently Played - below the browser on mobile */}
