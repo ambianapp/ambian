@@ -498,19 +498,6 @@ const Auth = () => {
                 {errors.terms && (
                   <p className="text-sm text-destructive">{errors.terms}</p>
                 )}
-
-                {/* Marketing opt-in checkbox */}
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="marketing"
-                    checked={acceptedMarketing}
-                    onCheckedChange={(checked) => setAcceptedMarketing(checked === true)}
-                    className="mt-1"
-                  />
-                  <Label htmlFor="marketing" className="text-xs xl:text-sm text-muted-foreground leading-snug cursor-pointer">
-                    {t("auth.marketingOptIn")}
-                  </Label>
-                </div>
               </div>
             )}
 

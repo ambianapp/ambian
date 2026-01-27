@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { X, Gift, Music, Calendar, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -15,6 +17,7 @@ interface WelcomeDialogProps {
 const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [acceptedMarketing, setAcceptedMarketing] = useState(false);
   const hasChecked = useRef(false);
 
   useEffect(() => {
@@ -63,6 +66,8 @@ const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
   }, [userId, userCreatedAt]);
 
   const handleClose = () => {
+    // Store marketing preference
+    localStorage.setItem('ambian_marketing_optin', acceptedMarketing ? 'true' : 'false');
     setOpen(false);
     // Clear the open flag so it doesn't reopen on next mount
     sessionStorage.removeItem(WELCOME_OPEN_KEY);
@@ -122,6 +127,19 @@ const WelcomeDialog = ({ userId, userCreatedAt }: WelcomeDialogProps) => {
               </div>
               <p className="text-sm text-foreground">{t("welcome.feature3")}</p>
             </div>
+          </div>
+
+          {/* Marketing opt-in checkbox */}
+          <div className="flex items-start gap-3 pt-2">
+            <Checkbox
+              id="welcome-marketing"
+              checked={acceptedMarketing}
+              onCheckedChange={(checked) => setAcceptedMarketing(checked === true)}
+              className="mt-0.5"
+            />
+            <Label htmlFor="welcome-marketing" className="text-xs text-muted-foreground leading-snug cursor-pointer">
+              {t("auth.marketingOptIn")}
+            </Label>
           </div>
 
           {/* CTA */}
