@@ -332,11 +332,16 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-colors" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-0.5">
               <Heart className="w-5 h-5 text-primary" />
               <span className="text-sm font-semibold text-foreground">
                 {t("mobile.mood")}
               </span>
+              {t("mobile.moodSuffix") && (
+                <span className="text-xs text-muted-foreground">
+                  {t("mobile.moodSuffix")}
+                </span>
+              )}
             </div>
           </div>
           <div className="absolute inset-0 border border-primary/0 group-hover:border-primary/40 rounded-xl transition-colors" />
@@ -348,11 +353,16 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         >
           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent group-hover:from-accent/10 transition-colors" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-0.5">
               <Palette className="w-5 h-5 text-primary" />
               <span className="text-sm font-semibold text-foreground">
                 {t("mobile.genre")}
               </span>
+              {t("mobile.genreSuffix") && (
+                <span className="text-xs text-muted-foreground">
+                  {t("mobile.genreSuffix")}
+                </span>
+              )}
             </div>
           </div>
           <div className="absolute inset-0 border border-accent/0 group-hover:border-accent/40 rounded-xl transition-colors" />
