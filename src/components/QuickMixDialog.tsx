@@ -247,7 +247,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }:
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shuffle className="w-5 h-5 text-primary" />
@@ -267,6 +267,7 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }:
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
+            autoFocus={false}
           />
         </div>
 
