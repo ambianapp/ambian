@@ -13,6 +13,7 @@ import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import OfflineBanner from "@/components/OfflineBanner";
 import QuickAddBar from "@/components/admin/QuickAddBar";
+import { AdminNotificationBanner } from "@/components/AdminNotificationBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -161,6 +162,7 @@ const App = () => (
               <QuickAddProvider>
                 <PlayerProvider>
                   <OfflineBanner />
+                  <AdminNotificationBanner />
                   <AppContent />
                 </PlayerProvider>
               </QuickAddProvider>
