@@ -350,7 +350,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return (
       <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40">
         <MobilePlaylistBrowser
-          onViewChange={(view) => setMobileView(view)}
           onPlaylistSelect={onPlaylistSelect}
           onTrackSelect={onTrackSelect}
         />
