@@ -71,6 +71,27 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
       deleted_playlist_tracks: {
         Row: {
           deleted_at: string

@@ -18,6 +18,7 @@ import { ActivityLogs } from "@/components/admin/ActivityLogs";
 import { CrossfadeDebugPanel } from "@/components/admin/CrossfadeDebugPanel";
 import { ReferralPartnerManager } from "@/components/admin/ReferralPartnerManager";
 import { DeletedTracksManager } from "@/components/admin/DeletedTracksManager";
+import { AdminNotificationSender } from "@/components/admin/AdminNotificationSender";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -116,6 +117,7 @@ const Admin = () => {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="mt-6 space-y-6">
+            <AdminNotificationSender />
             <Card>
               <CardHeader>
                 <CardTitle>Quick Add Mode</CardTitle>
