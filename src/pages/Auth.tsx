@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store, Hotel, Dumbbell, Sparkles } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-original.png";
@@ -21,11 +21,10 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedMarketing, setAcceptedMarketing] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; terms?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,30 +36,15 @@ const Auth = () => {
   const validateForm = () => {
     try {
       authSchema.parse({ email, password });
-      const fieldErrors: { email?: string; password?: string; terms?: string } = {};
-      
-      // Check terms acceptance for signup
-      if (!isLogin && !acceptedTerms) {
-        fieldErrors.terms = t("auth.mustAcceptTerms");
-      }
-      
-      if (Object.keys(fieldErrors).length > 0) {
-        setErrors(fieldErrors);
-        return false;
-      }
-      
       setErrors({});
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: { email?: string; password?: string; terms?: string } = {};
+        const fieldErrors: { email?: string; password?: string } = {};
         error.errors.forEach((err) => {
           if (err.path[0] === "email") fieldErrors.email = err.message;
           if (err.path[0] === "password") fieldErrors.password = err.message;
         });
-        if (!isLogin && !acceptedTerms) {
-          fieldErrors.terms = t("auth.mustAcceptTerms");
-        }
         setErrors(fieldErrors);
       }
       return false;
@@ -122,16 +106,6 @@ const Auth = () => {
   };
 
   const handleGoogleLogin = async () => {
-    // If in signup mode, require terms acceptance
-    if (!isLogin && !acceptedTerms) {
-      setErrors({ terms: t("auth.mustAcceptTerms") });
-      toast({
-        title: t("common.error"),
-        description: t("auth.mustAcceptTerms"),
-        variant: "destructive",
-      });
-      return;
-    }
     
     setIsLoading(true);
     try {
@@ -511,31 +485,18 @@ const Auth = () => {
               )}
             </div>
 
-            {/* Terms Checkbox - Only show for signup */}
+            {/* Terms notice - Only show for signup */}
             {!isLogin && (
-              <div className="space-y-2 md:space-y-2 -mt-2">
-                <div className="flex items-center gap-3 py-2">
-                  <Checkbox
-                    id="terms"
-                    checked={acceptedTerms}
-                    onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-                    className="h-5 w-5 shrink-0"
-                  />
-                  <Label htmlFor="terms" className="text-xs xl:text-sm text-muted-foreground leading-snug cursor-pointer">
-                    {t("auth.iAccept")}{" "}
-                    <Link to="/terms" className="text-primary hover:underline" target="_blank">
-                      {t("auth.termsAndConditions")}
-                    </Link>
-                    {" "}{t("auth.and")}{" "}
-                    <Link to="/privacy" className="text-primary hover:underline" target="_blank">
-                      {t("auth.privacyPolicy")}
-                    </Link>
-                  </Label>
-                </div>
-                {errors.terms && (
-                  <p className="text-sm text-destructive pl-5">{errors.terms}</p>
-                )}
-              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {t("auth.bySigningUp")}{" "}
+                <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                  {t("auth.termsAndConditions")}
+                </Link>
+                {" "}{t("auth.and")}{" "}
+                <Link to="/privacy" className="text-primary hover:underline" target="_blank">
+                  {t("auth.privacyPolicy")}
+                </Link>
+              </p>
             )}
 
             <Button
