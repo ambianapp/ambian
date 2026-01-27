@@ -324,9 +324,9 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
       <button
         onClick={() => navigate("/playlists")}
         className="relative w-full h-20 rounded-2xl transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98] group"
-        style={{ background: 'linear-gradient(135deg, #f725bd 0%, #9b48ce 100%)' }}
+        style={{ backgroundColor: '#9b48ce' }}
       >
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-xl font-bold text-white">
             {t("mobile.showAllPlaylists")}
@@ -334,14 +334,14 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         </div>
       </button>
 
-      {/* Mood & Genre Row - Brand colored cards */}
+      {/* Mood & Genre Row - Solid colored cards */}
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={handleMoodOpen}
           className="relative group h-32 rounded-2xl transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
-          style={{ background: 'linear-gradient(135deg, #f725bd 0%, #d41f9e 100%)' }}
+          style={{ backgroundColor: '#f725bd' }}
         >
-          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
           <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
             <span className="text-3xl mb-1">💖</span>
             <span className="text-xl font-bold text-white leading-tight">
@@ -356,9 +356,9 @@ const MobilePlaylistBrowser = ({ onPlaylistSelect, onTrackSelect, onViewChange }
         <button
           onClick={handleGenreOpen}
           className="relative group h-32 rounded-2xl transition-all duration-300 overflow-hidden shadow-lg active:scale-[0.98]"
-          style={{ background: 'linear-gradient(135deg, #9b48ce 0%, #7b35a8 100%)' }}
+          style={{ backgroundColor: '#1e90ff' }}
         >
-          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
           <div className="absolute inset-0 flex flex-col items-start justify-end p-4">
             <span className="text-3xl mb-1">🎸</span>
             <span className="text-xl font-bold text-white leading-tight">
