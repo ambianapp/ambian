@@ -8,6 +8,7 @@ import { PlayerProvider } from "@/contexts/PlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LikedSongsProvider } from "@/contexts/LikedSongsContext";
 import { QuickAddProvider } from "@/contexts/QuickAddContext";
+import { useEffect } from "react";
 import PlayerBar from "@/components/PlayerBar";
 import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
@@ -125,6 +126,25 @@ const AppRoutes = () => {
 const AppContent = () => {
   const { user, subscription, isAdmin } = useAuth();
   const location = useLocation();
+
+  // Show scrollbars only while the user is actively scrolling.
+  useEffect(() => {
+    let timeout: number | undefined;
+    const onScroll = () => {
+      document.body.classList.add("is-scrolling");
+      if (timeout) window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => {
+        document.body.classList.remove("is-scrolling");
+      }, 800);
+    };
+
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll, { capture: true } as any);
+      if (timeout) window.clearTimeout(timeout);
+      document.body.classList.remove("is-scrolling");
+    };
+  }, []);
   
   // Hide navigation and player on auth-related pages
   const isAuthPage = location.pathname === "/auth" || location.pathname === "/reset-password";
