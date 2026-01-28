@@ -33,9 +33,11 @@ const AllPlaylists = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
   const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null);
 
+  const category = searchParams.get("category"); // "mood" or "genre" or null
+
   useEffect(() => {
     loadPlaylists();
-  }, []);
+  }, [category]);
 
   // Handle playlist query param on load
   useEffect(() => {
@@ -56,11 +58,17 @@ const AllPlaylists = () => {
   const loadPlaylists = async () => {
     setIsLoading(true);
 
-    const { data } = await supabase
+    let query = supabase
       .from("playlists")
       .select("*")
-      .eq("is_system", true)
-      .order("name", { ascending: true });
+      .eq("is_system", true);
+
+    // Filter by category if provided
+    if (category === "mood" || category === "genre") {
+      query = query.eq("category", category);
+    }
+
+    const { data } = await query.order("name", { ascending: true });
 
     setAllPlaylists(data || []);
     setIsLoading(false);
@@ -254,7 +262,11 @@ const AllPlaylists = () => {
               </div>
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-foreground">
-                  {t("home.allPlaylists") || "All Playlists"}
+                  {category === "mood" 
+                    ? t("home.byMood") 
+                    : category === "genre" 
+                      ? t("home.byGenre") 
+                      : t("home.allPlaylists") || "All Playlists"}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {allPlaylists.length} {t("library.playlists") || "playlists"}
