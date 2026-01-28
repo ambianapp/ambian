@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Users, Music, Smartphone, Monitor, Play, TrendingUp, Calendar } from "lucide-react";
+import { RefreshCw, Users, Music, Smartphone, Monitor, Play, TrendingUp, Calendar, Disc } from "lucide-react";
 import { toast } from "sonner";
 import { GrowthChurnChart } from "./GrowthChurnChart";
 interface PlaylistStats {
@@ -34,6 +34,7 @@ interface AnalyticsData {
   totalUsers: number;
   activeSubscriptions: number;
   totalPlays: number;
+  totalTracks: number;
   topPlaylists: PlaylistStats[];
   deviceStats: DeviceStats[];
   subscriptionStats: SubscriptionStats[];
@@ -92,6 +93,7 @@ export function Analytics() {
         profilesResult,
         subscriptionsResult,
         playHistoryResult,
+        tracksResult,
         topPlaylistsResult,
         sessionsResult,
         recentPlaysResult,
@@ -99,6 +101,7 @@ export function Analytics() {
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("subscriptions").select("status"),
         supabase.from("play_history").select("id", { count: "exact", head: true }),
+        supabase.from("tracks").select("id", { count: "exact", head: true }),
         supabase
           .from("play_history")
           .select(`
@@ -129,6 +132,9 @@ export function Analytics() {
 
       // Calculate total plays
       const totalPlays = playHistoryResult.count || 0;
+
+      // Calculate total tracks
+      const totalTracks = tracksResult.count || 0;
 
       // Calculate top playlists
       const playlistCounts: Record<string, { name: string; count: number }> = {};
@@ -184,6 +190,7 @@ export function Analytics() {
         totalUsers,
         activeSubscriptions,
         totalPlays,
+        totalTracks,
         topPlaylists,
         deviceStats,
         subscriptionStats,
@@ -276,6 +283,16 @@ export function Analytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.activeSubscriptions}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tracks</CardTitle>
+            <Disc className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.totalTracks}</div>
           </CardContent>
         </Card>
 
