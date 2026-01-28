@@ -173,6 +173,18 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     };
   }, [user?.id, fetchPlaylists]);
 
+  // Listen for custom event when liked playlists change (fallback for realtime)
+  useEffect(() => {
+    const handleLikedPlaylistsChanged = () => {
+      fetchPlaylists();
+    };
+
+    window.addEventListener("liked-playlists-changed", handleLikedPlaylistsChanged);
+    return () => {
+      window.removeEventListener("liked-playlists-changed", handleLikedPlaylistsChanged);
+    };
+  }, [fetchPlaylists]);
+
   const baseNavItems = [
     { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
