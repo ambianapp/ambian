@@ -139,23 +139,23 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       setHasRecentlyPlayed(false);
     }
 
-    // Load mood playlists (alphabetically)
+    // Load mood playlists (by display order)
     const { data: moodData } = await supabase
       .from("playlists")
       .select("*")
       .eq("is_system", true)
       .eq("category", "mood")
-      .order("name", { ascending: true });
+      .order("display_order", { ascending: true });
 
     setMoodPlaylists(moodData || []);
 
-    // Load genre playlists (alphabetically)
+    // Load genre playlists (by display order)
     const { data: genreData } = await supabase
       .from("playlists")
       .select("*")
       .eq("is_system", true)
       .eq("category", "genre")
-      .order("name", { ascending: true });
+      .order("display_order", { ascending: true });
 
     setGenrePlaylists(genreData || []);
 

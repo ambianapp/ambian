@@ -19,6 +19,7 @@ import { CrossfadeDebugPanel } from "@/components/admin/CrossfadeDebugPanel";
 import { ReferralPartnerManager } from "@/components/admin/ReferralPartnerManager";
 import { DeletedTracksManager } from "@/components/admin/DeletedTracksManager";
 import { AdminNotificationSender } from "@/components/admin/AdminNotificationSender";
+import { PlaylistOrderManager } from "@/components/admin/PlaylistOrderManager";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -96,6 +97,16 @@ const Admin = () => {
 
           {/* Playlists Tab */}
           <TabsContent value="playlists" className="mt-6 space-y-6">
+            <PlaylistOrderManager 
+              category="mood" 
+              title="Mood Playlist Order" 
+              description="Drag to reorder mood playlists on the home page"
+            />
+            <PlaylistOrderManager 
+              category="genre" 
+              title="Genre Playlist Order" 
+              description="Drag to reorder genre playlists on the home page"
+            />
             <DeletedTracksManager />
             <AdminPlaylistManager />
           </TabsContent>

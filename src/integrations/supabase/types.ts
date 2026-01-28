@@ -385,6 +385,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           description: string | null
+          display_order: number | null
           id: string
           is_public: boolean | null
           is_system: boolean | null
@@ -397,6 +398,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           id?: string
           is_public?: boolean | null
           is_system?: boolean | null
@@ -409,6 +411,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           id?: string
           is_public?: boolean | null
           is_system?: boolean | null
