@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, Mail, CreditCard, Calendar, Loader2, ExternalLink, FileText, Download, Monitor, Plus, Globe, Smartphone, Eye, RefreshCw, Clock, Trash2, X, Lock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 
 interface Invoice {
@@ -154,18 +155,23 @@ const Profile = () => {
     }
   }, [searchParams, checkSubscription, toast, navigate, t]);
 
+  const [schedulingEnabled, setSchedulingEnabled] = useState(false);
+
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
       
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, scheduling_enabled")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (data?.full_name) {
         setFullName(data.full_name);
+      }
+      if (data?.scheduling_enabled !== undefined) {
+        setSchedulingEnabled(data.scheduling_enabled);
       }
     };
 
@@ -1379,7 +1385,44 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-
+        {/* Settings Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              {t("profile.settings")}
+            </CardTitle>
+            <CardDescription>{t("profile.settingsDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="scheduling-toggle" className="text-base">{t("profile.enableScheduling")}</Label>
+                <p className="text-sm text-muted-foreground">{t("profile.enableSchedulingDesc")}</p>
+              </div>
+              <Switch
+                id="scheduling-toggle"
+                checked={schedulingEnabled}
+                onCheckedChange={async (checked) => {
+                  if (!user) return;
+                  setSchedulingEnabled(checked);
+                  const { error } = await supabase
+                    .from("profiles")
+                    .update({ scheduling_enabled: checked })
+                    .eq("user_id", user.id);
+                  if (error) {
+                    setSchedulingEnabled(!checked);
+                    toast({
+                      title: t("common.error"),
+                      description: error.message,
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Sign Out */}
         <Card className="bg-card border-border">
