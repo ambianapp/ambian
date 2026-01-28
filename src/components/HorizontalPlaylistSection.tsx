@@ -86,8 +86,7 @@ const HorizontalPlaylistSection = ({
       {playlists.length > 0 ? (
         <div 
           ref={scrollContainerRef}
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
-          style={{ scrollbarWidth: 'thin' }}
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-transparent hover:scrollbar-thumb-border scrollbar-track-transparent transition-colors"
         >
           {playlists.map((playlist) => (
             <div key={playlist.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
