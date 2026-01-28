@@ -10,6 +10,7 @@ interface Playlist {
   name: string;
   display_order: number;
   cover_url: string | null;
+  track_count: number;
 }
 
 interface PlaylistOrderManagerProps {
@@ -33,7 +34,7 @@ export const PlaylistOrderManager = ({ category, title, description }: PlaylistO
     setIsLoading(true);
     const { data, error } = await supabase
       .from("playlists")
-      .select("id, name, display_order, cover_url")
+      .select("id, name, display_order, cover_url, playlist_tracks(count)")
       .eq("is_system", true)
       .eq("category", category)
       .order("display_order", { ascending: true });
@@ -41,7 +42,11 @@ export const PlaylistOrderManager = ({ category, title, description }: PlaylistO
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      setPlaylists(data || []);
+      const playlistsWithCount = (data || []).map(p => ({
+        ...p,
+        track_count: (p.playlist_tracks as any)?.[0]?.count || 0
+      }));
+      setPlaylists(playlistsWithCount);
     }
     setIsLoading(false);
     setHasChanges(false);
@@ -135,6 +140,7 @@ export const PlaylistOrderManager = ({ category, title, description }: PlaylistO
                 />
               )}
               <span className="flex-1 font-medium">{playlist.name}</span>
+              <span className="text-sm text-muted-foreground">{playlist.track_count} tracks</span>
               <div className="flex gap-1">
                 <Button
                   variant="ghost"

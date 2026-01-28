@@ -38,7 +38,7 @@ const AdminPlaylistManager = () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("playlists")
-      .select("*")
+      .select("*, playlist_tracks(count)")
       .eq("is_system", true)
       .order("name", { ascending: true });
 
@@ -246,7 +246,10 @@ const AdminPlaylistManager = () => {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {(playlist as any).playlist_tracks?.[0]?.count || 0} tracks
+                  </p>
+                  <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
                     {playlist.description || t("admin.noDescription")}
                   </p>
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
