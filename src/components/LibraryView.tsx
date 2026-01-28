@@ -1,4 +1,4 @@
-import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil, Music, ArrowLeft } from "lucide-react";
+import { List, Grid3X3, Heart, Shuffle, Check, Play, Pencil, Music, ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Track } from "@/data/musicData";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SelectedPlaylist {
   id: string;
@@ -58,6 +59,10 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
   const [isPlayingMix, setIsPlayingMix] = useState(false);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [editName, setEditName] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
 
   // All playlists combined for selection
@@ -292,6 +297,49 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
     }
   };
 
+  const handleCreatePlaylist = async () => {
+    if (!user || !newPlaylistName.trim()) return;
+
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from("playlists")
+        .insert({
+          name: newPlaylistName.trim(),
+          description: newPlaylistDescription.trim() || null,
+          user_id: user.id,
+          is_system: false,
+          is_public: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success(t("library.playlistCreated") || "Playlist created");
+      setNewPlaylistName("");
+      setNewPlaylistDescription("");
+      setIsCreateDialogOpen(false);
+      
+      // Add to own playlists
+      if (data) {
+        setOwnPlaylists(prev => [data, ...prev]);
+        // Open the new playlist
+        onPlaylistSelect({
+          id: data.id,
+          name: data.name,
+          cover: data.cover_url,
+          description: data.description,
+        });
+      }
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      toast.error("Failed to create playlist");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       <div className="p-6 md:p-8 space-y-6 pt-4 md:pt-6">
@@ -338,6 +386,16 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
             {t("library.playlists")}
           </Button>
           <div className="flex items-center gap-2">
+            {/* New Playlist Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setIsCreateDialogOpen(true)}
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("library.newPlaylist")}</span>
+            </Button>
             {/* Quick Mix Dialog - shows only liked playlists in Library */}
             <QuickMixDialog
               onTrackSelect={onTrackSelect}
@@ -345,7 +403,7 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
               trigger={
                 <Button variant="outline" size="sm" className="gap-2">
                   <Shuffle className="w-4 h-4" />
-                  <span>{t("library.quickMix")}</span>
+                  <span className="hidden sm:inline">{t("library.quickMix")}</span>
                 </Button>
               }
             />
@@ -359,6 +417,48 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
             </Button>
           </div>
         </div>
+
+        {/* Create Playlist Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("sidebar.createPlaylist")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-playlist-name">{t("sidebar.playlistName")}</Label>
+                <Input
+                  id="new-playlist-name"
+                  placeholder="My Playlist"
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  autoFocus={false}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-playlist-description">{t("sidebar.playlistDescription")}</Label>
+                <Textarea
+                  id="new-playlist-description"
+                  placeholder="Add a description..."
+                  value={newPlaylistDescription}
+                  onChange={(e) => setNewPlaylistDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>
+                {t("common.cancel")}
+              </Button>
+              <Button 
+                onClick={handleCreatePlaylist} 
+                disabled={!newPlaylistName.trim() || isCreating}
+              >
+                {isCreating ? t("common.loading") : t("sidebar.create")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Content */}
         <div
