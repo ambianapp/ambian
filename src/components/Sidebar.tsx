@@ -148,6 +148,31 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     };
   }, [user?.id, fetchPlaylists]);
 
+  // Subscribe to playlists changes so deletes/creates/renames reflect immediately in the sidebar
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`sidebar-playlists-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "playlists",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchPlaylists();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchPlaylists]);
+
   const baseNavItems = [
     { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
