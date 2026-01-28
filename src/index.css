@@ -119,7 +119,7 @@
   }
 }
 
-/* Scrollbar styling - dark theme, hidden by default */
+/* Scrollbar styling - dark theme, hidden by default; show only while scrolling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -135,14 +135,14 @@
   transition: background 0.3s ease;
 }
 
-/* Show scrollbar on hover/scroll */
-*:hover::-webkit-scrollbar-thumb,
-*:active::-webkit-scrollbar-thumb {
-  background: hsl(240 10% 25%);
+/* Show scrollbar only while scrolling (set by App.tsx) */
+body.is-scrolling *::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.35);
 }
 
-*:hover::-webkit-scrollbar-thumb:hover {
-  background: hsl(328 85% 52% / 0.6);
+/* Brand accent when directly hovering the thumb */
+body.is-scrolling *::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
 }
 
 /* Firefox scrollbar styling - auto-hide */
@@ -151,8 +151,8 @@
   scrollbar-color: transparent transparent;
 }
 
-*:hover {
-  scrollbar-color: hsl(240 10% 25%) transparent;
+body.is-scrolling * {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
 }
 
 /* Hide scrollbar but keep functionality */
