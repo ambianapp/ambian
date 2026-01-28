@@ -109,7 +109,7 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: 
       </div>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="bg-card">
+        <DialogContent className="bg-card" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Edit Playlist</DialogTitle>
           </DialogHeader>
