@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Music, Search, Library, Plus, Heart, Music2, User, Shield, Clock, HelpCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     loadSchedulingPref();
   }, [user?.id]);
 
-  const fetchPlaylists = async () => {
+  const fetchPlaylists = useCallback(async () => {
     if (!user) return;
 
     setPlaylistsError(null);
@@ -117,12 +117,11 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         .filter(Boolean);
       setLikedPlaylists(playlists);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchPlaylists();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Only reload when user ID changes
+  }, [fetchPlaylists]);
 
   // Subscribe to liked_playlists changes for real-time updates
   useEffect(() => {
@@ -147,8 +146,7 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     return () => {
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, fetchPlaylists]);
 
   const baseNavItems = [
     { id: "home", label: t("nav.home"), icon: Music },
