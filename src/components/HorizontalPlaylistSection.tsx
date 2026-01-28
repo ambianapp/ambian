@@ -47,7 +47,7 @@ const HorizontalPlaylistSection = ({
   };
 
   return (
-    <section className="group animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
+    <section className="group/section animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
       <div className="flex items-center justify-between gap-2 mb-4">
         <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
         <div className="flex items-center gap-1">
@@ -86,7 +86,7 @@ const HorizontalPlaylistSection = ({
       {playlists.length > 0 ? (
         <div 
           ref={scrollContainerRef}
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-on-hover"
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-on-section-hover"
         >
           {playlists.map((playlist) => (
             <div key={playlist.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
