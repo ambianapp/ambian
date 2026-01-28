@@ -7,7 +7,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles, MonitorSmartphone, FileText, Clock } from "lucide-react";
+import { Trash2, Loader2, RefreshCw, Crown, User, Search, XCircle, CreditCard, Eye, Building, MapPin, Phone, Mail, Calendar, Receipt, Download, ExternalLink, Sparkles, MonitorSmartphone, FileText, Clock, Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 interface UserProfile {
@@ -114,6 +115,8 @@ export function UserManager() {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [cancelingUserId, setCancelingUserId] = useState<string | null>(null);
   const [expiringUserId, setExpiringUserId] = useState<string | null>(null);
+  const [extendingUserId, setExtendingUserId] = useState<string | null>(null);
+  const [extendDays, setExtendDays] = useState<number>(7);
   
   // Customer detail modal
   const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
@@ -289,7 +292,26 @@ export function UserManager() {
     }
   };
 
-  const getSubscriptionBadge = (subscription?: Subscription) => {
+  const handleExtendTrial = async (userId: string, days: number) => {
+    setExtendingUserId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke("extend-trial", {
+        body: { targetUserId: userId, additionalDays: days },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`Trial extended by ${days} days`);
+      loadUsers();
+    } catch (error: any) {
+      console.error("Error extending trial:", error);
+      toast.error(error.message || "Failed to extend trial");
+    } finally {
+      setExtendingUserId(null);
+    }
+  };
+
     if (!subscription) {
       return <Badge variant="outline">No subscription</Badge>;
     }
@@ -547,6 +569,72 @@ export function UserManager() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
+
+                    {/* Extend Trial Button */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                          disabled={extendingUserId === user.user_id}
+                          title="Extend trial / grant access"
+                        >
+                          {extendingUserId === user.user_id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64" align="end">
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <h4 className="font-medium text-sm">Extend Trial</h4>
+                            <p className="text-xs text-muted-foreground">
+                              Grant additional access days to {user.email || user.full_name}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={365}
+                              value={extendDays}
+                              onChange={(e) => setExtendDays(Math.max(1, Math.min(365, parseInt(e.target.value) || 7)))}
+                              className="w-20"
+                            />
+                            <span className="text-sm text-muted-foreground self-center">days</span>
+                          </div>
+                          <div className="flex gap-2">
+                            {[7, 14, 30, 90].map((days) => (
+                              <Button
+                                key={days}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs px-2"
+                                onClick={() => setExtendDays(days)}
+                              >
+                                {days}d
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => handleExtendTrial(user.user_id, extendDays)}
+                            disabled={extendingUserId === user.user_id}
+                          >
+                            {extendingUserId === user.user_id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Plus className="w-4 h-4 mr-2" />
+                            )}
+                            Add {extendDays} Days
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
 
                     {/* Cancel Subscription Button */}
                     {user.subscription?.status === "active" && user.subscription?.stripe_subscription_id && (
