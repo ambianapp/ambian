@@ -51,6 +51,17 @@ const HorizontalPlaylistSection = ({
       <div className="flex items-center justify-between gap-2 mb-4">
         <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
         <div className="flex items-center gap-1">
+          {onShowAll && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onShowAll}
+              className="text-muted-foreground hover:text-foreground gap-1 mr-1"
+            >
+              <span className="text-sm">{t("home.showAll")}</span>
+              <ShowAllIcon className="w-4 h-4" />
+            </Button>
+          )}
           {playlists.length > 6 && (
             <>
               <Button
@@ -70,17 +81,6 @@ const HorizontalPlaylistSection = ({
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </>
-          )}
-          {onShowAll && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onShowAll}
-              className="text-muted-foreground hover:text-foreground gap-1 ml-1"
-            >
-              <span className="text-sm">{t("home.showAll")}</span>
-              <ShowAllIcon className="w-4 h-4" />
-            </Button>
           )}
         </div>
       </div>
