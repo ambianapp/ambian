@@ -47,3 +47,6 @@ verify_jwt = true
 
 [functions.get-signed-audio-url]
 verify_jwt = false
+
+[functions.extend-trial]
+verify_jwt = false
