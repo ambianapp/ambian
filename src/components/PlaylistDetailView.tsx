@@ -48,9 +48,49 @@ const PlaylistDetailView = ({
   const { handleTrackSelect: playerHandleTrackSelect } = usePlayer();
   const { t } = useLanguage();
 
+  const loadPlaylistTracks = useCallback(async () => {
+    setIsLoading(true);
+    
+    // Check if this is a system playlist and get owner
+    const { data: playlistData } = await supabase
+      .from("playlists")
+      .select("is_system, user_id")
+      .eq("id", playlistId)
+      .maybeSingle();
+    
+    const isSystem = playlistData?.is_system ?? false;
+    setIsSystemPlaylist(isSystem);
+    setPlaylistOwnerId(playlistData?.user_id ?? null);
+    
+    const { data, error } = await supabase
+      .from("playlist_tracks")
+      .select("track_id, position, tracks(*)")
+      .eq("playlist_id", playlistId)
+      .order("position", { ascending: true });
+
+    if (error) {
+      console.error("Error loading playlist tracks:", error);
+    } else if (data) {
+      let trackList = data
+        .map((item: any) => item.tracks)
+        .filter(Boolean);
+      
+      // Sort alphabetically by title for system playlists (genre/mood)
+      if (isSystem) {
+        trackList = trackList.sort((a: DbTrack, b: DbTrack) => 
+          a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' })
+        );
+      }
+      
+      setTracks(trackList);
+    }
+
+    setIsLoading(false);
+  }, [playlistId]);
+
   useEffect(() => {
     loadPlaylistTracks();
-  }, [playlistId]);
+  }, [loadPlaylistTracks]);
 
   // Realtime subscription for playlist tracks - songs appear/disappear live
   useEffect(() => {
@@ -75,8 +115,7 @@ const PlaylistDetailView = ({
     return () => {
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlistId]);
+  }, [playlistId, loadPlaylistTracks]);
 
   useEffect(() => {
     checkIfLiked();
@@ -141,46 +180,6 @@ const PlaylistDetailView = ({
       // Dispatch custom event so Sidebar can update immediately
       window.dispatchEvent(new CustomEvent("liked-playlists-changed"));
     }
-  };
-
-  const loadPlaylistTracks = async () => {
-    setIsLoading(true);
-    
-    // Check if this is a system playlist and get owner
-    const { data: playlistData } = await supabase
-      .from("playlists")
-      .select("is_system, user_id")
-      .eq("id", playlistId)
-      .maybeSingle();
-    
-    const isSystem = playlistData?.is_system ?? false;
-    setIsSystemPlaylist(isSystem);
-    setPlaylistOwnerId(playlistData?.user_id ?? null);
-    
-    const { data, error } = await supabase
-      .from("playlist_tracks")
-      .select("track_id, position, tracks(*)")
-      .eq("playlist_id", playlistId)
-      .order("position", { ascending: true });
-
-    if (error) {
-      console.error("Error loading playlist tracks:", error);
-    } else if (data) {
-      let trackList = data
-        .map((item: any) => item.tracks)
-        .filter(Boolean);
-      
-      // Sort alphabetically by title for system playlists (genre/mood)
-      if (isSystem) {
-        trackList = trackList.sort((a: DbTrack, b: DbTrack) => 
-          a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' })
-        );
-      }
-      
-      setTracks(trackList);
-    }
-
-    setIsLoading(false);
   };
 
   const convertToTrack = (dbTrack: DbTrack, signedAudioUrl: string | undefined): Track => ({
