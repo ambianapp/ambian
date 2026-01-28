@@ -57,6 +57,23 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [schedulingEnabled, setSchedulingEnabled] = useState(false);
+
+  // Load scheduling preference
+  useEffect(() => {
+    const loadSchedulingPref = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("scheduling_enabled")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.scheduling_enabled !== undefined) {
+        setSchedulingEnabled(data.scheduling_enabled);
+      }
+    };
+    loadSchedulingPref();
+  }, [user?.id]);
 
   const fetchPlaylists = async () => {
     if (!user) return;
@@ -133,12 +150,15 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const navItems = [
+  const baseNavItems = [
     { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
     { id: "library", label: t("nav.library"), icon: Library },
-    { id: "schedule", label: t("nav.schedule"), icon: Clock },
   ];
+  
+  const navItems = schedulingEnabled 
+    ? [...baseNavItems, { id: "schedule", label: t("nav.schedule"), icon: Clock }]
+    : baseNavItems;
 
   const handlePlaylistClick = (playlist: SidebarPlaylist) => {
     if (onPlaylistSelect) {

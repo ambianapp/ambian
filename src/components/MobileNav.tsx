@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Music, Search, Library, Shield, User, Clock, HelpCircle, MoreHorizontal, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +18,27 @@ interface MobileNavProps {
 }
 
 const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
-  const { isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const [schedulingEnabled, setSchedulingEnabled] = useState(false);
+
+  // Load scheduling preference
+  useEffect(() => {
+    const loadSchedulingPref = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("scheduling_enabled")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.scheduling_enabled !== undefined) {
+        setSchedulingEnabled(data.scheduling_enabled);
+      }
+    };
+    loadSchedulingPref();
+  }, [user?.id]);
 
   const isOnIndexPage = location.pathname === "/";
   const isOnProfilePage = location.pathname === "/profile";
@@ -61,7 +80,7 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
     }
   };
 
-  const isMoreActive = isOnHelpPage || isOnAdminPage || (isOnIndexPage && activeView === "schedule");
+  const isMoreActive = isOnHelpPage || isOnAdminPage || (schedulingEnabled && isOnIndexPage && activeView === "schedule");
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 md:hidden glass border-t border-border z-50 pb-[var(--safe-bottom-tight)]">
@@ -114,16 +133,18 @@ const MobileNav = ({ activeView, onViewChange }: MobileNavProps) => {
             sideOffset={8}
             className="w-48 bg-card border-border mb-2"
           >
-            <DropdownMenuItem 
-              onClick={handleScheduleClick}
-              className={cn(
-                "flex items-center gap-3 cursor-pointer",
-                isOnIndexPage && activeView === "schedule" && "text-primary"
-              )}
-            >
-              <Clock className="w-4 h-4" />
-              <span>{t("nav.schedule")}</span>
-            </DropdownMenuItem>
+            {schedulingEnabled && (
+              <DropdownMenuItem 
+                onClick={handleScheduleClick}
+                className={cn(
+                  "flex items-center gap-3 cursor-pointer",
+                  isOnIndexPage && activeView === "schedule" && "text-primary"
+                )}
+              >
+                <Clock className="w-4 h-4" />
+                <span>{t("nav.schedule")}</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem 
               onClick={handleHelpClick}
               className={cn(
