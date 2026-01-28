@@ -311,7 +311,12 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
 
         <div className="flex flex-col gap-4 mt-4">
         <div className="flex items-center justify-between px-2">
-          <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
+          <button 
+            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => onViewChange("library")}
+          >
+            {t("sidebar.yourPlaylists")}
+          </button>
           <Button 
             variant="ghost" 
             size="iconSm" 
