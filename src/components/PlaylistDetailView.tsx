@@ -131,11 +131,15 @@ const PlaylistDetailView = ({
         .eq("user_id", user.id)
         .eq("playlist_id", playlistId);
       setIsLiked(false);
+      // Dispatch custom event so Sidebar can update immediately
+      window.dispatchEvent(new CustomEvent("liked-playlists-changed"));
     } else {
       await supabase
         .from("liked_playlists")
         .insert({ user_id: user.id, playlist_id: playlistId });
       setIsLiked(true);
+      // Dispatch custom event so Sidebar can update immediately
+      window.dispatchEvent(new CustomEvent("liked-playlists-changed"));
     }
   };
 
