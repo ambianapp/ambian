@@ -312,6 +312,7 @@ export function UserManager() {
     }
   };
 
+  const getSubscriptionBadge = (subscription?: Subscription) => {
     if (!subscription) {
       return <Badge variant="outline">No subscription</Badge>;
     }
