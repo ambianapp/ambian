@@ -56,10 +56,9 @@ const HorizontalPlaylistSection = ({
               variant="ghost"
               size="sm"
               onClick={onShowAll}
-              className="text-muted-foreground hover:text-foreground gap-1 mr-1"
+              className="text-muted-foreground hover:text-foreground mr-1"
             >
               <span className="text-sm">{t("home.showAll")}</span>
-              <ShowAllIcon className="w-4 h-4" />
             </Button>
           )}
           {playlists.length > 6 && (
