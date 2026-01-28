@@ -103,10 +103,25 @@ export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [targetPlaylist, user, recentlyAdded, toast]);
 
-  // Clear recently added when target playlist changes
-  const handleSetTargetPlaylist = useCallback((playlist: TargetPlaylist | null) => {
+  // Load existing tracks when target playlist changes
+  const handleSetTargetPlaylist = useCallback(async (playlist: TargetPlaylist | null) => {
     setTargetPlaylist(playlist);
-    setRecentlyAdded(new Set());
+    
+    if (playlist) {
+      // Fetch existing tracks in the playlist to mark them as already added
+      const { data } = await supabase
+        .from("playlist_tracks")
+        .select("track_id")
+        .eq("playlist_id", playlist.id);
+      
+      if (data) {
+        setRecentlyAdded(new Set(data.map(item => item.track_id)));
+      } else {
+        setRecentlyAdded(new Set());
+      }
+    } else {
+      setRecentlyAdded(new Set());
+    }
   }, []);
 
   return (
