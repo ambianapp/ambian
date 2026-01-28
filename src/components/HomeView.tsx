@@ -382,6 +382,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           onPlaylistClick={handlePlaylistClick}
           onPlayPlaylist={handlePlayPlaylist}
           onPlaylistUpdate={handlePlaylistUpdate}
+          onShowAll={() => navigate("/playlists?category=mood")}
         />
 
         {/* Playlists by Genre - Horizontal scroll */}
@@ -391,6 +392,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           onPlaylistClick={handlePlaylistClick}
           onPlayPlaylist={handlePlayPlaylist}
           onPlaylistUpdate={handlePlaylistUpdate}
+          onShowAll={() => navigate("/playlists?category=genre")}
         />
 
         {/* Industry Collections */}
