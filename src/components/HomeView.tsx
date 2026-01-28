@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, History, Music, Shuffle } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, Music, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
@@ -45,8 +46,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const [newPlaylists, setNewPlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAllMoods, setShowAllMoods] = useState(false);
-  const [showAllGenres, setShowAllGenres] = useState(false);
   const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue">("browser");
   const [hasRecentlyPlayed, setHasRecentlyPlayed] = useState(false);
   const { toast } = useToast();
@@ -270,41 +269,60 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return t("home.greeting.evening") + " 🌙";
   };
 
-  const renderPlaylistSection = (
+  // Horizontal scrollable section for desktop
+  const renderHorizontalPlaylistSection = (
     title: string,
     playlists: DbPlaylist[],
-    showAll: boolean,
-    onToggle: () => void,
-    compact: boolean = false,
-    mobileDisplayCount?: number
+    sectionKey: string
   ) => {
-    const defaultDisplayCount = compact ? 10 : 4;
-    const displayCount = isMobile && mobileDisplayCount !== undefined ? mobileDisplayCount : defaultDisplayCount;
-    const displayedPlaylists = showAll ? playlists : playlists.slice(0, displayCount);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const scrollLeft = () => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+      }
+    };
+
+    const scrollRight = () => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+      }
+    };
 
     return (
       <section className="animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-4">
           <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
-          {playlists.length > displayCount && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              className="text-primary hover:text-primary hover:bg-primary/10 shrink-0 text-xs sm:text-sm px-2 sm:px-3"
-            >
-              <span className="hidden sm:inline">{showAll ? t("home.showLess") : t("home.showMore")}</span>
-              <span className="sm:hidden">{showAll ? "−" : "+"}</span>
-              <ChevronRight className={`w-4 h-4 ml-1 transition-transform hidden sm:block ${showAll ? "rotate-90" : ""}`} />
-            </Button>
+          {playlists.length > 6 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={scrollLeft}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={scrollRight}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           )}
         </div>
         {playlists.length > 0 ? (
-          <>
-            <div className={compact ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-3" : "grid grid-cols-2 lg:grid-cols-4 gap-4"}>
-              {displayedPlaylists.map((playlist) => (
+          <div 
+            ref={scrollContainerRef}
+            className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
+            style={{ scrollbarWidth: 'thin' }}
+          >
+            {playlists.map((playlist) => (
+              <div key={playlist.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
                 <PlaylistCard
-                  key={playlist.id}
                   playlist={{
                     id: playlist.id,
                     name: playlist.name,
@@ -321,24 +339,11 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                   })}
                   onPlay={() => handlePlayPlaylist(playlist.id)}
                   onUpdate={handlePlaylistUpdate}
-                  compact={compact}
+                  compact
                 />
-              ))}
-            </div>
-            {playlists.length > displayCount && !showAll && (
-              <div className="mt-4 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onToggle}
-                  className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
-                >
-                  {t("home.showMore")}
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
               </div>
-            )}
-          </>
+            ))}
+          </div>
         ) : (
           <p className="text-muted-foreground">No playlists yet. Create one in the admin panel.</p>
         )}
@@ -451,6 +456,20 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           </div>
         </div>
 
+        {/* Playlists by Mood - Horizontal scroll */}
+        {renderHorizontalPlaylistSection(
+          t("home.byMood"),
+          moodPlaylists,
+          "mood"
+        )}
+
+        {/* Playlists by Genre - Horizontal scroll */}
+        {renderHorizontalPlaylistSection(
+          t("home.byGenre"),
+          genrePlaylists,
+          "genre"
+        )}
+
         {/* Industry Collections */}
         <IndustryCollections
           onPlaylistSelect={onPlaylistSelect}
@@ -464,114 +483,32 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               <History className="w-4 h-4 text-primary" />
               <h2 className="text-lg font-semibold text-foreground">{t("home.continue")}</h2>
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
               {recentlyPlayed.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={{
-                    id: playlist.id,
-                    name: playlist.name,
-                    description: playlist.description || "",
-                    cover: playlist.cover_url || "/placeholder.svg",
-                    trackCount: 0,
-                    tracks: [],
-                  }}
-                  onClick={() => handlePlaylistClick({
-                    id: playlist.id,
-                    name: playlist.name,
-                    cover: playlist.cover_url,
-                    description: playlist.description,
-                  })}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  onUpdate={handlePlaylistUpdate}
-                  compact
-                />
+                <div key={playlist.id} className="flex-shrink-0 w-24 sm:w-28">
+                  <PlaylistCard
+                    playlist={{
+                      id: playlist.id,
+                      name: playlist.name,
+                      description: playlist.description || "",
+                      cover: playlist.cover_url || "/placeholder.svg",
+                      trackCount: 0,
+                      tracks: [],
+                    }}
+                    onClick={() => handlePlaylistClick({
+                      id: playlist.id,
+                      name: playlist.name,
+                      cover: playlist.cover_url,
+                      description: playlist.description,
+                    })}
+                    onPlay={() => handlePlayPlaylist(playlist.id)}
+                    onUpdate={handlePlaylistUpdate}
+                    compact
+                  />
+                </div>
               ))}
             </div>
           </section>
-        )}
-
-        {/* Playlists by Genre */}
-        {renderPlaylistSection(
-          t("home.byGenre"),
-          genrePlaylists,
-          showAllGenres,
-          () => setShowAllGenres(!showAllGenres),
-          true
-        )}
-
-        {/* Playlists by Mood */}
-        {renderPlaylistSection(
-          t("home.byMood"),
-          moodPlaylists,
-          showAllMoods,
-          () => setShowAllMoods(!showAllMoods),
-          true
-        )}
-
-        {/* Recently Updated & New Playlists - Side by Side */}
-        {(recentlyUpdated.length > 0 || newPlaylists.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
-            {/* Recently Updated Playlists */}
-            {recentlyUpdated.length > 0 && (
-              <section className="bg-secondary/30 rounded-2xl p-5 border border-border/50">
-                <h2 className="text-xl font-bold text-foreground mb-4">{t("home.recentlyUpdated")}</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {recentlyUpdated.map((playlist) => (
-                    <PlaylistCard
-                      key={playlist.id}
-                      playlist={{
-                        id: playlist.id,
-                        name: playlist.name,
-                        description: playlist.description || "",
-                        cover: playlist.cover_url || "/placeholder.svg",
-                        trackCount: 0,
-                        tracks: [],
-                      }}
-                      onClick={() => handlePlaylistClick({
-                        id: playlist.id,
-                        name: playlist.name,
-                        cover: playlist.cover_url,
-                        description: playlist.description,
-                      })}
-                      onPlay={() => handlePlayPlaylist(playlist.id)}
-                      onUpdate={handlePlaylistUpdate}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* New Playlists */}
-            {newPlaylists.length > 0 && (
-              <section className="bg-secondary/30 rounded-2xl p-5 border border-border/50">
-                <h2 className="text-xl font-bold text-foreground mb-4">{t("home.newPlaylists")}</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {newPlaylists.map((playlist) => (
-                    <PlaylistCard
-                      key={playlist.id}
-                      playlist={{
-                        id: playlist.id,
-                        name: playlist.name,
-                        description: playlist.description || "",
-                        cover: playlist.cover_url || "/placeholder.svg",
-                        trackCount: 0,
-                        tracks: [],
-                      }}
-                      onClick={() => handlePlaylistClick({
-                        id: playlist.id,
-                        name: playlist.name,
-                        cover: playlist.cover_url,
-                        description: playlist.description,
-                      })}
-                      onPlay={() => handlePlayPlaylist(playlist.id)}
-                      onUpdate={handlePlaylistUpdate}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
         )}
       </div>
     </div>
