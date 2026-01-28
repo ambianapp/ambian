@@ -156,25 +156,25 @@ body.is-scrolling * {
 }
 
 /* Show scrollbar on hover for playlist sections */
-.scrollbar-on-hover::-webkit-scrollbar-thumb {
+.scrollbar-on-section-hover::-webkit-scrollbar-thumb {
   background: transparent;
   transition: background 0.2s ease;
 }
 
-.group:hover .scrollbar-on-hover::-webkit-scrollbar-thumb {
+.group\/section:hover .scrollbar-on-section-hover::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.35);
 }
 
-.group:hover .scrollbar-on-hover::-webkit-scrollbar-thumb:hover {
+.group\/section:hover .scrollbar-on-section-hover::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.6);
 }
 
-/* Firefox: show scrollbar on group hover */
-.scrollbar-on-hover {
+/* Firefox: show scrollbar on section hover */
+.scrollbar-on-section-hover {
   scrollbar-color: transparent transparent;
 }
 
-.group:hover .scrollbar-on-hover {
+.group\/section:hover .scrollbar-on-section-hover {
   scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
 }
 
