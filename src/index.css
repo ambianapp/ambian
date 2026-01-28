@@ -119,7 +119,7 @@
   }
 }
 
-/* Scrollbar styling - dark theme */
+/* Scrollbar styling - dark theme, hidden by default */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -130,41 +130,29 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(240 10% 25%);
+  background: transparent;
   border-radius: 3px;
+  transition: background 0.3s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
+/* Show scrollbar on hover/scroll */
+*:hover::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+  background: hsl(240 10% 25%);
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
   background: hsl(328 85% 52% / 0.6);
 }
 
-/* Firefox scrollbar styling */
+/* Firefox scrollbar styling - auto-hide */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(240 10% 25%) transparent;
-}
-
-/* Subtle scrollbar - only visible on hover */
-.scrollbar-subtle {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
-.scrollbar-subtle:hover {
-  scrollbar-color: hsl(240 10% 30%) transparent;
-}
-
-.scrollbar-subtle::-webkit-scrollbar-thumb {
-  background: transparent;
-  transition: background 0.2s ease;
-}
-
-.scrollbar-subtle:hover::-webkit-scrollbar-thumb {
-  background: hsl(240 10% 30%);
-}
-
-.scrollbar-subtle::-webkit-scrollbar-thumb:hover {
-  background: hsl(328 85% 52% / 0.5);
+*:hover {
+  scrollbar-color: hsl(240 10% 25%) transparent;
 }
 
 /* Hide scrollbar but keep functionality */
