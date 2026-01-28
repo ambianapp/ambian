@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, History, Music, Shuffle } from "lucide-react";
+import { History, Music, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
 import MobilePlaylistBrowser from "./MobilePlaylistBrowser";
 import CategoryPlaylistsView from "./CategoryPlaylistsView";
 import ContinueListeningView from "./ContinueListeningView";
+import HorizontalPlaylistSection from "./HorizontalPlaylistSection";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -269,87 +269,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return t("home.greeting.evening") + " 🌙";
   };
 
-  // Horizontal scrollable section for desktop
-  const renderHorizontalPlaylistSection = (
-    title: string,
-    playlists: DbPlaylist[],
-    sectionKey: string
-  ) => {
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-    const scrollLeft = () => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-      }
-    };
-
-    const scrollRight = () => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-      }
-    };
-
-    return (
-      <section className="animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
-          {playlists.length > 6 && (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={scrollLeft}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={scrollRight}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-        {playlists.length > 0 ? (
-          <div 
-            ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
-            style={{ scrollbarWidth: 'thin' }}
-          >
-            {playlists.map((playlist) => (
-              <div key={playlist.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
-                <PlaylistCard
-                  playlist={{
-                    id: playlist.id,
-                    name: playlist.name,
-                    description: playlist.description || "",
-                    cover: playlist.cover_url || "/placeholder.svg",
-                    trackCount: 0,
-                    tracks: [],
-                  }}
-                  onClick={() => handlePlaylistClick({
-                    id: playlist.id,
-                    name: playlist.name,
-                    cover: playlist.cover_url,
-                    description: playlist.description,
-                  })}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  onUpdate={handlePlaylistUpdate}
-                  compact
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">No playlists yet. Create one in the admin panel.</p>
-        )}
-      </section>
-    );
-  };
 
   // Mobile view - show continue listening view
   if (isMobile && mobileView === "continue") {
@@ -457,18 +376,22 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         </div>
 
         {/* Playlists by Mood - Horizontal scroll */}
-        {renderHorizontalPlaylistSection(
-          t("home.byMood"),
-          moodPlaylists,
-          "mood"
-        )}
+        <HorizontalPlaylistSection
+          title={t("home.byMood")}
+          playlists={moodPlaylists}
+          onPlaylistClick={handlePlaylistClick}
+          onPlayPlaylist={handlePlayPlaylist}
+          onPlaylistUpdate={handlePlaylistUpdate}
+        />
 
         {/* Playlists by Genre - Horizontal scroll */}
-        {renderHorizontalPlaylistSection(
-          t("home.byGenre"),
-          genrePlaylists,
-          "genre"
-        )}
+        <HorizontalPlaylistSection
+          title={t("home.byGenre")}
+          playlists={genrePlaylists}
+          onPlaylistClick={handlePlaylistClick}
+          onPlayPlaylist={handlePlayPlaylist}
+          onPlaylistUpdate={handlePlaylistUpdate}
+        />
 
         {/* Industry Collections */}
         <IndustryCollections
