@@ -1564,12 +1564,12 @@ const PlayerBar = () => {
                 <button
                   onClick={() => {
                     clearQuickMix();
-                    toast({ title: "Exited Quick Mix" });
+                    toast({ title: "Exited Shuffle" });
                   }}
                   className="flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-medium rounded-full flex-shrink-0 hover:bg-primary/30 transition-colors active:scale-95"
                 >
                   <ListMusic className="w-2.5 h-2.5" />
-                  Mix ✕
+                  Shuffle ✕
                 </button>
               )}
             </div>
@@ -1717,17 +1717,17 @@ const PlayerBar = () => {
           )}
         </div>
 
-        {/* Quick Mix Indicator - between track info and controls */}
+        {/* Shuffle Indicator - between track info and controls */}
         {isQuickMix && (
           <button
             onClick={() => {
               clearQuickMix();
-              toast({ title: "Exited Quick Mix" });
+              toast({ title: "Exited Shuffle" });
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary text-sm font-medium rounded-full flex-shrink-0 hover:bg-primary/30 transition-colors cursor-pointer mx-4"
           >
             <ListMusic className="w-4 h-4" />
-            Quick Mix ✕
+            Shuffle ✕
           </button>
         )}
 
