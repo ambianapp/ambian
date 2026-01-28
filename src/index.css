@@ -155,6 +155,29 @@ body.is-scrolling * {
   scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
 }
 
+/* Show scrollbar on hover for playlist sections */
+.scrollbar-on-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.group:hover .scrollbar-on-hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.35);
+}
+
+.group:hover .scrollbar-on-hover::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
+}
+
+/* Firefox: show scrollbar on group hover */
+.scrollbar-on-hover {
+  scrollbar-color: transparent transparent;
+}
+
+.group:hover .scrollbar-on-hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
