@@ -1,7 +1,8 @@
 import { useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronRight as ShowAllIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbPlaylist = Tables<"playlists">;
@@ -19,6 +20,7 @@ interface HorizontalPlaylistSectionProps {
   onPlaylistClick: (playlist: SelectedPlaylist) => void;
   onPlayPlaylist: (playlistId: string) => void;
   onPlaylistUpdate: (id: string, data: { name: string; description: string; cover: string }) => void;
+  onShowAll?: () => void;
 }
 
 const HorizontalPlaylistSection = ({
@@ -27,7 +29,9 @@ const HorizontalPlaylistSection = ({
   onPlaylistClick,
   onPlayPlaylist,
   onPlaylistUpdate,
+  onShowAll,
 }: HorizontalPlaylistSectionProps) => {
+  const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -46,26 +50,39 @@ const HorizontalPlaylistSection = ({
     <section className="animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
       <div className="flex items-center justify-between gap-2 mb-4">
         <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
-        {playlists.length > 6 && (
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
+          {playlists.length > 6 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={scrollLeft}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={scrollRight}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          {onShowAll && (
             <Button
               variant="ghost"
-              size="icon"
-              onClick={scrollLeft}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              size="sm"
+              onClick={onShowAll}
+              className="text-muted-foreground hover:text-foreground gap-1 ml-1"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <span className="text-sm">{t("home.showAll")}</span>
+              <ShowAllIcon className="w-4 h-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={scrollRight}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       {playlists.length > 0 ? (
         <div 
