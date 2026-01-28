@@ -14,6 +14,7 @@ import MobileSidebar from "@/components/MobileSidebar";
 import AmbianLoadingScreen from "@/components/AmbianLoadingScreen";
 import OfflineBanner from "@/components/OfflineBanner";
 import QuickAddBar from "@/components/admin/QuickAddBar";
+import { useQuickAddKeyboard } from "@/hooks/useQuickAddKeyboard";
 import { AdminNotificationBanner } from "@/components/AdminNotificationBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -126,6 +127,9 @@ const AppRoutes = () => {
 const AppContent = () => {
   const { user, subscription, isAdmin } = useAuth();
   const location = useLocation();
+  
+  // Keyboard shortcuts for Quick Add mode
+  useQuickAddKeyboard();
 
   // Show scrollbars only while the user is actively scrolling.
   useEffect(() => {
