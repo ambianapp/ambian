@@ -219,7 +219,8 @@ const Sidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEnabled 
         <img 
           src="/ambian-logo.png" 
           alt="Ambian" 
-          className="h-24 object-contain"
+          className="h-24 object-contain cursor-pointer"
+          onClick={() => onViewChange("home")}
         />
       </div>
 
