@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, Disc3, ListMusic, Trash2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Repeat1, Shuffle, Heart, ListMusic, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -1691,20 +1691,6 @@ const PlayerBar = () => {
               {repeat === "one" ? <Repeat1 className="w-5 h-5" /> : <Repeat className="w-5 h-5" />}
               {repeat !== "off" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                handleCrossfadeToggle();
-                toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
-                (e.currentTarget as HTMLButtonElement).blur();
-              }}
-              className={cn("h-10 w-10 relative touch-manipulation", crossfade ? "text-primary" : "text-muted-foreground")}
-              title="Crossfade"
-            >
-              <Disc3 className="w-5 h-5" />
-              {crossfade && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
-            </Button>
           </div>
         </div>
       </div>
@@ -1804,20 +1790,6 @@ const PlayerBar = () => {
             >
               {repeat === "one" ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
               {repeat !== "off" && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="iconSm" 
-              onClick={(e) => {
-                handleCrossfadeToggle();
-                toast({ title: crossfade ? "Crossfade disabled" : "Crossfade enabled" });
-                (e.currentTarget as HTMLButtonElement).blur();
-              }}
-              className={cn("relative touch-manipulation", crossfade ? "text-primary" : "text-muted-foreground hover:text-foreground")}
-              title="Crossfade"
-            >
-              <Disc3 className="w-4 h-4" />
-              {crossfade && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
             </Button>
           </div>
 
