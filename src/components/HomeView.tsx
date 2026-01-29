@@ -9,7 +9,8 @@ import CategoryPlaylistsView from "./CategoryPlaylistsView";
 import ContinueListeningView from "./ContinueListeningView";
 import HorizontalPlaylistSection from "./HorizontalPlaylistSection";
 import MobileHorizontalPlaylistSection from "./MobileHorizontalPlaylistSection";
-import MobileIndustrySection from "./MobileIndustrySection";
+import MobileIndustrySection, { IndustryCollection } from "./MobileIndustrySection";
+import IndustryPlaylistsView from "./IndustryPlaylistsView";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +48,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const [newPlaylists, setNewPlaylists] = useState<DbPlaylist[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<DbPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue">("browser");
+  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue" | "industry">("browser");
+  const [selectedIndustry, setSelectedIndustry] = useState<{ id: string; name: string } | null>(null);
   const [hasRecentlyPlayed, setHasRecentlyPlayed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -60,6 +62,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       // When back is pressed, reset to browser view
       if (mobileView !== "browser") {
         setMobileView("browser");
+        setSelectedIndustry(null);
       }
     };
 
@@ -67,10 +70,15 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return () => window.removeEventListener('popstate', handlePopstate);
   }, [isMobile, mobileView]);
 
-  // Push history when entering mood/genre/continue view
-  const handleMobileViewChange = (view: "mood" | "genre" | "continue") => {
+  // Push history when entering mood/genre/continue/industry view
+  const handleMobileViewChange = (view: "mood" | "genre" | "continue" | "industry") => {
     window.history.pushState({ type: 'mobile-category', view }, '');
     setMobileView(view);
+  };
+
+  const handleIndustrySelect = (collection: IndustryCollection, translatedName: string) => {
+    setSelectedIndustry({ id: collection.id, name: translatedName });
+    handleMobileViewChange("industry");
   };
 
   useEffect(() => {
@@ -315,6 +323,21 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     );
   }
 
+  // Mobile view - show industry playlists view
+  if (isMobile && mobileView === "industry" && selectedIndustry) {
+    return (
+      <IndustryPlaylistsView
+        collectionId={selectedIndustry.id}
+        collectionName={selectedIndustry.name}
+        onBack={() => {
+          window.history.back();
+        }}
+        onPlaylistSelect={onPlaylistSelect}
+        onTrackSelect={onTrackSelect}
+      />
+    );
+  }
+
   // Mobile view - horizontal scrolling sections like desktop
   if (isMobile) {
     return (
@@ -370,8 +393,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
           {/* Industry Collections */}
           <MobileIndustrySection
-            onPlaylistSelect={onPlaylistSelect}
-            onTrackSelect={onTrackSelect}
+            onCollectionSelect={handleIndustrySelect}
           />
 
           {/* Continue Listening - horizontal scroll */}
