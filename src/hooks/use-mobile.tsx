@@ -17,3 +17,32 @@ export function useIsMobile() {
 
   return !!isMobile;
 }
+
+// Detect iOS device type for audio handling
+// iPad needs Web Audio for volume control, iPhone should skip it for better background audio
+export function useIOSDeviceType() {
+  const [deviceType, setDeviceType] = React.useState<'iphone' | 'ipad' | 'other'>('other');
+
+  React.useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const platform = (navigator.platform || '').toLowerCase();
+    
+    // Check for iPad - includes "ipad" in UA or is Mac with touch (iPad OS 13+)
+    const isIPad = ua.includes('ipad') || 
+      (platform === 'macintel' && navigator.maxTouchPoints > 1) ||
+      (ua.includes('macintosh') && navigator.maxTouchPoints > 1);
+    
+    // Check for iPhone
+    const isIPhone = ua.includes('iphone');
+    
+    if (isIPad) {
+      setDeviceType('ipad');
+    } else if (isIPhone) {
+      setDeviceType('iphone');
+    } else {
+      setDeviceType('other');
+    }
+  }, []);
+
+  return deviceType;
+}
