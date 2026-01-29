@@ -8,11 +8,14 @@ type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   fallbackSrc?: string;
 };
 
-function isAudioBucketUrl(url: string) {
-  // Only sign URLs from the private audio bucket
-  // Check specifically for /audio/ bucket paths, NOT other storage buckets
-  return url.includes("/storage/v1/object/public/audio/") || 
-         url.includes("/storage/v1/object/audio/");
+function isPrivateAudioBucketUrl(url: string) {
+  // Only sign URLs that are from the PRIVATE audio bucket (no /public/ in path)
+  // Public URLs like /storage/v1/object/public/audio/covers/... should NOT be signed
+  // Private URLs look like /storage/v1/object/audio/... (no "public")
+  if (url.includes("/storage/v1/object/public/")) {
+    return false; // Public bucket, no signing needed
+  }
+  return url.includes("/storage/v1/object/audio/");
 }
 
 /**
@@ -53,7 +56,7 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
         }
 
         // Public assets or relative paths (e.g. /playlists/...) should be used as-is.
-        if (!isAudioBucketUrl(next)) {
+        if (!isPrivateAudioBucketUrl(next)) {
           if (mountedRef.current && currentSrcRef.current === src) {
             setResolvedSrc(next);
             setIsLoading(false);
