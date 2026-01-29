@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import SignedImage from "./SignedImage";
+import QuickMixDialog from "./QuickMixDialog";
 import type { Track } from "@/data/musicData";
 
 interface SelectedPlaylist {
@@ -148,65 +149,8 @@ const IndustryPlaylistsView = ({
     }
   };
 
-  const handlePlayAllShuffled = async () => {
-    if (playlists.length === 0) return;
-
-    const playlistIds = playlists.map(p => p.id);
-
-    const { data: allTracksData } = await supabase
-      .from("playlist_tracks")
-      .select("tracks(*), playlist_id")
-      .in("playlist_id", playlistIds)
-      .limit(10000);
-
-    if (!allTracksData || allTracksData.length === 0) return;
-
-    const allTracks: Track[] = allTracksData
-      .map((item: any) => item.tracks)
-      .filter(Boolean)
-      .map((t: any) => ({
-        id: t.id,
-        title: t.title,
-        artist: t.artist,
-        album: t.album || "",
-        duration: t.duration || "",
-        cover: t.cover_url || "/placeholder.svg",
-        genre: t.genre || "",
-      }));
-
-    const uniqueTracks = allTracks.filter((track, index, self) =>
-      index === self.findIndex(t => t.id === track.id)
-    );
-
-    if (uniqueTracks.length === 0) return;
-
-    const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
-
-    const firstTrack = shuffledTracks[0];
-    const { data: trackData } = await supabase
-      .from("tracks")
-      .select("audio_url")
-      .eq("id", firstTrack.id)
-      .single();
-
-    const signedAudioUrl = trackData?.audio_url
-      ? await getSignedAudioUrl(trackData.audio_url)
-      : undefined;
-
-    if (user) {
-      for (const playlistId of playlistIds) {
-        await supabase.from("play_history").insert({
-          user_id: user.id,
-          playlist_id: playlistId,
-        });
-      }
-    }
-
-    onTrackSelect({
-      ...firstTrack,
-      audioUrl: signedAudioUrl,
-    }, shuffledTracks);
-  };
+  // Get playlist IDs for the QuickMixDialog
+  const industryPlaylistIds = playlists.map(p => p.id);
 
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
@@ -224,12 +168,18 @@ const IndustryPlaylistsView = ({
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">{collectionName}</h1>
         </div>
 
-        {/* Shuffle All Button */}
+        {/* Shuffle Playlists Button */}
         {playlists.length > 1 && !isLoading && (
-          <Button variant="outline" className="w-full gap-2" onClick={handlePlayAllShuffled}>
-            <Shuffle className="w-4 h-4" />
-            {t("industry.playAllShuffled")}
-          </Button>
+          <QuickMixDialog
+            onTrackSelect={onTrackSelect}
+            preselectedPlaylistIds={industryPlaylistIds}
+            trigger={
+              <Button variant="outline" className="w-full gap-2">
+                <Shuffle className="w-4 h-4" />
+                {t("quickMix.button")}
+              </Button>
+            }
+          />
         )}
 
         {/* Playlists List */}
