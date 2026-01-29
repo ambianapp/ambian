@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { History, Music, Shuffle } from "lucide-react";
+import { History, Music, Shuffle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
-import MobilePlaylistBrowser from "./MobilePlaylistBrowser";
 import CategoryPlaylistsView from "./CategoryPlaylistsView";
 import ContinueListeningView from "./ContinueListeningView";
 import HorizontalPlaylistSection from "./HorizontalPlaylistSection";
+import MobileHorizontalPlaylistSection from "./MobileHorizontalPlaylistSection";
+import MobileIndustrySection from "./MobileIndustrySection";
 import { Track } from "@/data/musicData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -314,28 +315,111 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     );
   }
 
-  // Mobile browser view
+  // Mobile view - horizontal scrolling sections like desktop
   if (isMobile) {
     return (
       <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-40">
-        <MobilePlaylistBrowser
-          onPlaylistSelect={onPlaylistSelect}
-          onTrackSelect={onTrackSelect}
-          onViewChange={handleMobileViewChange}
-        />
-        
-        {/* Continue Listening Link - below the browser on mobile */}
-        {hasRecentlyPlayed && (
-          <section className="px-4 pb-6 animate-fade-in">
-            <button
-              onClick={() => handleMobileViewChange("continue")}
-              className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+        <div className="py-6 space-y-6">
+          {/* Greeting */}
+          <div className="px-4 mb-2">
+            <h1 className="text-xl font-bold text-foreground">{getGreeting()}</h1>
+            <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
+          </div>
+
+          {/* Quick actions row */}
+          <div className="px-4 flex gap-2">
+            <QuickMixDialog
+              onTrackSelect={onTrackSelect}
+              trigger={
+                <Button variant="default" size="sm" className="gap-2 flex-1">
+                  <Shuffle className="w-4 h-4" />
+                  <span>{t("quickMix.button")}</span>
+                </Button>
+              }
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/playlists")}
+              className="gap-2 flex-1"
             >
-              <History className="w-4 h-4" />
-              <span className="text-sm font-medium">{t("home.continueLink")}</span>
-            </button>
-          </section>
-        )}
+              <Music className="w-4 h-4" />
+              <span>{t("home.allPlaylists")}</span>
+            </Button>
+          </div>
+
+          {/* Mood Playlists - horizontal scroll */}
+          <MobileHorizontalPlaylistSection
+            title={t("home.byMood")}
+            emoji="💖"
+            playlists={moodPlaylists}
+            onPlaylistClick={handlePlaylistClick}
+            onPlayPlaylist={handlePlayPlaylist}
+            onShowAll={() => handleMobileViewChange("mood")}
+            accentColor="#f725bd"
+          />
+
+          {/* Genre Playlists - horizontal scroll */}
+          <MobileHorizontalPlaylistSection
+            title={t("home.byGenre")}
+            emoji="🎸"
+            playlists={genrePlaylists}
+            onPlaylistClick={handlePlaylistClick}
+            onPlayPlaylist={handlePlayPlaylist}
+            onShowAll={() => handleMobileViewChange("genre")}
+            accentColor="#1e90ff"
+          />
+
+          {/* Industry Collections */}
+          <MobileIndustrySection
+            onPlaylistSelect={onPlaylistSelect}
+            onTrackSelect={onTrackSelect}
+          />
+
+          {/* Continue Listening - horizontal scroll */}
+          {recentlyPlayed.length > 0 && (
+            <section className="animate-fade-in">
+              <div className="flex items-center justify-between mb-3 px-4">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-primary" />
+                  <h2 className="text-base font-bold text-foreground">{t("home.continue")}</h2>
+                </div>
+                <button
+                  onClick={() => handleMobileViewChange("continue")}
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span>{t("home.showAll")}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 px-4 scrollbar-hide">
+                {recentlyPlayed.map((playlist) => (
+                  <button
+                    key={playlist.id}
+                    onClick={() => handlePlaylistClick({
+                      id: playlist.id,
+                      name: playlist.name,
+                      cover: playlist.cover_url,
+                      description: playlist.description,
+                    })}
+                    className="flex-shrink-0 w-24 text-left transition-transform active:scale-95"
+                  >
+                    <div className="relative aspect-square rounded-lg overflow-hidden mb-2 shadow-md">
+                      <img
+                        src={playlist.cover_url || "/placeholder.svg"}
+                        alt={playlist.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+                      {playlist.name}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     );
   }
