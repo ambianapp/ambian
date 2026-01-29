@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check, ChevronRight } from "lucide-react";
+import { Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag, Play, Shuffle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SignedImage from "./SignedImage";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +48,6 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 const MobileIndustrySection = ({ onPlaylistSelect, onTrackSelect }: MobileIndustrySectionProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [industryOpen, setIndustryOpen] = useState(false);
   const [collections, setCollections] = useState<IndustryCollection[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<IndustryCollection | null>(null);
   const [collectionPlaylists, setCollectionPlaylists] = useState<DbPlaylist[]>([]);
@@ -118,7 +116,6 @@ const MobileIndustrySection = ({ onPlaylistSelect, onTrackSelect }: MobileIndust
   };
 
   const handleCollectionSelect = async (collection: IndustryCollection) => {
-    setIndustryOpen(false);
     setSelectedCollection(collection);
     await loadCollectionPlaylists(collection.id);
   };
@@ -243,52 +240,42 @@ const MobileIndustrySection = ({ onPlaylistSelect, onTrackSelect }: MobileIndust
           </h2>
         </div>
 
-        <div className="px-4">
-          <Drawer open={industryOpen} onOpenChange={setIndustryOpen}>
-            <DrawerTrigger asChild>
-              <button className="w-full flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50 hover:bg-secondary transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Building2 className="w-4 h-4 text-primary" />
+        {/* Horizontally scrollable industry collections */}
+        {collections.length > 0 ? (
+          <div 
+            className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4"
+            style={{ scrollSnapType: 'x mandatory' }}
+          >
+            {collections.map((collection) => {
+              const Icon = getIcon(collection.icon);
+              return (
+                <button
+                  key={collection.id}
+                  onClick={() => handleCollectionSelect(collection)}
+                  className="flex-shrink-0 w-28 text-left transition-transform active:scale-95"
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <div className="relative aspect-square rounded-lg overflow-hidden mb-2 shadow-md bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    {collection.cover_url ? (
+                      <SignedImage
+                        src={collection.cover_url}
+                        alt={getTranslatedName(collection.name)}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Icon className="w-10 h-10 text-primary" />
+                    )}
                   </div>
-                  <span className="font-medium text-sm">{t("mobile.selectIndustry")}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </DrawerTrigger>
-            <DrawerContent className="max-h-[85dvh]">
-              <div className="p-4 pb-8">
-                <h3 className="text-lg font-semibold text-foreground mb-4 text-center">
-                  {t("mobile.selectIndustry")}
-                </h3>
-                <div className="grid grid-cols-1 gap-1">
-                  {collections.map((collection) => {
-                    const Icon = getIcon(collection.icon);
-                    return (
-                      <button
-                        key={collection.id}
-                        onClick={() => handleCollectionSelect(collection)}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors text-left"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <Icon className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {getTranslatedName(collection.name)}
-                          </p>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {getTranslatedDescription(collection.name, collection.description)}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </DrawerContent>
-          </Drawer>
-        </div>
+                  <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+                    {getTranslatedName(collection.name)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm px-4">{t("home.noPlaylists")}</p>
+        )}
       </section>
 
       {/* Collection Playlists Dialog */}
