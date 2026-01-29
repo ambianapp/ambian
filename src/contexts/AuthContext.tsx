@@ -124,7 +124,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // On mount, try to load cached subscription (without user ID check initially)
   const cachedSubscriptionRef = useRef<SubscriptionInfo | null>(loadSubscriptionCache());
-  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  // Start with loading true if no cache, so UI doesn't flash wrong state
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(!cachedSubscriptionRef.current);
   const [isAdmin, setIsAdmin] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionInfo>(
     cachedSubscriptionRef.current ?? {
