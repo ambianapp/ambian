@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { History, Music, Shuffle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import PlaylistCard from "./PlaylistCard";
 import IndustryCollections from "./IndustryCollections";
 import QuickMixDialog from "./QuickMixDialog";
@@ -371,6 +372,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             onShowAll={() => handleMobileViewChange("mood")}
             accentColor="#f725bd"
             hideNames
+            isLoading={isLoading}
           />
 
           {/* Genre Playlists - horizontal scroll */}
@@ -382,6 +384,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             onShowAll={() => handleMobileViewChange("genre")}
             accentColor="#1e90ff"
             hideNames
+            isLoading={isLoading}
           />
 
           {/* Industry Collections */}
@@ -390,7 +393,20 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           />
 
           {/* Continue Listening - horizontal scroll */}
-          {recentlyPlayed.length > 0 && (
+          {isLoading ? (
+            <section className="animate-fade-in">
+              <div className="flex items-center justify-between mb-3 px-4">
+                <h2 className="text-base font-bold text-foreground">{t("home.continue")}</h2>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-24">
+                    <Skeleton className="aspect-square rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : recentlyPlayed.length > 0 && (
             <section className="animate-fade-in">
               <div className="flex items-center justify-between mb-3 px-4">
                 <h2 className="text-base font-bold text-foreground">{t("home.continue")}</h2>

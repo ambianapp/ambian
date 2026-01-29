@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { ChevronRight } from "lucide-react";
-import PlaylistCard from "./PlaylistCard";
 import SignedImage from "./SignedImage";
+import { Skeleton } from "./ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -22,6 +22,7 @@ interface MobileHorizontalPlaylistSectionProps {
   onShowAll?: () => void;
   accentColor?: string;
   hideNames?: boolean;
+  isLoading?: boolean;
 }
 
 const MobileHorizontalPlaylistSection = ({
@@ -32,9 +33,35 @@ const MobileHorizontalPlaylistSection = ({
   onShowAll,
   accentColor,
   hideNames = false,
+  isLoading = false,
 }: MobileHorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <section className="animate-fade-in">
+        <div className="flex items-center justify-between mb-3 px-4">
+          <h2 className="text-base font-bold text-foreground">{title}</h2>
+          {onShowAll && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span>{t("home.showAll")}</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-28">
+              <Skeleton className="aspect-square rounded-lg mb-2" />
+              {!hideNames && <Skeleton className="h-3 w-20" />}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="animate-fade-in">
