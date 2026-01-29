@@ -21,6 +21,7 @@ interface MobileHorizontalPlaylistSectionProps {
   onPlayPlaylist: (playlistId: string) => void;
   onShowAll?: () => void;
   accentColor?: string;
+  hideNames?: boolean;
 }
 
 const MobileHorizontalPlaylistSection = ({
@@ -30,6 +31,7 @@ const MobileHorizontalPlaylistSection = ({
   onPlayPlaylist,
   onShowAll,
   accentColor,
+  hideNames = false,
 }: MobileHorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -78,9 +80,11 @@ const MobileHorizontalPlaylistSection = ({
                   className="w-full h-full object-cover"
                 />
               </div>
-              <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
-                {playlist.name}
-              </p>
+              {!hideNames && (
+                <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+                  {playlist.name}
+                </p>
+              )}
             </button>
           ))}
         </div>

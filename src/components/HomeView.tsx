@@ -370,6 +370,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             onPlayPlaylist={handlePlayPlaylist}
             onShowAll={() => handleMobileViewChange("mood")}
             accentColor="#f725bd"
+            hideNames
           />
 
           {/* Genre Playlists - horizontal scroll */}
@@ -380,6 +381,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             onPlayPlaylist={handlePlayPlaylist}
             onShowAll={() => handleMobileViewChange("genre")}
             accentColor="#1e90ff"
+            hideNames
           />
 
           {/* Industry Collections */}
