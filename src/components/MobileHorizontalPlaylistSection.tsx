@@ -38,10 +38,7 @@ const MobileHorizontalPlaylistSection = ({
     <section className="animate-fade-in">
       {/* Section header */}
       <div className="flex items-center justify-between mb-3 px-4">
-        <h2 
-          className="text-base font-bold"
-          style={accentColor ? { color: accentColor } : undefined}
-        >
+        <h2 className="text-base font-bold text-foreground">
           {title}
         </h2>
         {onShowAll && (
