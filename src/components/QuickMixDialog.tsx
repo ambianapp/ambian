@@ -221,8 +221,12 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category, p
         return;
       }
 
-      // Shuffle the tracks
-      const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
+      // Fisher-Yates shuffle for proper random distribution
+      const shuffledTracks = [...uniqueTracks];
+      for (let i = shuffledTracks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledTracks[i], shuffledTracks[j]] = [shuffledTracks[j], shuffledTracks[i]];
+      }
 
       // Get signed URL for the first track
       const firstTrack = shuffledTracks[0];
