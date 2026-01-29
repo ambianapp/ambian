@@ -349,18 +349,21 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
           </div>
 
-          {/* Quick action */}
-          <div className="px-4">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate("/playlists")}
-              className="gap-2 w-full"
-            >
-              <Music className="w-4 h-4" />
-              <span>{t("home.allPlaylists")}</span>
-            </Button>
-          </div>
+          {/* All Playlists section header */}
+          <section className="animate-fade-in">
+            <div className="flex items-center justify-between px-4">
+              <h2 className="text-base font-bold text-foreground">
+                {t("home.allPlaylists")}
+              </h2>
+              <button
+                onClick={() => navigate("/playlists")}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span>{t("home.showAll")}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </section>
 
           {/* Mood Playlists - horizontal scroll */}
           <MobileHorizontalPlaylistSection
