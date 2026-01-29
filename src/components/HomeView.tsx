@@ -349,25 +349,16 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             <p className="text-muted-foreground mt-1 text-sm">{t("home.subtitle")}</p>
           </div>
 
-          {/* Quick actions row */}
-          <div className="px-4 flex gap-2">
-            <QuickMixDialog
-              onTrackSelect={onTrackSelect}
-              trigger={
-                <Button variant="default" size="sm" className="gap-2 flex-1">
-                  <Shuffle className="w-4 h-4" />
-                  <span>{t("quickMix.button")}</span>
-                </Button>
-              }
-            />
+          {/* Quick action */}
+          <div className="px-4">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => navigate("/playlists")}
-              className="gap-1.5 flex-1 text-xs px-2"
+              className="gap-2 w-full"
             >
-              <Music className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("home.allPlaylists")}</span>
+              <Music className="w-4 h-4" />
+              <span>{t("home.allPlaylists")}</span>
             </Button>
           </div>
 
