@@ -59,8 +59,8 @@ const MobileHorizontalPlaylistSection = ({
       {playlists.length > 0 ? (
         <div 
           ref={scrollContainerRef}
-          className="flex gap-3 overflow-x-auto pb-2 pl-6 pr-4 scrollbar-hide"
-          style={{ scrollSnapType: 'x mandatory' }}
+          className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide"
+          style={{ scrollSnapType: 'x mandatory', paddingLeft: '1rem' }}
         >
           {playlists.map((playlist) => (
             <button

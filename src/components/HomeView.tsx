@@ -387,7 +387,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-2 pl-6 pr-4 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide" style={{ paddingLeft: '1rem' }}>
                 {recentlyPlayed.map((playlist) => (
                   <button
                     key={playlist.id}
