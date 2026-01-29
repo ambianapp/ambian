@@ -490,6 +490,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           onPlayPlaylist={handlePlayPlaylist}
           onPlaylistUpdate={handlePlaylistUpdate}
           onShowAll={() => navigate("/playlists?category=mood")}
+          isLoading={isLoading}
         />
 
         {/* Playlists by Genre - Horizontal scroll */}
@@ -500,6 +501,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           onPlayPlaylist={handlePlayPlaylist}
           onPlaylistUpdate={handlePlaylistUpdate}
           onShowAll={() => navigate("/playlists?category=genre")}
+          isLoading={isLoading}
         />
 
         {/* Industry Collections */}
@@ -509,7 +511,22 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         />
 
         {/* Recently Played - Compact horizontal row */}
-        {recentlyPlayed.length > 0 && (
+        {isLoading ? (
+          <section className="animate-fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <History className="w-4 h-4 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">{t("home.continue")}</h2>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-24 sm:w-28">
+                  <Skeleton className="aspect-square rounded-lg mb-2" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : recentlyPlayed.length > 0 && (
           <section className="animate-fade-in">
             <div className="flex items-center gap-2 mb-3">
               <History className="w-4 h-4 text-primary" />

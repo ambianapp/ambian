@@ -1,6 +1,7 @@
 import { useRef } from "react";
-import { ChevronLeft, ChevronRight, ChevronRight as ShowAllIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import PlaylistCard from "./PlaylistCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Tables } from "@/integrations/supabase/types";
@@ -21,6 +22,7 @@ interface HorizontalPlaylistSectionProps {
   onPlayPlaylist: (playlistId: string) => void;
   onPlaylistUpdate: (id: string, data: { name: string; description: string; cover: string }) => void;
   onShowAll?: () => void;
+  isLoading?: boolean;
 }
 
 const HorizontalPlaylistSection = ({
@@ -30,6 +32,7 @@ const HorizontalPlaylistSection = ({
   onPlayPlaylist,
   onPlaylistUpdate,
   onShowAll,
+  isLoading = false,
 }: HorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +48,35 @@ const HorizontalPlaylistSection = ({
       scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <section className="group/section animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h2>
+          {onShowAll && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+            >
+              <span className="text-sm">{t("home.showAll")}</span>
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
+              <Skeleton className="aspect-square rounded-lg mb-2" />
+              <Skeleton className="h-4 w-3/4 mb-1" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="group/section animate-fade-in bg-secondary/30 rounded-2xl p-4 sm:p-5 border border-border/50 overflow-hidden">

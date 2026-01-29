@@ -3,6 +3,7 @@ import { ChevronRight, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBa
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import PlaylistCard from "./PlaylistCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -295,7 +296,29 @@ const IndustryCollections = ({ onPlaylistSelect, onTrackSelect }: IndustryCollec
     }
   };
 
-  if (isLoading || collections.length === 0) {
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <section className="animate-fade-in bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/10 rounded-2xl p-5 border border-primary/20">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">{t("home.industryTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("home.industrySubtitle")}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg-background/60 border border-border/50">
+              <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (collections.length === 0) {
     return null;
   }
 
