@@ -208,7 +208,12 @@ const LibraryView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect,
         return;
       }
 
-      const shuffledTracks = [...uniqueTracks].sort(() => Math.random() - 0.5);
+      // Fisher-Yates shuffle for proper random distribution
+      const shuffledTracks = [...uniqueTracks];
+      for (let i = shuffledTracks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledTracks[i], shuffledTracks[j]] = [shuffledTracks[j], shuffledTracks[i]];
+      }
 
       const firstTrack = shuffledTracks[0];
       const { data: trackData } = await supabase
