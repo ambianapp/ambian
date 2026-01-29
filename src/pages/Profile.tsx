@@ -156,7 +156,10 @@ const Profile = () => {
   }, [searchParams, checkSubscription, toast, navigate, t]);
 
   const [schedulingEnabled, setSchedulingEnabled] = useState(false);
-
+  const [crossfadeEnabled, setCrossfadeEnabled] = useState(() => {
+    const saved = localStorage.getItem("ambian_crossfade");
+    return saved === null ? true : saved === "true";
+  });
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
