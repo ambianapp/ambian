@@ -23,9 +23,10 @@ interface QuickMixDialogProps {
   trigger?: React.ReactNode;
   likedOnly?: boolean; // When true, only show user's liked playlists
   category?: "mood" | "genre"; // When set, filter playlists by category
+  preselectedPlaylistIds?: string[]; // When set, pre-select these playlists and filter to only show them
 }
 
-const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }: QuickMixDialogProps) => {
+const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category, preselectedPlaylistIds }: QuickMixDialogProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -39,6 +40,11 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }:
   useEffect(() => {
     if (open) {
       loadPlaylists();
+    } else {
+      // Reset selection when dialog closes (unless preselected)
+      if (!preselectedPlaylistIds) {
+        setSelectedIds(new Set());
+      }
     }
   }, [open]);
 
@@ -67,6 +73,22 @@ const QuickMixDialog = ({ onTrackSelect, trigger, likedOnly = false, category }:
       cover_url: null,
       category: null,
     };
+    
+    // If preselected playlist IDs are provided, only fetch those
+    if (preselectedPlaylistIds && preselectedPlaylistIds.length > 0) {
+      const { data } = await supabase
+        .from("playlists")
+        .select("id, name, description, cover_url, category")
+        .in("id", preselectedPlaylistIds)
+        .order("name", { ascending: true });
+
+      setAllPlaylists(data || []);
+      setFilteredPlaylists(data || []);
+      // Pre-select all the industry playlists
+      setSelectedIds(new Set(preselectedPlaylistIds));
+      setIsLoading(false);
+      return;
+    }
     
     if (likedOnly && user) {
       // Fetch only the user's liked playlists
