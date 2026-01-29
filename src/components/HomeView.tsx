@@ -421,9 +421,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
-                      {playlist.name}
-                    </p>
                   </button>
                 ))}
               </div>
