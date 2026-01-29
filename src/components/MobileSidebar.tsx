@@ -122,12 +122,16 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
     };
   }, [user?.id]);
 
-  const navItems = [
+  // Filter out schedule if not enabled
+  const baseNavItems = [
     { id: "home", label: t("nav.home"), icon: Music },
     { id: "search", label: t("nav.search"), icon: Search },
     { id: "library", label: t("nav.library"), icon: Library },
-    { id: "schedule", label: t("nav.schedule"), icon: Clock },
   ];
+  
+  const navItems = schedulerEnabled
+    ? [...baseNavItems, { id: "schedule", label: t("nav.schedule"), icon: Clock }]
+    : baseNavItems;
 
   const handleNavClick = (id: string) => {
     if (isOnIndexPage) {
@@ -229,14 +233,17 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-72 p-0 flex flex-col h-full">
-            {/* Logo in sidebar - fixed at top */}
-            <div className="flex items-center gap-3 px-4 py-4 border-b border-border flex-shrink-0">
+            {/* Logo in sidebar - fixed at top, clickable to go home */}
+            <button 
+              onClick={() => { handleNavClick("home"); }}
+              className="flex items-center gap-3 px-4 py-4 border-b border-border flex-shrink-0 w-full text-left"
+            >
               <img 
                 src="/ambian-logo.png" 
                 alt="Ambian" 
                 className="h-12 object-contain"
               />
-            </div>
+            </button>
 
             {/* Scrollable content area */}
             <div className="flex-1 overflow-y-auto scrollbar-subtle">
@@ -320,7 +327,12 @@ const MobileSidebar = ({ activeView, onViewChange, onPlaylistSelect, schedulerEn
               {/* Playlists Section */}
               <div className="flex flex-col gap-2 px-4 pb-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-muted-foreground">{t("sidebar.yourPlaylists")}</span>
+                  <button 
+                    onClick={() => handleNavClick("library")}
+                    className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {t("sidebar.yourPlaylists")}
+                  </button>
                   <Button 
                     variant="ghost" 
                     size="iconSm" 

@@ -341,10 +341,10 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               variant="outline"
               size="sm"
               onClick={() => navigate("/playlists")}
-              className="gap-2 flex-1"
+              className="gap-1.5 flex-1 text-xs px-2"
             >
-              <Music className="w-4 h-4" />
-              <span>{t("home.allPlaylists")}</span>
+              <Music className="w-4 h-4 shrink-0" />
+              <span className="truncate">{t("home.allPlaylists")}</span>
             </Button>
           </div>
 
