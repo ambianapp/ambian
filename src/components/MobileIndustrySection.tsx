@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag } from "lucide-react";
 import SignedImage from "./SignedImage";
+import { Skeleton } from "./ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -28,6 +29,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProps) => {
   const { t } = useLanguage();
   const [collections, setCollections] = useState<IndustryCollection[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const collectionTranslationKeys: Record<string, { name: string; desc: string }> = {
     "Spa & Wellness": { name: "industry.spaWellness", desc: "industry.spaWellnessDesc" },
@@ -54,6 +56,7 @@ const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProp
       .eq("is_active", true)
       .order("display_order", { ascending: true });
     setCollections(data || []);
+    setIsLoading(false);
   };
 
   const getIcon = (iconName: string | null) => {
@@ -65,6 +68,27 @@ const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProp
     const translatedName = getTranslatedName(collection.name);
     onCollectionSelect(collection, translatedName);
   };
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <section className="animate-fade-in">
+        <div className="flex items-center justify-between mb-3 px-4">
+          <h2 className="text-base font-bold text-foreground">
+            {t("home.industryTitle")}
+          </h2>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-28">
+              <Skeleton className="aspect-square rounded-lg mb-2" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="animate-fade-in">
