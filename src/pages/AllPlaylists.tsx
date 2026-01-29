@@ -243,56 +243,32 @@ const AllPlaylists = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-40 md:pb-32">
-      {/* Header */}
-      <div className="sticky top-0 z-40 glass border-b border-border">
-        <div className="flex items-center justify-between gap-4 p-4 md:p-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex w-10 h-10 rounded-xl bg-primary/20 items-center justify-center">
-                <Music className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">
-                  {category === "mood" 
-                    ? t("home.byMood") 
-                    : category === "genre" 
-                      ? t("home.byGenre") 
-                      : t("home.allPlaylists") || "All Playlists"}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {allPlaylists.length} {t("library.playlists") || "playlists"}
-                </p>
-              </div>
-            </div>
-          </div>
-          {allPlaylists.length > 0 && !isLoading && (
-            <QuickMixDialog
-              onTrackSelect={handleTrackSelect}
-              trigger={
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
-                  <Shuffle className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("quickMix.button")}</span>
-                </Button>
-              }
-            />
-          )}
+    <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
+      <div className="p-4 sm:p-6 space-y-4">
+        {/* Header with Back Button */}
+        <div className="flex items-start gap-3 mr-12 md:mr-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+            className="shrink-0 mt-0.5"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {category === "mood" 
+              ? t("home.byMood") 
+              : category === "genre" 
+                ? t("home.byGenre") 
+                : t("home.allPlaylists") || "All Playlists"}
+          </h1>
         </div>
-      </div>
 
-      {/* Quick Mix Button - full width on mobile, under header */}
-      <div className="px-4 md:px-6 pb-4 md:hidden">
+        {/* Quick Mix Button - under header, before playlists */}
         {allPlaylists.length > 0 && !isLoading && (
           <QuickMixDialog
             onTrackSelect={handleTrackSelect}
+            category={category === "mood" || category === "genre" ? category : undefined}
             trigger={
               <Button variant="outline" className="w-full gap-2">
                 <Shuffle className="w-4 h-4" />
@@ -301,17 +277,18 @@ const AllPlaylists = () => {
             }
           />
         )}
-      </div>
 
-      {/* Content */}
-      <div className="p-4 md:p-6">
+        {/* Playlists List */}
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-xl bg-secondary/50 animate-pulse"
-              />
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-3 bg-secondary/50 rounded-lg animate-pulse">
+                <div className="w-12 h-12 bg-secondary rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-secondary rounded w-1/3" />
+                  <div className="h-3 bg-secondary rounded w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
         ) : allPlaylists.length > 0 ? (
@@ -348,7 +325,7 @@ const AllPlaylists = () => {
                   })()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground truncate">{playlist.name}</h3>
+                  <p className="font-medium text-foreground truncate">{playlist.name}</p>
                   {playlist.description && (
                     <p className="text-sm text-muted-foreground truncate">{playlist.description}</p>
                   )}
