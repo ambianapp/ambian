@@ -1394,7 +1394,27 @@ const Profile = () => {
             </CardTitle>
             <CardDescription>{t("profile.settingsDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Crossfade Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="crossfade-toggle" className="text-base">{t("profile.enableCrossfade")}</Label>
+                <p className="text-sm text-muted-foreground">{t("profile.enableCrossfadeDesc")}</p>
+              </div>
+              <Switch
+                id="crossfade-toggle"
+                checked={crossfadeEnabled}
+                onCheckedChange={(checked) => {
+                  setCrossfadeEnabled(checked);
+                  localStorage.setItem("ambian_crossfade", String(checked));
+                  toast({
+                    title: checked ? t("profile.crossfadeEnabled") : t("profile.crossfadeDisabled"),
+                  });
+                }}
+              />
+            </div>
+            
+            {/* Scheduling Toggle */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="scheduling-toggle" className="text-base">{t("profile.enableScheduling")}</Label>
