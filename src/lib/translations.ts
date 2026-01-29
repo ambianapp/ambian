@@ -410,6 +410,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Home
     "home.recentlyPlayed": "Recently Played",
     "home.allPlaylists": "All Playlists",
+    "home.showAllPlaylists": "Show All Playlists",
     "home.continue": "Continue Listening",
     "home.continueLink": "Continue where you left off →",
     "home.noRecentPlaylists": "No recently played playlists yet",
@@ -1201,6 +1202,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Home
     "home.recentlyPlayed": "Nyligen spelat",
     "home.allPlaylists": "Alla spellistor",
+    "home.showAllPlaylists": "Visa alla spellistor",
     "home.continue": "Fortsätt lyssna",
     "home.continueLink": "Fortsätt där du slutade →",
     "home.noRecentPlaylists": "Inga nyligen spelade spellistor ännu",
@@ -1992,6 +1994,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Home
     "home.recentlyPlayed": "Äskettäin toistetut",
     "home.allPlaylists": "Kaikki soittolistat",
+    "home.showAllPlaylists": "Näytä kaikki soittolistat",
     "home.continue": "Jatka kuuntelua",
     "home.continueLink": "Jatka siitä mihin jäit →",
     "home.noRecentPlaylists": "Ei vielä äskettäin toistettuja soittolistoja",
@@ -2784,6 +2787,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Home
     "home.recentlyPlayed": "Kürzlich gespielt",
     "home.allPlaylists": "Alle Playlists",
+    "home.showAllPlaylists": "Alle Playlists anzeigen",
     "home.continue": "Weiterhören",
     "home.continueLink": "Weiter wo du aufgehört hast →",
     "home.noRecentPlaylists": "Noch keine kürzlich gespielten Playlists",
@@ -3575,6 +3579,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Home
     "home.recentlyPlayed": "Récemment écoutés",
     "home.allPlaylists": "Toutes les playlists",
+    "home.showAllPlaylists": "Afficher toutes les playlists",
     "home.continue": "Continuer l'écoute",
     "home.continueLink": "Reprendre là où vous en étiez →",
     "home.noRecentPlaylists": "Pas encore de playlists récemment jouées",

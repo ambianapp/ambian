@@ -358,7 +358,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
               className="gap-2 w-full"
             >
               <Music className="w-4 h-4" />
-              <span>{t("home.allPlaylists")}</span>
+              <span>{t("home.showAllPlaylists")}</span>
             </Button>
           </div>
 
@@ -461,7 +461,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                 className="shrink-0 gap-2"
               >
                 <Music className="w-4 h-4" />
-                <span>{t("home.allPlaylists")}</span>
+                <span>{t("home.showAllPlaylists")}</span>
               </Button>
             </div>
           </div>
