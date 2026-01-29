@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { useToast } from "@/hooks/use-toast";
+import { useIOSDeviceType } from "@/hooks/use-mobile";
 import SignedImage from "@/components/SignedImage";
 import { Track } from "@/data/musicData";
 
@@ -65,6 +66,11 @@ const PlayerBar = () => {
   const { user, getDeviceId, canPlayMusic, isAdmin } = useAuth();
   const { isLiked: checkIsLiked, toggleLike } = useLikedSongs();
   const { toast } = useToast();
+  const iosDeviceType = useIOSDeviceType();
+  
+  // iPhone skips Web Audio entirely to allow better background audio
+  // iPad/desktop use Web Audio for volume control
+  const shouldUseWebAudio = iosDeviceType !== 'iphone';
 
   // iOS/Safari autoplay can fail if play() isn't triggered from a user gesture.
   // We surface a clear CTA instead of failing silently.
@@ -798,8 +804,15 @@ const PlayerBar = () => {
     }
   }, [isPlaying, currentTrack?.id, currentTrack?.audioUrl, isCrossfadeActive, dbg, canPlayMusic]);
 
-  // Initialize Web Audio API for iOS volume control
+  // Initialize Web Audio API for iOS volume control (iPad only, not iPhone)
+  // iPhone skips Web Audio to allow better background audio when locked
   const initWebAudio = useCallback(() => {
+    // Skip Web Audio on iPhone to prevent iOS from suspending audio in background
+    if (!shouldUseWebAudio) {
+      console.log("[Audio] Skipping Web Audio on iPhone for better background audio");
+      return;
+    }
+    
     if (webAudioInitializedRef.current) return;
     if (!audioRef.current) return;
     
@@ -829,11 +842,11 @@ const PlayerBar = () => {
       }
       
       webAudioInitializedRef.current = true;
-      console.log("[Audio] Web Audio API initialized for volume control");
+      console.log("[Audio] Web Audio API initialized for volume control (iPad/desktop)");
     } catch (err) {
       console.warn("[Audio] Web Audio API initialization failed:", err);
     }
-  }, []);
+  }, [shouldUseWebAudio]);
 
   const ensureAudioContextRunning = useCallback(async () => {
     initWebAudio();
@@ -1806,44 +1819,52 @@ const PlayerBar = () => {
           </div>
         </div>
 
-        {/* Volume Control */}
-        <div className="flex items-center gap-3 w-48 justify-end">
-          <Button
-            variant="ghost"
-            size="iconSm"
-            onClick={async () => {
-              await ensureAudioContextRunning();
+        {/* Volume Control - hidden on iPhone (use device buttons instead for better background audio) */}
+        {shouldUseWebAudio ? (
+          <div className="flex items-center gap-3 w-48 justify-end">
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={async () => {
+                await ensureAudioContextRunning();
 
-              setIsMuted((prev) => {
-                const next = !prev;
-                // If user unmutes while the slider is at 0, restore a sane value.
-                if (!next && volume[0] === 0) {
-                  const restore = Math.max(5, userVolumeRef.current || 75);
-                  setVolume([restore]);
-                }
-                return next;
-              });
-            }}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </Button>
-          <Slider
-            value={volume}
-            onPointerDown={() => {
-              // iOS requires resume() to happen in direct user gesture handlers
-              void ensureAudioContextRunning();
-            }}
-            onValueChange={(next) => {
-              void ensureAudioContextRunning();
-              setVolume(next);
-              if (next[0] > 0 && isMuted) setIsMuted(false);
-            }}
-            max={100}
-            step={1}
-            className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
-          />
-        </div>
+                setIsMuted((prev) => {
+                  const next = !prev;
+                  // If user unmutes while the slider is at 0, restore a sane value.
+                  if (!next && volume[0] === 0) {
+                    const restore = Math.max(5, userVolumeRef.current || 75);
+                    setVolume([restore]);
+                  }
+                  return next;
+                });
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
+            <Slider
+              value={volume}
+              onPointerDown={() => {
+                // iOS requires resume() to happen in direct user gesture handlers
+                void ensureAudioContextRunning();
+              }}
+              onValueChange={(next) => {
+                void ensureAudioContextRunning();
+                setVolume(next);
+                if (next[0] > 0 && isMuted) setIsMuted(false);
+              }}
+              max={100}
+              step={1}
+              className="w-24 cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
+            />
+          </div>
+        ) : (
+          // iPhone: Show minimal volume indicator, use device buttons
+          <div className="flex items-center gap-2 w-48 justify-end text-muted-foreground text-xs">
+            <Volume2 className="w-4 h-4" />
+            <span>Use device buttons</span>
+          </div>
+        )}
       </div>
     </>
   );
