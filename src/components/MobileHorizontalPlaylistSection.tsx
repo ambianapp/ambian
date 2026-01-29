@@ -16,7 +16,6 @@ interface SelectedPlaylist {
 
 interface MobileHorizontalPlaylistSectionProps {
   title: string;
-  emoji?: string;
   playlists: DbPlaylist[];
   onPlaylistClick: (playlist: SelectedPlaylist) => void;
   onPlayPlaylist: (playlistId: string) => void;
@@ -26,7 +25,6 @@ interface MobileHorizontalPlaylistSectionProps {
 
 const MobileHorizontalPlaylistSection = ({
   title,
-  emoji,
   playlists,
   onPlaylistClick,
   onPlayPlaylist,
@@ -40,15 +38,12 @@ const MobileHorizontalPlaylistSection = ({
     <section className="animate-fade-in">
       {/* Section header */}
       <div className="flex items-center justify-between mb-3 px-4">
-        <div className="flex items-center gap-2">
-          {emoji && <span className="text-lg">{emoji}</span>}
-          <h2 
-            className="text-base font-bold"
-            style={accentColor ? { color: accentColor } : undefined}
-          >
-            {title}
-          </h2>
-        </div>
+        <h2 
+          className="text-base font-bold"
+          style={accentColor ? { color: accentColor } : undefined}
+        >
+          {title}
+        </h2>
         {onShowAll && (
           <button
             onClick={onShowAll}
@@ -64,7 +59,7 @@ const MobileHorizontalPlaylistSection = ({
       {playlists.length > 0 ? (
         <div 
           ref={scrollContainerRef}
-          className="flex gap-3 overflow-x-auto pb-2 px-4 scrollbar-hide"
+          className="flex gap-3 overflow-x-auto pb-2 pl-6 pr-4 scrollbar-hide"
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {playlists.map((playlist) => (
