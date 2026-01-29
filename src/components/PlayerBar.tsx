@@ -788,8 +788,9 @@ const PlayerBar = () => {
           });
         }
       } else if (!isPlaying) {
-        // Only pause if not already paused to avoid iOS audio context issues
-        if (!activeAudio.paused) {
+        // Only pause if not already paused AND not already being paused by user gesture
+        // This prevents iOS audio buffer loop issues caused by multiple pause() calls
+        if (!activeAudio.paused && !pauseInProgressRef.current) {
           dbg("play/pause effect: pausing", { trackId: currentTrack?.id });
           activeAudio.pause();
         }
@@ -848,6 +849,8 @@ const PlayerBar = () => {
 
   // Track if we're in the middle of a user-initiated play/pause to avoid duplicate actions
   const userPlayPauseInProgressRef = useRef(false);
+  // Track if a pause is currently being executed to prevent iOS audio buffer loop issues
+  const pauseInProgressRef = useRef(false);
   
   const handleUserPlayPause = useCallback(async () => {
     // Prevent re-entrancy (especially on iOS where touch events can double-fire)
@@ -861,10 +864,16 @@ const PlayerBar = () => {
       if (activeAudio) {
         try {
           if (isPlaying) {
+            // Mark pause as in progress BEFORE calling pause() to prevent the effect from double-pausing
+            pauseInProgressRef.current = true;
             // Pause directly in the gesture handler for immediate feedback.
             if (!activeAudio.paused) {
               activeAudio.pause();
             }
+            // Keep the flag set until after the state update propagates
+            setTimeout(() => {
+              pauseInProgressRef.current = false;
+            }, 150);
           } else {
             // Play directly in the gesture handler to satisfy iOS/Safari autoplay rules.
             if (activeAudio.paused && activeAudio.src) {
@@ -872,6 +881,7 @@ const PlayerBar = () => {
             }
           }
         } catch (err: any) {
+          pauseInProgressRef.current = false;
           const name = err?.name;
           if (name === "NotAllowedError") {
             toast({
@@ -1494,6 +1504,15 @@ const PlayerBar = () => {
         onError={(e) => handleAudioError(e.currentTarget)}
         onStalled={(e) => handleStalled(e.currentTarget)}
         onWaiting={(e) => handleStalled(e.currentTarget)}
+        onPause={() => {
+          // Sync React state when audio is paused externally (iOS interruption, phone call, Siri, etc.)
+          // Only sync if this is the active audio element and we're not already handling a pause
+          if (!isCrossfadeActive && isPlaying && !pauseInProgressRef.current && !isCrossfadingRef.current) {
+            dbg("mainAudio onPause: external pause detected, syncing state");
+            // Use the context's handlePlayPause to keep everything in sync
+            handlePlayPause();
+          }
+        }}
         onEnded={() => {
           if (repeat === "one" && audioRef.current) {
             audioRef.current.currentTime = 0;
@@ -1544,6 +1563,14 @@ const PlayerBar = () => {
         onError={(e) => handleAudioError(e.currentTarget)}
         onStalled={(e) => handleStalled(e.currentTarget)}
         onWaiting={(e) => handleStalled(e.currentTarget)}
+        onPause={() => {
+          // Sync React state when audio is paused externally (iOS interruption, phone call, Siri, etc.)
+          // Only sync if this is the active audio element and we're not already handling a pause
+          if (isCrossfadeActive && isPlaying && !pauseInProgressRef.current && !isCrossfadingRef.current) {
+            dbg("crossfadeAudio onPause: external pause detected, syncing state");
+            handlePlayPause();
+          }
+        }}
         onEnded={handleCrossfadeEnded}
       />
 
