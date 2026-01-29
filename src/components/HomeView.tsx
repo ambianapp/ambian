@@ -351,7 +351,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           {/* Mood Playlists - horizontal scroll */}
           <MobileHorizontalPlaylistSection
             title={t("home.byMood")}
-            emoji="💖"
             playlists={moodPlaylists}
             onPlaylistClick={handlePlaylistClick}
             onPlayPlaylist={handlePlayPlaylist}
@@ -362,7 +361,6 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           {/* Genre Playlists - horizontal scroll */}
           <MobileHorizontalPlaylistSection
             title={t("home.byGenre")}
-            emoji="🎸"
             playlists={genrePlaylists}
             onPlaylistClick={handlePlaylistClick}
             onPlayPlaylist={handlePlayPlaylist}
@@ -380,10 +378,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           {recentlyPlayed.length > 0 && (
             <section className="animate-fade-in">
               <div className="flex items-center justify-between mb-3 px-4">
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-primary" />
-                  <h2 className="text-base font-bold text-foreground">{t("home.continue")}</h2>
-                </div>
+                <h2 className="text-base font-bold text-foreground">{t("home.continue")}</h2>
                 <button
                   onClick={() => handleMobileViewChange("continue")}
                   className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -392,7 +387,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-2 px-4 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto pb-2 pl-6 pr-4 scrollbar-hide">
                 {recentlyPlayed.map((playlist) => (
                   <button
                     key={playlist.id}

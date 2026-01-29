@@ -238,12 +238,9 @@ const MobileIndustrySection = ({ onPlaylistSelect, onTrackSelect }: MobileIndust
     <>
       <section className="animate-fade-in">
         <div className="flex items-center justify-between mb-3 px-4">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🏢</span>
-            <h2 className="text-base font-bold text-foreground">
-              {t("home.byIndustry")}
-            </h2>
-          </div>
+          <h2 className="text-base font-bold text-foreground">
+            {t("home.industryTitle")}
+          </h2>
         </div>
 
         <div className="px-4">
