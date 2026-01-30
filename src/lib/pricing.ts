@@ -44,7 +44,7 @@ export const PRICE_IDS = {
       yearly: "price_1SvLMHJrU52a7SNLJKf7S7ty",
     },
     deviceSlot: {
-      monthly: "price_TODO_SEK_DEVICE_MONTHLY", // 55 kr/month - TODO: Create in Stripe
+      monthly: "price_1SvLkEJrU52a7SNLEc2p5H6Q",
       yearly: "price_1SvLhNJrU52a7SNLFg38xzQc",
     },
   },
@@ -58,7 +58,7 @@ export const PRICE_IDS = {
       yearly: "price_1SvLOBJrU52a7SNLeQkVBdDi",
     },
     deviceSlot: {
-      monthly: "price_TODO_NOK_DEVICE_MONTHLY", // 55 kr/month - TODO: Create in Stripe
+      monthly: "price_1SvLkYJrU52a7SNLdnMRp7js",
       yearly: "price_1SvLgtJrU52a7SNLWSwY0Xhk",
     },
   },
@@ -72,7 +72,7 @@ export const PRICE_IDS = {
       yearly: "price_1SvLQ6JrU52a7SNL8sMmlz7L",
     },
     deviceSlot: {
-      monthly: "price_TODO_GBP_DEVICE_MONTHLY", // £4.50/month - TODO: Create in Stripe
+      monthly: "price_1SvLkuJrU52a7SNLLn4wvNVX",
       yearly: "price_1SvLfWJrU52a7SNLt7FXuVGt",
     },
   },
