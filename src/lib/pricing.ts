@@ -139,20 +139,16 @@ function isNorthAmericanTimezone(timezone: string): boolean {
 }
 
 // Detect currency from browser locale and timezone
+// Note: localStorage is NOT checked here - only explicit user selection saves to localStorage
 export function detectCurrency(): Currency {
-  // 1. Check localStorage first for saved preference
-  const saved = localStorage.getItem("ambian_currency");
-  if (saved === "EUR" || saved === "USD") {
-    return saved;
-  }
-
-  // 2. Detect from browser locale
+  // 1. Detect from browser locale (respects user's current system settings)
   const locale = navigator.language || navigator.languages?.[0] || "en";
   if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
     return "USD";
   }
 
-  // 3. Check timezone as secondary signal for US/Canada
+  // 2. Check timezone as secondary signal for US/Canada
+  // (catches users with generic "en" locale but US timezone)
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (isNorthAmericanTimezone(timezone)) {
@@ -162,7 +158,7 @@ export function detectCurrency(): Currency {
     // Timezone detection not supported, continue to default
   }
 
-  // 4. Default to EUR for all other regions
+  // 3. Default to EUR for all other regions
   return "EUR";
 }
 
