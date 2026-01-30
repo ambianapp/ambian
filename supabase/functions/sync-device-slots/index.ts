@@ -24,10 +24,14 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SYNC-DEVICE-SLOTS] ${step}${detailsStr}`);
 };
 
-// Device slot price IDs
+// Device slot price IDs (EUR and USD)
 const DEVICE_SLOT_PRICES = [
+  // EUR prices
   "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly €5
   "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
+  // USD prices
+  "price_1SvKEDJrU52a7SNLnMfkHpUz", // monthly $5.50
+  "price_1SvKDCJrU52a7SNL6YI9kCAI", // yearly $55
 ];
 
 serve(async (req) => {

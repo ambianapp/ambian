@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { Check, User, Shield, Clock, AlertCircle } from "lucide-react";
 import ambianLogo from "@/assets/ambian-logo-new.png";
@@ -9,7 +10,12 @@ import LanguageSelector from "@/components/LanguageSelector";
 const SubscriptionGate = () => {
   const { user, isAdmin, signOut, subscription } = useAuth();
   const { t } = useLanguage();
+  const { getPrice, getMonthlyEquivalent } = useCurrency();
   const navigate = useNavigate();
+
+  // Get prices for display
+  const yearlyPrice = getPrice("subscription", "yearly");
+  const monthlyEquivalent = getMonthlyEquivalent();
 
   // Show trial banner if user is in trial period
   const showTrialBanner = subscription.isTrial && subscription.trialDaysRemaining > 0;
@@ -88,9 +94,9 @@ const SubscriptionGate = () => {
         <div className="space-y-4">
           <div className="text-center">
             <p className="text-3xl font-bold text-foreground">
-              {t("gate.priceMonthly")}<span className="text-lg font-normal text-muted-foreground">{t("gate.perMonth")}</span>
+              {monthlyEquivalent}<span className="text-lg font-normal text-muted-foreground">{t("gate.perMonth")}</span>
             </p>
-            <p className="text-sm text-muted-foreground">{t("gate.billedYearly")}</p>
+            <p className="text-sm text-muted-foreground">{t("gate.billedYearly")} ({yearlyPrice.formatted})</p>
             <p className="text-xs text-muted-foreground/70 mt-1">
               {t("gate.pricesExclVat")}
             </p>

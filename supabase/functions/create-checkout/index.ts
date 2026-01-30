@@ -24,18 +24,43 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
-// Price IDs for subscriptions (recurring)
+// Price IDs for subscriptions (recurring) - by currency
 const SUBSCRIPTION_PRICES = {
-  monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
-  yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
-  daily_test: "price_1SjxomJrU52a7SNL3ImdC1N0", // TEST - 1 day recurring
+  EUR: {
+    monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
+    yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
+  },
+  USD: {
+    monthly: "price_1SvJoMJrU52a7SNLo959c2de",
+    yearly: "price_1SvJowJrU52a7SNLGaCy1fSV",
+  },
 };
 
-// Price IDs for prepaid access (one-time)
+// Price IDs for prepaid access (one-time) - by currency
 const PREPAID_PRICES = {
-  monthly: "price_1SfhOOJrU52a7SNLPPopAVyb",
-  yearly: "price_1SfhOZJrU52a7SNLIejHHUh4",
-  daily_test: "price_1SjxozJrU52a7SNLnoFrDtvf", // TEST - 1 day prepaid
+  EUR: {
+    monthly: "price_1SfhOOJrU52a7SNLPPopAVyb",
+    yearly: "price_1SfhOZJrU52a7SNLIejHHUh4",
+  },
+  USD: {
+    monthly: "price_1SvJqQJrU52a7SNLQVDEH3YZ",
+    yearly: "price_1SvJqmJrU52a7SNLpKF8z2oF",
+  },
+};
+
+// Test prices (EUR only)
+const TEST_PRICES = {
+  subscription_daily: "price_1SjxomJrU52a7SNL3ImdC1N0",
+  prepaid_daily: "price_1SjxozJrU52a7SNLnoFrDtvf",
+};
+
+// All valid price IDs for lookup
+const ALL_PRICES = {
+  ...SUBSCRIPTION_PRICES.EUR,
+  ...SUBSCRIPTION_PRICES.USD,
+  ...PREPAID_PRICES.EUR,
+  ...PREPAID_PRICES.USD,
+  ...TEST_PRICES,
 };
 
 serve(async (req) => {
@@ -63,16 +88,25 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId, paymentMode, promoCode } = await req.json();
+    const { priceId, paymentMode, promoCode, currency } = await req.json();
     // paymentMode: "subscription" or "payment" (one-time prepaid)
     const mode = paymentMode || "subscription";
-    logStep("Received request", { priceId, mode, promoCode: promoCode || "none" });
+    const selectedCurrency = currency || "EUR";
+    logStep("Received request", { priceId, mode, promoCode: promoCode || "none", currency: selectedCurrency });
 
     // Determine plan type from price ID
     let planType = "monthly";
-    if (priceId === SUBSCRIPTION_PRICES.yearly || priceId === PREPAID_PRICES.yearly) {
+    const allYearlyPrices = [
+      SUBSCRIPTION_PRICES.EUR.yearly,
+      SUBSCRIPTION_PRICES.USD.yearly,
+      PREPAID_PRICES.EUR.yearly,
+      PREPAID_PRICES.USD.yearly,
+    ];
+    const allDailyTestPrices = [TEST_PRICES.subscription_daily, TEST_PRICES.prepaid_daily];
+    
+    if (allYearlyPrices.includes(priceId)) {
       planType = "yearly";
-    } else if (priceId === SUBSCRIPTION_PRICES.daily_test || priceId === PREPAID_PRICES.daily_test) {
+    } else if (allDailyTestPrices.includes(priceId)) {
       planType = "daily_test";
     }
     logStep("Plan type determined", { planType });
@@ -132,6 +166,7 @@ serve(async (req) => {
         user_id: user.id,
         plan_type: planType,
         payment_mode: mode,
+        currency: selectedCurrency,
       },
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
@@ -188,7 +223,7 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionOptions);
 
-    logStep("Checkout session created", { sessionId: session.id, mode });
+    logStep("Checkout session created", { sessionId: session.id, mode, currency: selectedCurrency });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

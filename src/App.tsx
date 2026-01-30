@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LikedSongsProvider } from "@/contexts/LikedSongsContext";
 import { QuickAddProvider } from "@/contexts/QuickAddContext";
 import { useEffect } from "react";
@@ -182,15 +183,17 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <LanguageProvider>
-            <LikedSongsProvider>
-              <QuickAddProvider>
-                <PlayerProvider>
-                  <OfflineBanner />
-                  <AdminNotificationBanner />
-                  <AppContent />
-                </PlayerProvider>
-              </QuickAddProvider>
-            </LikedSongsProvider>
+            <CurrencyProvider>
+              <LikedSongsProvider>
+                <QuickAddProvider>
+                  <PlayerProvider>
+                    <OfflineBanner />
+                    <AdminNotificationBanner />
+                    <AppContent />
+                  </PlayerProvider>
+                </QuickAddProvider>
+              </LikedSongsProvider>
+            </CurrencyProvider>
           </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>

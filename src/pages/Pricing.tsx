@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,40 +23,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// Subscription prices (recurring)
-const SUBSCRIPTION_PLANS = {
-  monthly: {
-    priceId: "price_1S2BhCJrU52a7SNLtRRpyoCl",
-    price: "€8.90",
-    interval: "month",
-  },
-  yearly: {
-    priceId: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
-    price: "€89",
-    interval: "year",
-    savingsKey: "pricing.saveYearly",
-  },
-};
-
-// Prepaid prices (one-time)
-const PREPAID_PLANS = {
-  monthly: {
-    priceId: "price_1SfhOOJrU52a7SNLPPopAVyb",
-    price: "€8.90",
-    duration: "1 month",
-  },
-  yearly: {
-    priceId: "price_1SfhOZJrU52a7SNLIejHHUh4",
-    price: "€89",
-    duration: "1 year",
-    savingsKey: "pricing.saveOneTime",
-  },
-};
-
 
 const Pricing = () => {
   const { user, subscription, checkSubscription } = useAuth();
   const { t } = useLanguage();
+  const { currency, getPriceId, getPrice, getYearlySavings } = useCurrency();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
   const [paymentType, setPaymentType] = useState<"subscription" | "prepaid">("subscription");
   const [isLoading, setIsLoading] = useState(false);
@@ -168,11 +140,13 @@ const Pricing = () => {
 
     setIsLoading(true);
     try {
-      const plans = paymentType === "subscription" ? SUBSCRIPTION_PLANS : PREPAID_PLANS;
+      const priceType = paymentType === "subscription" ? "subscription" : "prepaid";
+      const priceId = getPriceId(priceType, selectedPlan);
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { 
-          priceId: plans[selectedPlan].priceId,
+          priceId,
           paymentMode: paymentType === "subscription" ? "subscription" : "payment",
+          currency,
         },
       });
 
@@ -211,7 +185,7 @@ const Pricing = () => {
     setIsInvoiceLoading(true);
     try {
       // Invoice payment is yearly one-time only, use prepaid price
-      const yearlyPriceId = PREPAID_PLANS.yearly.priceId;
+      const yearlyPriceId = getPriceId("prepaid", "yearly");
       const { data, error } = await supabase.functions.invoke("create-invoice", {
         body: { 
           priceId: yearlyPriceId,
@@ -223,6 +197,7 @@ const Pricing = () => {
             country: country,
           },
           vatId: vatId.trim() || undefined,
+          currency,
         },
       });
 
@@ -307,7 +282,11 @@ const Pricing = () => {
     });
   };
 
-  const currentPlans = paymentType === "subscription" ? SUBSCRIPTION_PLANS : PREPAID_PLANS;
+  // Get current price type for display
+  const priceType = paymentType === "subscription" ? "subscription" : "prepaid";
+  const monthlyPrice = getPrice(priceType as "subscription" | "prepaid", "monthly");
+  const yearlyPrice = getPrice(priceType as "subscription" | "prepaid", "yearly");
+  const savings = getYearlySavings();
 
   if (isVerifying) {
     return (
@@ -469,7 +448,7 @@ const Pricing = () => {
             <CardContent className="p-3 md:p-6 pt-2 md:pt-4 space-y-3 md:space-y-4">
               <div className="min-h-[60px] md:min-h-[88px]">
                 <div className="text-2xl md:text-4xl font-bold text-foreground mb-1">
-                  {currentPlans.monthly.price}
+                  {monthlyPrice.formatted}
                   {paymentType === "subscription" && (
                     <span className="text-xs md:text-lg font-normal text-muted-foreground">/{t("subscription.month")}</span>
                   )}
@@ -508,12 +487,12 @@ const Pricing = () => {
             </div>
             <CardHeader className="p-3 md:p-6 pb-2 md:pb-2">
               <CardTitle className="text-sm md:text-xl">{paymentType === "subscription" ? t("pricing.yearly") : t("pricing.yearAccess")}</CardTitle>
-              <CardDescription className="text-xs md:text-sm">{t(currentPlans.yearly.savingsKey)}</CardDescription>
+              <CardDescription className="text-xs md:text-sm">{t("pricing.saveYearly").replace("{amount}", savings.formatted)}</CardDescription>
             </CardHeader>
             <CardContent className="p-3 md:p-6 pt-2 md:pt-4 space-y-3 md:space-y-4">
               <div className="min-h-[60px] md:min-h-[88px]">
                 <div className="text-2xl md:text-4xl font-bold text-foreground mb-1">
-                  {currentPlans.yearly.price}
+                  {yearlyPrice.formatted}
                   {paymentType === "subscription" && (
                     <span className="text-xs md:text-lg font-normal text-muted-foreground">/{t("subscription.year")}</span>
                   )}
@@ -644,7 +623,7 @@ const Pricing = () => {
               {/* Show selected yearly plan info */}
               <div className="p-2.5 rounded-lg border border-primary bg-primary/10">
                 <div className="font-medium text-foreground text-sm">{t("pricing.yearAccess")}</div>
-                <div className="text-xs text-muted-foreground">{currentPlans.yearly.price}/{t("subscription.year")} {t("pricing.plusVat")}</div>
+                <div className="text-xs text-muted-foreground">{yearlyPrice.formatted}/{t("subscription.year")} {t("pricing.plusVat")}</div>
               </div>
 
               <div className="space-y-1.5">

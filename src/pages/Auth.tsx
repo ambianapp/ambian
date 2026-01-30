@@ -10,9 +10,11 @@ import { Mail, Lock, Loader2, Music, Calendar, Shield, Building2, Coffee, Store,
 import ambianLogo from "@/assets/ambian-logo-original.png";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const Auth = () => {
   const { t } = useLanguage();
+  const { getMonthlyEquivalent } = useCurrency();
   // Check if user has logged in before - default to login for returning users
   const [isLogin, setIsLogin] = useState(() => {
     return localStorage.getItem('ambian_has_account') === 'true';
@@ -332,7 +334,7 @@ const Auth = () => {
             
             <div className="mt-3 xl:mt-4 p-3 xl:p-4 bg-primary/10 rounded-xl text-center border border-primary/30">
               <div className="text-sm text-muted-foreground mb-1">{t("auth.startingAt")}</div>
-              <div className="text-2xl xl:text-3xl font-bold text-foreground">€7.40<span className="text-base xl:text-lg font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
+              <div className="text-2xl xl:text-3xl font-bold text-foreground">{getMonthlyEquivalent()}<span className="text-base xl:text-lg font-normal text-muted-foreground">{t("auth.perMonth")}</span></div>
             </div>
           </div>
           
