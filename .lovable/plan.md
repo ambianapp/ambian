@@ -1,129 +1,193 @@
 
+# Multi-Currency Support: EUR and USD
 
-# Plan: Better Device Recognition Across Tabs and Browsers
+## Overview
+This plan implements automatic currency detection so users in the USA see prices in USD while European users see prices in EUR - both in the app UI and during Stripe checkout.
 
-## Problem Summary
-When you use the app in different browsers (Chrome vs Safari) or different browser tabs that don't share storage, the app treats each as a separate device. This happens because the current system uses a randomly generated ID stored in browser storage - each browser has its own storage.
+## Price IDs Summary
 
-## Solution: Device Fingerprinting
+| Plan | EUR Price ID | USD Price ID |
+|------|--------------|--------------|
+| Subscription Monthly | price_1S2BhCJrU52a7SNLtRRpyoCl | price_1SvJoMJrU52a7SNLo959c2de |
+| Subscription Yearly | price_1S2BqdJrU52a7SNLAnOR8Nhf | price_1SvJowJrU52a7SNLGaCy1fSV |
+| Prepaid Monthly | price_1SfhOOJrU52a7SNLPPopAVyb | price_1SvJqQJrU52a7SNLQVDEH3YZ |
+| Prepaid Yearly | price_1SfhOZJrU52a7SNLIejHHUh4 | price_1SvJqmJrU52a7SNLpKF8z2oF |
+| Device Slot Monthly | price_1SfhoMJrU52a7SNLpLI3yoEl | price_1SvKEDJrU52a7SNLnMfkHpUz |
+| Device Slot Yearly | price_1Sj2PMJrU52a7SNLzhpFYfJd | price_1SvKDCJrU52a7SNL6YI9kCAI |
 
-We'll create a "device fingerprint" using characteristics of your actual physical device. This fingerprint will be the same regardless of which browser you use, allowing the app to recognize it's the same device.
+---
 
-### What device characteristics we'll use:
-- Screen resolution and color depth
-- Operating system and platform
-- Timezone
-- Device memory and CPU cores
-- Browser language
+## How It Will Work
 
-This creates a stable identifier that stays consistent across:
-- Different browsers on the same device
-- Multiple tabs
-- Browser restarts
-- Storage clears
+1. **Currency Detection**: Detect user region from browser locale/timezone
+2. **Display Prices**: Show correct currency symbol and amounts throughout the app
+3. **Stripe Integration**: Pass correct currency-specific price IDs to checkout
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Create Device Fingerprint Utility
+### Step 1: Create Pricing Configuration
 
-Create a new utility file `src/lib/deviceFingerprint.ts` that generates a consistent device fingerprint using hardware/software characteristics.
+Create a new centralized pricing file:
 
 ```text
-Device characteristics collected:
-+----------------------------+
-|  Screen: 1920x1080 @24bit  |
-|  Platform: MacIntel        |
-|  Timezone: Europe/Helsinki |
-|  Cores: 8, Memory: 16GB    |
-|  Language: en-US           |
-+----------------------------+
-           |
-           v
-    Hash -> "a7f3b2c1..."
-           (Same across all browsers)
+src/lib/pricing.ts
 ```
 
-### Step 2: Update Device ID Generation in AuthContext
+This will contain:
+- All price IDs mapped by currency (EUR/USD)
+- Display prices for each plan and currency
+- Helper function to get user's detected currency
+- Functions to get correct price IDs based on currency
 
-Modify the `getDeviceId()` function to:
-1. First check for an existing stored device ID (for backward compatibility)
-2. Generate a device fingerprint
-3. Use a hybrid approach: fingerprint + fallback to random UUID if fingerprint is unavailable
+Detection logic:
+- Check browser locale (navigator.language)
+- US users (en-US) get USD
+- European countries get EUR
+- Default to EUR for other regions
 
-### Step 3: Update Backend Session Registration
+### Step 2: Create Currency Context
 
-Modify the `register-session` edge function to:
-1. Accept both `sessionId` (current) and `deviceFingerprint` (new)
-2. When registering, check if another session with the same fingerprint already exists
-3. If yes, update that session instead of creating a new one (consolidate sessions from same device)
+Create a new context to manage currency state:
 
-### Step 4: Improve Device Limit Dialog Display
+```text
+src/contexts/CurrencyContext.tsx
+```
 
-Update the `DeviceLimitDialog` to:
-- Group sessions that appear to be from the same device (based on user-agent similarity)
-- Show clearer labels like "iPhone - Safari" vs "iPhone - Chrome"
-- Add a note when sessions look like they're from the same physical device
+This will:
+- Detect and store user's currency preference
+- Provide currency symbol and formatting functions
+- Persist preference in localStorage
+- Save to user profile when logged in
+
+### Step 3: Update Pricing Page
+
+Modify `src/pages/Pricing.tsx`:
+- Import and use pricing configuration
+- Display prices in user's currency
+- Pass correct price ID to checkout based on currency
+- Update savings calculations for each currency
+
+### Step 4: Update Subscription Gate
+
+Modify `src/components/SubscriptionGate.tsx`:
+- Import pricing configuration
+- Display prices in user's currency
+
+### Step 5: Update Auth Page
+
+Modify `src/pages/Auth.tsx`:
+- Display prices in user's currency on the marketing sections
+
+### Step 6: Update Profile Page
+
+Modify `src/pages/Profile.tsx`:
+- Display device slot prices in user's currency
+- Pass correct currency to edge functions
+
+### Step 7: Update Translations
+
+Modify `src/lib/translations.ts`:
+- Make price strings dynamic (remove hardcoded prices)
+- Add currency-specific formatting
+
+### Step 8: Update Edge Functions
+
+Update backend functions to accept and use currency parameter:
+
+**supabase/functions/create-checkout/index.ts**
+- Accept `currency` parameter in request body
+- Select correct price ID based on currency
+- Add currency-specific price mappings
+
+**supabase/functions/create-invoice/index.ts**
+- Accept `currency` parameter
+- Use correct yearly prepaid price for currency
+
+**supabase/functions/add-device-slot/index.ts**
+- Add USD device slot price IDs
+- Accept currency parameter to use correct price
+
+**supabase/functions/add-device-slot-prepaid/index.ts**
+- Update base price constant to support USD
+- Use correct currency in checkout session
+
+**supabase/functions/change-subscription-plan/index.ts**
+- Add USD subscription price IDs
+- Accept currency parameter
+
+**supabase/functions/sync-device-slots/index.ts**
+- Add USD device slot price IDs to recognition list
 
 ---
 
 ## Technical Details
 
-### Device Fingerprint Generation
-```typescript
-const generateFingerprint = (): string => {
-  const components = [
-    screen.width,
-    screen.height,
-    screen.colorDepth,
-    navigator.platform,
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    navigator.hardwareConcurrency || 0,
-    (navigator as any).deviceMemory || 0,
-    navigator.language,
-  ];
-  // Hash these values to create consistent identifier
-  return hashString(components.join('|'));
-};
+### Currency Detection Logic
+
+```text
+Priority:
+1. Saved user preference (from localStorage/profile)
+2. Browser locale (navigator.language)
+3. Default to EUR
+
+Region mapping:
+- en-US, en-CA -> USD
+- All other locales -> EUR
 ```
 
-### Backend Session Consolidation
-When a new session is registered:
-1. Check if any existing session has the same fingerprint
-2. If found, update that session's timestamp and user-agent instead of creating new
-3. This automatically consolidates Chrome + Safari on the same device
+### Pricing Structure
 
-### Backward Compatibility
-- Existing sessions continue to work
-- Fingerprint is added as an additional identifier, not a replacement
-- If fingerprinting fails (e.g., in some privacy-focused browsers), fall back to current behavior
+```text
+EUR Prices:
+- Monthly: €8.90
+- Yearly: €89 (save €17.80)
+- Device Slot Monthly: €5
+- Device Slot Yearly: €50
+
+USD Prices (assuming similar structure):
+- Monthly: $9.90
+- Yearly: $99 (save ~$20)
+- Device Slot Monthly: $5.50
+- Device Slot Yearly: $55
+```
 
 ---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/lib/pricing.ts` | Centralized pricing configuration and helpers |
+| `src/contexts/CurrencyContext.tsx` | Currency state management |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/lib/deviceFingerprint.ts` | **New** - Device fingerprint generation utility |
-| `src/contexts/AuthContext.tsx` | Update `getDeviceId()` to use fingerprint |
-| `supabase/functions/register-session/index.ts` | Accept fingerprint, consolidate same-device sessions |
-| `src/components/DeviceLimitDialog.tsx` | Improve device grouping/display |
+| File | Changes |
+|------|---------|
+| `src/pages/Pricing.tsx` | Use pricing config, pass currency to checkout |
+| `src/components/SubscriptionGate.tsx` | Display dynamic prices |
+| `src/pages/Auth.tsx` | Display dynamic prices |
+| `src/pages/Profile.tsx` | Pass currency for device slots |
+| `src/lib/translations.ts` | Dynamic price placeholders |
+| `src/App.tsx` | Add CurrencyProvider |
+| `supabase/functions/create-checkout/index.ts` | Add USD prices, accept currency |
+| `supabase/functions/create-invoice/index.ts` | Add USD price support |
+| `supabase/functions/add-device-slot/index.ts` | Add USD device slot prices |
+| `supabase/functions/add-device-slot-prepaid/index.ts` | USD support |
+| `supabase/functions/change-subscription-plan/index.ts` | Add USD subscription prices |
+| `supabase/functions/sync-device-slots/index.ts` | Recognize USD device slot prices |
 
 ---
 
-## Benefits
+## User Experience
 
-1. **Same device, different browsers**: Recognized as one device
-2. **Cleared browser storage**: Still recognized as same device  
-3. **Multiple tabs**: Continue working as before
-4. **Privacy-friendly**: Uses only non-identifying device characteristics (no tracking cookies)
+1. User visits from USA (browser locale en-US)
+2. App detects USD preference
+3. All prices display in $ (e.g., "$9.90/month")
+4. Checkout uses USD price IDs
+5. Stripe checkout shows USD amounts
+6. Invoice/receipt in USD
 
-## Limitations
-
-- Two identical devices (same model, OS, screen) may share a fingerprint
-- VMs or remote desktops may have generic fingerprints
-- Some privacy browsers block fingerprinting APIs
-
-These edge cases are rare and the improved experience for the common case (same person, same device, different browsers) outweighs them.
-
+For European users, everything continues working as before with EUR.
