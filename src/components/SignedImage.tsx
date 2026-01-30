@@ -1,6 +1,7 @@
 import { useEffect, useState, forwardRef, useRef } from "react";
 import { getSignedAudioUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import ambianDefaultCover from "@/assets/ambian-default-cover.png";
 
 type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   src?: string | null;
@@ -24,7 +25,7 @@ function isPrivateAudioBucketUrl(url: string) {
  * Shows a neutral background while loading to prevent white flash.
  */
 const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
-  ({ src, alt, className, fallbackSrc = "/placeholder.svg", loading = "lazy", style, ...props }, ref) => {
+  ({ src, alt, className, fallbackSrc = ambianDefaultCover, loading = "lazy", style, ...props }, ref) => {
     const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +48,7 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
       async function resolve() {
         const next = src || "";
         
-        if (!next || next === "/placeholder.svg") {
+        if (!next || next === "/placeholder.svg" || next === ambianDefaultCover) {
           if (mountedRef.current && currentSrcRef.current === src) {
             setResolvedSrc(fallbackSrc);
             setIsLoading(false);
