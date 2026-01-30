@@ -56,7 +56,7 @@ export const PRICE_IDS = {
   NOK: {
     subscription: {
       monthly: "price_1SvLMtJrU52a7SNLfTAYFrzd",
-      yearly: "price_1SvLOBJrU52a7SNLeQkVBdDi",
+      yearly: "price_1SvLNAJrU52a7SNLXIsfKvSz",
     },
     prepaid: {
       monthly: "price_1SvLNpJrU52a7SNLvznnyORD",
