@@ -130,11 +130,10 @@ export const ImageOptimizer = () => {
 
           // Only re-upload if we achieved significant savings (>30%)
           if (compressedFile.size < originalSize * 0.7) {
-            // Delete original
-            await supabase.storage.from("playlist-covers").remove([file.name]);
-
-            // Upload compressed version with new name
+            const oldName = file.name;
             const newName = file.name.replace(/\.[^.]+$/, '.jpg');
+            
+            // Upload compressed version first (before deleting original)
             const { error: uploadError } = await supabase.storage
               .from("playlist-covers")
               .upload(newName, compressedFile, { 
@@ -144,10 +143,38 @@ export const ImageOptimizer = () => {
 
             if (uploadError) {
               optimization.failed++;
-            } else {
-              optimization.processed++;
-              optimization.savedKB += Math.round((originalSize - compressedFile.size) / 1024);
+              continue;
             }
+
+            // Update database URLs if the filename changed
+            if (oldName !== newName) {
+              const oldUrl = `https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1/object/public/playlist-covers/${oldName}`;
+              const newUrl = `https://hjecjqyonxvrrvprbvgr.supabase.co/storage/v1/object/public/playlist-covers/${newName}`;
+              
+              // Update playlists table
+              await supabase
+                .from("playlists")
+                .update({ cover_url: newUrl })
+                .eq("cover_url", oldUrl);
+              
+              // Update industry_collections table
+              await supabase
+                .from("industry_collections")
+                .update({ cover_url: newUrl })
+                .eq("cover_url", oldUrl);
+              
+              // Update tracks table
+              await supabase
+                .from("tracks")
+                .update({ cover_url: newUrl })
+                .eq("cover_url", oldUrl);
+            }
+
+            // Only delete original after successful upload and DB update
+            await supabase.storage.from("playlist-covers").remove([oldName]);
+            
+            optimization.processed++;
+            optimization.savedKB += Math.round((originalSize - compressedFile.size) / 1024);
           } else {
             optimization.skipped++;
           }
