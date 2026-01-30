@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,11 +24,55 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [acceptedMarketing, setAcceptedMarketing] = useState(false);
+  const [existingAccount, setExistingAccount] = useState(false);
+  const emailCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if email exists when user is in signup mode
+  useEffect(() => {
+    // Only check in signup mode with valid email
+    if (isLogin || !email || !z.string().email().safeParse(email).success) {
+      setExistingAccount(false);
+      return;
+    }
+
+    // Debounce the check
+    if (emailCheckTimeoutRef.current) {
+      clearTimeout(emailCheckTimeoutRef.current);
+    }
+
+    emailCheckTimeoutRef.current = setTimeout(async () => {
+      try {
+        // Try to sign in with a dummy password to check if user exists
+        // Supabase returns different errors for "user not found" vs "wrong password"
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password: '__check_existence_only__',
+        });
+        
+        // If error says "Invalid login credentials" it means user exists but password is wrong
+        // If error says "Email not confirmed" it also means user exists
+        if (error?.message?.includes("Invalid login credentials") || 
+            error?.message?.includes("Email not confirmed")) {
+          setExistingAccount(true);
+        } else {
+          setExistingAccount(false);
+        }
+      } catch {
+        setExistingAccount(false);
+      }
+    }, 500);
+
+    return () => {
+      if (emailCheckTimeoutRef.current) {
+        clearTimeout(emailCheckTimeoutRef.current);
+      }
+    };
+  }, [email, isLogin]);
 
   const authSchema = z.object({
     email: z.string().email(t("auth.validEmail")),
@@ -403,12 +447,14 @@ const Auth = () => {
           {/* Header */}
           <div className="text-center lg:text-left mb-8">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">
-              {isLogin ? t("auth.welcomeBack") : t("auth.startTrial")}
+              {isLogin ? t("auth.welcomeBack") : existingAccount ? t("auth.welcomeBack") : t("auth.startTrial")}
             </h1>
             <p className="text-muted-foreground mt-1 md:mt-2 hidden lg:block">
               {isLogin
                 ? t("auth.signInToAccess")
-                : t("auth.trialInfo")}
+                : existingAccount 
+                  ? t("auth.signInToAccess")
+                  : t("auth.trialInfo")}
             </p>
           </div>
 
@@ -535,6 +581,8 @@ const Auth = () => {
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : isLogin ? (
+                t("auth.signIn")
+              ) : existingAccount ? (
                 t("auth.signIn")
               ) : (
                 t("auth.startFreeTrial")
