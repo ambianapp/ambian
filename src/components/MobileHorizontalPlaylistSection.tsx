@@ -23,6 +23,7 @@ interface MobileHorizontalPlaylistSectionProps {
   accentColor?: string;
   hideNames?: boolean;
   isLoading?: boolean;
+  priorityCount?: number; // Number of images to load with high priority
 }
 
 const MobileHorizontalPlaylistSection = ({
@@ -34,6 +35,7 @@ const MobileHorizontalPlaylistSection = ({
   accentColor,
   hideNames = false,
   isLoading = false,
+  priorityCount = 4, // First 4 images load eagerly by default
 }: MobileHorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -88,7 +90,7 @@ const MobileHorizontalPlaylistSection = ({
           className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4"
           style={{ scrollSnapType: 'x mandatory' }}
         >
-          {playlists.map((playlist) => (
+          {playlists.map((playlist, index) => (
             <button
               key={playlist.id}
               onClick={() => onPlaylistClick({
@@ -105,6 +107,8 @@ const MobileHorizontalPlaylistSection = ({
                   src={playlist.cover_url || "/placeholder.svg"}
                   alt={playlist.name}
                   className="w-full h-full object-cover"
+                  loading={index < priorityCount ? "eager" : "lazy"}
+                  fetchPriority={index < priorityCount ? "high" : undefined}
                 />
               </div>
               {!hideNames && (

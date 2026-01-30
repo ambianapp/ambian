@@ -7,6 +7,7 @@ type SignedImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
   src?: string | null;
   alt: string;
   fallbackSrc?: string;
+  fetchPriority?: "high" | "low" | "auto";
 };
 
 function isPrivateAudioBucketUrl(url: string) {
@@ -25,7 +26,7 @@ function isPrivateAudioBucketUrl(url: string) {
  * Shows a neutral background while loading to prevent white flash.
  */
 const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
-  ({ src, alt, className, fallbackSrc = ambianDefaultCover, loading = "lazy", style, ...props }, ref) => {
+  ({ src, alt, className, fallbackSrc = ambianDefaultCover, loading = "lazy", fetchPriority, style, ...props }, ref) => {
     const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -113,6 +114,8 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
         src={resolvedSrc || fallbackSrc}
         alt={alt}
         loading={loading}
+        // @ts-ignore - fetchPriority is valid but not in all TS versions
+        fetchpriority={fetchPriority}
         className={cn(
           className,
           showPlaceholder && "bg-muted"

@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
 import { Building2, Sparkles, Scissors, Dumbbell, UtensilsCrossed, ShoppingBag } from "lucide-react";
 import SignedImage from "./SignedImage";
 import { Skeleton } from "./ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
+import { useIndustryCollections } from "@/hooks/useHomeData";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface IndustryCollection {
@@ -28,8 +27,9 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProps) => {
   const { t } = useLanguage();
-  const [collections, setCollections] = useState<IndustryCollection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Use React Query for cached data fetching
+  const { data: collections = [], isLoading } = useIndustryCollections();
 
   const collectionTranslationKeys: Record<string, { name: string; desc: string }> = {
     "Spa & Wellness": { name: "industry.spaWellness", desc: "industry.spaWellnessDesc" },
@@ -43,20 +43,6 @@ const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProp
   const getTranslatedName = (name: string) => {
     const keys = collectionTranslationKeys[name];
     return keys ? t(keys.name) : name;
-  };
-
-  useEffect(() => {
-    loadCollections();
-  }, []);
-
-  const loadCollections = async () => {
-    const { data } = await supabase
-      .from("industry_collections")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true });
-    setCollections(data || []);
-    setIsLoading(false);
   };
 
   const getIcon = (iconName: string | null) => {
@@ -104,7 +90,7 @@ const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProp
           className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4"
           style={{ scrollSnapType: 'x mandatory' }}
         >
-          {collections.map((collection) => {
+          {collections.map((collection, index) => {
             const Icon = getIcon(collection.icon);
             return (
               <button
@@ -119,6 +105,8 @@ const MobileIndustrySection = ({ onCollectionSelect }: MobileIndustrySectionProp
                       src={collection.cover_url}
                       alt={getTranslatedName(collection.name)}
                       className="w-full h-full object-cover"
+                      loading={index < 4 ? "eager" : "lazy"}
+                      fetchPriority={index < 4 ? "high" : undefined}
                     />
                   ) : (
                     <Icon className="w-10 h-10 text-primary" />

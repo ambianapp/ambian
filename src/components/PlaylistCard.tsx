@@ -18,9 +18,10 @@ interface PlaylistCardProps {
   onPlay?: () => void;
   onUpdate?: (id: string, data: { name: string; description: string; cover: string }) => void;
   compact?: boolean;
+  priorityImage?: boolean; // Load image with high priority
 }
 
-const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: PlaylistCardProps) => {
+const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false, priorityImage = false }: PlaylistCardProps) => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -95,6 +96,8 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: 
               alt={`${playlist.name} playlist cover`}
               className="w-full aspect-square object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
               fallbackSrc="/placeholder.svg"
+              loading={priorityImage ? "eager" : "lazy"}
+              fetchPriority={priorityImage ? "high" : undefined}
             />
             <Button
               variant="player"
