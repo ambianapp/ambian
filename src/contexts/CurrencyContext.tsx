@@ -29,16 +29,27 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>(() => detectCurrency());
 
-  // Persist currency preference
+  // Only persist currency when user explicitly chooses via UI selector
+  // This prevents auto-detection from caching and overriding future browser settings
   const setCurrency = (newCurrency: Currency) => {
     setCurrencyState(newCurrency);
     localStorage.setItem("ambian_currency", newCurrency);
+    localStorage.setItem("ambian_currency_explicit", "true"); // Mark as user choice
   };
 
-  // Re-detect on mount in case of SSR mismatch
+  // Re-detect on mount - always use fresh browser settings unless user explicitly chose
   useEffect(() => {
-    const detected = detectCurrency();
-    setCurrencyState(detected);
+    const isExplicitChoice = localStorage.getItem("ambian_currency_explicit") === "true";
+    if (!isExplicitChoice) {
+      const detected = detectCurrency();
+      setCurrencyState(detected);
+    } else {
+      // User explicitly chose - use their saved preference
+      const saved = localStorage.getItem("ambian_currency") as Currency;
+      if (saved === "EUR" || saved === "USD") {
+        setCurrencyState(saved);
+      }
+    }
   }, []);
 
   const value: CurrencyContextType = {
