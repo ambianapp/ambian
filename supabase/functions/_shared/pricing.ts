@@ -41,44 +41,44 @@ export const PRICE_IDS = {
   // TODO: Add Stripe Price IDs once created in Stripe Dashboard
   SEK: {
     subscription: {
-      monthly: "price_TODO_SEK_SUB_MONTHLY", // 99 kr/month
-      yearly: "price_TODO_SEK_SUB_YEARLY",   // 990 kr/year
+      monthly: "price_1SvLLNJrU52a7SNLXqAZBgNJ",
+      yearly: "price_1SvLLhJrU52a7SNLAlCULDCb",
     },
     prepaid: {
-      monthly: "price_TODO_SEK_PREPAID_MONTHLY",
-      yearly: "price_TODO_SEK_PREPAID_YEARLY",
+      monthly: "price_1SvLLyJrU52a7SNL7lkJPiAe",
+      yearly: "price_1SvLMHJrU52a7SNLJKf7S7ty",
     },
     deviceSlot: {
-      monthly: "price_TODO_SEK_DEVICE_MONTHLY", // 55 kr/month
-      yearly: "price_TODO_SEK_DEVICE_YEARLY",   // 550 kr/year
+      monthly: "price_TODO_SEK_DEVICE_MONTHLY", // 55 kr/month - TODO: Create in Stripe
+      yearly: "price_TODO_SEK_DEVICE_YEARLY",   // 550 kr/year - TODO: Create in Stripe
     },
   },
   NOK: {
     subscription: {
-      monthly: "price_TODO_NOK_SUB_MONTHLY", // 99 kr/month
-      yearly: "price_TODO_NOK_SUB_YEARLY",   // 990 kr/year
+      monthly: "price_1SvLMtJrU52a7SNLfTAYFrzd",
+      yearly: "price_1SvLOBJrU52a7SNLeQkVBdDi",
     },
     prepaid: {
-      monthly: "price_TODO_NOK_PREPAID_MONTHLY",
-      yearly: "price_TODO_NOK_PREPAID_YEARLY",
+      monthly: "price_1SvLNpJrU52a7SNLvznnyORD",
+      yearly: "price_1SvLOBJrU52a7SNLeQkVBdDi",
     },
     deviceSlot: {
-      monthly: "price_TODO_NOK_DEVICE_MONTHLY", // 55 kr/month
-      yearly: "price_TODO_NOK_DEVICE_YEARLY",   // 550 kr/year
+      monthly: "price_TODO_NOK_DEVICE_MONTHLY", // 55 kr/month - TODO: Create in Stripe
+      yearly: "price_TODO_NOK_DEVICE_YEARLY",   // 550 kr/year - TODO: Create in Stripe
     },
   },
   GBP: {
     subscription: {
-      monthly: "price_TODO_GBP_SUB_MONTHLY", // £7.90/month
-      yearly: "price_TODO_GBP_SUB_YEARLY",   // £79/year
+      monthly: "price_1SvLPDJrU52a7SNLCre6iSm3",
+      yearly: "price_1SvLPXJrU52a7SNLudGngEyu",
     },
     prepaid: {
-      monthly: "price_TODO_GBP_PREPAID_MONTHLY",
-      yearly: "price_TODO_GBP_PREPAID_YEARLY",
+      monthly: "price_1SvLPqJrU52a7SNLttKNZSeg",
+      yearly: "price_1SvLQ6JrU52a7SNL8sMmlz7L",
     },
     deviceSlot: {
-      monthly: "price_TODO_GBP_DEVICE_MONTHLY", // £4.50/month
-      yearly: "price_TODO_GBP_DEVICE_YEARLY",   // £45/year
+      monthly: "price_TODO_GBP_DEVICE_MONTHLY", // £4.50/month - TODO: Create in Stripe
+      yearly: "price_TODO_GBP_DEVICE_YEARLY",   // £45/year - TODO: Create in Stripe
     },
   },
 } as const;
