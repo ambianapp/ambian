@@ -85,17 +85,42 @@ const maybeCreateAndSendInvoiceForSendInvoiceSubscription = async (params: {
   return invoice.id;
 };
 
-// Device slot price - single price that matches main subscription interval
-const DEVICE_SLOT_PRICE_MONTHLY = "price_1SfhoMJrU52a7SNLpLI3yoEl"; // €5/month
-const DEVICE_SLOT_PRICE_YEARLY = "price_1Sj2PMJrU52a7SNLzhpFYfJd";  // €50/year
+// Device slot prices by currency
+const DEVICE_SLOT_PRICES = {
+  EUR: {
+    monthly: "price_1SfhoMJrU52a7SNLpLI3yoEl", // €5/month
+    yearly: "price_1Sj2PMJrU52a7SNLzhpFYfJd",  // €50/year
+  },
+  USD: {
+    monthly: "price_1SvKEDJrU52a7SNLnMfkHpUz", // $5.50/month
+    yearly: "price_1SvKDCJrU52a7SNL6YI9kCAI",  // $55/year
+  },
+};
+
+// Full price amounts by currency
+const DEVICE_SLOT_FULL_PRICES = {
+  EUR: { monthly: 5, yearly: 50 },
+  USD: { monthly: 5.5, yearly: 55 },
+};
 
 // Main subscription prices (to identify the main subscription)
 const MAIN_SUBSCRIPTION_PRICES = [
+  // EUR
   "price_1S2BhCJrU52a7SNLtRRpyoCl", // monthly €8.90
   "price_1S2BqdJrU52a7SNLAnOR8Nhf", // yearly €89
   "price_1RREw6JrU52a7SNLjcBLbT7w", // monthly with VAT €11.17
   "price_1RREw6JrU52a7SNLevS4o4gf", // yearly with VAT €111.70
+  // USD
+  "price_1SvJoMJrU52a7SNLo959c2de", // monthly $9.90
+  "price_1SvJowJrU52a7SNLGaCy1fSV", // yearly $99
+  // Test
   "price_1SjxomJrU52a7SNL3ImdC1N0", // test daily
+];
+
+// All device slot price IDs (for detection)
+const ALL_DEVICE_SLOT_PRICES = [
+  ...Object.values(DEVICE_SLOT_PRICES.EUR),
+  ...Object.values(DEVICE_SLOT_PRICES.USD),
 ];
 
 // Check for abuse: open invoices or too many uncollectible invoices
@@ -306,15 +331,26 @@ serve(async (req) => {
       }
     }
 
-    // Determine which device slot price to use based on main subscription interval
+    // Determine which device slot price to use based on main subscription interval and currency
     const mainItem = mainSubscription.items.data.find((item: any) => 
       MAIN_SUBSCRIPTION_PRICES.includes(item.price.id)
     );
     const mainInterval = mainItem?.price?.recurring?.interval;
-    const deviceSlotPriceId = mainInterval === "year" ? DEVICE_SLOT_PRICE_YEARLY : DEVICE_SLOT_PRICE_MONTHLY;
-    const fullPrice = mainInterval === "year" ? 50 : 5; // €50/year or €5/month
+    const mainPriceId = mainItem?.price?.id || "";
     
-    logStep("Determined device slot price", { mainInterval, deviceSlotPriceId });
+    // Detect currency from main subscription price
+    // USD prices
+    const isUSD = mainPriceId === "price_1SvJoMJrU52a7SNLo959c2de" || mainPriceId === "price_1SvJowJrU52a7SNLGaCy1fSV";
+    const currency = isUSD ? "USD" : "EUR";
+    
+    const deviceSlotPriceId = mainInterval === "year" 
+      ? DEVICE_SLOT_PRICES[currency].yearly 
+      : DEVICE_SLOT_PRICES[currency].monthly;
+    const fullPrice = mainInterval === "year" 
+      ? DEVICE_SLOT_FULL_PRICES[currency].yearly 
+      : DEVICE_SLOT_FULL_PRICES[currency].monthly;
+    
+    logStep("Determined device slot price", { mainInterval, deviceSlotPriceId, currency });
 
     // If mode is "calculate", return proration preview without making changes
     if (mode === "calculate") {
@@ -344,10 +380,9 @@ serve(async (req) => {
         daysRemaining 
       });
       
-      // Use Stripe's invoice preview to get accurate proration with tax
-      // Check if there's already a device slot item on this subscription
+      // Check if there's already a device slot item on this subscription (could be EUR or USD)
       const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
-        item.price.id === deviceSlotPriceId
+        ALL_DEVICE_SLOT_PRICES.includes(item.price.id)
       );
       
       const currentDeviceQuantity = existingDeviceSlotItem?.quantity || 0;
@@ -471,15 +506,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         mode: "calculate",
-        proratedPrice: proratedAmountCents / 100, // Convert to euros (excl. tax)
-        proratedTax: proratedTax / 100, // Tax amount in euros
+        proratedPrice: proratedAmountCents / 100, // Convert to currency units (excl. tax)
+        proratedTax: proratedTax / 100, // Tax amount
         proratedTotal: (proratedAmountCents + proratedTax) / 100, // Total incl. tax
         fullPrice: fullPrice * quantity,
         remainingDays: daysRemaining,
         periodEnd: periodEnd.toISOString(),
         quantity,
         interval: mainInterval,
-        currency: "eur",
+        currency: currency.toLowerCase(),
         isSendInvoice,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -487,9 +522,9 @@ serve(async (req) => {
       });
     }
 
-    // Check if there's already a device slot item on this subscription
+    // Check if there's already a device slot item on this subscription (could be EUR or USD)
     const existingDeviceSlotItem = mainSubscription.items.data.find((item: any) => 
-      item.price.id === deviceSlotPriceId
+      ALL_DEVICE_SLOT_PRICES.includes(item.price.id)
     );
 
     const returnOrigin = origin || "https://ambian.lovable.app";

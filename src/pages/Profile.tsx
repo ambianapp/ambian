@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ interface TimeRemaining {
 const Profile = () => {
   const { user, subscription, checkSubscription, signOut } = useAuth();
   const { language, setLanguage, t, languageNames, availableLanguages } = useLanguage();
+  const { getPrice, currency } = useCurrency();
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
@@ -591,7 +593,7 @@ const Profile = () => {
     setIsLoadingDevice(true);
     try {
       const { data, error } = await supabase.functions.invoke("add-device-slot-prepaid", {
-        body: { mode: "checkout", quantity: deviceSlotQuantity },
+        body: { mode: "checkout", quantity: deviceSlotQuantity, currency },
       });
       
       if (error) throw error;
@@ -1007,7 +1009,7 @@ const Profile = () => {
                             {t("devices.location") || "Location"} {rowIndex + 2}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            €{expandedSlot.amount}/{expandedSlot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
+                            {expandedSlot.currency === "usd" ? "$" : "€"}{expandedSlot.amount}/{expandedSlot.period === "yearly" ? t("subscription.year") || "year" : t("subscription.month") || "month"}
                             {" • "}
                             {expandedSlot.cancelAtPeriodEnd 
                               ? (t("devices.endsOn") || "Ends") 
@@ -1077,7 +1079,7 @@ const Profile = () => {
                         </p>
                       ) : prepaidProration ? (
                         <p className="text-sm text-muted-foreground">
-                          €{prepaidProration.proratedPrice.toFixed(2)} {t("devices.proratedUntil") || "prorated until"}{" "}
+                          {currency === "USD" ? "$" : "€"}{prepaidProration.proratedPrice.toFixed(2)} {t("devices.proratedUntil") || "prorated until"}{" "}
                           {new Date(prepaidProration.periodEnd).toLocaleDateString()}
                           <span className="text-xs ml-1">({prepaidProration.remainingDays} {t("devices.daysRemaining") || "days"})</span>
                           {" • "}{t("pricing.exclVat")}
@@ -1122,8 +1124,8 @@ const Profile = () => {
                       <p className="font-medium text-foreground">{t("devices.addLocation") || "Add another location"}</p>
                       <p className="text-sm text-muted-foreground">
                         {subscription.planType === "yearly" 
-                          ? `€50/${t("subscription.year") || "year"}`
-                          : `€5/${t("subscription.month") || "month"}`}
+                          ? `${getPrice("deviceSlot", "yearly").formatted}/${t("subscription.year") || "year"}`
+                          : `${getPrice("deviceSlot", "monthly").formatted}/${t("subscription.month") || "month"}`}
                         {" • "}{t("pricing.exclVat")}
                       </p>
                     </div>
