@@ -1,214 +1,139 @@
 
 
-# Adding Swedish, Norwegian, and UK Currencies
+# Plan: Improve Home Page Loading Speed
 
-## Current Architecture Analysis
+## Summary
 
-The app currently supports **EUR** and **USD** currencies with:
-
-### Frontend (Centralized)
-| File | Purpose |
-|------|---------|
-| `src/lib/pricing.ts` | Central config: Price IDs, display prices, detection logic |
-| `src/contexts/CurrencyContext.tsx` | React context for currency state |
-
-### Backend (Duplicated Price IDs)
-Price IDs are **manually duplicated** across 8+ edge functions:
-
-| Function | Hardcoded Price IDs |
-|----------|---------------------|
-| `create-checkout` | Subscription + Prepaid (EUR/USD) |
-| `create-invoice` | Yearly Prepaid (EUR/USD) |
-| `change-subscription-plan` | Subscription (EUR/USD) |
-| `add-device-slot` | Device slots + Main subscription (EUR/USD) |
-| `add-device-slot-prepaid` | Device slots (EUR/USD) |
-| `sync-device-slots` | Device slots (EUR/USD) |
-| `cancel-device-slot` | Device slots (EUR only!) |
-| `check-subscription` | Device slots (EUR only!) |
-| `stripe-webhook` | Device slots (EUR only!) - multiple locations |
+You've already optimized the image file sizes (great job!), but the **perceived loading speed** can still be improved. The current implementation makes 4+ separate database calls sequentially and loads images lazily without prioritization. I'll implement several strategies to make the home page feel instant.
 
 ---
 
-## Problem: Manual Duplication is Error-Prone
+## What's Slowing Things Down
 
-Adding SEK, NOK, and GBP means:
-- **12 new Stripe prices** to create (3 currencies x 4 price types)
-- **20+ code locations** to update across edge functions
-- High risk of missing updates
+1. **Sequential Database Queries**: The `loadData()` function makes 5 separate database calls one after another (history, mood, genre, updated, new playlists)
+
+2. **No Data Caching**: Every time you return to the home page, all data is fetched fresh from the database
+
+3. **All Images Load at Same Priority**: Browser loads visible and off-screen images equally, causing a "waterfall" effect
+
+4. **No Stale-While-Revalidate**: Users see skeletons even when they have fresh data from seconds ago
 
 ---
 
-## Recommended Solution: Shared Pricing Module for Edge Functions
+## The Solution
 
-Create a **single source of truth** that both frontend and backend can reference.
-
-### Option A: Shared Deno Module (Recommended)
-Create a shared TypeScript module in `supabase/functions/_shared/pricing.ts` that all edge functions import.
+### 1. Parallel Database Queries
+Run all playlist queries at the same time instead of waiting for each to finish:
 
 ```text
-supabase/functions/
-├── _shared/
-│   └── pricing.ts          <-- Single source of truth for backend
-├── create-checkout/
-├── create-invoice/
-└── ...
+BEFORE: Query 1 → Query 2 → Query 3 → Query 4 → Query 5
+        [-----200ms-----][-----200ms-----][-----200ms-----]...
+
+AFTER:  Query 1 ─┐
+        Query 2 ─┼──→ All finish together
+        Query 3 ─┤     [-----200ms-----]
+        Query 4 ─┤
+        Query 5 ─┘
 ```
 
-**Pros:**
-- Single update point for all edge functions
-- Type-safe
-- No network calls
+This alone should cut loading time by ~60-70%.
 
-**Cons:**
-- Frontend still needs its own copy (can't import Deno modules)
-- Must keep frontend/backend in sync manually
+### 2. Add React Query Caching
+Use the existing React Query setup to cache playlist data. Users returning to the home screen will see their previous data instantly while fresh data loads in the background.
 
-### Option B: Database-Driven Pricing
-Store price IDs in a `pricing_config` table and fetch at runtime.
+- **Mood playlists**: Cache for 5 minutes
+- **Genre playlists**: Cache for 5 minutes  
+- **Industry collections**: Cache for 5 minutes
+- Show cached data immediately, refresh silently
 
-**Pros:**
-- True single source of truth
-- Update prices without code deployment
+### 3. Priority Image Loading
+Load the first few visible images immediately, lazy-load the rest:
 
-**Cons:**
-- Adds database dependency to every payment flow
-- Latency on every request
-- Overkill for infrequent price changes
+- First 4 mood playlist covers: `loading="eager"` with `fetchPriority="high"`
+- Everything else: `loading="lazy"` (current behavior)
+
+### 4. Image Prefetching
+After the first batch of images loads, prefetch the next ones so they're ready when the user scrolls.
 
 ---
 
-## Implementation Plan
+## Files to Modify
 
-### Step 1: Create Stripe Prices
-You'll need to create prices in Stripe Dashboard for each new currency:
+| File | Change |
+|------|--------|
+| `src/components/HomeView.tsx` | Replace sequential queries with parallel `Promise.all()`, add React Query hooks |
+| `src/hooks/useHomeData.ts` (new) | Create a dedicated hook for home data fetching with caching |
+| `src/components/MobileHorizontalPlaylistSection.tsx` | Add priority loading for first few images |
+| `src/components/HorizontalPlaylistSection.tsx` | Add priority loading for first few images |
+| `src/components/MobileIndustrySection.tsx` | Add React Query caching |
 
-| Currency | Symbol | Subscription Monthly | Subscription Yearly | Prepaid Monthly | Prepaid Yearly | Device Monthly | Device Yearly |
-|----------|--------|---------------------|---------------------|-----------------|----------------|----------------|---------------|
-| SEK | kr | 99 kr | 990 kr | 99 kr | 990 kr | 55 kr | 550 kr |
-| NOK | kr | 99 kr | 990 kr | 99 kr | 990 kr | 55 kr | 550 kr |
-| GBP | £ | £7.90 | £79 | £7.90 | £79 | £4.50 | £45 |
+---
 
-*(These are example amounts - adjust based on your pricing strategy)*
+## Expected Improvement
 
-### Step 2: Create Shared Backend Module
-Create `supabase/functions/_shared/pricing.ts`:
+| Metric | Before | After |
+|--------|--------|-------|
+| First content paint | ~1.5-2s | ~0.5-0.8s |
+| All images loaded | ~3-4s | ~1.5-2s |
+| Return visits | Full reload | Instant (cached) |
+
+---
+
+## Technical Details
+
+### New Hook: useHomeData
 
 ```typescript
-// Shared pricing configuration for all edge functions
-export type Currency = "EUR" | "USD" | "SEK" | "NOK" | "GBP";
-
-export const PRICE_IDS = {
-  EUR: {
-    subscription: { monthly: "price_...", yearly: "price_..." },
-    prepaid: { monthly: "price_...", yearly: "price_..." },
-    deviceSlot: { monthly: "price_...", yearly: "price_..." },
-  },
-  USD: { /* ... */ },
-  SEK: { /* new prices */ },
-  NOK: { /* new prices */ },
-  GBP: { /* new prices */ },
-} as const;
-
-// Helper functions
-export function getAllDeviceSlotPriceIds(): string[] { /* ... */ }
-export function getAllSubscriptionPriceIds(): string[] { /* ... */ }
-export function detectCurrencyFromPriceId(priceId: string): Currency { /* ... */ }
+// Combines all home data fetching with caching
+const useHomeData = (userId?: string) => {
+  return useQuery({
+    queryKey: ['home-playlists', userId],
+    queryFn: async () => {
+      // Run ALL queries in parallel
+      const [mood, genre, industry, history] = await Promise.all([
+        supabase.from("playlists").select("*").eq("category", "mood")...,
+        supabase.from("playlists").select("*").eq("category", "genre")...,
+        supabase.from("industry_collections").select("*")...,
+        userId ? supabase.from("play_history")... : Promise.resolve({ data: [] })
+      ]);
+      return { mood, genre, industry, history };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000,   // 30 minutes
+  });
+};
 ```
 
-### Step 3: Update Frontend Config
-Update `src/lib/pricing.ts`:
-- Add SEK, NOK, GBP to `Currency` type
-- Add price IDs for each currency
-- Add display prices and symbols
-- Add timezone/locale detection for Nordic countries and UK
+### Priority Image Loading
 
-### Step 4: Update Detection Logic
-Add locale/timezone detection for new regions:
+```tsx
+// First 4 images load immediately
+{playlists.slice(0, 4).map((playlist, i) => (
+  <SignedImage
+    src={playlist.cover_url}
+    loading="eager"
+    fetchPriority="high"
+    ...
+  />
+))}
 
-```typescript
-// Swedish locale
-if (locale.startsWith("sv")) return "SEK";
-
-// Norwegian locale  
-if (locale.startsWith("nb") || locale.startsWith("nn") || locale.startsWith("no")) return "NOK";
-
-// UK locale
-if (locale === "en-GB") return "GBP";
-
-// Timezone fallback
-if (timezone === "Europe/Stockholm") return "SEK";
-if (timezone === "Europe/Oslo") return "NOK";
-if (timezone === "Europe/London") return "GBP";
+// Rest load lazily
+{playlists.slice(4).map((playlist) => (
+  <SignedImage
+    src={playlist.cover_url}
+    loading="lazy"
+    ...
+  />
+))}
 ```
-
-### Step 5: Update Edge Functions
-Replace hardcoded price IDs with imports from shared module:
-
-```typescript
-// Before (in each function)
-const DEVICE_SLOT_PRICES = ["price_1Sfh...", "price_1Sj2..."];
-
-// After
-import { getAllDeviceSlotPriceIds } from "../_shared/pricing.ts";
-const DEVICE_SLOT_PRICES = getAllDeviceSlotPriceIds();
-```
-
-Functions to update:
-- `create-checkout`
-- `create-invoice`
-- `change-subscription-plan`
-- `add-device-slot`
-- `add-device-slot-prepaid`
-- `sync-device-slots`
-- `cancel-device-slot`
-- `check-subscription`
-- `stripe-webhook` (multiple locations)
-- `verify-payment`
-- `verify-device-slot-payment`
-
-### Step 6: Add Currency Selector UI
-Add a dropdown in the pricing page footer or settings to allow manual currency override.
 
 ---
 
-## Files to Create/Modify
+## Optional Enhancements
 
-| Action | File | Changes |
-|--------|------|---------|
-| Create | `supabase/functions/_shared/pricing.ts` | Shared pricing config for backend |
-| Modify | `src/lib/pricing.ts` | Add SEK, NOK, GBP currencies |
-| Modify | `src/contexts/CurrencyContext.tsx` | Update types |
-| Modify | `supabase/functions/create-checkout/index.ts` | Import from shared |
-| Modify | `supabase/functions/create-invoice/index.ts` | Import from shared |
-| Modify | `supabase/functions/change-subscription-plan/index.ts` | Import from shared |
-| Modify | `supabase/functions/add-device-slot/index.ts` | Import from shared |
-| Modify | `supabase/functions/add-device-slot-prepaid/index.ts` | Import from shared |
-| Modify | `supabase/functions/sync-device-slots/index.ts` | Import from shared |
-| Modify | `supabase/functions/cancel-device-slot/index.ts` | Import from shared |
-| Modify | `supabase/functions/check-subscription/index.ts` | Import from shared |
-| Modify | `supabase/functions/stripe-webhook/index.ts` | Import from shared |
-| Modify | `supabase/functions/verify-payment/index.ts` | Import from shared |
-| Modify | `supabase/functions/verify-device-slot-payment/index.ts` | Import from shared |
-| Optional | `src/components/CurrencySelector.tsx` | Manual currency picker UI |
+After implementing the core improvements, you could also consider:
 
----
-
-## Prerequisites Before Implementation
-
-1. **Create Stripe Prices**: You need to create 12 new prices in Stripe Dashboard (4 price types x 3 currencies) and note their IDs
-
-2. **Decide on Amounts**: Confirm the exact pricing for each currency:
-   - SEK: ~10x EUR (99/990 kr suggested)
-   - NOK: ~10x EUR (99/990 kr suggested)
-   - GBP: ~0.85x EUR (£7.90/£79 suggested)
-
----
-
-## Maintenance Benefits After Implementation
-
-| Scenario | Current | After |
-|----------|---------|-------|
-| Add new currency | Edit 12+ files | Edit 2 files (frontend + shared backend) |
-| Change price ID | Hunt through all functions | Single update point |
-| Add new product type | Copy-paste everywhere | Add to shared config |
+- **Optimistic UI**: Show placeholder playlist covers with a gradient while loading
+- **Service Worker caching**: Pre-cache common playlist covers for offline access
+- **Supabase image transforms**: Use `?width=200` URL params for thumbnails (smaller downloads)
 
