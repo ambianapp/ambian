@@ -1,193 +1,148 @@
 
-# Multi-Currency Support: EUR and USD
 
-## Overview
-This plan implements automatic currency detection so users in the USA see prices in USD while European users see prices in EUR - both in the app UI and during Stripe checkout.
+# Fix Currency Detection for US Visitors
 
-## Price IDs Summary
+## Problem
+The current currency detection only checks `navigator.language`, which returns the browser's language preference - not the user's geographic location. GTmetrix testing from Seattle, WA still showed EUR because the test browser likely has a generic English locale (like `en` or `en-GB`) rather than specifically `en-US`.
 
-| Plan | EUR Price ID | USD Price ID |
-|------|--------------|--------------|
-| Subscription Monthly | price_1S2BhCJrU52a7SNLtRRpyoCl | price_1SvJoMJrU52a7SNLo959c2de |
-| Subscription Yearly | price_1S2BqdJrU52a7SNLAnOR8Nhf | price_1SvJowJrU52a7SNLGaCy1fSV |
-| Prepaid Monthly | price_1SfhOOJrU52a7SNLPPopAVyb | price_1SvJqQJrU52a7SNLQVDEH3YZ |
-| Prepaid Yearly | price_1SfhOZJrU52a7SNLIejHHUh4 | price_1SvJqmJrU52a7SNLpKF8z2oF |
-| Device Slot Monthly | price_1SfhoMJrU52a7SNLpLI3yoEl | price_1SvKEDJrU52a7SNLnMfkHpUz |
-| Device Slot Yearly | price_1Sj2PMJrU52a7SNLzhpFYfJd | price_1SvKDCJrU52a7SNL6YI9kCAI |
+## Root Cause
+```typescript
+// Current logic - only matches exact "en-US" or "en-CA"
+if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
+  return "USD";
+}
+```
+
+A browser in the US might report:
+- `en` (generic English)
+- `en-GB` (British English - common default)
+- `en-AU` (Australian English)
+
+None of these trigger USD.
 
 ---
 
-## How It Will Work
+## Solution: Add Timezone-Based Detection
 
-1. **Currency Detection**: Detect user region from browser locale/timezone
-2. **Display Prices**: Show correct currency symbol and amounts throughout the app
-3. **Stripe Integration**: Pass correct currency-specific price IDs to checkout
+Use `Intl.DateTimeFormat().resolvedOptions().timeZone` to detect US/Canada timezones as a secondary signal. This is more reliable than browser language for geographic detection.
 
----
+### US Timezones to Detect
+- America/New_York
+- America/Chicago  
+- America/Denver
+- America/Los_Angeles
+- America/Phoenix
+- America/Anchorage
+- Pacific/Honolulu
+- (and other US territories)
 
-## Implementation Steps
-
-### Step 1: Create Pricing Configuration
-
-Create a new centralized pricing file:
-
-```text
-src/lib/pricing.ts
-```
-
-This will contain:
-- All price IDs mapped by currency (EUR/USD)
-- Display prices for each plan and currency
-- Helper function to get user's detected currency
-- Functions to get correct price IDs based on currency
-
-Detection logic:
-- Check browser locale (navigator.language)
-- US users (en-US) get USD
-- European countries get EUR
-- Default to EUR for other regions
-
-### Step 2: Create Currency Context
-
-Create a new context to manage currency state:
-
-```text
-src/contexts/CurrencyContext.tsx
-```
-
-This will:
-- Detect and store user's currency preference
-- Provide currency symbol and formatting functions
-- Persist preference in localStorage
-- Save to user profile when logged in
-
-### Step 3: Update Pricing Page
-
-Modify `src/pages/Pricing.tsx`:
-- Import and use pricing configuration
-- Display prices in user's currency
-- Pass correct price ID to checkout based on currency
-- Update savings calculations for each currency
-
-### Step 4: Update Subscription Gate
-
-Modify `src/components/SubscriptionGate.tsx`:
-- Import pricing configuration
-- Display prices in user's currency
-
-### Step 5: Update Auth Page
-
-Modify `src/pages/Auth.tsx`:
-- Display prices in user's currency on the marketing sections
-
-### Step 6: Update Profile Page
-
-Modify `src/pages/Profile.tsx`:
-- Display device slot prices in user's currency
-- Pass correct currency to edge functions
-
-### Step 7: Update Translations
-
-Modify `src/lib/translations.ts`:
-- Make price strings dynamic (remove hardcoded prices)
-- Add currency-specific formatting
-
-### Step 8: Update Edge Functions
-
-Update backend functions to accept and use currency parameter:
-
-**supabase/functions/create-checkout/index.ts**
-- Accept `currency` parameter in request body
-- Select correct price ID based on currency
-- Add currency-specific price mappings
-
-**supabase/functions/create-invoice/index.ts**
-- Accept `currency` parameter
-- Use correct yearly prepaid price for currency
-
-**supabase/functions/add-device-slot/index.ts**
-- Add USD device slot price IDs
-- Accept currency parameter to use correct price
-
-**supabase/functions/add-device-slot-prepaid/index.ts**
-- Update base price constant to support USD
-- Use correct currency in checkout session
-
-**supabase/functions/change-subscription-plan/index.ts**
-- Add USD subscription price IDs
-- Accept currency parameter
-
-**supabase/functions/sync-device-slots/index.ts**
-- Add USD device slot price IDs to recognition list
+### Canadian Timezones
+- America/Toronto
+- America/Vancouver
+- America/Edmonton
+- America/Winnipeg
+- (and others)
 
 ---
 
-## Technical Details
+## Implementation
 
-### Currency Detection Logic
+### Update `src/lib/pricing.ts`
 
-```text
-Priority:
-1. Saved user preference (from localStorage/profile)
-2. Browser locale (navigator.language)
-3. Default to EUR
+Add timezone detection as a secondary check:
 
-Region mapping:
-- en-US, en-CA -> USD
-- All other locales -> EUR
-```
+```typescript
+export function detectCurrency(): Currency {
+  // 1. Check localStorage first for saved preference
+  const saved = localStorage.getItem("ambian_currency");
+  if (saved === "EUR" || saved === "USD") {
+    return saved;
+  }
 
-### Pricing Structure
+  // 2. Detect from browser locale
+  const locale = navigator.language || navigator.languages?.[0] || "en";
+  if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
+    return "USD";
+  }
 
-```text
-EUR Prices:
-- Monthly: €8.90
-- Yearly: €89 (save €17.80)
-- Device Slot Monthly: €5
-- Device Slot Yearly: €50
+  // 3. NEW: Check timezone as secondary signal for US/Canada
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (isNorthAmericanTimezone(timezone)) {
+      return "USD";
+    }
+  } catch {
+    // Timezone detection not supported, continue to default
+  }
 
-USD Prices (assuming similar structure):
-- Monthly: $9.90
-- Yearly: $99 (save ~$20)
-- Device Slot Monthly: $5.50
-- Device Slot Yearly: $55
+  // 4. Default to EUR
+  return "EUR";
+}
+
+function isNorthAmericanTimezone(timezone: string): boolean {
+  const usTimezones = [
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "America/Phoenix",
+    "America/Anchorage",
+    "America/Adak",
+    "Pacific/Honolulu",
+    "America/Detroit",
+    "America/Indiana",
+    "America/Kentucky",
+    "America/Boise",
+    "America/Juneau",
+    "America/Nome",
+    "America/Sitka",
+    "America/Yakutat",
+    "America/Metlakatla",
+  ];
+  
+  const canadaTimezones = [
+    "America/Toronto",
+    "America/Vancouver",
+    "America/Edmonton",
+    "America/Winnipeg",
+    "America/Halifax",
+    "America/St_Johns",
+    "America/Regina",
+    "America/Yellowknife",
+    "America/Whitehorse",
+    "America/Iqaluit",
+  ];
+
+  // Check for exact match or prefix match (for sub-zones)
+  return usTimezones.some(tz => timezone.startsWith(tz)) || 
+         canadaTimezones.some(tz => timezone.startsWith(tz));
+}
 ```
 
 ---
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/lib/pricing.ts` | Centralized pricing configuration and helpers |
-| `src/contexts/CurrencyContext.tsx` | Currency state management |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Pricing.tsx` | Use pricing config, pass currency to checkout |
-| `src/components/SubscriptionGate.tsx` | Display dynamic prices |
-| `src/pages/Auth.tsx` | Display dynamic prices |
-| `src/pages/Profile.tsx` | Pass currency for device slots |
-| `src/lib/translations.ts` | Dynamic price placeholders |
-| `src/App.tsx` | Add CurrencyProvider |
-| `supabase/functions/create-checkout/index.ts` | Add USD prices, accept currency |
-| `supabase/functions/create-invoice/index.ts` | Add USD price support |
-| `supabase/functions/add-device-slot/index.ts` | Add USD device slot prices |
-| `supabase/functions/add-device-slot-prepaid/index.ts` | USD support |
-| `supabase/functions/change-subscription-plan/index.ts` | Add USD subscription prices |
-| `supabase/functions/sync-device-slots/index.ts` | Recognize USD device slot prices |
+| `src/lib/pricing.ts` | Add timezone-based detection with `isNorthAmericanTimezone()` helper |
 
 ---
 
-## User Experience
+## How It Will Work After Fix
 
-1. User visits from USA (browser locale en-US)
-2. App detects USD preference
-3. All prices display in $ (e.g., "$9.90/month")
-4. Checkout uses USD price IDs
-5. Stripe checkout shows USD amounts
-6. Invoice/receipt in USD
+1. User in Seattle visits the app
+2. Browser locale might be `en` or `en-GB` (doesn't match)
+3. Timezone check runs: `America/Los_Angeles` detected
+4. Matches US timezone list → USD returned
+5. User sees $9.90/month pricing
 
-For European users, everything continues working as before with EUR.
+---
+
+## Testing Notes
+
+After implementation, GTmetrix from Seattle should show:
+- `$8.25/mo` on Auth page (instead of €7.40)
+- `$99/year` on Pricing page (instead of €89)
+- `$` symbol throughout
+
