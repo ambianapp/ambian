@@ -26,6 +26,13 @@ interface CurrencyContextType {
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
+// Valid currencies for validation
+const VALID_CURRENCIES: Currency[] = ["EUR", "USD", "SEK", "NOK", "GBP"];
+
+function isValidCurrency(value: string | null): value is Currency {
+  return value !== null && VALID_CURRENCIES.includes(value as Currency);
+}
+
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>(() => detectCurrency());
 
@@ -45,8 +52,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       setCurrencyState(detected);
     } else {
       // User explicitly chose - use their saved preference
-      const saved = localStorage.getItem("ambian_currency") as Currency;
-      if (saved === "EUR" || saved === "USD") {
+      const saved = localStorage.getItem("ambian_currency");
+      if (isValidCurrency(saved)) {
         setCurrencyState(saved);
       }
     }

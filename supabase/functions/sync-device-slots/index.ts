@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getAllDeviceSlotPriceIds } from "../_shared/pricing.ts";
 
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
@@ -24,15 +25,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SYNC-DEVICE-SLOTS] ${step}${detailsStr}`);
 };
 
-// Device slot price IDs (EUR and USD)
-const DEVICE_SLOT_PRICES = [
-  // EUR prices
-  "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly €5
-  "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
-  // USD prices
-  "price_1SvKEDJrU52a7SNLnMfkHpUz", // monthly $5.50
-  "price_1SvKDCJrU52a7SNL6YI9kCAI", // yearly $55
-];
+// Get all device slot price IDs from shared config
+const DEVICE_SLOT_PRICES = getAllDeviceSlotPriceIds();
 
 serve(async (req) => {
   const origin = req.headers.get("origin");

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { getAllDeviceSlotPriceIds } from "../_shared/pricing.ts";
 
 // Declare EdgeRuntime for background tasks
 declare const EdgeRuntime: {
@@ -37,11 +38,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CANCEL-DEVICE-SLOT] ${step}${detailsStr}`);
 };
 
-// Device slot price IDs
-const DEVICE_SLOT_PRICES = [
-  "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly €5
-  "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly €50
-];
+// Device slot price IDs from shared config
+const DEVICE_SLOT_PRICES = getAllDeviceSlotPriceIds();
 
 async function sendCancellationEmail(
   email: string,

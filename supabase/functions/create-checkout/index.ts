@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { 
+  PRICE_IDS, 
+  TEST_PRICES, 
+  getAllYearlyPriceIds, 
+  getAllDailyTestPriceIds,
+  type Currency 
+} from "../_shared/pricing.ts";
 
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
@@ -22,45 +29,6 @@ const getCorsHeaders = (origin: string | null) => {
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
-};
-
-// Price IDs for subscriptions (recurring) - by currency
-const SUBSCRIPTION_PRICES = {
-  EUR: {
-    monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
-    yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
-  },
-  USD: {
-    monthly: "price_1SvJoMJrU52a7SNLo959c2de",
-    yearly: "price_1SvJowJrU52a7SNLGaCy1fSV",
-  },
-};
-
-// Price IDs for prepaid access (one-time) - by currency
-const PREPAID_PRICES = {
-  EUR: {
-    monthly: "price_1SfhOOJrU52a7SNLPPopAVyb",
-    yearly: "price_1SfhOZJrU52a7SNLIejHHUh4",
-  },
-  USD: {
-    monthly: "price_1SvJqQJrU52a7SNLQVDEH3YZ",
-    yearly: "price_1SvJqmJrU52a7SNLpKF8z2oF",
-  },
-};
-
-// Test prices (EUR only)
-const TEST_PRICES = {
-  subscription_daily: "price_1SjxomJrU52a7SNL3ImdC1N0",
-  prepaid_daily: "price_1SjxozJrU52a7SNLnoFrDtvf",
-};
-
-// All valid price IDs for lookup
-const ALL_PRICES = {
-  ...SUBSCRIPTION_PRICES.EUR,
-  ...SUBSCRIPTION_PRICES.USD,
-  ...PREPAID_PRICES.EUR,
-  ...PREPAID_PRICES.USD,
-  ...TEST_PRICES,
 };
 
 serve(async (req) => {
@@ -96,13 +64,8 @@ serve(async (req) => {
 
     // Determine plan type from price ID
     let planType = "monthly";
-    const allYearlyPrices = [
-      SUBSCRIPTION_PRICES.EUR.yearly,
-      SUBSCRIPTION_PRICES.USD.yearly,
-      PREPAID_PRICES.EUR.yearly,
-      PREPAID_PRICES.USD.yearly,
-    ];
-    const allDailyTestPrices = [TEST_PRICES.subscription_daily, TEST_PRICES.prepaid_daily];
+    const allYearlyPrices = getAllYearlyPriceIds();
+    const allDailyTestPrices = getAllDailyTestPriceIds();
     
     if (allYearlyPrices.includes(priceId)) {
       planType = "yearly";
