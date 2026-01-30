@@ -98,23 +98,71 @@ export const ALL_DEVICE_SLOT_PRICE_IDS = [
   ...Object.values(PRICE_IDS.USD.deviceSlot),
 ];
 
-// Detect currency from browser locale
+// US timezones for geographic detection
+const US_TIMEZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Phoenix",
+  "America/Anchorage",
+  "America/Adak",
+  "Pacific/Honolulu",
+  "America/Detroit",
+  "America/Indiana",
+  "America/Kentucky",
+  "America/Boise",
+  "America/Juneau",
+  "America/Nome",
+  "America/Sitka",
+  "America/Yakutat",
+  "America/Metlakatla",
+];
+
+// Canadian timezones for geographic detection
+const CANADA_TIMEZONES = [
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Edmonton",
+  "America/Winnipeg",
+  "America/Halifax",
+  "America/St_Johns",
+  "America/Regina",
+  "America/Yellowknife",
+  "America/Whitehorse",
+  "America/Iqaluit",
+];
+
+function isNorthAmericanTimezone(timezone: string): boolean {
+  return US_TIMEZONES.some(tz => timezone.startsWith(tz)) || 
+         CANADA_TIMEZONES.some(tz => timezone.startsWith(tz));
+}
+
+// Detect currency from browser locale and timezone
 export function detectCurrency(): Currency {
-  // Check localStorage first for saved preference
+  // 1. Check localStorage first for saved preference
   const saved = localStorage.getItem("ambian_currency");
   if (saved === "EUR" || saved === "USD") {
     return saved;
   }
 
-  // Detect from browser locale
+  // 2. Detect from browser locale
   const locale = navigator.language || navigator.languages?.[0] || "en";
-  
-  // US and Canada get USD
   if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
     return "USD";
   }
 
-  // Default to EUR for all other regions
+  // 3. Check timezone as secondary signal for US/Canada
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (isNorthAmericanTimezone(timezone)) {
+      return "USD";
+    }
+  } catch {
+    // Timezone detection not supported, continue to default
+  }
+
+  // 4. Default to EUR for all other regions
   return "EUR";
 }
 
