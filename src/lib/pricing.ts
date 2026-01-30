@@ -1,6 +1,7 @@
-// Centralized pricing configuration for multi-currency support (EUR/USD)
+// Centralized pricing configuration for multi-currency support
+// When adding new currencies, also update supabase/functions/_shared/pricing.ts
 
-export type Currency = "EUR" | "USD";
+export type Currency = "EUR" | "USD" | "SEK" | "NOK" | "GBP";
 
 // Price IDs mapped by currency
 export const PRICE_IDS = {
@@ -30,6 +31,49 @@ export const PRICE_IDS = {
     deviceSlot: {
       monthly: "price_1SvKEDJrU52a7SNLnMfkHpUz",
       yearly: "price_1SvKDCJrU52a7SNL6YI9kCAI",
+    },
+  },
+  // TODO: Add Stripe Price IDs once created in Stripe Dashboard
+  SEK: {
+    subscription: {
+      monthly: "price_TODO_SEK_SUB_MONTHLY", // 99 kr/month
+      yearly: "price_TODO_SEK_SUB_YEARLY",   // 990 kr/year
+    },
+    prepaid: {
+      monthly: "price_TODO_SEK_PREPAID_MONTHLY",
+      yearly: "price_TODO_SEK_PREPAID_YEARLY",
+    },
+    deviceSlot: {
+      monthly: "price_TODO_SEK_DEVICE_MONTHLY", // 55 kr/month
+      yearly: "price_TODO_SEK_DEVICE_YEARLY",   // 550 kr/year
+    },
+  },
+  NOK: {
+    subscription: {
+      monthly: "price_TODO_NOK_SUB_MONTHLY", // 99 kr/month
+      yearly: "price_TODO_NOK_SUB_YEARLY",   // 990 kr/year
+    },
+    prepaid: {
+      monthly: "price_TODO_NOK_PREPAID_MONTHLY",
+      yearly: "price_TODO_NOK_PREPAID_YEARLY",
+    },
+    deviceSlot: {
+      monthly: "price_TODO_NOK_DEVICE_MONTHLY", // 55 kr/month
+      yearly: "price_TODO_NOK_DEVICE_YEARLY",   // 550 kr/year
+    },
+  },
+  GBP: {
+    subscription: {
+      monthly: "price_TODO_GBP_SUB_MONTHLY", // £7.90/month
+      yearly: "price_TODO_GBP_SUB_YEARLY",   // £79/year
+    },
+    prepaid: {
+      monthly: "price_TODO_GBP_PREPAID_MONTHLY",
+      yearly: "price_TODO_GBP_PREPAID_YEARLY",
+    },
+    deviceSlot: {
+      monthly: "price_TODO_GBP_DEVICE_MONTHLY", // £4.50/month
+      yearly: "price_TODO_GBP_DEVICE_YEARLY",   // £45/year
     },
   },
 } as const;
@@ -76,6 +120,66 @@ export const DISPLAY_PRICES = {
     symbol: "$",
     monthlyEquivalent: "$8.25", // 99/12 rounded
   },
+  SEK: {
+    subscription: {
+      monthly: { amount: 99, formatted: "99 kr" },
+      yearly: { amount: 990, formatted: "990 kr" },
+    },
+    prepaid: {
+      monthly: { amount: 99, formatted: "99 kr" },
+      yearly: { amount: 990, formatted: "990 kr" },
+    },
+    deviceSlot: {
+      monthly: { amount: 55, formatted: "55 kr" },
+      yearly: { amount: 550, formatted: "550 kr" },
+    },
+    savings: {
+      yearly: "198 kr",
+      yearlyAmount: 198,
+    },
+    symbol: "kr",
+    monthlyEquivalent: "82.50 kr", // 990/12 rounded
+  },
+  NOK: {
+    subscription: {
+      monthly: { amount: 99, formatted: "99 kr" },
+      yearly: { amount: 990, formatted: "990 kr" },
+    },
+    prepaid: {
+      monthly: { amount: 99, formatted: "99 kr" },
+      yearly: { amount: 990, formatted: "990 kr" },
+    },
+    deviceSlot: {
+      monthly: { amount: 55, formatted: "55 kr" },
+      yearly: { amount: 550, formatted: "550 kr" },
+    },
+    savings: {
+      yearly: "198 kr",
+      yearlyAmount: 198,
+    },
+    symbol: "kr",
+    monthlyEquivalent: "82.50 kr", // 990/12 rounded
+  },
+  GBP: {
+    subscription: {
+      monthly: { amount: 7.9, formatted: "£7.90" },
+      yearly: { amount: 79, formatted: "£79" },
+    },
+    prepaid: {
+      monthly: { amount: 7.9, formatted: "£7.90" },
+      yearly: { amount: 79, formatted: "£79" },
+    },
+    deviceSlot: {
+      monthly: { amount: 4.5, formatted: "£4.50" },
+      yearly: { amount: 45, formatted: "£45" },
+    },
+    savings: {
+      yearly: "£15.80",
+      yearlyAmount: 15.8,
+    },
+    symbol: "£",
+    monthlyEquivalent: "£6.58", // 79/12 rounded
+  },
 } as const;
 
 // All valid price IDs for each currency (used for recognition in edge functions)
@@ -90,12 +194,30 @@ export const ALL_PRICE_IDS = {
     ...Object.values(PRICE_IDS.USD.prepaid),
     ...Object.values(PRICE_IDS.USD.deviceSlot),
   ],
+  SEK: [
+    ...Object.values(PRICE_IDS.SEK.subscription),
+    ...Object.values(PRICE_IDS.SEK.prepaid),
+    ...Object.values(PRICE_IDS.SEK.deviceSlot),
+  ],
+  NOK: [
+    ...Object.values(PRICE_IDS.NOK.subscription),
+    ...Object.values(PRICE_IDS.NOK.prepaid),
+    ...Object.values(PRICE_IDS.NOK.deviceSlot),
+  ],
+  GBP: [
+    ...Object.values(PRICE_IDS.GBP.subscription),
+    ...Object.values(PRICE_IDS.GBP.prepaid),
+    ...Object.values(PRICE_IDS.GBP.deviceSlot),
+  ],
 };
 
 // All device slot price IDs (for recognition in sync-device-slots)
 export const ALL_DEVICE_SLOT_PRICE_IDS = [
   ...Object.values(PRICE_IDS.EUR.deviceSlot),
   ...Object.values(PRICE_IDS.USD.deviceSlot),
+  ...Object.values(PRICE_IDS.SEK.deviceSlot),
+  ...Object.values(PRICE_IDS.NOK.deviceSlot),
+  ...Object.values(PRICE_IDS.GBP.deviceSlot),
 ];
 
 // US timezones for geographic detection
@@ -141,16 +263,49 @@ function isNorthAmericanTimezone(timezone: string): boolean {
 // Detect currency from browser locale and timezone
 // Note: localStorage is NOT checked here - only explicit user selection saves to localStorage
 export function detectCurrency(): Currency {
-  // 1. Detect from browser locale (respects user's current system settings)
   const locale = navigator.language || navigator.languages?.[0] || "en";
+  
+  // 1. Detect from browser locale
+  // Swedish locale
+  if (locale.startsWith("sv")) {
+    return "SEK";
+  }
+  
+  // Norwegian locale (nb = Bokmål, nn = Nynorsk, no = generic Norwegian)
+  if (locale.startsWith("nb") || locale.startsWith("nn") || locale.startsWith("no")) {
+    return "NOK";
+  }
+  
+  // UK English
+  if (locale === "en-GB") {
+    return "GBP";
+  }
+  
+  // US/Canada English
   if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
     return "USD";
   }
 
-  // 2. Check timezone as secondary signal for US/Canada
-  // (catches users with generic "en" locale but US timezone)
+  // 2. Check timezone as secondary signal
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Sweden
+    if (timezone === "Europe/Stockholm") {
+      return "SEK";
+    }
+    
+    // Norway
+    if (timezone === "Europe/Oslo") {
+      return "NOK";
+    }
+    
+    // UK
+    if (timezone === "Europe/London") {
+      return "GBP";
+    }
+    
+    // US/Canada
     if (isNorthAmericanTimezone(timezone)) {
       return "USD";
     }
@@ -203,5 +358,11 @@ export function formatPrice(amount: number, currency: Currency): string {
   const symbol = getCurrencySymbol(currency);
   // Format with proper decimal handling
   const formatted = amount % 1 === 0 ? amount.toString() : amount.toFixed(2);
-  return currency === "USD" ? `${symbol}${formatted}` : `${symbol}${formatted}`;
+  
+  // For Scandinavian currencies, symbol comes after the amount
+  if (currency === "SEK" || currency === "NOK") {
+    return `${formatted} ${symbol}`;
+  }
+  
+  return `${symbol}${formatted}`;
 }

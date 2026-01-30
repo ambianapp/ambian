@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { 
+  PRICE_IDS, 
+  getAllSubscriptionPriceIds,
+  detectCurrencyFromPriceId,
+  type Currency 
+} from "../_shared/pricing.ts";
 
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
@@ -24,23 +30,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHANGE-PLAN] ${step}${detailsStr}`);
 };
 
-// Price IDs for subscriptions - by currency
-const SUBSCRIPTION_PRICES = {
-  EUR: {
-    monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
-    yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
-  },
-  USD: {
-    monthly: "price_1SvJoMJrU52a7SNLo959c2de",
-    yearly: "price_1SvJowJrU52a7SNLGaCy1fSV",
-  },
-};
-
 // All subscription price IDs for recognition
-const ALL_SUBSCRIPTION_PRICES = [
-  ...Object.values(SUBSCRIPTION_PRICES.EUR),
-  ...Object.values(SUBSCRIPTION_PRICES.USD),
-];
+const ALL_SUBSCRIPTION_PRICES = getAllSubscriptionPriceIds();
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -103,19 +94,21 @@ serve(async (req) => {
     const currentPriceId = subscription.items.data[0].price.id;
     
     // Determine which currency the user is currently on based on their current price
-    const isUSD = Object.values(SUBSCRIPTION_PRICES.USD).includes(currentPriceId);
-    const currencyPrices = isUSD ? SUBSCRIPTION_PRICES.USD : SUBSCRIPTION_PRICES.EUR;
-    const newPriceId = currencyPrices[newPlan as keyof typeof currencyPrices];
+    const detectedCurrency = detectCurrencyFromPriceId(currentPriceId);
+    const newPriceId = PRICE_IDS[detectedCurrency].subscription[newPlan as "monthly" | "yearly"];
 
     logStep("Current subscription", { 
       subscriptionId: subscription.id, 
       currentPriceId, 
       newPriceId,
-      detectedCurrency: isUSD ? "USD" : "EUR",
+      detectedCurrency,
     });
 
     // Check if already on the requested plan (check all currencies)
-    const allPricesForPlan = [SUBSCRIPTION_PRICES.EUR[newPlan as keyof typeof SUBSCRIPTION_PRICES.EUR], SUBSCRIPTION_PRICES.USD[newPlan as keyof typeof SUBSCRIPTION_PRICES.USD]];
+    const allPricesForPlan: string[] = [];
+    for (const currency of Object.keys(PRICE_IDS) as Currency[]) {
+      allPricesForPlan.push(PRICE_IDS[currency].subscription[newPlan as "monthly" | "yearly"]);
+    }
     if (allPricesForPlan.includes(currentPriceId)) {
       throw new Error(`Already on ${newPlan} plan`);
     }

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { PRICE_IDS, type Currency } from "../_shared/pricing.ts";
 
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
@@ -31,11 +32,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-INVOICE] ${step}${detailsStr}`);
 };
 
-// Yearly prepaid price IDs by currency
-const YEARLY_PREPAID_PRICES = {
-  EUR: "price_1SfhOZJrU52a7SNLIejHHUh4",
-  USD: "price_1SvJqmJrU52a7SNLpKF8z2oF",
-};
+// Get yearly prepaid price for a given currency
+function getYearlyPrepaidPrice(currency: Currency): string {
+  return PRICE_IDS[currency].prepaid.yearly;
+}
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -77,7 +77,7 @@ serve(async (req) => {
     logStep("Received request", { priceId, companyName, address, vatId: vatId ? "provided" : "not provided", currency: selectedCurrency });
 
     // If no priceId provided, use the default for the selected currency
-    const finalPriceId = priceId || YEARLY_PREPAID_PRICES[selectedCurrency as keyof typeof YEARLY_PREPAID_PRICES] || YEARLY_PREPAID_PRICES.EUR;
+    const finalPriceId = priceId || getYearlyPrepaidPrice(selectedCurrency as Currency);
 
     const { data, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);

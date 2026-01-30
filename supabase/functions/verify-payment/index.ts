@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getAllDeviceSlotPriceIds } from "../_shared/pricing.ts";
 
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
@@ -23,6 +24,9 @@ const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[VERIFY-PAYMENT] ${step}${detailsStr}`);
 };
+
+// Get device slot price IDs from shared config
+const DEVICE_SLOT_PRICE_IDS = getAllDeviceSlotPriceIds();
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -157,10 +161,6 @@ serve(async (req) => {
           limit: 10,
         });
         
-        const DEVICE_SLOT_PRICE_IDS = [
-          "price_1SfhoMJrU52a7SNLpLI3yoEl", // monthly device slot
-          "price_1Sj2PMJrU52a7SNLzhpFYfJd", // yearly device slot
-        ];
         
         for (const openInv of openInvoices.data) {
           const invoiceLineItem = openInv.lines?.data?.[0];

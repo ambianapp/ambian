@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getAllDeviceSlotPriceIds } from "../_shared/pricing.ts";
 
 const ALLOWED_ORIGINS = [
   "https://ambian.lovable.app",
@@ -30,6 +31,9 @@ const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
+
+// Device slot price IDs from shared config
+const deviceSlotPriceIds = getAllDeviceSlotPriceIds();
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
