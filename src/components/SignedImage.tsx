@@ -105,25 +105,40 @@ const SignedImage = forwardRef<HTMLImageElement, SignedImageProps>(
       }
     };
 
-    // Show a neutral background while loading or if no source
-    const showPlaceholder = isLoading || !resolvedSrc;
+    // Show skeleton while loading - only show fallback on actual error
+    const showSkeleton = isLoading && !hasError;
+    const displaySrc = hasError ? fallbackSrc : (resolvedSrc || undefined);
+
+    // If still loading and no resolved src yet, show empty skeleton
+    if (showSkeleton && !resolvedSrc) {
+      return (
+        <div
+          className={cn(
+            className,
+            "animate-pulse bg-muted"
+          )}
+          style={style}
+          aria-label={alt}
+        />
+      );
+    }
 
     return (
       <img
         ref={ref}
-        src={resolvedSrc || fallbackSrc}
+        src={displaySrc}
         alt={alt}
         loading={loading}
         // @ts-ignore - fetchPriority is valid but not in all TS versions
         fetchpriority={fetchPriority}
         className={cn(
           className,
-          showPlaceholder && "bg-muted"
+          // Keep muted background while image loads to prevent flash
+          isLoading && "bg-muted"
         )}
         style={{
           ...style,
-          // Ensure a background color while loading to prevent white flash
-          backgroundColor: showPlaceholder ? 'hsl(var(--muted))' : undefined,
+          backgroundColor: isLoading ? 'hsl(var(--muted))' : undefined,
         }}
         onError={handleError}
         onLoad={handleLoad}
