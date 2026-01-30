@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Clock, CreditCard, FileText, Calendar, RefreshCw, Mail, ExternalLink, Info } from "lucide-react";
 
 import LanguageSelector from "@/components/LanguageSelector";
+import CurrencySelector from "@/components/CurrencySelector";
 import ThankYouDialog from "@/components/ThankYouDialog";
 import {
   Dialog,
@@ -336,7 +337,8 @@ const Pricing = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t("common.back")}
           </Button>
-          <div className="mr-12 md:mr-0">
+          <div className="flex items-center gap-2 mr-12 md:mr-0">
+            <CurrencySelector />
             <LanguageSelector />
           </div>
         </div>
