@@ -39,7 +39,10 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-48 md:p-8 md:pb-32">
+    <div 
+      className="min-h-screen h-screen bg-background p-4 pb-48 md:p-8 md:pb-32 overflow-y-auto overscroll-contain"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
