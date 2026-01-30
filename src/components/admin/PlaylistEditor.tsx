@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload, ImageIcon, Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Tables } from "@/integrations/supabase/types";
+import { compressImage } from "@/lib/imageCompression";
 
 type Playlist = Tables<"playlists">;
 type Track = Tables<"tracks">;
@@ -109,7 +110,7 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
 
   // Handle cover image upload
   const handleCoverUpload = async (file: File) => {
-    const maxCoverSize = 5 * 1024 * 1024; // 5MB
+    const maxCoverSize = 10 * 1024 * 1024; // 10MB (will be compressed)
     
     if (!file.type.startsWith("image/")) {
       toast({ title: "Error", description: "Please select an image file (JPG, PNG)", variant: "destructive" });
@@ -117,18 +118,26 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
     }
 
     if (file.size > maxCoverSize) {
-      toast({ title: "Error", description: "Cover image must be under 5MB", variant: "destructive" });
+      toast({ title: "Error", description: "Cover image must be under 10MB", variant: "destructive" });
       return;
     }
 
     setIsUploadingCover(true);
 
     try {
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      // Compress image before upload
+      const compressedFile = await compressImage(file, {
+        maxWidth: 500,
+        maxHeight: 500,
+        quality: 0.85,
+        format: 'jpeg'
+      });
+      
+      const fileName = `${Date.now()}-${compressedFile.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
       
       const { error: uploadError } = await supabase.storage
         .from("playlist-covers")
-        .upload(fileName, file, { contentType: file.type });
+        .upload(fileName, compressedFile, { contentType: compressedFile.type });
 
       if (uploadError) {
         throw uploadError;

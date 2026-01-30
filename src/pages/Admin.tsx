@@ -20,6 +20,7 @@ import { ReferralPartnerManager } from "@/components/admin/ReferralPartnerManage
 import { DeletedTracksManager } from "@/components/admin/DeletedTracksManager";
 import { AdminNotificationSender } from "@/components/admin/AdminNotificationSender";
 import { PlaylistOrderManager } from "@/components/admin/PlaylistOrderManager";
+import { ImageOptimizer } from "@/components/admin/ImageOptimizer";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -129,6 +130,7 @@ const Admin = () => {
           {/* Settings Tab */}
           <TabsContent value="settings" className="mt-6 space-y-6">
             <AdminNotificationSender />
+            <ImageOptimizer />
             <Card>
               <CardHeader>
                 <CardTitle>Quick Add Mode</CardTitle>
