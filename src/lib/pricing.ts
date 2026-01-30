@@ -45,7 +45,7 @@ export const PRICE_IDS = {
     },
     deviceSlot: {
       monthly: "price_TODO_SEK_DEVICE_MONTHLY", // 55 kr/month - TODO: Create in Stripe
-      yearly: "price_TODO_SEK_DEVICE_YEARLY",   // 550 kr/year - TODO: Create in Stripe
+      yearly: "price_1SvLhNJrU52a7SNLFg38xzQc",
     },
   },
   NOK: {
@@ -59,7 +59,7 @@ export const PRICE_IDS = {
     },
     deviceSlot: {
       monthly: "price_TODO_NOK_DEVICE_MONTHLY", // 55 kr/month - TODO: Create in Stripe
-      yearly: "price_TODO_NOK_DEVICE_YEARLY",   // 550 kr/year - TODO: Create in Stripe
+      yearly: "price_1SvLgtJrU52a7SNLWSwY0Xhk",
     },
   },
   GBP: {
@@ -73,7 +73,7 @@ export const PRICE_IDS = {
     },
     deviceSlot: {
       monthly: "price_TODO_GBP_DEVICE_MONTHLY", // £4.50/month - TODO: Create in Stripe
-      yearly: "price_TODO_GBP_DEVICE_YEARLY",   // £45/year - TODO: Create in Stripe
+      yearly: "price_1SvLfWJrU52a7SNLt7FXuVGt",
     },
   },
 } as const;
