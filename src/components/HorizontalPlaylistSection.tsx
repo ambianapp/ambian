@@ -23,6 +23,7 @@ interface HorizontalPlaylistSectionProps {
   onPlaylistUpdate: (id: string, data: { name: string; description: string; cover: string }) => void;
   onShowAll?: () => void;
   isLoading?: boolean;
+  priorityCount?: number; // Number of images to load with high priority
 }
 
 const HorizontalPlaylistSection = ({
@@ -33,6 +34,7 @@ const HorizontalPlaylistSection = ({
   onPlaylistUpdate,
   onShowAll,
   isLoading = false,
+  priorityCount = 4, // First 4 images load eagerly by default
 }: HorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -120,7 +122,7 @@ const HorizontalPlaylistSection = ({
           ref={scrollContainerRef}
           className="flex gap-3 overflow-x-auto pb-2 scrollbar-on-section-hover"
         >
-          {playlists.map((playlist) => (
+          {playlists.map((playlist, index) => (
             <div key={playlist.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
               <PlaylistCard
                 playlist={{
@@ -140,6 +142,7 @@ const HorizontalPlaylistSection = ({
                 onPlay={() => onPlayPlaylist(playlist.id)}
                 onUpdate={onPlaylistUpdate}
                 compact
+                priorityImage={index < priorityCount}
               />
             </div>
           ))}

@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useHomeData } from "@/hooks/useHomeData";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
@@ -43,17 +44,20 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const scrollRef = useScrollRestoration("home");
-  const [moodPlaylists, setMoodPlaylists] = useState<DbPlaylist[]>([]);
-  const [genrePlaylists, setGenrePlaylists] = useState<DbPlaylist[]>([]);
-  const [recentlyUpdated, setRecentlyUpdated] = useState<DbPlaylist[]>([]);
-  const [newPlaylists, setNewPlaylists] = useState<DbPlaylist[]>([]);
-  const [recentlyPlayed, setRecentlyPlayed] = useState<DbPlaylist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue" | "industry">("browser");
-  const [selectedIndustry, setSelectedIndustry] = useState<{ id: string; name: string } | null>(null);
-  const [hasRecentlyPlayed, setHasRecentlyPlayed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Use React Query for cached, parallel data fetching
+  const { data: homeData, isLoading, refetch } = useHomeData(user?.id);
+  const moodPlaylists = homeData?.moodPlaylists || [];
+  const genrePlaylists = homeData?.genrePlaylists || [];
+  const recentlyUpdated = homeData?.recentlyUpdated || [];
+  const newPlaylists = homeData?.newPlaylists || [];
+  const recentlyPlayed = homeData?.recentlyPlayed || [];
+  const hasRecentlyPlayed = homeData?.hasRecentlyPlayed || false;
+
+  const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue" | "industry">("browser");
+  const [selectedIndustry, setSelectedIndustry] = useState<{ id: string; name: string } | null>(null);
 
   // Handle browser back/forward for mobile category views
   useEffect(() => {
@@ -82,12 +86,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     handleMobileViewChange("industry");
   };
 
-  useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Only reload when user ID changes, not on every user object update
-
-  // Realtime subscription for playlists - updates appear live for all users
+  // Realtime subscription for playlists - refetch on changes
   useEffect(() => {
     const channel = supabase
       .channel('playlists-realtime')
@@ -100,8 +99,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
         },
         (payload) => {
           console.log('Playlist change detected:', payload.eventType);
-          // Reload data when playlists are created, updated, or deleted
-          loadData();
+          // Refetch data when playlists are created, updated, or deleted
+          refetch();
         }
       )
       .subscribe();
@@ -109,87 +108,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
     return () => {
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadData = async () => {
-    setIsLoading(true);
-    
-    // Load recently played playlists for current user
-    if (user) {
-      const { data: historyData } = await supabase
-        .from("play_history")
-        .select("playlist_id, played_at")
-        .eq("user_id", user.id)
-        .order("played_at", { ascending: false })
-        .limit(20);
-
-      if (historyData && historyData.length > 0) {
-        // Get unique playlist IDs (most recent first)
-        const uniquePlaylistIds = [...new Set(historyData.map(h => h.playlist_id))].slice(0, 4);
-        
-        // Fetch playlist details
-        const { data: playlistData } = await supabase
-          .from("playlists")
-          .select("*")
-          .in("id", uniquePlaylistIds);
-
-        if (playlistData) {
-          // Sort by original order
-          const sortedPlaylists = uniquePlaylistIds
-            .map(id => playlistData.find(p => p.id === id))
-            .filter((p): p is DbPlaylist => p !== undefined);
-          setRecentlyPlayed(sortedPlaylists);
-          setHasRecentlyPlayed(sortedPlaylists.length > 0);
-        }
-      } else {
-        setHasRecentlyPlayed(false);
-      }
-    } else {
-      setHasRecentlyPlayed(false);
-    }
-
-    // Load mood playlists (by display order)
-    const { data: moodData } = await supabase
-      .from("playlists")
-      .select("*")
-      .eq("is_system", true)
-      .eq("category", "mood")
-      .order("display_order", { ascending: true });
-
-    setMoodPlaylists(moodData || []);
-
-    // Load genre playlists (by display order)
-    const { data: genreData } = await supabase
-      .from("playlists")
-      .select("*")
-      .eq("is_system", true)
-      .eq("category", "genre")
-      .order("display_order", { ascending: true });
-
-    setGenrePlaylists(genreData || []);
-
-    // Load recently updated playlists
-    const { data: updatedData } = await supabase
-      .from("playlists")
-      .select("*")
-      .eq("is_system", true)
-      .order("updated_at", { ascending: false })
-      .limit(4);
-
-    setRecentlyUpdated(updatedData || []);
-
-    // Load newest playlists
-    const { data: newData } = await supabase
-      .from("playlists")
-      .select("*")
-      .eq("is_system", true)
-      .order("created_at", { ascending: false })
-      .limit(4);
-
-    setNewPlaylists(newData || []);
-    setIsLoading(false);
-  };
+  }, [refetch]);
 
   const handlePlaylistClick = async (playlist: SelectedPlaylist) => {
     // Record play history
@@ -212,7 +131,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Playlist updated" });
-      loadData();
+      refetch();
     }
   };
 
