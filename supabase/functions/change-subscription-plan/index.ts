@@ -24,11 +24,23 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHANGE-PLAN] ${step}${detailsStr}`);
 };
 
-// Price IDs for subscriptions
+// Price IDs for subscriptions - by currency
 const SUBSCRIPTION_PRICES = {
-  monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
-  yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
+  EUR: {
+    monthly: "price_1S2BhCJrU52a7SNLtRRpyoCl",
+    yearly: "price_1S2BqdJrU52a7SNLAnOR8Nhf",
+  },
+  USD: {
+    monthly: "price_1SvJoMJrU52a7SNLo959c2de",
+    yearly: "price_1SvJowJrU52a7SNLGaCy1fSV",
+  },
 };
+
+// All subscription price IDs for recognition
+const ALL_SUBSCRIPTION_PRICES = [
+  ...Object.values(SUBSCRIPTION_PRICES.EUR),
+  ...Object.values(SUBSCRIPTION_PRICES.USD),
+];
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -89,16 +101,22 @@ serve(async (req) => {
 
     const subscription = subscriptions.data[0];
     const currentPriceId = subscription.items.data[0].price.id;
-    const newPriceId = SUBSCRIPTION_PRICES[newPlan as keyof typeof SUBSCRIPTION_PRICES];
+    
+    // Determine which currency the user is currently on based on their current price
+    const isUSD = Object.values(SUBSCRIPTION_PRICES.USD).includes(currentPriceId);
+    const currencyPrices = isUSD ? SUBSCRIPTION_PRICES.USD : SUBSCRIPTION_PRICES.EUR;
+    const newPriceId = currencyPrices[newPlan as keyof typeof currencyPrices];
 
     logStep("Current subscription", { 
       subscriptionId: subscription.id, 
       currentPriceId, 
-      newPriceId 
+      newPriceId,
+      detectedCurrency: isUSD ? "USD" : "EUR",
     });
 
-    // Check if already on the requested plan
-    if (currentPriceId === newPriceId) {
+    // Check if already on the requested plan (check all currencies)
+    const allPricesForPlan = [SUBSCRIPTION_PRICES.EUR[newPlan as keyof typeof SUBSCRIPTION_PRICES.EUR], SUBSCRIPTION_PRICES.USD[newPlan as keyof typeof SUBSCRIPTION_PRICES.USD]];
+    if (allPricesForPlan.includes(currentPriceId)) {
       throw new Error(`Already on ${newPlan} plan`);
     }
 
