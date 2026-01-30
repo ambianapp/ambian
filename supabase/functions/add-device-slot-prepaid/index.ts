@@ -31,8 +31,11 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ADD-DEVICE-SLOT-PREPAID] ${step}${detailsStr}`);
 };
 
-// Full yearly device slot price for reference (€50/year = 5000 cents)
-const YEARLY_DEVICE_SLOT_PRICE_CENTS = 5000;
+// Full yearly device slot prices by currency (in cents)
+const YEARLY_DEVICE_SLOT_PRICES = {
+  EUR: 5000, // €50/year = 5000 cents
+  USD: 5500, // $55/year = 5500 cents
+};
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -53,6 +56,7 @@ serve(async (req) => {
     // Parse request body
     let quantity = 1;
     let mode: "calculate" | "checkout" = "calculate";
+    let currency: "EUR" | "USD" = "EUR";
     
     try {
       const body = await req.json();
@@ -62,10 +66,13 @@ serve(async (req) => {
       if (body.mode === "checkout") {
         mode = "checkout";
       }
+      if (body.currency === "USD") {
+        currency = "USD";
+      }
     } catch {
       // No body or invalid JSON, use defaults
     }
-    logStep("Options", { quantity, mode });
+    logStep("Options", { quantity, mode, currency });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
@@ -119,9 +126,10 @@ serve(async (req) => {
     // Calculate prorated price based on remaining days out of 365
     // Minimum 1 day to avoid zero pricing
     const effectiveDays = Math.max(1, remainingDays);
-    const proratedPriceCents = Math.ceil((YEARLY_DEVICE_SLOT_PRICE_CENTS * effectiveDays) / 365) * quantity;
+    const yearlyPriceCents = YEARLY_DEVICE_SLOT_PRICES[currency];
+    const proratedPriceCents = Math.ceil((yearlyPriceCents * effectiveDays) / 365) * quantity;
     
-    // Minimum charge of €1 to avoid Stripe issues
+    // Minimum charge of €1/$1 to avoid Stripe issues
     const finalPriceCents = Math.max(100, proratedPriceCents);
 
     logStep("Proration calculated", {
@@ -131,6 +139,7 @@ serve(async (req) => {
       proratedPriceCents,
       finalPriceCents,
       quantity,
+      currency,
     });
 
     // If just calculating, return the quote
@@ -138,10 +147,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         remainingDays,
-        proratedPrice: finalPriceCents / 100, // Convert to euros
+        proratedPrice: finalPriceCents / 100, // Convert to currency units
         quantity,
         periodEnd: periodEnd.toISOString(),
         currentSlots: localSub.device_slots || 1,
+        currency: currency.toLowerCase(),
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -177,7 +187,7 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "eur",
+            currency: currency.toLowerCase(),
             product_data: {
               name: quantity === 1 
                 ? "Additional Device Slot (Prorated)" 
@@ -197,6 +207,7 @@ serve(async (req) => {
         type: "prepaid_device_slot",
         quantity: String(quantity),
         period_end: periodEnd.toISOString(),
+        currency: currency,
       },
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },

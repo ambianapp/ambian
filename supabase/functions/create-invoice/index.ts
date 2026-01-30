@@ -31,6 +31,12 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-INVOICE] ${step}${detailsStr}`);
 };
 
+// Yearly prepaid price IDs by currency
+const YEARLY_PREPAID_PRICES = {
+  EUR: "price_1SfhOZJrU52a7SNLIejHHUh4",
+  USD: "price_1SvJqmJrU52a7SNLpKF8z2oF",
+};
+
 serve(async (req) => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
@@ -66,8 +72,12 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId, companyName, address, vatId } = await req.json();
-    logStep("Received request", { priceId, companyName, address, vatId: vatId ? "provided" : "not provided" });
+    const { priceId, companyName, address, vatId, currency } = await req.json();
+    const selectedCurrency = currency || "EUR";
+    logStep("Received request", { priceId, companyName, address, vatId: vatId ? "provided" : "not provided", currency: selectedCurrency });
+
+    // If no priceId provided, use the default for the selected currency
+    const finalPriceId = priceId || YEARLY_PREPAID_PRICES[selectedCurrency as keyof typeof YEARLY_PREPAID_PRICES] || YEARLY_PREPAID_PRICES.EUR;
 
     const { data, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Auth error: ${userError.message}`);
@@ -231,8 +241,8 @@ serve(async (req) => {
     }
 
     // Get the price to determine if it's recurring or one-time
-    const price = await stripe.prices.retrieve(priceId);
-    logStep("Retrieved price", { priceId, recurring: !!price.recurring, amount: price.unit_amount });
+    const price = await stripe.prices.retrieve(finalPriceId);
+    logStep("Retrieved price", { priceId: finalPriceId, recurring: !!price.recurring, amount: price.unit_amount });
 
     // Invoice payment is ONLY available for yearly one-time (prepaid) payments
     // Reject recurring subscriptions and monthly plans
@@ -244,7 +254,7 @@ serve(async (req) => {
     const planType = "yearly";
     const amountInCents = price.unit_amount || 0;
     
-    // Yearly prepaid should be €89+ (8900+ cents) - reject monthly prepaid
+    // Yearly prepaid should be €89+ or $99+ (8900+ cents) - reject monthly prepaid
     if (amountInCents < 5000) {
       throw new Error("Invoice payment is only available for yearly one-time payments. Please select yearly plan or use card payment for monthly.");
     }
@@ -287,6 +297,7 @@ serve(async (req) => {
         user_id: user.id,
         plan_type: planType,
         billing_type: "prepaid",
+        currency: selectedCurrency,
       },
     });
     logStep("Created invoice", { invoiceId: invoice.id });
@@ -295,10 +306,10 @@ serve(async (req) => {
     try {
       await stripe.invoiceItems.create({
         customer: customerId,
-        pricing: { price: priceId },
+        pricing: { price: finalPriceId },
         invoice: invoice.id,
       });
-      logStep("Added invoice item", { priceId, invoiceId: invoice.id });
+      logStep("Added invoice item", { priceId: finalPriceId, invoiceId: invoice.id });
     } catch (itemError) {
       logStep("Failed to add invoice item, deleting empty invoice", { error: String(itemError) });
       await stripe.invoices.del(invoice.id);
