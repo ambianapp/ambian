@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import SignedImage from "@/components/SignedImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { compressImage } from "@/lib/imageCompression";
 
 interface PlaylistCardProps {
   playlist: Playlist;
@@ -39,11 +40,19 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false }: 
 
     setIsUploadingCover(true);
     try {
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      // Compress image before upload
+      const compressedFile = await compressImage(file, {
+        maxWidth: 500,
+        maxHeight: 500,
+        quality: 0.85,
+        format: 'jpeg'
+      });
+      
+      const fileName = `${Date.now()}-${compressedFile.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
       
       const { error: uploadError } = await supabase.storage
         .from("playlist-covers")
-        .upload(fileName, file, { contentType: file.type });
+        .upload(fileName, compressedFile, { contentType: compressedFile.type });
 
       if (uploadError) throw uploadError;
 
