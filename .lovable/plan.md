@@ -1,47 +1,30 @@
 
 
-# Fix Currency Detection for US Visitors
+# Fix Currency Detection Priority
 
 ## Problem
-The current currency detection only checks `navigator.language`, which returns the browser's language preference - not the user's geographic location. GTmetrix testing from Seattle, WA still showed EUR because the test browser likely has a generic English locale (like `en` or `en-GB`) rather than specifically `en-US`.
+Currency detection checks localStorage first, which caches the old "EUR" preference. Even after changing MacBook settings to US region + EN-US language, the cached value takes priority and the app still shows EUR.
 
-## Root Cause
-```typescript
-// Current logic - only matches exact "en-US" or "en-CA"
-if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
-  return "USD";
-}
+Additionally, the timezone is still set to GMT+2 (European), so timezone detection wouldn't help anyway - only the locale check (en-US) would correctly detect USD.
+
+## Current Detection Flow
+```text
+1. localStorage "ambian_currency" → "EUR" found → Returns EUR immediately
+   (Steps 2-4 never execute)
+2. Browser locale check (en-US)
+3. Timezone check (GMT+2 = European)
+4. Default to EUR
 ```
 
-A browser in the US might report:
-- `en` (generic English)
-- `en-GB` (British English - common default)
-- `en-AU` (Australian English)
+## Solution
+Remove localStorage from automatic detection. Only use localStorage when user explicitly chooses a currency via a UI selector. This ensures browser settings are always respected.
 
-None of these trigger USD.
-
----
-
-## Solution: Add Timezone-Based Detection
-
-Use `Intl.DateTimeFormat().resolvedOptions().timeZone` to detect US/Canada timezones as a secondary signal. This is more reliable than browser language for geographic detection.
-
-### US Timezones to Detect
-- America/New_York
-- America/Chicago  
-- America/Denver
-- America/Los_Angeles
-- America/Phoenix
-- America/Anchorage
-- Pacific/Honolulu
-- (and other US territories)
-
-### Canadian Timezones
-- America/Toronto
-- America/Vancouver
-- America/Edmonton
-- America/Winnipeg
-- (and others)
+## Updated Detection Flow
+```text
+1. Browser locale check → "en-US" → Returns USD ✓
+2. Timezone check (fallback for generic "en" locales)
+3. Default to EUR
+```
 
 ---
 
@@ -49,23 +32,18 @@ Use `Intl.DateTimeFormat().resolvedOptions().timeZone` to detect US/Canada timez
 
 ### Update `src/lib/pricing.ts`
 
-Add timezone detection as a secondary check:
+Remove the localStorage check from `detectCurrency()`:
 
 ```typescript
 export function detectCurrency(): Currency {
-  // 1. Check localStorage first for saved preference
-  const saved = localStorage.getItem("ambian_currency");
-  if (saved === "EUR" || saved === "USD") {
-    return saved;
-  }
-
-  // 2. Detect from browser locale
+  // 1. Detect from browser locale (respects user's system settings)
   const locale = navigator.language || navigator.languages?.[0] || "en";
   if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
     return "USD";
   }
 
-  // 3. NEW: Check timezone as secondary signal for US/Canada
+  // 2. Check timezone as secondary signal for US/Canada
+  // (catches users with generic "en" locale but US timezone)
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (isNorthAmericanTimezone(timezone)) {
@@ -75,48 +53,18 @@ export function detectCurrency(): Currency {
     // Timezone detection not supported, continue to default
   }
 
-  // 4. Default to EUR
+  // 3. Default to EUR for all other regions
   return "EUR";
 }
+```
 
-function isNorthAmericanTimezone(timezone: string): boolean {
-  const usTimezones = [
-    "America/New_York",
-    "America/Chicago",
-    "America/Denver",
-    "America/Los_Angeles",
-    "America/Phoenix",
-    "America/Anchorage",
-    "America/Adak",
-    "Pacific/Honolulu",
-    "America/Detroit",
-    "America/Indiana",
-    "America/Kentucky",
-    "America/Boise",
-    "America/Juneau",
-    "America/Nome",
-    "America/Sitka",
-    "America/Yakutat",
-    "America/Metlakatla",
-  ];
-  
-  const canadaTimezones = [
-    "America/Toronto",
-    "America/Vancouver",
-    "America/Edmonton",
-    "America/Winnipeg",
-    "America/Halifax",
-    "America/St_Johns",
-    "America/Regina",
-    "America/Yellowknife",
-    "America/Whitehorse",
-    "America/Iqaluit",
-  ];
+### Update `src/contexts/CurrencyContext.tsx`
 
-  // Check for exact match or prefix match (for sub-zones)
-  return usTimezones.some(tz => timezone.startsWith(tz)) || 
-         canadaTimezones.some(tz => timezone.startsWith(tz));
-}
+Remove automatic localStorage save on detection. Only save when user explicitly changes currency:
+
+```typescript
+// Remove auto-save from detectCurrency calls
+// Only save to localStorage when user manually selects currency via UI
 ```
 
 ---
@@ -125,24 +73,27 @@ function isNorthAmericanTimezone(timezone: string): boolean {
 
 | File | Changes |
 |------|---------|
-| `src/lib/pricing.ts` | Add timezone-based detection with `isNorthAmericanTimezone()` helper |
+| `src/lib/pricing.ts` | Remove localStorage check from `detectCurrency()` |
+| `src/contexts/CurrencyContext.tsx` | Don't auto-save detected currency to localStorage |
 
 ---
 
-## How It Will Work After Fix
+## Expected Result After Fix
 
-1. User in Seattle visits the app
-2. Browser locale might be `en` or `en-GB` (doesn't match)
-3. Timezone check runs: `America/Los_Angeles` detected
-4. Matches US timezone list → USD returned
-5. User sees $9.90/month pricing
+With MacBook set to US region + EN-US language:
+1. App detects `navigator.language` = "en-US"
+2. Matches US locale check → Returns USD
+3. User sees $8.25/mo pricing
+
+With Finnish settings:
+1. App detects `navigator.language` = "fi" or "fi-FI"
+2. Doesn't match US locale
+3. Timezone check: GMT+2 = European (not North American)
+4. Returns EUR
+5. User sees €7.40/mo pricing
 
 ---
 
-## Testing Notes
-
-After implementation, GTmetrix from Seattle should show:
-- `$8.25/mo` on Auth page (instead of €7.40)
-- `$99/year` on Pricing page (instead of €89)
-- `$` symbol throughout
+## Future Enhancement (Optional)
+Add a manual currency selector in the footer or settings page so users can override the automatic detection if needed.
 
