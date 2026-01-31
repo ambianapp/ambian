@@ -376,7 +376,9 @@ const PlaylistDetailView = ({
               {t("playlist.noTracks")}
             </p>
             <p className="text-sm text-muted-foreground/80">
-              {t("playlist.addTracksHint")}
+              {playlistId === "liked-songs" 
+                ? t("playlist.addTracksHintLiked")
+                : t("playlist.addTracksHintOwn")}
             </p>
             <Link 
               to="/playlists" 
