@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
-import { ChevronRight, Play } from "lucide-react";
+import { ChevronRight, Play, Pause } from "lucide-react";
 import SignedImage from "./SignedImage";
 import { Skeleton } from "./ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DbPlaylist = Tables<"playlists">;
@@ -38,11 +39,25 @@ const MobileHorizontalPlaylistSection = ({
   priorityCount = 4,
 }: MobileHorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
+  const { currentPlaylistId, isPlaying } = usePlayer();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCardClick = (playlist: DbPlaylist) => {
+    const isThisPlaying = currentPlaylistId === playlist.id && isPlaying;
+    
+    // If this playlist is playing, first tap opens it directly
+    if (isThisPlaying) {
+      onPlaylistClick({
+        id: playlist.id,
+        name: playlist.name,
+        cover: playlist.cover_url,
+        description: playlist.description,
+      });
+      return;
+    }
+
     if (activePlaylistId === playlist.id) {
       // Already active, second tap opens playlist
       onPlaylistClick({
@@ -129,7 +144,8 @@ const MobileHorizontalPlaylistSection = ({
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {playlists.map((playlist, index) => {
-            const isActive = activePlaylistId === playlist.id;
+            const isThisPlaying = currentPlaylistId === playlist.id && isPlaying;
+            const showButton = isThisPlaying || activePlaylistId === playlist.id;
             
             return (
               <button
@@ -146,14 +162,18 @@ const MobileHorizontalPlaylistSection = ({
                     loading={index < priorityCount ? "eager" : "lazy"}
                     fetchPriority={index < priorityCount ? "high" : undefined}
                   />
-                  {/* Play button in bottom-right corner - visible when tapped */}
+                  {/* Play/Pause button in bottom-right corner */}
                   <div
                     className={`absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg transition-opacity duration-200 ${
-                      isActive ? "opacity-100" : "opacity-0 pointer-events-none"
+                      showButton ? "opacity-100" : "opacity-0 pointer-events-none"
                     }`}
                     onClick={(e) => handlePlayClick(e, playlist.id)}
                   >
-                    <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+                    {isThisPlaying ? (
+                      <Pause className="w-4 h-4 text-primary-foreground" fill="currentColor" />
+                    ) : (
+                      <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+                    )}
                   </div>
                 </div>
                 {!hideNames && (
