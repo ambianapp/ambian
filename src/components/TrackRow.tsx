@@ -116,12 +116,13 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay, onDelete, s
     <div
       className={cn(
         "group grid gap-2 md:gap-4 items-center px-3 md:px-4 py-3 rounded-lg transition-colors cursor-pointer",
+        "hover-capable:hover:bg-secondary/50",
         isQuickAddMode 
           ? "grid-cols-[auto_1fr_auto_auto_auto_auto]" 
           : showDelete
             ? "grid-cols-[auto_1fr_auto_auto_auto]"
             : "grid-cols-[auto_1fr_auto_auto]",
-        isCurrentTrack ? "bg-secondary" : "hover:bg-secondary/50"
+        isCurrentTrack && "bg-secondary"
       )}
       onClick={onPlay}
     >
