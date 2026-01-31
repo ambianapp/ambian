@@ -136,70 +136,80 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
-    // Fetch playlist cover first
+    // Fetch playlist cover and system flag first
     const { data: playlistData } = await supabase
       .from("playlists")
-      .select("cover_url")
+      .select("cover_url, is_system")
       .eq("id", playlistId)
       .single();
     
     const playlistCover = playlistData?.cover_url || "/placeholder.svg";
+    const isSystemPlaylist = playlistData?.is_system ?? false;
 
-    // Fetch first track of playlist
-    const { data } = await supabase
+    // Fetch all tracks for playlist context
+    const { data: allTracksData } = await supabase
       .from("playlist_tracks")
-      .select("track_id, tracks(*)")
+      .select("position, is_featured, tracks(*)")
       .eq("playlist_id", playlistId)
-      .order("position", { ascending: true })
-      .limit(1);
+      .order("position", { ascending: true });
 
-    if (data && data.length > 0) {
-      const track = (data[0] as any).tracks;
-      if (track) {
-        const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
-        
-        // Fetch all tracks for playlist context
-        const { data: allTracksData } = await supabase
-          .from("playlist_tracks")
-          .select("tracks(*)")
-          .eq("playlist_id", playlistId)
-          .order("position", { ascending: true });
+    if (!allTracksData || allTracksData.length === 0) return;
 
-        const playlistTracks: Track[] = (allTracksData || [])
-          .map((item: any) => item.tracks)
-          .filter(Boolean)
-          .map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            artist: t.artist,
-            album: t.album || "",
-            duration: t.duration || "",
-            // Always use playlist cover when playing from a playlist context
-            cover: playlistCover,
-            genre: t.genre || "",
-          }));
-
-        // Record play history
-        if (user) {
-          await supabase.from("play_history").insert({
-            user_id: user.id,
-            playlist_id: playlistId,
-          });
-        }
-
-        onTrackSelect({
-          id: track.id,
-          title: track.title,
-          artist: track.artist,
-          album: track.album || "",
-          duration: track.duration || "",
-          // Always use playlist cover when playing from a playlist context
-          cover: playlistCover,
-          genre: track.genre || "",
-          audioUrl: signedAudioUrl,
-        }, playlistTracks);
-      }
+    // Sort tracks: for system playlists, featured first then alphabetically
+    let sortedTracks = allTracksData;
+    if (isSystemPlaylist) {
+      const featured = allTracksData
+        .filter((item: any) => item.is_featured)
+        .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+      
+      const nonFeatured = allTracksData
+        .filter((item: any) => !item.is_featured)
+        .sort((a: any, b: any) => 
+          (a.tracks?.title || "").localeCompare(b.tracks?.title || "", undefined, { numeric: true, sensitivity: 'base' })
+        );
+      
+      sortedTracks = [...featured, ...nonFeatured];
     }
+
+    const playlistTracks: Track[] = sortedTracks
+      .map((item: any) => item.tracks)
+      .filter(Boolean)
+      .map((t: any) => ({
+        id: t.id,
+        title: t.title,
+        artist: t.artist,
+        album: t.album || "",
+        duration: t.duration || "",
+        // Always use playlist cover when playing from a playlist context
+        cover: playlistCover,
+        genre: t.genre || "",
+      }));
+
+    if (playlistTracks.length === 0) return;
+
+    // Get signed URL for first track
+    const firstTrack = sortedTracks[0]?.tracks;
+    const signedAudioUrl = await getSignedAudioUrl(firstTrack?.audio_url);
+
+    // Record play history
+    if (user) {
+      await supabase.from("play_history").insert({
+        user_id: user.id,
+        playlist_id: playlistId,
+      });
+    }
+
+    onTrackSelect({
+      id: firstTrack.id,
+      title: firstTrack.title,
+      artist: firstTrack.artist,
+      album: firstTrack.album || "",
+      duration: firstTrack.duration || "",
+      // Always use playlist cover when playing from a playlist context
+      cover: playlistCover,
+      genre: firstTrack.genre || "",
+      audioUrl: signedAudioUrl,
+    }, playlistTracks);
   };
 
   const getGreeting = () => {

@@ -76,25 +76,37 @@ const PlaylistDetailView = ({
     
     const { data, error } = await supabase
       .from("playlist_tracks")
-      .select("track_id, position, tracks(*)")
+      .select("track_id, position, is_featured, tracks(*)")
       .eq("playlist_id", playlistId)
       .order("position", { ascending: true });
 
     if (error) {
       console.error("Error loading playlist tracks:", error);
     } else if (data) {
-      let trackList = data
-        .map((item: any) => item.tracks)
-        .filter(Boolean);
-      
-      // Sort alphabetically by title for system playlists (genre/mood)
+      // For system playlists: featured first (by position), then rest alphabetically
       if (isSystem) {
-        trackList = trackList.sort((a: DbTrack, b: DbTrack) => 
-          a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' })
-        );
+        const featured = data
+          .filter((item: any) => item.is_featured)
+          .sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
+          .map((item: any) => item.tracks)
+          .filter(Boolean);
+        
+        const nonFeatured = data
+          .filter((item: any) => !item.is_featured)
+          .map((item: any) => item.tracks)
+          .filter(Boolean)
+          .sort((a: DbTrack, b: DbTrack) => 
+            a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' })
+          );
+        
+        setTracks([...featured, ...nonFeatured]);
+      } else {
+        // For user playlists, keep original position order
+        const trackList = data
+          .map((item: any) => item.tracks)
+          .filter(Boolean);
+        setTracks(trackList);
       }
-      
-      setTracks(trackList);
     }
 
     setIsLoading(false);
