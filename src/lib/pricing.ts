@@ -260,35 +260,19 @@ function isNorthAmericanTimezone(timezone: string): boolean {
          CANADA_TIMEZONES.some(tz => timezone.startsWith(tz));
 }
 
-// Detect currency from browser locale and timezone
+// Detect currency from browser timezone (primary) and locale (secondary)
 // Note: localStorage is NOT checked here - only explicit user selection saves to localStorage
+// IMPORTANT: Timezone is checked FIRST because language ≠ currency location
+// (e.g., Swedish-speaking Finns use EUR, not SEK)
 export function detectCurrency(): Currency {
-  const locale = navigator.language || navigator.languages?.[0] || "en";
-  
-  // 1. Detect from browser locale
-  // Swedish locale
-  if (locale.startsWith("sv")) {
-    return "SEK";
-  }
-  
-  // Norwegian locale (nb = Bokmål, nn = Nynorsk, no = generic Norwegian)
-  if (locale.startsWith("nb") || locale.startsWith("nn") || locale.startsWith("no")) {
-    return "NOK";
-  }
-  
-  // UK English
-  if (locale === "en-GB") {
-    return "GBP";
-  }
-  
-  // US/Canada English
-  if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
-    return "USD";
-  }
-
-  // 2. Check timezone as secondary signal
+  // 1. Check timezone FIRST - this is the most reliable indicator of actual location
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Finland uses EUR (important: Swedish-speaking Finns should get EUR, not SEK)
+    if (timezone === "Europe/Helsinki") {
+      return "EUR";
+    }
     
     // Sweden
     if (timezone === "Europe/Stockholm") {
@@ -310,7 +294,35 @@ export function detectCurrency(): Currency {
       return "USD";
     }
   } catch {
-    // Timezone detection not supported, continue to default
+    // Timezone detection not supported, fall through to locale
+  }
+
+  // 2. Fall back to browser locale if timezone didn't match
+  const locale = navigator.language || navigator.languages?.[0] || "en";
+  
+  // Finnish locale - always EUR
+  if (locale.startsWith("fi")) {
+    return "EUR";
+  }
+  
+  // Swedish locale (only if we couldn't detect timezone - assume Sweden)
+  if (locale.startsWith("sv")) {
+    return "SEK";
+  }
+  
+  // Norwegian locale (nb = Bokmål, nn = Nynorsk, no = generic Norwegian)
+  if (locale.startsWith("nb") || locale.startsWith("nn") || locale.startsWith("no")) {
+    return "NOK";
+  }
+  
+  // UK English
+  if (locale === "en-GB") {
+    return "GBP";
+  }
+  
+  // US/Canada English
+  if (locale.startsWith("en-US") || locale.startsWith("en-CA")) {
+    return "USD";
   }
 
   // 3. Default to EUR for all other regions
