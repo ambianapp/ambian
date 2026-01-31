@@ -197,7 +197,7 @@ serve(async (req) => {
                       <tr>
                         <td style="padding: 20px 40px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
                           <p style="color: #888888; font-size: 14px; margin: 0;">
-                            Questions? Just reply to this email or visit our <a href="https://ambian.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a>.
+                            Questions? Just reply to this email or visit our <a href="https://ambian.lovable.app/help" style="color: #8b5cf6; text-decoration: none;">Help Center</a>.
                           </p>
                         </td>
                       </tr>
