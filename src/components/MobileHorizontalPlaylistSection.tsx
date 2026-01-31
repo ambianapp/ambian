@@ -42,13 +42,15 @@ const MobileHorizontalPlaylistSection = ({
   const { currentPlaylistId, isPlaying } = usePlayer();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null);
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCardClick = (playlist: DbPlaylist) => {
     const isThisPlaying = currentPlaylistId === playlist.id && isPlaying;
+    const isThisLoading = loadingPlaylistId === playlist.id;
     
-    // If this playlist is playing, first tap opens it directly
-    if (isThisPlaying) {
+    // If this playlist is playing or loading, first tap opens it directly
+    if (isThisPlaying || isThisLoading) {
       onPlaylistClick({
         id: playlist.id,
         name: playlist.name,
@@ -86,6 +88,8 @@ const MobileHorizontalPlaylistSection = ({
 
   const handlePlayClick = (e: React.MouseEvent, playlistId: string) => {
     e.stopPropagation();
+    // Set loading state to keep button visible during async play
+    setLoadingPlaylistId(playlistId);
     onPlayPlaylist(playlistId);
     setActivePlaylistId(null);
     if (tapTimeoutRef.current) {
@@ -145,7 +149,9 @@ const MobileHorizontalPlaylistSection = ({
         >
           {playlists.map((playlist, index) => {
             const isThisPlaying = currentPlaylistId === playlist.id && isPlaying;
-            const showButton = isThisPlaying || activePlaylistId === playlist.id;
+            const isThisLoading = loadingPlaylistId === playlist.id;
+            // Show button if: playing, loading, or tapped
+            const showButton = isThisPlaying || isThisLoading || activePlaylistId === playlist.id;
             
             return (
               <button
@@ -169,7 +175,7 @@ const MobileHorizontalPlaylistSection = ({
                     }`}
                     onClick={(e) => handlePlayClick(e, playlist.id)}
                   >
-                    {isThisPlaying ? (
+                    {isThisPlaying || isThisLoading ? (
                       <Pause className="w-4 h-4 text-primary-foreground" fill="currentColor" />
                     ) : (
                       <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
