@@ -487,7 +487,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Playlist empty state
     "playlist.noTracks": "No tracks in this playlist yet.",
     "playlist.addTracksHintLiked": "Browse our playlists and like songs to add them here.",
-    "playlist.addTracksHintOwn": "Browse playlists, tap the menu on any song, and select 'Add to Playlist'.",
+    "playlist.addTracksHintOwn": "Browse playlists, tap the three dots on any song, and select 'Add to Playlist'.",
     "playlist.browseAllPlaylists": "Browse all playlists",
     
     
@@ -1290,7 +1290,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Playlist empty state
     "playlist.noTracks": "Inga låtar i denna spellista ännu.",
     "playlist.addTracksHintLiked": "Bläddra bland våra spellistor och gilla låtar för att lägga till dem här.",
-    "playlist.addTracksHintOwn": "Bläddra bland spellistor, tryck på menyn på valfri låt och välj 'Lägg till i spellista'.",
+    "playlist.addTracksHintOwn": "Bläddra bland spellistor, tryck på de tre prickarna på valfri låt och välj 'Lägg till i spellista'.",
     "playlist.browseAllPlaylists": "Bläddra alla spellistor",
     
     
@@ -2093,7 +2093,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Playlist empty state
     "playlist.noTracks": "Tässä soittolistassa ei ole vielä kappaleita.",
     "playlist.addTracksHintLiked": "Selaa soittolistojamme ja tykkää kappaleista lisätäksesi ne tänne.",
-    "playlist.addTracksHintOwn": "Selaa soittolistoja, napauta minkä tahansa kappaleen valikkoa ja valitse 'Lisää soittolistaan'.",
+    "playlist.addTracksHintOwn": "Selaa soittolistoja, napauta kolmea pistettä minkä tahansa kappaleen kohdalla ja valitse 'Lisää soittolistaan'.",
     "playlist.browseAllPlaylists": "Selaa kaikkia soittolistoja",
     
     
@@ -2897,7 +2897,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Playlist empty state
     "playlist.noTracks": "Noch keine Songs in dieser Playlist.",
     "playlist.addTracksHintLiked": "Durchstöbern Sie unsere Playlists und liken Sie Songs, um sie hier hinzuzufügen.",
-    "playlist.addTracksHintOwn": "Playlists durchsuchen, auf das Menü eines Songs tippen und 'Zur Playlist hinzufügen' wählen.",
+    "playlist.addTracksHintOwn": "Playlists durchsuchen, auf die drei Punkte bei einem Song tippen und 'Zur Playlist hinzufügen' wählen.",
     "playlist.browseAllPlaylists": "Alle Playlists durchsuchen",
     
     
@@ -3700,7 +3700,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Playlist empty state
     "playlist.noTracks": "Aucun titre dans cette playlist.",
     "playlist.addTracksHintLiked": "Parcourez nos playlists et aimez des titres pour les ajouter ici.",
-    "playlist.addTracksHintOwn": "Parcourez les playlists, appuyez sur le menu d'un titre et sélectionnez 'Ajouter à la playlist'.",
+    "playlist.addTracksHintOwn": "Parcourez les playlists, appuyez sur les trois points d'un titre et sélectionnez 'Ajouter à la playlist'.",
     "playlist.browseAllPlaylists": "Parcourir toutes les playlists",
     
     
