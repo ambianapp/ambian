@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Play, Pause, Shuffle, Clock, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLikedSongs } from "@/contexts/LikedSongsContext";
 import { getSignedAudioUrl } from "@/lib/storage";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -26,6 +27,12 @@ const LikedSongsView = ({
   const [tracks, setTracks] = useState<DbTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { likedSongIds } = useLikedSongs();
+
+  // Filter tracks to only show songs still in likedSongIds (instant removal on unlike)
+  const visibleTracks = useMemo(() => {
+    return tracks.filter(track => likedSongIds.has(track.id));
+  }, [tracks, likedSongIds]);
 
   useEffect(() => {
     loadLikedSongs();
@@ -69,8 +76,8 @@ const LikedSongsView = ({
   const handleTrackSelect = async (track: DbTrack) => {
     const signedAudioUrl = await getSignedAudioUrl(track.audio_url);
 
-    // Convert all tracks for playlist context
-    const allTracksPromises = tracks.map(async (t) => {
+    // Convert all visible tracks for playlist context
+    const allTracksPromises = visibleTracks.map(async (t) => {
       const url = t.id === track.id ? signedAudioUrl : undefined;
       return convertToTrack(t, url);
     });
@@ -80,8 +87,8 @@ const LikedSongsView = ({
   };
 
   const handlePlayAll = async () => {
-    if (tracks.length > 0) {
-      handleTrackSelect(tracks[0]);
+    if (visibleTracks.length > 0) {
+      handleTrackSelect(visibleTracks[0]);
     }
   };
 
@@ -110,7 +117,7 @@ const LikedSongsView = ({
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Playlist</p>
             <h1 className="text-2xl md:text-4xl font-bold text-foreground">Liked Songs</h1>
             <p className="text-sm text-muted-foreground mt-2">Your favorite tracks</p>
-            <p className="text-sm text-muted-foreground mt-1">{tracks.length} songs</p>
+            <p className="text-sm text-muted-foreground mt-1">{visibleTracks.length} songs</p>
           </div>
         </div>
       </div>
@@ -122,7 +129,7 @@ const LikedSongsView = ({
           size="lg"
           className="rounded-full h-14 w-14"
           onClick={handlePlayAll}
-          disabled={tracks.length === 0}
+          disabled={visibleTracks.length === 0}
         >
           <Play className="w-6 h-6 ml-1" />
         </Button>
@@ -145,9 +152,9 @@ const LikedSongsView = ({
 
         {isLoading ? (
           <div className="py-8 text-center text-muted-foreground">Loading your liked songs...</div>
-        ) : tracks.length > 0 ? (
+        ) : visibleTracks.length > 0 ? (
           <div className="bg-card/30 rounded-xl overflow-hidden">
-            {tracks.map((track, index) => (
+            {visibleTracks.map((track, index) => (
               <TrackRow
                 key={track.id}
                 track={{
