@@ -488,6 +488,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "playlist.noTracks": "No tracks in this playlist yet.",
     "playlist.addTracksHintLiked": "Browse our playlists and like songs to add them here.",
     "playlist.addTracksHintOwn": "Browse playlists, tap the three dots on any song, and select 'Add to Playlist'.",
+    
+    // Playlist delete
+    "playlist.deleteConfirmTitle": "Delete Playlist?",
+    "playlist.deleteConfirmDesc": "This action cannot be undone. All tracks will be removed from this playlist.",
+    "playlist.deleteBtn": "Delete",
+    "playlist.deleteSuccess": "Playlist deleted",
+    "playlist.deleteError": "Failed to delete playlist",
     "playlist.browseAllPlaylists": "Browse all playlists",
     
     
@@ -1291,6 +1298,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "playlist.noTracks": "Inga låtar i denna spellista ännu.",
     "playlist.addTracksHintLiked": "Bläddra bland våra spellistor och gilla låtar för att lägga till dem här.",
     "playlist.addTracksHintOwn": "Bläddra bland spellistor, tryck på de tre prickarna på valfri låt och välj 'Lägg till i spellista'.",
+    
+    // Playlist delete
+    "playlist.deleteConfirmTitle": "Ta bort spellista?",
+    "playlist.deleteConfirmDesc": "Denna åtgärd kan inte ångras. Alla låtar kommer att tas bort från denna spellista.",
+    "playlist.deleteBtn": "Ta bort",
+    "playlist.deleteSuccess": "Spellista borttagen",
+    "playlist.deleteError": "Kunde inte ta bort spellistan",
     "playlist.browseAllPlaylists": "Bläddra alla spellistor",
     
     
@@ -2094,6 +2108,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "playlist.noTracks": "Tässä soittolistassa ei ole vielä kappaleita.",
     "playlist.addTracksHintLiked": "Selaa soittolistojamme ja tykkää kappaleista lisätäksesi ne tänne.",
     "playlist.addTracksHintOwn": "Selaa soittolistoja, napauta kolmea pistettä minkä tahansa kappaleen kohdalla ja valitse 'Lisää soittolistaan'.",
+    
+    // Playlist delete
+    "playlist.deleteConfirmTitle": "Poista soittolista?",
+    "playlist.deleteConfirmDesc": "Tätä toimintoa ei voi peruuttaa. Kaikki kappaleet poistetaan tästä soittolistasta.",
+    "playlist.deleteBtn": "Poista",
+    "playlist.deleteSuccess": "Soittolista poistettu",
+    "playlist.deleteError": "Soittolistan poistaminen epäonnistui",
     "playlist.browseAllPlaylists": "Selaa kaikkia soittolistoja",
     
     
@@ -2898,6 +2919,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "playlist.noTracks": "Noch keine Songs in dieser Playlist.",
     "playlist.addTracksHintLiked": "Durchstöbern Sie unsere Playlists und liken Sie Songs, um sie hier hinzuzufügen.",
     "playlist.addTracksHintOwn": "Playlists durchsuchen, auf die drei Punkte bei einem Song tippen und 'Zur Playlist hinzufügen' wählen.",
+    
+    // Playlist delete
+    "playlist.deleteConfirmTitle": "Playlist löschen?",
+    "playlist.deleteConfirmDesc": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Songs werden aus dieser Playlist entfernt.",
+    "playlist.deleteBtn": "Löschen",
+    "playlist.deleteSuccess": "Playlist gelöscht",
+    "playlist.deleteError": "Playlist konnte nicht gelöscht werden",
     "playlist.browseAllPlaylists": "Alle Playlists durchsuchen",
     
     
@@ -3701,6 +3729,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "playlist.noTracks": "Aucun titre dans cette playlist.",
     "playlist.addTracksHintLiked": "Parcourez nos playlists et aimez des titres pour les ajouter ici.",
     "playlist.addTracksHintOwn": "Parcourez les playlists, appuyez sur les trois points d'un titre et sélectionnez 'Ajouter à la playlist'.",
+    
+    // Playlist delete
+    "playlist.deleteConfirmTitle": "Supprimer la playlist ?",
+    "playlist.deleteConfirmDesc": "Cette action est irréversible. Tous les titres seront retirés de cette playlist.",
+    "playlist.deleteBtn": "Supprimer",
+    "playlist.deleteSuccess": "Playlist supprimée",
+    "playlist.deleteError": "Échec de la suppression de la playlist",
     "playlist.browseAllPlaylists": "Parcourir toutes les playlists",
     
     

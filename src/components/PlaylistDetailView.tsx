@@ -1,7 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Play, Pause, Clock, Heart, ChevronRight } from "lucide-react";
+import { ArrowLeft, Play, Pause, Clock, Heart, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
 import SignedImage from "@/components/SignedImage";
@@ -259,6 +270,21 @@ const PlaylistDetailView = ({
 
   const isUserPlaylist = !isSystemPlaylist && playlistOwnerId === user?.id;
 
+  const handleDeletePlaylist = async () => {
+    const { error } = await supabase
+      .from("playlists")
+      .delete()
+      .eq("id", playlistId);
+
+    if (error) {
+      toast.error(t("playlist.deleteError"));
+      console.error("Error deleting playlist:", error);
+    } else {
+      toast.success(t("playlist.deleteSuccess"));
+      onBack();
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto pb-40 md:pb-32">
       {/* Header with gradient background */}
@@ -331,6 +357,37 @@ const PlaylistDetailView = ({
         >
           <Heart className={cn("w-6 h-6", isLiked && "fill-current")} />
         </Button>
+        
+        {isUserPlaylist && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="w-6 h-6" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("playlist.deleteConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("playlist.deleteConfirmDesc")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDeletePlaylist}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {t("playlist.deleteBtn")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {/* Track List */}
