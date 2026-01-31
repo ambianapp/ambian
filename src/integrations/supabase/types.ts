@@ -344,6 +344,7 @@ export type Database = {
         Row: {
           added_at: string
           id: string
+          is_featured: boolean
           playlist_id: string
           position: number | null
           track_id: string
@@ -351,6 +352,7 @@ export type Database = {
         Insert: {
           added_at?: string
           id?: string
+          is_featured?: boolean
           playlist_id: string
           position?: number | null
           track_id: string
@@ -358,6 +360,7 @@ export type Database = {
         Update: {
           added_at?: string
           id?: string
+          is_featured?: boolean
           playlist_id?: string
           position?: number | null
           track_id?: string

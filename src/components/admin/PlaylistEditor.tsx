@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import * as musicMetadata from "music-metadata-browser";
 
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload, ImageIcon, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music, ArrowRightLeft, Loader2, ListMusic, FileUp, Upload, ImageIcon, Pencil, Star } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { Tables } from "@/integrations/supabase/types";
 import { compressImage } from "@/lib/imageCompression";
@@ -18,6 +18,7 @@ interface PlaylistTrackWithDetails {
   id: string;
   track_id: string;
   position: number | null;
+  is_featured: boolean;
   track: Track;
 }
 
@@ -59,7 +60,7 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
     // Load playlist tracks with track details
     const { data: ptData, error: ptError } = await supabase
       .from("playlist_tracks")
-      .select("id, track_id, position, tracks(*)")
+      .select("id, track_id, position, is_featured, tracks(*)")
       .eq("playlist_id", playlist.id)
       .order("position", { ascending: true });
 
@@ -70,8 +71,18 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
         id: pt.id,
         track_id: pt.track_id,
         position: pt.position,
+        is_featured: pt.is_featured ?? false,
         track: pt.tracks as Track,
       }));
+      // Sort: featured first (by position), then non-featured alphabetically
+      formattedTracks.sort((a: PlaylistTrackWithDetails, b: PlaylistTrackWithDetails) => {
+        if (a.is_featured && !b.is_featured) return -1;
+        if (!a.is_featured && b.is_featured) return 1;
+        if (a.is_featured && b.is_featured) {
+          return (a.position || 0) - (b.position || 0);
+        }
+        return a.track.title.localeCompare(b.track.title, undefined, { numeric: true, sensitivity: 'base' });
+      });
       setPlaylistTracks(formattedTracks);
     }
 
@@ -662,7 +673,9 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
             <Music className="w-5 h-5" />
             Tracks in Playlist
           </CardTitle>
-          <CardDescription>Click tracks to select them for transfer</CardDescription>
+          <CardDescription>
+            Click tracks to select for transfer. Star icon marks featured tracks (shown first to users).
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -675,47 +688,85 @@ const PlaylistEditor = ({ playlist, allPlaylists, onBack }: PlaylistEditorProps)
             </p>
           ) : (
             <div className="space-y-2">
-              {playlistTracks.map((pt) => (
-                <div
-                  key={pt.id}
-                  className={`flex items-center gap-4 p-3 rounded-lg transition-colors cursor-pointer ${
-                    selectedTracksToTransfer.has(pt.id)
-                      ? "bg-primary/20 ring-2 ring-primary"
-                      : "bg-secondary/50 hover:bg-secondary"
-                  }`}
-                  onClick={() => toggleTrackSelection(pt.id)}
-                >
-                  {pt.track.cover_url ? (
-                    <img
-                      src={pt.track.cover_url}
-                      alt={pt.track.title}
-                      className="w-12 h-12 rounded object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                      <Music className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{pt.track.title}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {pt.track.artist} {pt.track.album && `• ${pt.track.album}`}
-                    </p>
-                  </div>
-                  <span className="text-sm text-muted-foreground">{pt.track.duration}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveTrack(pt.id);
-                    }}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              {playlistTracks.map((pt, index) => {
+                const featuredCount = playlistTracks.filter(t => t.is_featured).length;
+                return (
+                  <div
+                    key={pt.id}
+                    className={`flex items-center gap-4 p-3 rounded-lg transition-colors cursor-pointer ${
+                      selectedTracksToTransfer.has(pt.id)
+                        ? "bg-primary/20 ring-2 ring-primary"
+                        : pt.is_featured
+                        ? "bg-amber-500/10 ring-1 ring-amber-500/30"
+                        : "bg-secondary/50 hover:bg-secondary"
+                    }`}
+                    onClick={() => toggleTrackSelection(pt.id)}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`flex-shrink-0 ${pt.is_featured ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}`}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        // Limit to 3 featured tracks
+                        if (!pt.is_featured && featuredCount >= 3) {
+                          toast({ title: "Limit reached", description: "Maximum 3 featured tracks allowed", variant: "destructive" });
+                          return;
+                        }
+                        const newFeatured = !pt.is_featured;
+                        const newPosition = newFeatured ? featuredCount + 1 : 0;
+                        const { error } = await supabase
+                          .from("playlist_tracks")
+                          .update({ is_featured: newFeatured, position: newPosition })
+                          .eq("id", pt.id);
+                        if (error) {
+                          toast({ title: "Error", description: error.message, variant: "destructive" });
+                        } else {
+                          loadData();
+                        }
+                      }}
+                    >
+                      <Star className={`w-4 h-4 ${pt.is_featured ? "fill-current" : ""}`} />
+                    </Button>
+                    {pt.track.cover_url ? (
+                      <img
+                        src={pt.track.cover_url}
+                        alt={pt.track.title}
+                        className="w-12 h-12 rounded object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                        <Music className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground truncate">{pt.track.title}</p>
+                        {pt.is_featured && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500">
+                            #{playlistTracks.filter(t => t.is_featured).findIndex(t => t.id === pt.id) + 1}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {pt.track.artist} {pt.track.album && `• ${pt.track.album}`}
+                      </p>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{pt.track.duration}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveTrack(pt.id);
+                      }}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
