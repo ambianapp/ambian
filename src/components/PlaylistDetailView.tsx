@@ -349,14 +349,16 @@ const PlaylistDetailView = ({
         >
           <Play className="w-6 h-6 ml-1" />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn("transition-colors", isLiked ? "text-primary" : "text-muted-foreground hover:text-foreground")}
-          onClick={toggleLike}
-        >
-          <Heart className={cn("w-6 h-6", isLiked && "fill-current")} />
-        </Button>
+        {!isUserPlaylist && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn("transition-colors", isLiked ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+            onClick={toggleLike}
+          >
+            <Heart className={cn("w-6 h-6", isLiked && "fill-current")} />
+          </Button>
+        )}
         
         {isUserPlaylist && (
           <AlertDialog>
