@@ -323,8 +323,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Handle auto-disconnect for single-slot users (shows toast instead of dialog)
         if (data?.autoDisconnected) {
           console.log("Previous device was auto-disconnected:", data.disconnectedDevice);
-          toast.info("Your previous device has been signed out", {
-            description: "Only one device can be active at a time",
+          toast.info("Previous device signed out", {
+            description: "Want to use multiple devices? Add extra device slots in your profile settings.",
+            duration: 6000,
           });
           setIsDeviceLimitReached(false);
           setActiveDevices([]);
