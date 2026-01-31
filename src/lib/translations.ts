@@ -486,8 +486,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Playlist empty state
     "playlist.noTracks": "No tracks in this playlist yet.",
-    "playlist.addTracksHint": "Browse our playlists and like songs to add them here.",
+    "playlist.addTracksHintLiked": "Browse our playlists and like songs to add them here.",
+    "playlist.addTracksHintOwn": "Browse playlists, tap the menu on any song, and select 'Add to Playlist'.",
     "playlist.browseAllPlaylists": "Browse all playlists",
+    
     
     // Home extras
     "home.greeting.morning": "Good morning",
@@ -1287,8 +1289,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Playlist empty state
     "playlist.noTracks": "Inga låtar i denna spellista ännu.",
-    "playlist.addTracksHint": "Bläddra bland våra spellistor och gilla låtar för att lägga till dem här.",
+    "playlist.addTracksHintLiked": "Bläddra bland våra spellistor och gilla låtar för att lägga till dem här.",
+    "playlist.addTracksHintOwn": "Bläddra bland spellistor, tryck på menyn på valfri låt och välj 'Lägg till i spellista'.",
     "playlist.browseAllPlaylists": "Bläddra alla spellistor",
+    
     
     // Home extras
     "home.greeting.morning": "God morgon",
@@ -2088,8 +2092,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Playlist empty state
     "playlist.noTracks": "Tässä soittolistassa ei ole vielä kappaleita.",
-    "playlist.addTracksHint": "Selaa soittolistojamme ja tykkää kappaleista lisätäksesi ne tänne.",
+    "playlist.addTracksHintLiked": "Selaa soittolistojamme ja tykkää kappaleista lisätäksesi ne tänne.",
+    "playlist.addTracksHintOwn": "Selaa soittolistoja, napauta minkä tahansa kappaleen valikkoa ja valitse 'Lisää soittolistaan'.",
     "playlist.browseAllPlaylists": "Selaa kaikkia soittolistoja",
+    
     
     // Home extras
     "home.greeting.morning": "Hyvää huomenta",
@@ -2890,8 +2896,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Playlist empty state
     "playlist.noTracks": "Noch keine Songs in dieser Playlist.",
-    "playlist.addTracksHint": "Durchstöbern Sie unsere Playlists und liken Sie Songs, um sie hier hinzuzufügen.",
+    "playlist.addTracksHintLiked": "Durchstöbern Sie unsere Playlists und liken Sie Songs, um sie hier hinzuzufügen.",
+    "playlist.addTracksHintOwn": "Playlists durchsuchen, auf das Menü eines Songs tippen und 'Zur Playlist hinzufügen' wählen.",
     "playlist.browseAllPlaylists": "Alle Playlists durchsuchen",
+    
     
     // Home extras
     "home.greeting.morning": "Guten Morgen",
@@ -3691,8 +3699,10 @@ export const translations: Record<Language, Record<string, string>> = {
     
     // Playlist empty state
     "playlist.noTracks": "Aucun titre dans cette playlist.",
-    "playlist.addTracksHint": "Parcourez nos playlists et aimez des titres pour les ajouter ici.",
+    "playlist.addTracksHintLiked": "Parcourez nos playlists et aimez des titres pour les ajouter ici.",
+    "playlist.addTracksHintOwn": "Parcourez les playlists, appuyez sur le menu d'un titre et sélectionnez 'Ajouter à la playlist'.",
     "playlist.browseAllPlaylists": "Parcourir toutes les playlists",
+    
     
     // Home extras
     "home.greeting.morning": "Bonjour",
