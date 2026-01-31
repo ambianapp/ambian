@@ -188,7 +188,8 @@ const PlaylistDetailView = ({
     artist: dbTrack.artist,
     album: dbTrack.album || "",
     duration: dbTrack.duration || "",
-    cover: dbTrack.cover_url || resolvedPlaylistCover || "/placeholder.svg",
+    // Always use playlist cover when playing from a playlist context
+    cover: resolvedPlaylistCover || dbTrack.cover_url || "/placeholder.svg",
     genre: dbTrack.genre || "",
     audioUrl: signedAudioUrl,
   });
@@ -355,7 +356,8 @@ const PlaylistDetailView = ({
                   artist: track.artist,
                   album: track.album || "",
                   duration: track.duration || "",
-                  cover: track.cover_url || resolvedPlaylistCover || "/placeholder.svg",
+                  // Always use playlist cover when displaying in playlist context
+                  cover: resolvedPlaylistCover || track.cover_url || "/placeholder.svg",
                   genre: track.genre || "",
                 }}
                 index={index + 1}
