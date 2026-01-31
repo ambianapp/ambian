@@ -94,6 +94,10 @@ const IndustryPlaylistsView = ({
     setLoadingPlaylistId(playlistId);
 
     try {
+      // Get playlist cover for fallback
+      const playlist = playlists.find(p => p.id === playlistId);
+      const playlistCover = playlist?.cover_url || "/placeholder.svg";
+
       const { data } = await supabase
         .from("playlist_tracks")
         .select("track_id, tracks(*)")
@@ -121,7 +125,7 @@ const IndustryPlaylistsView = ({
               artist: t.artist,
               album: t.album || "",
               duration: t.duration || "",
-              cover: t.cover_url || "/placeholder.svg",
+              cover: t.cover_url || playlistCover,
               genre: t.genre || "",
             }));
 
@@ -138,7 +142,7 @@ const IndustryPlaylistsView = ({
             artist: track.artist,
             album: track.album || "",
             duration: track.duration || "",
-            cover: track.cover_url || "/placeholder.svg",
+            cover: track.cover_url || playlistCover,
             genre: track.genre || "",
             audioUrl: signedAudioUrl,
           }, playlistTracks);
