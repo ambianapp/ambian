@@ -34,11 +34,13 @@ const UI_STATE_KEY = "ambian_ui_state";
 type UiState = {
   activeView: string;
   selectedPlaylist: SelectedPlaylist | null;
+  searchQuery: string;
 };
 
 const Index = () => {
   const [activeView, setActiveView] = useState("home");
   const [selectedPlaylist, setSelectedPlaylist] = useState<SelectedPlaylist | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { 
     user,
     subscription, 
@@ -77,6 +79,7 @@ const Index = () => {
       const saved = JSON.parse(raw) as UiState;
       if (saved?.activeView) setActiveView(saved.activeView);
       if (saved?.selectedPlaylist !== undefined) setSelectedPlaylist(saved.selectedPlaylist);
+      if (saved?.searchQuery) setSearchQuery(saved.searchQuery);
     } catch {
       // ignore
     }
@@ -86,12 +89,12 @@ const Index = () => {
   // Persist UI state when it changes
   useEffect(() => {
     try {
-      const next: UiState = { activeView, selectedPlaylist };
+      const next: UiState = { activeView, selectedPlaylist, searchQuery };
       sessionStorage.setItem(UI_STATE_KEY, JSON.stringify(next));
     } catch {
       // ignore
     }
-  }, [activeView, selectedPlaylist]);
+  }, [activeView, selectedPlaylist, searchQuery]);
 
   // Track previous state to avoid duplicate history entries
   const prevStateRef = useRef<{ activeView: string; playlistId: string | null }>({ 
@@ -228,17 +231,26 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [subscription.isTrial, subscription.trialEnd, isAdmin, checkSubscription]);
 
-  const handlePlaylistSelect = useCallback((playlist: SelectedPlaylist) => {
+  const handlePlaylistSelect = useCallback((playlist: SelectedPlaylist, searchQueryFromView?: string) => {
+    // If coming from search, preserve the search query for when user comes back
+    if (searchQueryFromView) {
+      setSearchQuery(searchQueryFromView);
+    }
     setSelectedPlaylist(playlist);
   }, []);
 
   const handleBackFromPlaylist = useCallback(() => {
     setSelectedPlaylist(null);
+    // searchQuery is preserved - will be passed to SearchView on re-render
   }, []);
 
   const handleViewChange = useCallback((view: string) => {
     setActiveView(view);
     setSelectedPlaylist(null); // Clear playlist when changing views
+    // Clear search query when leaving search view
+    if (view !== "search") {
+      setSearchQuery("");
+    }
   }, []);
 
   // Show loading while checking auth (login / hard refresh)
@@ -300,6 +312,7 @@ const Index = () => {
             onPlaylistSelect={handlePlaylistSelect}
             onPlayPlaylist={playPlaylist}
             onBack={() => handleViewChange("home")}
+            initialQuery={searchQuery}
           />
         );
       case "library":
