@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-
+import { ToastAction } from "@/components/ui/toast";
 interface LikedSongsContextType {
   likedSongIds: Set<string>;
   isLoading: boolean;
@@ -161,7 +161,17 @@ export const LikedSongsProvider = ({ children }: LikedSongsProviderProps) => {
           });
           toast({ title: t("toast.errorAddingLiked"), variant: "destructive" });
         } else {
-          toast({ title: t("toast.addedToLiked") });
+          toast({ 
+            title: t("toast.addedToLiked"),
+            action: (
+              <ToastAction 
+                altText="View Liked Songs"
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate-to-liked-songs'))}
+              >
+                {t("actions.view") || "View"}
+              </ToastAction>
+            ),
+          });
         }
       }
     },

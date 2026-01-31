@@ -157,6 +157,22 @@ const Index = () => {
     return () => window.removeEventListener('popstate', handlePopstate);
   }, []);
 
+  // Listen for custom event to navigate to liked songs (from toast action)
+  useEffect(() => {
+    const handleNavigateToLiked = () => {
+      setSelectedPlaylist({
+        id: 'liked-songs',
+        name: 'Liked Songs',
+        cover: null,
+        description: 'Your favorite tracks',
+      });
+      setActiveView('home');
+    };
+
+    window.addEventListener('navigate-to-liked-songs', handleNavigateToLiked);
+    return () => window.removeEventListener('navigate-to-liked-songs', handleNavigateToLiked);
+  }, []);
+
   // Handle navigation state from other pages (e.g., Profile -> Search, Help -> Playlist)
   useEffect(() => {
     const state = location.state as { view?: string; selectedPlaylist?: SelectedPlaylist } | null;
