@@ -52,7 +52,8 @@ export function usePlayPlaylist(
             artist: t.artist,
             album: t.album || "",
             duration: t.duration || "",
-            cover: t.cover_url || playlistCover,
+            // Always use playlist cover when playing from a playlist context
+            cover: playlistCover,
             genre: t.genre || "",
           }));
 
@@ -71,7 +72,8 @@ export function usePlayPlaylist(
             artist: track.artist,
             album: track.album || "",
             duration: track.duration || "",
-            cover: track.cover_url || playlistCover,
+            // Always use playlist cover when playing from a playlist context
+            cover: playlistCover,
             genre: track.genre || "",
             audioUrl: signedAudioUrl,
           },
