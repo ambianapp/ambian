@@ -14,6 +14,15 @@ export function usePlayPlaylist(
   const { user } = useAuth();
 
   const playPlaylist = async (playlistId: string) => {
+    // Fetch playlist cover first
+    const { data: playlistData } = await supabase
+      .from("playlists")
+      .select("cover_url")
+      .eq("id", playlistId)
+      .single();
+    
+    const playlistCover = playlistData?.cover_url || "/placeholder.svg";
+
     // Fetch first track of playlist
     const { data } = await supabase
       .from("playlist_tracks")
@@ -43,7 +52,7 @@ export function usePlayPlaylist(
             artist: t.artist,
             album: t.album || "",
             duration: t.duration || "",
-            cover: t.cover_url || "/placeholder.svg",
+            cover: t.cover_url || playlistCover,
             genre: t.genre || "",
           }));
 
@@ -62,7 +71,7 @@ export function usePlayPlaylist(
             artist: track.artist,
             album: track.album || "",
             duration: track.duration || "",
-            cover: track.cover_url || "/placeholder.svg",
+            cover: track.cover_url || playlistCover,
             genre: track.genre || "",
             audioUrl: signedAudioUrl,
           },
