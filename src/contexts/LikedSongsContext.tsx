@@ -168,7 +168,7 @@ export const LikedSongsProvider = ({ children }: LikedSongsProviderProps) => {
                 altText="View Liked Songs"
                 onClick={() => window.dispatchEvent(new CustomEvent('navigate-to-liked-songs'))}
               >
-                {t("actions.view") || "View"}
+                View
               </ToastAction>
             ),
           });
