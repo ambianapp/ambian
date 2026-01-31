@@ -136,6 +136,15 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
+    // Fetch playlist cover first
+    const { data: playlistData } = await supabase
+      .from("playlists")
+      .select("cover_url")
+      .eq("id", playlistId)
+      .single();
+    
+    const playlistCover = playlistData?.cover_url || "/placeholder.svg";
+
     // Fetch first track of playlist
     const { data } = await supabase
       .from("playlist_tracks")
@@ -165,7 +174,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
             artist: t.artist,
             album: t.album || "",
             duration: t.duration || "",
-            cover: t.cover_url || "/placeholder.svg",
+            // Always use playlist cover when playing from a playlist context
+            cover: playlistCover,
             genre: t.genre || "",
           }));
 
@@ -183,7 +193,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           artist: track.artist,
           album: track.album || "",
           duration: track.duration || "",
-          cover: track.cover_url || "/placeholder.svg",
+          // Always use playlist cover when playing from a playlist context
+          cover: playlistCover,
           genre: track.genre || "",
           audioUrl: signedAudioUrl,
         }, playlistTracks);
