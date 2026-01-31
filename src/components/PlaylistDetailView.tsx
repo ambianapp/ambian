@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Play, Pause, Clock, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Play, Pause, Clock, Heart, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
@@ -370,8 +371,20 @@ const PlaylistDetailView = ({
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center text-muted-foreground">
-            No tracks in this playlist yet.
+          <div className="py-8 text-center space-y-3">
+            <p className="text-muted-foreground">
+              {t("playlist.noTracks")}
+            </p>
+            <p className="text-sm text-muted-foreground/80">
+              {t("playlist.addTracksHint")}
+            </p>
+            <Link 
+              to="/playlists" 
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              {t("playlist.browseAllPlaylists")}
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
         )}
       </div>

@@ -484,6 +484,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.playlistName": "Name",
     "common.delete": "Delete",
     
+    // Playlist empty state
+    "playlist.noTracks": "No tracks in this playlist yet.",
+    "playlist.addTracksHint": "Browse our playlists and like songs to add them here.",
+    "playlist.browseAllPlaylists": "Browse all playlists",
+    
     // Home extras
     "home.greeting.morning": "Good morning",
     "home.greeting.afternoon": "Good afternoon",
@@ -1280,6 +1285,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.playlistName": "Namn",
     "common.delete": "Ta bort",
     
+    // Playlist empty state
+    "playlist.noTracks": "Inga låtar i denna spellista ännu.",
+    "playlist.addTracksHint": "Bläddra bland våra spellistor och gilla låtar för att lägga till dem här.",
+    "playlist.browseAllPlaylists": "Bläddra alla spellistor",
+    
     // Home extras
     "home.greeting.morning": "God morgon",
     "home.greeting.afternoon": "God eftermiddag",
@@ -2075,6 +2085,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.editPlaylist": "Muokkaa soittolistaa",
     "library.playlistName": "Nimi",
     "common.delete": "Poista",
+    
+    // Playlist empty state
+    "playlist.noTracks": "Tässä soittolistassa ei ole vielä kappaleita.",
+    "playlist.addTracksHint": "Selaa soittolistojamme ja tykkää kappaleista lisätäksesi ne tänne.",
+    "playlist.browseAllPlaylists": "Selaa kaikkia soittolistoja",
     
     // Home extras
     "home.greeting.morning": "Hyvää huomenta",
@@ -2873,6 +2888,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.playlistName": "Name",
     "common.delete": "Löschen",
     
+    // Playlist empty state
+    "playlist.noTracks": "Noch keine Songs in dieser Playlist.",
+    "playlist.addTracksHint": "Durchstöbern Sie unsere Playlists und liken Sie Songs, um sie hier hinzuzufügen.",
+    "playlist.browseAllPlaylists": "Alle Playlists durchsuchen",
+    
     // Home extras
     "home.greeting.morning": "Guten Morgen",
     "home.greeting.afternoon": "Guten Tag",
@@ -3668,6 +3688,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "library.editPlaylist": "Modifier la playlist",
     "library.playlistName": "Nom",
     "common.delete": "Supprimer",
+    
+    // Playlist empty state
+    "playlist.noTracks": "Aucun titre dans cette playlist.",
+    "playlist.addTracksHint": "Parcourez nos playlists et aimez des titres pour les ajouter ici.",
+    "playlist.browseAllPlaylists": "Parcourir toutes les playlists",
     
     // Home extras
     "home.greeting.morning": "Bonjour",
