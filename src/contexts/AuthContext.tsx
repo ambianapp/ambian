@@ -320,7 +320,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return false;
         }
 
-        // Check if device limit was reached
+        // Handle auto-disconnect for single-slot users (shows toast instead of dialog)
+        if (data?.autoDisconnected) {
+          console.log("Previous device was auto-disconnected:", data.disconnectedDevice);
+          toast.info("Your previous device has been signed out", {
+            description: "Only one device can be active at a time",
+          });
+          setIsDeviceLimitReached(false);
+          setActiveDevices([]);
+          setIsSessionRegistered(true);
+          return true;
+        }
+
+        // Check if device limit was reached (multi-slot users)
         if (data?.limitReached) {
           const deviceSlotsFromServer = Number(data.deviceSlots ?? 1) || 1;
           const activeDevicesFromServer: ActiveDevice[] = Array.isArray(data.activeDevices)
