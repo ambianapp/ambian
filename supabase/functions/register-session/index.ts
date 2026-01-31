@@ -247,29 +247,71 @@ serve(async (req) => {
 
     const currentCount = allSessions?.length || 0;
 
-    // If at or over the limit and NOT forcing registration, return conflict with active devices list
-    if (!isAdmin && currentCount >= deviceSlots && !forceRegister) {
-      console.log(`Device limit reached for user ${user.id}: ${currentCount}/${deviceSlots} devices`);
-      
-      // Return list of active devices so user can choose which to disconnect
-      const activeDevices = allSessions?.map(s => ({
-        sessionId: s.session_id,
-        deviceInfo: s.device_info,
-        createdAt: s.created_at,
-        updatedAt: s.updated_at,
-      })) || [];
+    // If at or over the limit
+    if (!isAdmin && currentCount >= deviceSlots) {
+      // For single-slot subscriptions (no additional devices), auto-disconnect the oldest
+      if (deviceSlots === 1 && !forceRegister) {
+        const oldestSession = allSessions?.[0];
+        if (oldestSession) {
+          await adminClient
+            .from("active_sessions")
+            .delete()
+            .eq("id", oldestSession.id);
+          console.log(`Auto-disconnected oldest session for single-slot user ${user.id}: ${oldestSession.session_id}`);
+          
+          // Insert the new session
+          const { error: insertError } = await adminClient
+            .from("active_sessions")
+            .insert({
+              user_id: user.id,
+              session_id: sessionId,
+              device_info: deviceInfo,
+            });
 
-      return new Response(JSON.stringify({ 
-        success: false, 
-        limitReached: true,
-        deviceSlots,
-        currentDevices: currentCount,
-        activeDevices,
-        message: "Device limit reached. Choose a device to disconnect.",
-      }), {
-        status: 200, // Not an error, just a conflict state
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+          if (insertError) {
+            console.error("Error inserting session after auto-disconnect:", insertError);
+            return new Response(JSON.stringify({ error: "Failed to register session" }), {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          return new Response(JSON.stringify({ 
+            success: true, 
+            message: "Session registered, previous device disconnected",
+            isRegistered: true,
+            autoDisconnected: true,
+            disconnectedDevice: oldestSession.device_info,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      
+      // For multi-slot subscriptions, show the dialog
+      if (!forceRegister) {
+        console.log(`Device limit reached for user ${user.id}: ${currentCount}/${deviceSlots} devices`);
+        
+        // Return list of active devices so user can choose which to disconnect
+        const activeDevices = allSessions?.map(s => ({
+          sessionId: s.session_id,
+          deviceInfo: s.device_info,
+          createdAt: s.created_at,
+          updatedAt: s.updated_at,
+        })) || [];
+
+        return new Response(JSON.stringify({ 
+          success: false, 
+          limitReached: true,
+          deviceSlots,
+          currentDevices: currentCount,
+          activeDevices,
+          message: "Device limit reached. Choose a device to disconnect.",
+        }), {
+          status: 200, // Not an error, just a conflict state
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // If forceRegister is true and at limit, remove oldest session (user explicitly chose this)
