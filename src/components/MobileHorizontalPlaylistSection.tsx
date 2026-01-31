@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ChevronRight, Play } from "lucide-react";
 import SignedImage from "./SignedImage";
 import { Skeleton } from "./ui/skeleton";
-import { Button } from "./ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -24,7 +23,7 @@ interface MobileHorizontalPlaylistSectionProps {
   accentColor?: string;
   hideNames?: boolean;
   isLoading?: boolean;
-  priorityCount?: number; // Number of images to load with high priority
+  priorityCount?: number;
 }
 
 const MobileHorizontalPlaylistSection = ({
@@ -36,44 +35,23 @@ const MobileHorizontalPlaylistSection = ({
   accentColor,
   hideNames = false,
   isLoading = false,
-  priorityCount = 4, // First 4 images load eagerly by default
+  priorityCount = 4,
 }: MobileHorizontalPlaylistSectionProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
-  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle tap: first tap shows play button, second tap (on button) plays
-  const handlePlaylistTap = (playlist: DbPlaylist) => {
-    if (activePlaylistId === playlist.id) {
-      // Already active, open playlist detail
-      onPlaylistClick({
-        id: playlist.id,
-        name: playlist.name,
-        cover: playlist.cover_url,
-        description: playlist.description,
-      });
-    } else {
-      // First tap - show play button
-      setActivePlaylistId(playlist.id);
-      
-      // Auto-hide after 3 seconds
-      if (tapTimeoutRef.current) {
-        clearTimeout(tapTimeoutRef.current);
-      }
-      tapTimeoutRef.current = setTimeout(() => {
-        setActivePlaylistId(null);
-      }, 3000);
-    }
+  const handleCardClick = (playlist: DbPlaylist) => {
+    onPlaylistClick({
+      id: playlist.id,
+      name: playlist.name,
+      cover: playlist.cover_url,
+      description: playlist.description,
+    });
   };
 
   const handlePlayClick = (e: React.MouseEvent, playlistId: string) => {
     e.stopPropagation();
     onPlayPlaylist(playlistId);
-    setActivePlaylistId(null);
-    if (tapTimeoutRef.current) {
-      clearTimeout(tapTimeoutRef.current);
-    }
   };
 
   // Skeleton loading state
@@ -126,48 +104,36 @@ const MobileHorizontalPlaylistSection = ({
           className="flex gap-3 overflow-x-auto pb-2 pr-4 scrollbar-hide ml-4"
           style={{ scrollSnapType: 'x mandatory' }}
         >
-          {playlists.map((playlist, index) => {
-            const isActive = activePlaylistId === playlist.id;
-            
-            return (
-              <button
-                key={playlist.id}
-                onClick={() => handlePlaylistTap(playlist)}
-                className="flex-shrink-0 w-28 text-left transition-transform active:scale-95"
-                style={{ scrollSnapAlign: 'start' }}
-              >
-                <div className="relative aspect-square rounded-lg overflow-hidden mb-2 shadow-md">
-                  <SignedImage
-                    src={playlist.cover_url || "/placeholder.svg"}
-                    alt={playlist.name}
-                    className="w-full h-full object-cover"
-                    loading={index < priorityCount ? "eager" : "lazy"}
-                    fetchPriority={index < priorityCount ? "high" : undefined}
-                  />
-                  {/* Play button overlay - visible when tapped */}
-                  <div 
-                    className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 ${
-                      isActive ? "opacity-100" : "opacity-0 pointer-events-none"
-                    }`}
-                  >
-                    <Button
-                      variant="player"
-                      size="icon"
-                      className="h-12 w-12 shadow-2xl"
-                      onClick={(e) => handlePlayClick(e, playlist.id)}
-                    >
-                      <Play className="w-6 h-6 ml-0.5" />
-                    </Button>
-                  </div>
+          {playlists.map((playlist, index) => (
+            <button
+              key={playlist.id}
+              onClick={() => handleCardClick(playlist)}
+              className="flex-shrink-0 w-28 text-left transition-transform active:scale-95"
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              <div className="relative aspect-square rounded-lg overflow-hidden mb-2 shadow-md">
+                <SignedImage
+                  src={playlist.cover_url || "/placeholder.svg"}
+                  alt={playlist.name}
+                  className="w-full h-full object-cover"
+                  loading={index < priorityCount ? "eager" : "lazy"}
+                  fetchPriority={index < priorityCount ? "high" : undefined}
+                />
+                {/* Play button in bottom-right corner */}
+                <div
+                  className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg"
+                  onClick={(e) => handlePlayClick(e, playlist.id)}
+                >
+                  <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
                 </div>
-                {!hideNames && (
-                  <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
-                    {playlist.name}
-                  </p>
-                )}
-              </button>
-            );
-          })}
+              </div>
+              {!hideNames && (
+                <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+                  {playlist.name}
+                </p>
+              )}
+            </button>
+          ))}
         </div>
       ) : (
         <p className="text-muted-foreground text-sm px-4">{t("home.noPlaylists")}</p>
