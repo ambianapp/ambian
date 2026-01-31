@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Play, Pause, Shuffle, Clock, Heart } from "lucide-react";
+import { ArrowLeft, Play, Pause, Clock, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Track } from "@/data/musicData";
 import TrackRow from "./TrackRow";
@@ -133,18 +133,14 @@ const LikedSongsView = ({
         >
           <Play className="w-6 h-6 ml-1" />
         </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <Shuffle className="w-5 h-5" />
-        </Button>
       </div>
 
       {/* Track List */}
       <div className="px-6">
         {/* Header */}
-        <div className="hidden md:grid grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wider border-b border-border mb-2">
+        <div className="hidden md:grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wider border-b border-border mb-2">
           <span className="w-8">#</span>
           <span>Title</span>
-          <span>Album</span>
           <span className="w-12 flex justify-end">
             <Clock className="w-4 h-4" />
           </span>
