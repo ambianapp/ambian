@@ -68,7 +68,7 @@ const HorizontalPlaylistSection = ({
           )}
         </div>
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(10)].map((_, i) => (
             <div key={i} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
               <Skeleton className="aspect-square rounded-lg mb-2" />
               <Skeleton className="h-4 w-3/4 mb-1" />
