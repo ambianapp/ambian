@@ -195,6 +195,18 @@ body.is-scrolling * {
   display: none;
 }
 
+/* Hide scrollbars on mobile/touch devices */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Audio waveform animation */
 @keyframes waveform {
   0%, 100% { height: 20%; }
