@@ -88,6 +88,19 @@ const MobileHorizontalPlaylistSection = ({
 
   const handlePlayClick = (e: React.MouseEvent, playlistId: string) => {
     e.stopPropagation();
+    
+    const isThisPlaying = currentPlaylistId === playlistId && isPlaying;
+    
+    // If this playlist is currently playing, pause it
+    if (isThisPlaying) {
+      // Access the audio element to pause
+      const audioElement = document.querySelector('audio');
+      if (audioElement) {
+        audioElement.pause();
+      }
+      return;
+    }
+    
     // Set loading state to keep button visible during async play
     setLoadingPlaylistId(playlistId);
     onPlayPlaylist(playlistId);

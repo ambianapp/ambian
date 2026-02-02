@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Play, Pencil, Upload, Loader2 } from "lucide-react";
+import { Play, Pause, Pencil, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Playlist } from "@/data/musicData";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 import SignedImage from "@/components/SignedImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +24,10 @@ interface PlaylistCardProps {
 
 const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false, priorityImage = false }: PlaylistCardProps) => {
   const { isAdmin } = useAuth();
+  const { currentPlaylistId, isPlaying } = usePlayer();
   const { toast } = useToast();
+  
+  const isThisPlaying = currentPlaylistId === playlist.id && isPlaying;
   const [isEditing, setIsEditing] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,17 +106,31 @@ const PlaylistCard = ({ playlist, onClick, onPlay, onUpdate, compact = false, pr
             <Button
               variant="player"
               size={compact ? "icon" : "iconLg"}
-              className={`absolute bottom-1 right-1 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-2xl ${compact ? "w-8 h-8" : ""}`}
+              className={`absolute bottom-1 right-1 transition-all duration-300 shadow-2xl ${compact ? "w-8 h-8" : ""} ${
+                isThisPlaying 
+                  ? "opacity-100 translate-y-0" 
+                  : "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                if (onPlay) {
+                if (isThisPlaying) {
+                  // Pause the current playback
+                  const audioElement = document.querySelector('audio');
+                  if (audioElement) {
+                    audioElement.pause();
+                  }
+                } else if (onPlay) {
                   onPlay();
                 } else {
                   onClick();
                 }
               }}
             >
-              <Play className={compact ? "w-4 h-4 ml-0.5" : "w-6 h-6 ml-0.5"} />
+              {isThisPlaying ? (
+                <Pause className={compact ? "w-4 h-4" : "w-6 h-6"} />
+              ) : (
+                <Play className={compact ? "w-4 h-4 ml-0.5" : "w-6 h-6 ml-0.5"} />
+              )}
             </Button>
           </div>
           <h3 className={`font-semibold text-foreground truncate ${compact ? "text-sm" : ""}`}>{playlist.name}</h3>
