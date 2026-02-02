@@ -100,6 +100,15 @@ const AllPlaylists = () => {
     setLoadingPlaylistId(playlistId);
     
     try {
+      // Fetch playlist cover first (same as usePlayPlaylist hook)
+      const { data: playlistData } = await supabase
+        .from("playlists")
+        .select("cover_url")
+        .eq("id", playlistId)
+        .single();
+      
+      const playlistCover = playlistData?.cover_url || "/placeholder.svg";
+
       const { data } = await supabase
         .from("playlist_tracks")
         .select("track_id, tracks(*)")
@@ -118,6 +127,7 @@ const AllPlaylists = () => {
             .eq("playlist_id", playlistId)
             .order("position", { ascending: true });
 
+          // Use playlist cover for all tracks (contextual branding)
           const playlistTracks: Track[] = (allTracksData || [])
             .map((item: any) => item.tracks)
             .filter(Boolean)
@@ -127,7 +137,7 @@ const AllPlaylists = () => {
               artist: t.artist,
               album: t.album || "",
               duration: t.duration || "",
-              cover: t.cover_url || "/placeholder.svg",
+              cover: playlistCover,
               genre: t.genre || "",
             }));
 
@@ -145,7 +155,7 @@ const AllPlaylists = () => {
               artist: track.artist,
               album: track.album || "",
               duration: track.duration || "",
-              cover: track.cover_url || "/placeholder.svg",
+              cover: playlistCover,
               genre: track.genre || "",
               audioUrl: signedAudioUrl,
             },
