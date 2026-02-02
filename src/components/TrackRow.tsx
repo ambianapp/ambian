@@ -75,6 +75,15 @@ const TrackRow = ({ track, index, isPlaying, isCurrentTrack, onPlay, onDelete, s
   };
 
   const handlePlay = () => {
+    // If this track is currently playing, pause it
+    if (isCurrentTrack && isPlaying) {
+      const audioElement = document.querySelector('audio');
+      if (audioElement) {
+        audioElement.pause();
+      }
+      return;
+    }
+    
     if (!isCurrentTrack) {
       setIsPendingPlay(true);
     }
