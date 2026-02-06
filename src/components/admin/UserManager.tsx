@@ -152,11 +152,13 @@ export function UserManager() {
 
       const usersWithDetails: UserWithDetails[] = (profiles || []).map((profile) => {
         const subscription = subscriptions?.find((s) => s.user_id === profile.user_id);
-        const userRole = roles?.find((r) => r.user_id === profile.user_id);
+        // Check all roles for this user - prioritize admin if they have it
+        const userRoles = roles?.filter((r) => r.user_id === profile.user_id);
+        const hasAdminRole = userRoles?.some((r) => r.role === "admin");
         return {
           ...profile,
           subscription,
-          role: userRole?.role || "user",
+          role: hasAdminRole ? "admin" : "user",
         };
       });
 
