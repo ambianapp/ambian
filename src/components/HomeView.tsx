@@ -59,10 +59,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   const [mobileView, setMobileView] = useState<"browser" | "mood" | "genre" | "continue" | "industry">("browser");
   const [selectedIndustry, setSelectedIndustry] = useState<{ id: string; name: string } | null>(null);
 
-  // Handle browser back/forward for mobile category views
+  // Handle browser back/forward for category views (mobile and desktop)
   useEffect(() => {
-    if (!isMobile) return;
-
     const handlePopstate = () => {
       // When back is pressed, reset to browser view
       if (mobileView !== "browser") {
@@ -73,7 +71,7 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
 
     window.addEventListener('popstate', handlePopstate);
     return () => window.removeEventListener('popstate', handlePopstate);
-  }, [isMobile, mobileView]);
+  }, [mobileView]);
 
   // Push history when entering mood/genre/continue/industry view
   const handleMobileViewChange = (view: "mood" | "genre" | "continue" | "industry") => {
@@ -220,8 +218,8 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
   };
 
 
-  // Mobile view - show continue listening view
-  if (isMobile && mobileView === "continue") {
+  // Show continue listening view (mobile and desktop)
+  if (mobileView === "continue") {
     return (
       <ContinueListeningView
         onBack={() => {
@@ -468,9 +466,18 @@ const HomeView = ({ currentTrack, isPlaying, onTrackSelect, onPlaylistSelect }: 
           </section>
         ) : recentlyPlayed.length > 0 && (
           <section className="animate-fade-in">
-            <div className="flex items-center gap-2 mb-3">
-              <History className="w-4 h-4 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">{t("home.continue")}</h2>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">{t("home.continue")}</h2>
+              </div>
+              <button
+                onClick={() => handleMobileViewChange("continue")}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span>{t("home.showAll")}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
               {recentlyPlayed.map((playlist) => (
