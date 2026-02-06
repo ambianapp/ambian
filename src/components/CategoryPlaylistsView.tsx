@@ -225,7 +225,7 @@ const CategoryPlaylistsView = ({
           <QuickMixDialog
             onTrackSelect={onTrackSelect}
             trigger={
-              <Button variant="outline" className="w-full gap-2">
+              <Button variant="outline" className="w-full md:w-auto gap-2">
                 <Shuffle className="w-4 h-4" />
                 {t("quickMix.button")}
               </Button>
